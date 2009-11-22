@@ -81,10 +81,13 @@ extern volatile UBYTE shift_pause;
 
 void zx_task(UBYTE operation);
 
-
 void zx_init(void);
+
 void to_zx(UBYTE scancode, UBYTE was_E0, UBYTE was_release);
+
 void update_keys(UBYTE zxcode, UBYTE was_release);
+
+void zx_clr_kb(void);
 
 
 void  zx_fifo_put(UBYTE input);

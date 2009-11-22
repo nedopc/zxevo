@@ -29,6 +29,7 @@ UBYTE zx_fifo_out_ptr;
 
 
 UBYTE zx_counters[40]; // filter ZX keystrokes here to assure every is pressed and released only once
+UBYTE zx_map[5]; // keys bitmap. send order: LSbit first, from [4] to [0]
 
 
 volatile UBYTE shift_pause;
@@ -276,7 +277,6 @@ void zx_task(UBYTE operation) // zx task, tracks when there is need to send new 
 {
 	static UBYTE prev_code;
 	static UBYTE task_state;
-	static UBYTE zx_map[5]; // keys bitmap. send order: LSbit first, from [4] to [0]
 	static UBYTE reset_type;
 
 	UBYTE was_data;
@@ -289,7 +289,7 @@ void zx_task(UBYTE operation) // zx task, tracks when there is need to send new 
 		task_state = 0;
 		shift_pause = 0;
 
-		zx_map[0] = zx_map[1] = zx_map[2] = zx_map[3] = zx_map[4] = 0;
+		zx_clr_kb();
 	}
 	else /*if(operation==ZX_TASK_WORK)*/
 
@@ -317,7 +317,7 @@ void zx_task(UBYTE operation) // zx task, tracks when there is need to send new 
 					reset_type = 0;
 					prev_code  = KEY_V+1;
 
-					zx_map[0] = zx_map[1] = zx_map[2] = zx_map[3] = zx_map[4] = 0;
+					zx_clr_kb();
 
 					break; // flush changes immediately to the fpga
 				}
@@ -345,6 +345,9 @@ void zx_task(UBYTE operation) // zx task, tracks when there is need to send new 
 						zx_map[keynum] |=   keybit;
 					else
 						zx_map[keynum] &= (~keybit);
+
+
+					prev_code = code;
 				}
 			}
 
@@ -370,39 +373,33 @@ void zx_task(UBYTE operation) // zx task, tracks when there is need to send new 
 		}
 	}
 
-
-/*	if( !send_state )
-	{
-		nSPICS_PORT |= (1<<nSPICS); // set /SPICS
-
-		if( keys_changed )
-		{
-			towrite = current; // copy current state
-			keys_changed = 0;
-
-			send_state = 6;
-		}
-	}
-	else // we are sending data
-	{
-		send_state--;
-
-		if( send_state==5 )
-		{
-			//send reset byte, /SPICS = 1
-			byte=0x00;
-			if( towrite.reset_type ) byte = ( ((towrite.reset_type+1)<<4)&0xF0 ) + 2;
-
-			spi_send(byte);
-		}
-		else // send_state==4..0
-		{
-                        nSPICS_PORT &= ~(1<<nSPICS); // clr /SPICS
-
-			spi_send( towrite.map[send_state] );
-		}
-	}*/
 }
+
+void zx_clr_kb(void)
+{
+	BYTE i;
+
+	i=4;
+	do
+		zx_map[i] = 0;
+	while( (--i)>=0 );
+
+
+	i=39;
+	do
+		zx_counters[i] = 0;
+	while( (--i)>=0 );
+}
+
+
+
+
+
+
+
+
+
+
 
 
 
