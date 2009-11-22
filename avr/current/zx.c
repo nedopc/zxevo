@@ -268,7 +268,6 @@ void zx_init(void)
 	_delay_us(10);
 	nSPICS_PORT |= (1<<nSPICS);
 
-	send_state = 0;
 }
 
 
@@ -369,20 +368,6 @@ void zx_task(UBYTE operation) // zx task, tracks when there is need to send new 
 				spi_send( zx_map[task_state] );
 			}
 		}
-	}
-
-
-
-
-	if( !send_state )
-	{
-		if( !shift_pause && !zx_fifo_isempty() ) // 'shift_pause' decremented in interrupt
-		{
-
-		}
-	}
-	else // send_state
-	{
 	}
 
 
