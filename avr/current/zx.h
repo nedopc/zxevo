@@ -8,6 +8,7 @@
 //
 #define PRESS_BIT  7
 #define PRESS_MASK 128
+#define KEY_MASK   127
 //
 #define KEY_SP  0
 #define KEY_EN  1
@@ -68,15 +69,17 @@
 //
 extern volatile UBYTE shift_pause;
 
-
-struct zx {
+/*struct zx {
 	UBYTE counters[40];
 	UBYTE map[5]; // send order: LSbit first, from [4] to [0]
 	UBYTE reset_type;
-};
+};*/
 
 
-void zx_task(void);
+#define ZX_TASK_INIT 0
+#define ZX_TASK_WORK 1
+
+void zx_task(UBYTE operation);
 
 
 void zx_init(void);

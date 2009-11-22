@@ -90,7 +90,7 @@ int main()
         for(;;)
         {
         	ps2_task();
-        	zx_task();
+        	zx_task(ZX_TASK_WORK);
         }
 
 
