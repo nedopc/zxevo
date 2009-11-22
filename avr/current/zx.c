@@ -30,6 +30,7 @@ UBYTE zx_fifo_out_ptr;
 
 UBYTE zx_counters[40]; // filter ZX keystrokes here to assure every is pressed and released only once
 
+
 volatile UBYTE shift_pause;
 
 
@@ -238,12 +239,10 @@ NO_KEY,NO_KEY  // 7F
 };
 
 
-struct zx current;
-struct zx towrite;
-
-volatile UBYTE keys_changed;
-
-volatile UBYTE send_state;
+//struct zx current;
+//struct zx towrite;
+//volatile UBYTE keys_changed;
+//volatile UBYTE send_state;
 
 
 void zx_init(void)
@@ -252,13 +251,10 @@ void zx_init(void)
 
 	i=39;
 	do zx_counters[i] = zx_counters[i] = 0x00; while( (--i)>=0 );
-/*
-	current.map[0] = current.map[1] = current.map[2] = current.map[3] = current.map[4] = 0x00;
-	towrite.map[0] = towrite.map[1] = towrite.map[2] = towrite.map[3] = towrite.map[4] = 0x00;
-*/
 
 	zx_fifo_in_ptr=zx_fifo_out_ptr=0;
 
+	zx_task(ZX_TASK_INIT);
 
 
 	nSPICS_DDR  |= (1<<nSPICS);
@@ -266,7 +262,7 @@ void zx_init(void)
 	_delay_us(10);
 	nSPICS_PORT |= (1<<nSPICS);
 	_delay_us(10);
-	spi_send(0xE2);
+	spi_send(0xE2); // send specific reset
 	_delay_us(10);
 	nSPICS_PORT &= ~(1<<nSPICS);
 	_delay_us(10);
@@ -277,13 +273,106 @@ void zx_init(void)
 
 
 
-void zx_task(void) // zx task, tracks when there is need to send new keymap to the fpga
+void zx_task(UBYTE operation) // zx task, tracks when there is need to send new keymap to the fpga
 {
-	static UBYTE prev_byte;
+	static UBYTE prev_code;
+	static UBYTE task_state;
+	static UBYTE zx_map[5]; // keys bitmap. send order: LSbit first, from [4] to [0]
+	static UBYTE reset_type;
 
-	UBYTE byte;
+	UBYTE was_data;
+	UBYTE code,keynum,keybit;
 
-	// make pause between (CS|SS) and not(CS|SS)
+	if(operation==ZX_TASK_INIT)
+	{
+		reset_type = 0;
+		prev_code = KEY_V+1; // impossible scancode
+		task_state = 0;
+		shift_pause = 0;
+
+		zx_map[0] = zx_map[1] = zx_map[2] = zx_map[3] = zx_map[4] = 0;
+	}
+	else /*if(operation==ZX_TASK_WORK)*/
+
+	// из фифы приходит: нажатия и отжатия ресетов, нажатия и отжатия кнопков, CLRKYS (только нажание).
+	// задача: упдейтить в соответствии с этим битмап кнопок, посылать его в фпгу, посылать ресеты.
+	// кроме того, делать паузу в упдейте битмапа и посылке его в фпга между нажатием CS|SS и последующей не-CS|SS кнопки,
+	// равно как и между отжатием не-CS|SS кнопки и последующим отжатием CS|SS.
+
+	// сначала делаем тупо без никаких пауз - чтобы работало вообще с фифой
+
+	{
+		if( !task_state )
+		{
+			nSPICS_PORT |= (1<<nSPICS);
+
+			was_data = 0;
+
+			while( !zx_fifo_isempty() )
+			{
+				was_data = 1; // we've got something!
+				code=zx_fifo_get();
+
+				if( code==CLRKYS )
+				{
+					reset_type = 0;
+					prev_code  = KEY_V+1;
+
+					zx_map[0] = zx_map[1] = zx_map[2] = zx_map[3] = zx_map[4] = 0;
+
+					break; // flush changes immediately to the fpga
+				}
+				else if( (code&KEY_MASK) >= RSTSYS )
+				{
+					if( code&PRESS_MASK ) // reset key pressed
+					{
+						reset_type  = 0x30 & ((code+1)<<4);
+						reset_type += 2;
+
+						break; // flush immediately
+					}
+					else // reset key released
+					{
+						reset_type = 0;
+					}
+				}
+				else /*if( (code&KEY_MASK) < 40 )*/
+				{
+					keynum = (code&KEY_MASK)>>3;
+
+					keybit = 0x0080 >> (code&7); // KEY_MASK - надмножество битов 7
+
+					if( code&PRESS_MASK )
+						zx_map[keynum] |=   keybit;
+					else
+						zx_map[keynum] &= (~keybit);
+				}
+			}
+
+			if( was_data ) // initialize transfer
+			{
+				task_state = 6;
+			}
+		}
+		else // sending bytes one by one in each state
+		{
+			task_state--;
+
+			if( task_state==5 )
+			{
+				nSPICS_PORT |= (1<<nSPICS);
+				spi_send(reset_type);
+			}
+			else // task_state==4..0
+			{
+				nSPICS_PORT &= ~(1<<nSPICS);
+				spi_send( zx_map[task_state] );
+			}
+		}
+	}
+
+
+
 
 	if( !send_state )
 	{
@@ -392,7 +481,7 @@ void update_keys(UBYTE zxcode, UBYTE was_release)
 	{
 		/* NOTHING */
 	}
-	else if( (zxcode==CLRKYS) && (!was_release) )
+	else if( (zxcode==CLRKYS) && (!was_release) ) // does not have release option
 	{
 		i=39;
 		do zx_counters[i]=0; while( (--i)>=0 );
@@ -400,12 +489,12 @@ void update_keys(UBYTE zxcode, UBYTE was_release)
 		if( !zx_fifo_isfull() )
 			zx_fifo_put(CLRKYS);
 	}
-	else if( zxcode>=RSTSYS )
+	else if( zxcode>=RSTSYS ) // resets - press and release
 	{
 		if( !zx_fifo_isfull() )
 			zx_fifo_put( (was_release ? 0 : PRESS_MASK) | zxcode );
 	}
-	else if( zxcode < 40 );
+	else if( zxcode < 40 ); // ordinary keys too
 	{
 		if( was_release )
 		{
