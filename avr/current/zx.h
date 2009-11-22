@@ -4,7 +4,10 @@
 #include "mytypes.h"
 
 
+
 // key code is 7 bits, 8th bit is press/release (1=press,0=release)
+//
+// ACHTUNG!!!! DO NOT CHANGE THESE DEFINES, OTHERWISE MUCH OF CODE WILL BREAK!!!!
 //
 #define PRESS_BIT  7
 #define PRESS_MASK 128
@@ -65,7 +68,7 @@
 
 
 // pause between (CS|SS) and not(CS|SS)
-#define SHIFT_PAUSE = 8;
+#define SHIFT_PAUSE 8
 //
 extern volatile UBYTE shift_pause;
 

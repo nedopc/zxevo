@@ -309,11 +309,14 @@ void zx_task(UBYTE operation) // zx task, tracks when there is need to send new 
 
 			while( !zx_fifo_isempty() )
 			{
-				was_data = 1; // we've got something!
-				code=zx_fifo_get();
+				code=zx_fifo_copy(); // don't remove byte from fifo!
 
 				if( code==CLRKYS )
 				{
+					was_data = 1; // we've got something!
+
+					zx_fifo_get(); // remove byte from fifo
+
 					reset_type = 0;
 					prev_code  = KEY_V+1;
 
@@ -323,6 +326,10 @@ void zx_task(UBYTE operation) // zx task, tracks when there is need to send new 
 				}
 				else if( (code&KEY_MASK) >= RSTSYS )
 				{
+					was_data = 1; // we've got something!
+
+					zx_fifo_get(); // remove byte from fifo
+
 					if( code&PRESS_MASK ) // reset key pressed
 					{
 						reset_type  = 0x30 & ((code+1)<<4);
@@ -337,6 +344,30 @@ void zx_task(UBYTE operation) // zx task, tracks when there is need to send new 
 				}
 				else /*if( (code&KEY_MASK) < 40 )*/
 				{
+					if( shift_pause ) // if we inside pause interval and need checking
+					{
+						if( (PRESS_MASK&prev_code) && (PRESS_MASK&code) )
+						{
+							if(	/* prev key was CS|SS down */
+								( (PRESS_MASK|KEY_CS)<=prev_code && prev_code<=(PRESS_MASK|KEY_SS) ) &&
+								/* curr key is not-CS|SS down */
+								( code<(PRESS_MASK|KEY_CS) || (PRESS_MASK|KEY_SS)<code )
+							)
+								break; // while loop
+						}
+
+						if( (!(PRESS_MASK&prev_code)) && (!(PRESS_MASK&code)) )
+						{
+							if(	/* prev key was not-CS|SS up */
+								( prev_code<KEY_CS || KEY_SS<prev_code ) &&
+								/* curr key is CS|SS up */
+								( KEY_CS<=prev_code && prev_code<=KEY_SS )
+							)
+								break;
+						}
+					}
+
+					// just normal processing out of pause interval
 					keynum = (code&KEY_MASK)>>3;
 
 					keybit = 0x0080 >> (code&7); // KEY_MASK - надмножество битов 7
@@ -346,8 +377,11 @@ void zx_task(UBYTE operation) // zx task, tracks when there is need to send new 
 					else
 						zx_map[keynum] &= (~keybit);
 
-
 					prev_code = code;
+					zx_fifo_get();
+					shift_pause = SHIFT_PAUSE; // init wait timer
+
+					was_data = 1;
 				}
 			}
 
