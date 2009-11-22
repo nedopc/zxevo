@@ -33,6 +33,7 @@ ISR(TIMER2_OVF_vect)
 	}
 
 
+	// PS/2 timeout tracking
 	if( (ps2_count<11) && (ps2_count!=0) ) // track timeout for PS/2
 	{
 		if( ps2_timeout ) ps2_timeout--;
@@ -42,6 +43,11 @@ ISR(TIMER2_OVF_vect)
 			ps2_count = 11;
 		}
 	}
+
+
+	// pause for keyboard CS|SS
+	if( shift_pause )
+		shift_pause--;
 }
 
 
