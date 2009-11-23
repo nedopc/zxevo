@@ -73,6 +73,8 @@ $(FPGACORE): top.rbf
 
 %.hex: $(TARGET)
 	avr-objcopy -O ihex $(HEX_FLASH_FLAGS)  $< $@
+	..\..\..\tools\make_fw\trunk\release\make_fw.exe $@
+	..\..\..\tools\7z\7z.exe a -tzip -mx=9 zxevo_fw.zip zxevo_fw.bin
 
 %.eep: $(TARGET)
 	avr-objcopy $(HEX_EEPROM_FLAGS) -O ihex $< $@ || exit 0
@@ -87,7 +89,7 @@ size: ${TARGET}
 ## Clean target
 .PHONY: clean
 clean:
-	-rm -rf $(OBJECTS) $(FPGACORE) core.* dep/* top.mlz
+	-rm -rf $(OBJECTS) $(FPGACORE) core.* dep/* top.mlz zxevo_fw.*
 
 ## program chip
 pgm: core.hex

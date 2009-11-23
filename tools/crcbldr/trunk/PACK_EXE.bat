@@ -1,0 +1,1 @@
+..\..\upx\upx.exe --all-methods Release\CRCBLDR.exe
