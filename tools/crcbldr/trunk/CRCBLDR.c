@@ -178,7 +178,7 @@ int main(int argc,char*argv[])
  f=fopen("ZXEVO_BL.HEX","wt");
  if (!f) { printf("Can't create output file!\n"); return 1; }
 
- fputs(":020000020000FC\n:020000021000EC\n",f);
+ fputs(":020000020000FC\n:01000000FF00\n:020000021000EC\n",f);
  s[0]=':';
  s[1]='1';
  s[2]='0';
