@@ -1,7 +1,5 @@
 // simulate together CPU, DRAM and VIDEO FETCH
 
-`timescale 1ns/1ns
-
 `include "../include/tune.v"
 
 module tb_cdv;

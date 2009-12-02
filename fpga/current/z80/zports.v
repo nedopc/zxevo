@@ -1,3 +1,5 @@
+`include "../include/tune.v"
+
 module zports(
 
 	input clk,   // z80 clock

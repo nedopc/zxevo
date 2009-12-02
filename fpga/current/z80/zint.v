@@ -1,3 +1,5 @@
+`include "../include/tune.v"
+
 module zint(
 	input zclk,
 	input fclk,
@@ -15,6 +17,20 @@ module zint(
 	wire intend;
 
 	reg [6:0] intctr;
+
+
+
+`ifdef SIMULATE
+	initial
+	begin
+		ibeg = 0;
+		intctr = 7'b0100000;
+	//	int_n = 1'b1;
+
+		force int_n = 1'b1;
+	end
+`endif
+
 
 
 	always @(posedge fclk)

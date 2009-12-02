@@ -1,3 +1,5 @@
+`include "../include/tune.v"
+
 module rom(
 	input [15:0] addr,
 	output reg [7:0] data,
@@ -9,7 +11,7 @@ module rom(
 		if( ce_n )
 			data <= 8'bZZZZZZZZ;
 		else
-		case(addr)
+		case(addr[13:0])
 			16'h0000: data<=8'h21;
 			16'h0001: data<=8'h0e;
 			16'h0002: data<=8'h00;

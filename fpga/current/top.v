@@ -1,3 +1,5 @@
+`include "../include/tune.v"
+
 module top(
 
 	// clocks
@@ -187,6 +189,26 @@ module top(
 
 
 
+
+	wire [7:0] peff7;
+	wire [7:0] p7ffd;
+
+
+
+	wire cpu_req,cpu_rnw,cpu_wrbsel,cpu_strobe;
+	wire [20:0] cpu_addr;
+	wire [15:0] cpu_rddata;
+	wire [7:0] cpu_wrdata;
+
+
+	wire cend,pre_cend,go;
+
+
+	wire sd_start;
+	wire [7:0] sd_dataout,sd_datain;
+
+
+
 //AY control
 	always @(posedge fclk)
 	begin
@@ -218,12 +240,15 @@ module top(
 	wire ena_ports;
 
 
+	wire [2:0] border;
+
+	wire drive_ff;
+
 	// data bus out: either RAM data or internal ports data or 0xFF with unused ports
 	assign d = ena_ram ? dout_ram : ( ena_ports ? dout_ports : ( drive_ff ? 8'hFF : 8'bZZZZZZZZ ) );
 
 
 
-	wire drive_ff;
 
 	zbus zxbus( .iorq_n(iorq_n), .rd_n(rd_n), .wr_n(wr_n), .m1_n(m1_n),
 	            .iorq1_n(iorq1_n), .iorq2_n(iorq2_n), .iorqge1(iorqge1), .iorqge2(iorqge2),
@@ -263,10 +288,6 @@ module top(
 	.cpu_rddata(cpu_rddata) );
 
 
-	wire cpu_req,cpu_rnw,cpu_wrbsel,cpu_strobe;
-	wire [20:0] cpu_addr;
-	wire [15:0] cpu_rddata;
-	wire [7:0] cpu_wrdata;
 
 
 
@@ -277,6 +298,9 @@ module top(
 	wire [15:0] drddata;
 	wire [15:0] dwrdata;
 	wire [1:0] dbsel;
+
+
+
 
 	dram dramko( .clk(fclk),
 	             .rst_n(rst_n),
@@ -299,7 +323,6 @@ module top(
 	             .rras1_n(rras1_n) );
 
 
-	wire cend,pre_cend,go;
 	wire [1:0] bw;
 
 	wire [20:0] video_addr;
@@ -380,9 +403,6 @@ module top(
 
 
 
-	wire [2:0] border;
-	wire [7:0] peff7;
-	wire [7:0] p7ffd;
 
 	zports porty( .clk(zclk), .fclk(fclk), .rst_n(rst_n), .din(d), .dout(dout_ports), .dataout(ena_ports),
 	              .a(a), .iorq_n(iorq_n), .rd_n(rd_n), .wr_n(wr_n), .keyout(keyout), .porthit(porthit),
@@ -414,8 +434,6 @@ module top(
 
 
 
-	wire sd_start;
-	wire [7:0] sd_dataout,sd_datain;
 
 	spi2 zspi( .clock(fclk), .sck(sdclk), .sdo(sddo), .sdi(sddi), .start(sd_start),
 	           .speed(2'b00), .din(sd_datain), .dout(sd_dataout) );

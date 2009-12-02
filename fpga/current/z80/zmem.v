@@ -1,3 +1,5 @@
+`include "../include/tune.v"
+
 // PentEvo project (c) NedoPC 2008-2009
 //
 // Z80 memory manager: routes ROM/RAM accesses, makes wait-states for 14MHz or stall condition, etc.

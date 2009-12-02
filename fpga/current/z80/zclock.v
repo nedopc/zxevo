@@ -11,7 +11,7 @@
 // CURRENTLY ONLY 3.5 and 7 MHz!!!! FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME
 //    FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME
 
-//`include "../include/tune.v"
+`include "../include/tune.v"
 
 module zclock(
 
@@ -70,11 +70,7 @@ module zclock(
 	// 2.6ns lag because of non-output register emitting of zclk_out
 	// total: 5.8 ns lead of any edge of zclk relative to posedge of fclk => ACCOUNT FOR THIS WHEN DOING INTER-CLOCK DATA TRANSFERS
 	//
-`ifdef SIMULATE
-	always @(posedge fclk) // for simulation!
-`else
-	always @(negedge fclk) // normal working - see comment above
-`endif
+	always @(negedge fclk)
 		if( int_turbo[0] ) // 7 MHz
 			zclk_out <= ~zcount[1];
 		else // 3.5 MHz

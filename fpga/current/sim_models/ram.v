@@ -1,3 +1,5 @@
+`include "../include/tune.v"
+
 module ram(
 	addr,
 	data,
