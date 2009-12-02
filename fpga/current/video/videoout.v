@@ -1,3 +1,5 @@
+`include "../include/tune.v"
+
 // PentEvo project (c) NedoPC 2008-2009
 //
 // resyncs and outs video data to the DAC plus syncs

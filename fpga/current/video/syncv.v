@@ -1,3 +1,5 @@
+`include "../include/tune.v"
+
 // PentEvo project (c) NedoPC 2008-2009
 //
 // vertical blank, sync and window. H is period of horizontal sync;

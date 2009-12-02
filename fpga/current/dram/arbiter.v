@@ -1,3 +1,5 @@
+`include "../include/tune.v"
+
 // PentEvo project (c) NedoPC 2008-2009
 //
 // DRAM arbiter. Shares DRAM between processor and video data fetcher
