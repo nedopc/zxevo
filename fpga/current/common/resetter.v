@@ -23,6 +23,18 @@ parameter RST_CNT_SIZE = 4;
 	reg rst1_n,rst2_n;
 
 
+
+`ifdef SIMULATE
+	initial
+	begin
+		rst_cnt = 0;
+		rst1_n = 1'b0;
+		rst2_n = 1'b0;
+		rst_out_n = 1'b0;
+	end
+`endif
+
+
 	always @(posedge clk, negedge rst_in_n)
 	if( !rst_in_n ) // external asynchronous reset
 	begin
