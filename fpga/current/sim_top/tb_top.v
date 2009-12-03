@@ -2,10 +2,15 @@
 
 `include "../include/tune.v"
 
+
+//`define HALF_CLK_PERIOD (17.8)
+//`define ZCLK_DELAY      (9.4)
+//`define Z80_DELAY_DOWN  (17.0)
+//`define Z80_DELAY_UP    (22.0)
 `define HALF_CLK_PERIOD (17.8)
-`define ZCLK_DELAY      (9.4)
-`define Z80_DELAY_DOWN  (17.0)
-`define Z80_DELAY_UP    (22.0)
+`define ZCLK_DELAY        0
+`define Z80_DELAY_DOWN   0
+`define Z80_DELAY_UP    0
 
 module tb;
 
@@ -21,7 +26,7 @@ module tb;
 
 
 	wire [15:0] za;
-	wire [7:0] zd;
+	trireg [7:0] zd;
 
 
 	wire csrom, romoe_n, romwe_n;

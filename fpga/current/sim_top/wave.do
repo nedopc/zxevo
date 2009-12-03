@@ -5,6 +5,8 @@ add wave -noupdate -format Logic /tb/clkz_out
 add wave -noupdate -format Logic /tb/zrst_n
 add wave -noupdate -format Logic /tb/clkz_in
 add wave -noupdate -divider <NULL>
+add wave -noupdate -format Logic /tb/z80/busrq_n
+add wave -noupdate -format Logic /tb/z80/busak_n
 add wave -noupdate -format Logic /tb/iorq_n
 add wave -noupdate -format Logic /tb/mreq_n
 add wave -noupdate -format Logic /tb/rd_n
@@ -19,8 +21,17 @@ add wave -noupdate -format Literal -radix hexadecimal /tb/zd
 add wave -noupdate -format Logic /tb/csrom
 add wave -noupdate -format Logic /tb/romoe_n
 add wave -noupdate -format Logic /tb/romwe_n
+add wave -noupdate -divider <NULL>
+add wave -noupdate -format Literal -radix hexadecimal /tb/z80/u0/dinst
+add wave -noupdate -format Literal -radix hexadecimal /tb/z80/u0/ir
+add wave -noupdate -format Logic /tb/z80/u0/halt_ff
+add wave -noupdate -format Logic /tb/z80/u0/intcycle
+add wave -noupdate -format Logic /tb/z80/u0/nmicycle
+add wave -noupdate -format Literal /tb/z80/u0/istatus
+add wave -noupdate -format Literal -radix unsigned /tb/z80/u0/mcycle
+add wave -noupdate -format Literal -radix unsigned /tb/z80/u0/tstate
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {2513800 ps} 0}
+WaveRestoreCursors {{Cursor 1} {2367400 ps} 0}
 configure wave -namecolwidth 150
 configure wave -valuecolwidth 100
 configure wave -justifyvalue left
@@ -34,4 +45,4 @@ configure wave -gridperiod 80
 configure wave -griddelta 10
 configure wave -timeline 0
 update
-WaveRestoreZoom {0 ps} {18268800 ps}
+WaveRestoreZoom {374 ns} {10111200 ps}

@@ -1,1 +1,1 @@
-vsim -gui -novopt work.tb
+vsim -do "do wave.do" -gui -novopt work.tb
