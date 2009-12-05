@@ -6,10 +6,12 @@
 `define HALF_CLK_PERIOD (17.8)
 
 `define ZCLK_DELAY      (9.4)
+
+// toshibo
 `define Z80_DELAY_DOWN  (17.0)
 `define Z80_DELAY_UP    (22.0)
 
-//`define ZCLK_DELAY        0
+// z0840008
 //`define Z80_DELAY_DOWN   0
 //`define Z80_DELAY_UP    0
 
@@ -185,7 +187,7 @@ module tb;
 
 	// ROM model
 	rom romko(
-	           .addr( {dos_n, (~rompg0_n), za[13:0]} ),
+	           .addr( {/*dos_n, (~rompg0_n),*/ 2'b00, za[13:0]} ),
 	           .data(zd),
 	           .ce_n( romoe_n | (~csrom) )
 	         );
