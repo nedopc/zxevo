@@ -24,14 +24,16 @@ add wave -noupdate -format Logic /tb/romwe_n
 add wave -noupdate -divider <NULL>
 add wave -noupdate -format Literal -radix hexadecimal /tb/z80/u0/dinst
 add wave -noupdate -format Literal -radix hexadecimal /tb/z80/u0/ir
-add wave -noupdate -format Logic /tb/z80/u0/halt_ff
-add wave -noupdate -format Logic /tb/z80/u0/intcycle
-add wave -noupdate -format Logic /tb/z80/u0/nmicycle
-add wave -noupdate -format Literal /tb/z80/u0/istatus
-add wave -noupdate -format Literal -radix unsigned /tb/z80/u0/mcycle
-add wave -noupdate -format Literal -radix unsigned /tb/z80/u0/tstate
+add wave -noupdate -divider <NULL>
+add wave -noupdate -format Literal -radix hexadecimal /tb/DUT/ra
+add wave -noupdate -format Logic /tb/DUT/rwe_n
+add wave -noupdate -format Logic /tb/DUT/rucas_n
+add wave -noupdate -format Logic /tb/DUT/rlcas_n
+add wave -noupdate -format Logic /tb/DUT/rras0_n
+add wave -noupdate -format Logic /tb/DUT/rras1_n
+add wave -noupdate -format Literal -radix hexadecimal /tb/DUT/rd
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {2367400 ps} 0}
+WaveRestoreCursors {{Cursor 1} {142349500 ps} 0}
 configure wave -namecolwidth 150
 configure wave -valuecolwidth 100
 configure wave -justifyvalue left
@@ -40,9 +42,9 @@ configure wave -snapdistance 10
 configure wave -datasetprefix 0
 configure wave -rowmargin 4
 configure wave -childrowmargin 2
-configure wave -gridoffset 40
-configure wave -gridperiod 80
-configure wave -griddelta 10
+configure wave -gridoffset 178
+configure wave -gridperiod 356
+configure wave -griddelta 8
 configure wave -timeline 0
 update
-WaveRestoreZoom {10416900 ps} {20504400 ps}
+WaveRestoreZoom {141892900 ps} {144112900 ps}

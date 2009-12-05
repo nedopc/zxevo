@@ -16,5 +16,5 @@ tb_top.v
 ../z80/zmem.v
 ../z80/zports.v
 ../sim_models/drammem.v
-../sim_models/rom.v
+rom_top.v
 
