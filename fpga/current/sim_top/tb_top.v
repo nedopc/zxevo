@@ -5,15 +5,15 @@
 
 `define HALF_CLK_PERIOD (17.8)
 
-`define ZCLK_DELAY      (9.4)
+`define ZCLK_DELAY      (9.5)
 
 // toshibo
-`define Z80_DELAY_DOWN  (17.0)
-`define Z80_DELAY_UP    (22.0)
+//`define Z80_DELAY_DOWN  (17.0)
+//`define Z80_DELAY_UP    (22.0)
 
 // z0840008
-//`define Z80_DELAY_DOWN   0
-//`define Z80_DELAY_UP    0
+`define Z80_DELAY_DOWN   34
+`define Z80_DELAY_UP     30
 
 module tb;
 
