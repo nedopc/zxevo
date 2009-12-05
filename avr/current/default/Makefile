@@ -67,6 +67,9 @@ depacker_dirty.o: ../depacker_dirty.c ../depacker_dirty.h
 $(TARGET): $(OBJECTS) $(FPGACORE)
 	 $(CC) $(LDFLAGS) $(OBJECTS) $(FPGACORE) $(LIBDIRS) $(LIBS) -o $(TARGET)
 
+top.rbf: ../../../fpga/current/quartus/top.rbf
+	cp ../../../fpga/current/quartus/top.rbf top.rbf
+
 $(FPGACORE): top.rbf
 	mhmt -maxwin2048 top.rbf top.mlz
 	avr-objcopy -I binary -O elf32-avr --rename-section .data=.progmem.data,contents,alloc,load,readonly,data --redefine-sym _binary_top_mlz_start=fpga --redefine-sym _binary_top_mlz_end=fpga_end top.mlz top.o

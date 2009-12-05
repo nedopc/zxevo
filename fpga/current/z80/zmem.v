@@ -157,11 +157,15 @@ module zmem(
 		zd_out <= cpu_wrbsel ? cpu_rddata[7:0] : cpu_rddata[15:8];
 
 
-	always @(posedge fclk) if( pre_cend )
-		ramrd_prereg <= ramrd;
-
-	assign cpu_rnw = ramrd_prereg; // is it correct???
-
+//	always @(posedge fclk) if( pre_cend )
+//		ramrd_prereg <= ramrd;
+//	assign cpu_rnw = ramrd_prereg; // is it correct???
+//
+// removed because it could be source of problems for NMOS Z80
+//
+// new one:
+//
+	assign cpu_rnw = ramrd;
 
 
 	always @(posedge fclk) if( cend )
