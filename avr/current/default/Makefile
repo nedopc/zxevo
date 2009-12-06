@@ -92,7 +92,7 @@ size: ${TARGET}
 ## Clean target
 .PHONY: clean
 clean:
-	-rm -rf $(OBJECTS) $(FPGACORE) core.* dep/* top.mlz zxevo_fw.*
+	-rm -rf $(OBJECTS) $(FPGACORE) core.* dep/* top.* zxevo_fw.bin zxevo_fw.zip
 
 ## program chip
 pgm: core.hex
