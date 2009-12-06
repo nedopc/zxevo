@@ -310,12 +310,15 @@ module zports(
 	begin
 		if( !rst_n )
 			peff7_int <= 8'h00;
-		else if( (a[15:8]==8'hEF) && portf7_wr && (!block1m) )
+//		lvd's style
+//		else if( (a[15:8]==8'hEF) && portf7_wr && (!block1m) )
+//		koe's style
+		else if( (a[15:8]==8'hEF) && portf7_wr )
 			peff7_int <= din; // 4 - turbooff, 0 - p16c on, 2 - block1meg
 	end
 	assign block1m = peff7_int[2];
 
-	assign p7ffd = block7ffd ? { 8'b00010000 } : { (block1m ? 3'b0 : p7ffd_int[7:5]),p7ffd_rom_int,p7ffd_int[3:0]};
+	assign p7ffd = { (block1m ? 3'b0 : p7ffd_int[7:5]),p7ffd_rom_int,p7ffd_int[3:0]};
 
 	// video modes + turbo are always modifiable. page0 ram is being blocked off
 	assign peff7 = block1m ? { 2'b00, peff7_int[5], peff7_int[4], 3'b000, peff7_int[0] } : peff7_int;
