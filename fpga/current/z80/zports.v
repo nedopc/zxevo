@@ -332,6 +332,13 @@ module zports(
 
 	// dos on-off
 
+`ifdef SIMULATE
+	initial
+	begin
+		dos <= 1'b0;
+	end
+`endif
+
 	always @(posedge clk)
 	begin
 		if( rstsync2 )

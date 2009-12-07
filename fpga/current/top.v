@@ -230,7 +230,7 @@ module top(
 	assign rompg4   =  rompg[4];
 
 	zclock z80clk( .fclk(fclk), .rst_n(rst_n), .zclk(zclk), .zclk_out(clkz_out),
-	               .turbo( {1'b0,~(peff7[4]|dos)} ), .pre_cend(pre_cend) );
+	               .turbo( {1'b0,~(peff7[4]|dos)} ), .pre_cend(pre_cend), .cbeg(cbeg) );
 
 
 

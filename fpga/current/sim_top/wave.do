@@ -36,8 +36,11 @@ add wave -noupdate -format Logic /tb/DUT/dramko/cbeg
 add wave -noupdate -format Logic /tb/DUT/dramarb/post_cbeg
 add wave -noupdate -format Logic /tb/DUT/dramarb/pre_cend
 add wave -noupdate -format Logic /tb/DUT/dramarb/cend
-add wave -noupdate -format Logic /tb/DUT/z80clk/half_precend
-add wave -noupdate -format Literal -radix unsigned /tb/DUT/z80clk/zcount
+add wave -noupdate -format Logic /tb/DUT/z80clk/precend_cnt
+add wave -noupdate -format Logic /tb/DUT/z80clk/h_precend_1
+add wave -noupdate -format Logic /tb/DUT/z80clk/h_precend_2
+add wave -noupdate -format Logic /tb/DUT/z80clk/zpos
+add wave -noupdate -format Logic /tb/DUT/z80clk/zneg
 add wave -noupdate -format Logic /tb/DUT/z80clk/zclk_out
 add wave -noupdate -format Logic /tb/clkz_in
 add wave -noupdate -format Logic /tb/DUT/dramarb/cpu_req
@@ -49,7 +52,7 @@ add wave -noupdate -format Logic /tb/DUT/z80mem/ramrd_reg
 add wave -noupdate -format Logic /tb/DUT/z80mem/ramwr_reg
 add wave -noupdate -format Logic /tb/DUT/z80mem/ramrd_prereg
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {99626600 ps} 0} {{Cursor 2} {99825100 ps} 0}
+WaveRestoreCursors {{Cursor 1} {99555200 ps} 0} {{Cursor 2} {99825100 ps} 0}
 configure wave -namecolwidth 180
 configure wave -valuecolwidth 56
 configure wave -justifyvalue left
@@ -63,4 +66,4 @@ configure wave -gridperiod 356
 configure wave -griddelta 8
 configure wave -timeline 0
 update
-WaveRestoreZoom {99470100 ps} {100027900 ps}
+WaveRestoreZoom {98837600 ps} {100061200 ps}

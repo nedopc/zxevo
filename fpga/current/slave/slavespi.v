@@ -19,8 +19,18 @@ module slavespi(
 	output reg [1:0] rstrom
 );
 
-
 	reg [7:0] reset_reg;
+
+
+`ifdef SIMULATE
+	initial
+	begin
+		rstrom <= 2'b00;
+	end
+`endif
+
+
+
 
 	always @(posedge spick, negedge spics_n)
 	begin
