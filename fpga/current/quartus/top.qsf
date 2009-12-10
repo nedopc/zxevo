@@ -200,7 +200,7 @@ set_global_assignment -name FMAX_REQUIREMENT "28 MHz" -section_id "FPGA clock"
 set_global_assignment -name FMAX_REQUIREMENT "5.5296 MHz" -section_id "SPI clock"
 set_global_assignment -name BASED_ON_CLOCK_SETTINGS "FPGA clock" -section_id "Z80 clock"
 set_global_assignment -name MULTIPLY_BASE_CLOCK_PERIOD_BY 2 -section_id "Z80 clock"
-set_global_assignment -name OFFSET_FROM_BASE_CLOCK "-5.8 ns" -section_id "Z80 clock"
+set_global_assignment -name OFFSET_FROM_BASE_CLOCK "-8 ns" -section_id "Z80 clock"
 set_global_assignment -name USE_CONFIGURATION_DEVICE OFF
 set_global_assignment -name GENERATE_RBF_FILE ON
 set_global_assignment -name ON_CHIP_BITSTREAM_DECOMPRESSION OFF
