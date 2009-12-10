@@ -29,6 +29,9 @@ module zclock(
 
 	input zclk, // Z80 clock, buffered via act04 and returned back to the FPGA
 
+	input rfsh_n, // switch turbo modes in RFSH part of m1
+
+
 	output reg zclk_out, // generated Z80 clock - passed through inverter externally!
 
 	output reg zpos,
@@ -53,10 +56,16 @@ module zclock(
 	reg [1:0] int_turbo; // internal turbo, controlling muxes
 
 
+	reg old_rfsh_n;
+
+
+
 `ifdef SIMULATE
 	initial // simulation...
 	begin
 		precend_cnt = 1'b0;
+		int_turbo   = 2'b00;
+		old_rfsh_n  = 1'b1;
 	end
 `endif
 
@@ -77,10 +86,18 @@ module zclock(
 	end
 */
 
-	// switch between 3.5 and 7 only at predefined times
-	always @(posedge fclk) if( h_precend_1 )
-		int_turbo <= turbo;
+	// switch between 3.5 and 7 only at predefined time
+	always @(posedge fclk) if(zpos)
+	begin
+		old_rfsh_n <= rfsh_n;
 
+		if( old_rfsh_n && !rfsh_n )
+			int_turbo <= turbo;
+	end
+
+/*	always @(posedge fclk) if( h_precend_1 )
+		int_turbo <= turbo;
+*/
 
 	always @(posedge fclk)
 	begin
