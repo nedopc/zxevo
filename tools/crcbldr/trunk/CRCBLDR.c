@@ -3,6 +3,8 @@
 #include <string.h>
 #include <time.h>
 
+// #define thirdpart 1
+
 typedef unsigned char BYTE;
 typedef unsigned short int WORD;
 typedef unsigned int LONGWORD;
@@ -82,7 +84,9 @@ BYTE getbyte()
 
 int main(int argc,char*argv[])
 {
+#ifndef thirdpart
  BYTE       official=0x80;
+#endif
  BYTE       h[]="0123456789ABCDEF";
  BYTE       b, m, hexlen, datatype;
  WORD       i, crc;
@@ -90,7 +94,7 @@ int main(int argc,char*argv[])
  struct tm  stm;
  BYTE       vs[86];
  BYTE       E2Phead[0x98] = {
-             0x45,0x32,0x50,0x21,0x4C,0x61,0x6E,0x63,0xC0,0x20,0x30,0x00,0x03,0x00,0x00,0x10,
+             0x45,0x32,0x50,0x21,0x4C,0x61,0x6E,0x63,0xC0,0x10,0x30,0x00,0x03,0x00,0x00,0x10,
              0x02,0x00,0x00,0x77,0x00,0x00,0x00,0x02,0x00,0x00,0x41,0x54,0x6D,0x65,0x67,0x61,
              0x31,0x32,0x38 };
  WORD       tabcrc[256];
@@ -115,7 +119,9 @@ int main(int argc,char*argv[])
  if (!i)
   {
    strcpy(vs, "No info");
+#ifndef thirdpart
    official=0;
+#endif
   }
 
  strncpy(s1,argv[1],255);
@@ -203,7 +209,11 @@ int main(int argc,char*argv[])
   memcpy(&stm,localtime(&tt),sizeof(stm));
  }
  i=(WORD)( (((stm.tm_year-100)&0x3f)<<9) | (((stm.tm_mon+1)&0x0f)<<5) | (stm.tm_mday&0x1f) );
+#ifdef thirdpart
+ buff[0x1ffc]=(i>>8)&0x7f;
+#else
  buff[0x1ffc]=(i>>8)&0x7f|official;
+#endif
  buff[0x1ffd]=i&0xff;
 
  crc=0xffff;
@@ -290,7 +300,9 @@ int main(int argc,char*argv[])
  vs[i++]=h[b/10];
  vs[i++]=h[b%10];
  vs[i]=0;
+#ifndef thirdpart
  if (official) strcpy(&vs[i]," by NedoPC");
+#endif
 
  strncpy(&E2Phead[0x3a],vs,85);
  E2Phead[0x90]=0x02;
