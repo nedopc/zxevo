@@ -4,8 +4,6 @@
 .LIST
 .LISTMAC
 
-.EQU    WHISTLES        =1
-
 .DEF    POLY_LO =R06    ;всегда = $21
 .DEF    POLY_HI =R07    ;всегда = $10
 .DEF    FF_FL   =R08
@@ -29,14 +27,19 @@
 .EQU    nSTATUS         =PORTF1
 .EQU    CONF_DONE       =PORTF2
 
-.EQU    SOH     =$01
-.EQU    EOT     =$04
-.EQU    ACK     =$06
-.EQU    NAK     =$15
-.EQU    CAN     =$18
+.EQU    SOH             =$01
+.EQU    EOT             =$04
+.EQU    ACK             =$06
+.EQU    NAK             =$15
+.EQU    CAN             =$18
 
-.EQU    CMD_17  =$51    ;read_single_block
-.EQU    ACMD_41 =$69    ;sd_send_op_cond
+.EQU    CMD_17          =$51    ;read_single_block
+.EQU    ACMD_41         =$69    ;sd_send_op_cond
+
+.EQU    ANSI_RED        =$31
+.EQU    ANSI_GREEN      =$32
+.EQU    ANSI_YELLOW     =$33
+.EQU    ANSI_WHITE      =$37
 
 .DSEG
         .ORG    $0100
@@ -66,8 +69,8 @@ NUMSECK:.BYTE   1       ;счетчик секторов в кластере
 TFILCLS:.BYTE   4       ;текущий кластер
 MPHWOST:.BYTE   1       ;кол-во секторов в последнем кластере
 KOL_CLS:.BYTE   4       ;кол-во полных кластеров файла
-STEP:   .BYTE   1
-
+STEP:
+SDERROR:.BYTE   1
 
 .CSEG
         .ORG    LARGEBOOTSTART
@@ -75,6 +78,7 @@ BOOTLOADER_BEGIN:
 ;
 ;FLASHSIZE - размер обновляемой области в блоках по 256 байт
 .EQU    FLASHSIZE       =BOOTLOADER_BEGIN/128
+.EQU    MAIN_VERS       =BOOTLOADER_BEGIN-8
 ;
 RESET:  CLI
 ;Причина реcета? Если не PowerOn и не ExtReset то на основную программу
@@ -111,23 +115,45 @@ START1: CLR     NULL
         OUT     RAMPZ,ONE
         LDIY    BOOTLOADER_END-BOOTLOADER_BEGIN ;длина в словах
         RCALL   CALK_CRC_FLASH
-        BRNE    BAD_BOOTLDR_CRC ;ЧТО ДЕЛАТЬ, ЕСЛИ НЕ ПРАВИЛЬНАЯ CRC У BOOTLOADERа ???
+        BRNE    BAD_BOOTLDR_CRC ;что делать, если не правильная crc у bootloaderа ? я делаю перезапуск.
 ;хочет ли пользователь обновиться ?
         SBIS    PINC,7
         RJMP    UPDATE_ME        ;если нажато "SoftReset"
 ;проверка CRC программы
-START9: LDIZ    $0000                           ;адрес в байтах
-        OUT     RAMPZ,NULL
-        LDIY    FLASHSIZE<<7                    ;длина в словах
-        RCALL   CALK_CRC_FLASH
+START8: RCALL   CRCMAIN
         BRNE    UPDATE_ME        ;если некорректная CRC
-;
-        IN      TEMP,MCUCSR
+START9: IN      TEMP,MCUCSR
         ANDI    TEMP,0B11111100
         OUT     MCUCSR,TEMP
         LDI     TEMP,0B00011000
         OUT     WDTCR,TEMP
 GAVGAV: RJMP    GAVGAV
+;
+CRCMAIN:LDIZ    $0000                           ;адрес в байтах
+        OUT     RAMPZ,NULL
+        LDIY    FLASHSIZE<<7                    ;длина в словах
+        RJMP    CALK_CRC_FLASH
+;
+CHECKIT:RCALL   NEWLINE
+        LDIZ    MSG_RECHECK*2
+        RCALL   PRINTSTRZ
+        RCALL   CRCMAIN
+        BRNE    CHK_BAD
+        LDIZ    MSG_MAINOK*2
+        RCALL   PRINTSTRZ
+        RCALL   NEWLINE2
+        LDIZ    MSG_MAIN*2
+        RCALL   PRINTSTRZ
+        LDIZ    MAIN_VERS*2
+        RCALL   PRINTVERS
+        RCALL   NEWLINE2
+        RJMP    START9
+;
+CHK_BAD:LDI     DATA,ANSI_RED
+        RCALL   ANSI_COLOR
+        LDIZ    MSG_MAINBAD*2
+        RCALL   PRINTSTRZ
+        RCALL   DELAY_3SEC
 ;
 ;--------------------------------------
 ;
@@ -136,6 +162,10 @@ UPDATE_ME:
         OUTPORT PORTB,TEMP
         LDI     TEMP,      0B10000111 ; LED on, spi outs
         OUTPORT DDRB,TEMP
+
+        LDI     TEMP,      0B00001000 ; ATX on
+        OUTPORT DDRF,TEMP
+        OUTPORT PORTF,TEMP
 ;SPI init
         LDI     TEMP,(1<<SPI2X)
         OUT     SPSR,TEMP
@@ -153,6 +183,37 @@ UPDATE_ME:
 ;UART1 Разрешаем передачу
         LDI     TEMP,(1<<TXEN)
         OUTPORT UCSR1B,TEMP
+
+        LDIZ    MSG_TITLE*2
+        RCALL   PRINTSTRZ
+        LDIZ    MSG_BOOT*2
+        RCALL   PRINTSTRZ
+        LDIZ    BOOT_VERS*2
+        RCALL   PRINTVERS
+        RCALL   NEWLINE
+        LDIZ    MSG_MAIN*2
+        RCALL   PRINTSTRZ
+        TST     CRC_LO
+        BREQ    UP01
+        LDIZ    MSG_BADCRC*2
+        RCALL   PRINTSTRZ
+        RJMP    UP02
+UP01:   LDIZ    MAIN_VERS*2
+        RCALL   PRINTVERS
+UP02:
+        RCALL   NEWLINE2
+
+        SBIC    PINC,5
+        RJMP    UP12
+        LDIZ    MSG_POWERON*2
+        RCALL   PRINTSTRZ
+        SBI     PORTB,7
+UP11:   SBIS    PINC,5
+        RJMP    UP11
+        CBI     PORTB,7
+
+UP12:   LDIZ    MSG_CFGFPGA*2
+        RCALL   PRINTSTRZ
 
         INPORT  TEMP,DDRF
         SBR     TEMP,(1<<nCONFIG)
@@ -301,6 +362,12 @@ DEMLZEND:;теперь можно юзать стек
         OUT     SPCR,TEMP
 ;св.диод погасить
         SBI     PORTB,7
+
+        RCALL   NEWLINE
+        LDIZ    MSG_TRYUPDATE*2
+        RCALL   PRINTSTRZ
+        LDIZ    MSG__SDCARD*2
+        RCALL   PRINTSTRZ
 ;
 ;--------------------------------------
 ;инициализация SD карточки
@@ -738,7 +805,7 @@ SDUPD80:POP     COUNT
         RCALL   BLOCK_FLASH
         BRNE    SDUPD11
 ;
-SDUPD90:RJMP    START9  ;проверка CRC основной программы и если всё Ok её запуск.
+SDUPD90:RJMP    CHECKIT ;проверка CRC основной программы и если всё Ok её запуск.
 ;
 ;--------------------------------------
 ;out:   DATA
@@ -1204,15 +1271,57 @@ LSTCLSF:LDSX    TFILCLS+0
 ;--------------------------------------
 ;
 SD_ERROR:
+        STS     SDERROR,DATA
         SBI     PORTB,0 ;SDCS=1
         LDI     TEMP,LOW(RAMEND)
         OUT     SPL,TEMP
         LDI     TEMP,HIGH(RAMEND)
         OUT     SPH,TEMP
 
-        MOV     ZL,DATA
-        RCALL   WRUART
-
+;;UPDATE_FROM_UART:
+;UART1 Разрешаем приём/передачу
+        LDI     TEMP,(1<<RXEN)|(1<<TXEN)
+        OUTPORT UCSR1B,TEMP
+;
+        RCALL   NEWLINE
+        LDIZ    MSG_SDERROR*2
+        RCALL   PRINTSTRZ
+        LDI     DATA,ANSI_RED
+        RCALL   ANSI_COLOR
+        LDS     DATA,SDERROR
+        CPI     DATA,1
+        BRNE    SD_ERR2
+        LDIZ    MSG_CARD*2
+        RCALL   PRINTSTRZ
+        RJMP    SD_NOTFOUND
+SD_ERR2:
+        CPI     DATA,2
+        BRNE    SD_ERR3
+        LDIZ    MSG_READERROR*2
+        RCALL   PRINTSTRZ
+        RJMP    SD_ERR9
+SD_ERR3:
+        CPI     DATA,3
+        BRNE    SD_ERR4
+        LDIZ    MSG_FAT*2
+        RCALL   PRINTSTRZ
+        RJMP    SD_NOTFOUND
+SD_ERR4:
+        CPI     DATA,4
+        BRNE    SD_ERR5
+        LDIZ    MSG_FILE*2
+        RCALL   PRINTSTRZ
+SD_NOTFOUND:
+        LDIZ    MSG_NOTFOUND*2
+        RCALL   PRINTSTRZ
+        RJMP    SD_ERR9
+SD_ERR5:
+        LDIZ    MSG_WRONGFILE*2
+        RCALL   PRINTSTRZ
+SD_ERR9:
+;
+;
+        LDS     ZL,SDERROR
 SD_ERR1:CBI     PORTB,7
         LDI     DATA,5
         RCALL   BEEP
@@ -1221,30 +1330,12 @@ SD_ERR1:CBI     PORTB,7
         RCALL   DELAY
         DEC     ZL
         BRNE    SD_ERR1
-
-;HALT:   RJMP    HALT
-
-
-;;UPDATE_FROM_UART:
-;;UART1 Set baud rate
-;        OUTPORT UBRR1H,NULL
-;        LDI     TEMP,5     ;115200 baud @ 11.0592 MHz, Normal speed
-;        OUTPORT UBRR1L,TEMP
-;;UART1 Normal Speed
-;        OUTPORT UCSR1A,NULL
-;;UART1 data8bit, 2stopbits
-;        LDI     TEMP,(1<<UCSZ1)|(1<<UCSZ0)|(1<<USBS)
-;        OUTPORT UCSR1C,TEMP
-
-;UART1 Разрешаем приём/передачу
-        LDI     TEMP,(1<<RXEN)|(1<<TXEN)
-        OUTPORT UCSR1B,TEMP
 ;
-.IFDEF  WHISTLES
-        LDIZ    MSG_TITLE*2
-        RCALL   STRING2UART
-.ENDIF
-;
+        RCALL   NEWLINE
+        LDIZ    MSG_TRYUPDATE*2
+        RCALL   PRINTSTRZ
+        LDIZ    MSG__RS232*2
+        RCALL   PRINTSTRZ
 ;инициируем обмен по протоколу XModem-CRC
         LDI     TEMP,20 ;если в течении ~60 секунд не начнётся обмен - будет перезагрузка бутлоадера (20*timeout=60)
 UUPD00: PUSH    TEMP
@@ -1259,7 +1350,6 @@ UUPD00: PUSH    TEMP
 
 UUPD01: OR      CRC_LO,CRC_HI
         BREQ    UUPD03
-.IFDEF  WHISTLES
 UUPD04:
         LDI     DATA,CAN
         RCALL   WRUART
@@ -1268,20 +1358,16 @@ UUPD04:
         RCALL   WRUART
         RCALL   WRUART
         RCALL   DELAY_3SEC
+        RCALL   NEWLINE
+        LDI     DATA,ANSI_RED
+        RCALL   ANSI_COLOR
         LDIZ    MSG_WRONGDATA*2
-        RCALL   STRING2UART
+        RCALL   PRINTSTRZ
         RCALL   DELAY_3SEC
-        RJMP    START9  ;проверка CRC основной программы и если всё Ok её запуск.
-.ELSE
-        RJMP    UUPD_F2
-.ENDIF
+        RJMP    START8  ;проверка CRC основной программы и если всё Ok её запуск.
 UUPD03:
         RCALL   CHECK_SIGNATURE
-.IFDEF  WHISTLES
         BRNE    UUPD04
-.ELSE
-        BRNE    UUPD_F2
-.ENDIF
 ;-------
         LDI     XL,LOW(HEADER+$40)
 ;        LDI     XH,HIGH(HEADER+$40)
@@ -1351,19 +1437,11 @@ UUPD_F2:LDI     DATA,CAN
         RCALL   WRUART
         RCALL   WRUART
 UUPD_F1:RCALL   WRUART
-.IFDEF  WHISTLES
         RCALL   DELAY_3SEC
-        LDIZ    MSG_SUCCESSFULLY*2
-        RCALL   STRING2UART
-        LDIX    HEADER+6
-UUPD_F8:LD      DATA,X+
-        TST     DATA
-        BREQ    UUPD_F9
-        RCALL   WRUART
-        RJMP    UUPD_F8
-UUPD_F9:
-.ENDIF
-        RJMP    START9  ;проверка CRC основной программы и если всё Ok её запуск.
+;        RCALL   NEWLINE
+;        LDIZ    MSG_SUCCESSFULLY*2
+;        RCALL   PRINTSTRZ
+        RJMP    CHECKIT ;проверка CRC основной программы и если всё Ok её запуск.
 ;
 ;--------------------------------------
 ;
@@ -1439,20 +1517,122 @@ XMRX4:  RCALL   RDUART
         CLZ
         RET
 ;
-;
 ;--------------------------------------
-;STRING2UART
-;in:    Z == указательна строку (в буте)
-STRING2UART:
-        OUT     RAMPZ,ONE
-SRT2UA1:ELPM    DATA,Z+
+;
+PRINTVERS:
+        LDI     DATA,ANSI_GREEN
+        RCALL   ANSI_COLOR
+        LDI     COUNT,12
+        LDIX    MSG_NEWLINE2-26
+        PUSHX
+PRVERS2:ELPM    DATA,Z+
         TST     DATA
-        BREQ    SRT2UA2
+        BREQ    PRVERS1
+        BRMI    PRVERS1
         RCALL   WRUART
-        RJMP    SRT2UA1
-SRT2UA2:RET
+        DEC     COUNT
+        BRNE    PRVERS2
+PRVERS1:LDI     DATA,$20
+        RCALL   WRUART
+        LDI     ZL,$FC
+        ELPM    XH,Z+
+        ELPM    XL,Z+
+        MOV     DATA,XL
+        ANDI    DATA,$1F
+        BREQ    PRVERS9
+        MOV     TEMP,XH
+        LSL     XL
+        ROL     TEMP
+        LSL     XL
+        ROL     TEMP
+        LSL     XL
+        ROL     TEMP
+        ANDI    TEMP,$0F
+        BREQ    PRVERS9
+        CPI     TEMP,13
+        BRCC    PRVERS9
+        MOV     COUNT,XH
+        LSR     COUNT
+        ANDI    COUNT,$3F
+        CPI     COUNT,9
+        BRCS    PRVERS9
+        RCALL   DECBYTE
+        LDI     DATA,$2E
+        RCALL   WRUART
+        MOV     DATA,TEMP
+        RCALL   DECBYTE
+        LDI     DATA,$2E
+        RCALL   WRUART
+        LDI     DATA,$20
+        RCALL   HEXBYTE
+        MOV     DATA,COUNT
+        RCALL   DECBYTE
+        MOV     DATA,XH
+PRVERS9:RET
 ;
 ;--------------------------------------
+;
+ANSI_COLOR:
+        PUSH    DATA
+        LDI     DATA,$1B
+        RCALL   WRUART
+        LDI     DATA,$5B
+        RCALL   WRUART
+        POP     DATA
+        RCALL   HEXBYTE
+        LDI     DATA,$6D
+        RJMP    WRUART
+;
+;--------------------------------------
+;
+NEWLINE2:
+        LDIZ    MSG_NEWLINE2*2
+        RJMP    PRINTSTRZ
+;
+NEWLINE:LDIZ    MSG_NEWLINE*2
+;
+; - - - - - - - - - - - - - - - - - - -
+;PRINTSTRZ
+;in:    Z == указательна строку (в старших 64K)
+PRINTSTRZ:
+        OUT     RAMPZ,ONE
+PRSTRZ1:ELPM    DATA,Z+
+        TST     DATA
+        BREQ    PRSTRZ2
+        RCALL   WRUART
+        RJMP    PRSTRZ1
+PRSTRZ2:RET
+;
+;--------------------------------------
+;byte in dec to uart
+;in:    DATA == byte (0..99)
+DECBYTE:SUBI    DATA,208
+        SBRS    DATA,7
+        SUBI    DATA,48
+        SUBI    DATA,232
+        SBRS    DATA,6
+        SUBI    DATA,24
+        SUBI    DATA,244
+        SBRS    DATA,5
+        SUBI    DATA,12
+        SUBI    DATA,250
+        SBRS    DATA,4
+        SUBI    DATA,6
+;
+; - - - - - - - - - - - - - - - - - - -
+;byte in hex to uart
+;in:    DATA == byte
+HEXBYTE:PUSH    DATA
+        SWAP    DATA
+        RCALL   HEXHALF
+        POP     DATA
+HEXHALF:ANDI    DATA,$0F
+        CPI     DATA,$0A
+        BRCS    HEXBYT1
+        ADDI    DATA,$07
+HEXBYT1:ADDI    DATA,$30
+;
+; - - - - - - - - - - - - - - - - - - -
 ;WRUART
 ;in:    DATA == передаваемый байт
 WRUART: PUSH    TEMP
@@ -1484,7 +1664,7 @@ INUART: INPORT  DATA,UCSR1A
 INU9:   RET
 ;
 ;--------------------------------------
-;in:    DATA - длительность *0.1ms
+;in:    DATA - длительность *0.1s
 BEEP:   ;SBI     PORTB,0 ;SDCS=1
         OUT     SPCR,NULL       ;SPI off
 
@@ -1645,6 +1825,8 @@ INCADR9:RET
 ;--------------------------------------
 ;
 FLASH_ERROR:
+        LDI     DATA,30
+        RCALL   BEEP
 CRITICAL_ERROR:
         RJMP    START1
 ;
@@ -1682,18 +1864,56 @@ CMD16:  .DB     $50,$00,$00,$02,$00,$FF
 CMD55:  .DB     $77,$00,$00,$00,$00,$FF ;app_cmd
 CMD58:  .DB     $7A,$00,$00,$00,$00,$FF ;read_ocr
 CMD59:  .DB     $7B,$00,$00,$00,$00,$FF ;crc_on_off
-;
 FILENAME:       .DB     "ZXEVO_FWBIN",0
 SIGNATURE:      .DB     "ZXEVO",$1A
-;
-.IFDEF  WHISTLES
+TABPC:  .DB     $07,$FF,$08,$95,$BE,$B7,$AD,$B7,$EC,$91,$FE,$91,$75,$96,$EE,$0F
+        .DB     $FF,$1F,$2A,$E0,$07,$91,$02,$95,$10,$91,$9B,$00,$15,$FF,$FC,$CF
+        .DB     $00,$93,$9C,$00,$2A,$95,$B1,$F7,$08,$95,$02,$26,$97,$02,$E4,$56
+        .DB     $46,$F6,$05,$34
+MSG_NEWLINE2:
+        .DB     $0D,$0A
+MSG_NEWLINE:
+        .DB     $0D,$0A,$1B,"[1",$3B,"37m",0
+MSG_BADCRC:
+        .DB     $1B,"[31mBad CRC!",0
+MSG_BOOT:
+        .DB     "boot: ",0,0
+MSG_MAIN:
+        .DB     "main: ",0,0
+MSG_SDERROR:
+        .DB     "SD error: ",0,0
+MSG_CARD:
+        .DB     "Card",0,0
+MSG_READERROR:
+        .DB     "Read error",0,0
+MSG_FAT:
+        .DB     "FAT",0
+MSG_FILE:
+        .DB     "File",0,0
+MSG_WRONGFILE:
+        .DB     "Wrong file",0,0
+MSG_NOTFOUND:
+        .DB     " not found",0,0
+MSG_POWERON:
+        .DB     "ATX power up...",0
+MSG_CFGFPGA:
+        .DB     $0D,$0A,"Set temporary configuration...",0,0
+MSG_TRYUPDATE:
+        .DB     "Try update from ",0,0
+MSG__SDCARD:
+        .DB     "SD-card...",0,0
+MSG__RS232:
+        .DB     "RS-232...",$1B,"[0",$3B,"30m",0,0
+MSG_WRONGDATA:
+        .DB     "Data is corrupt! Update is canceled.",0,0
+MSG_RECHECK:
+        .DB     "Recheck flash...   ",0
+MSG_MAINOK:
+        .DB     "Ok!",0
+MSG_MAINBAD:
+        .DB     "Update is failure.",0,0
 MSG_TITLE:
 .INCLUDE "EVOTITLE.INC"
-MSG_WRONGDATA:
-        .DB     $0D,$0A,$1B,"[1",$3B,"31mData is corrupt! Update is canceled.",0
-MSG_SUCCESSFULLY:
-        .DB     $0D,$0A,$1B,"[1",$3B,"37mUpdate is successfully.",$0D,$0A,$1B,"[33m",0
-.ENDIF
 ;
 PACKED_FPGA:
 .NOLIST
@@ -1702,6 +1922,9 @@ PACKED_FPGA:
 ;
 ;--------------------------------------
 ;
-        .ORG    FLASHEND
-        .DW     0       ;здесь должно быть CRC bootloader-а
+        .ORG    FLASHEND-$0007
+BOOT_VERS:
+        .DW     0,0,0,0,0,0     ;здесь будет строчка описателя bootloader-а
+        .DW     0               ;здесь будет дата(версия) bootloader-а
+        .DW     0               ;здесь будет CRC bootloader-а
 BOOTLOADER_END:

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 typedef unsigned char BYTE;
 typedef unsigned short int WORD;
@@ -81,20 +82,20 @@ BYTE getbyte()
 
 int main(int argc,char*argv[])
 {
+ BYTE       official=0x80;
+ BYTE       h[]="0123456789ABCDEF";
  BYTE       b, m, hexlen, datatype;
- WORD       i, crc;
+ WORD       i, ih, crc;
  LONGWORD   x0, x1, adr, segadr;
-// BYTE*      ptr;
+ struct tm  stm;
+ BYTE       vs[57]; //58-1
  WORD       tabcrc[256];
  BYTE       buff[0x1e000];
  BYTE       header[0x80];
  FILE*      f;
 
  printf("ZX EVO project:  HEX to BIN + CRC + Header\n");
- if (argc!=2) { printf("usage: MAKE_FW <HexFileName>\n"); return 2; }
- strncpy(s1,argv[1],255);
- f=fopen(s1,"rt");
- if (!f) { printf("Can't open file %s!\n",s1); return 1; }
+ if (argc!=3) { printf("usage: MAKE_FW <HexFileName> [<VersionFileName>]\n"); return 2; }
 
  header[0]='Z';
  header[1]='X';
@@ -102,7 +103,32 @@ int main(int argc,char*argv[])
  header[3]='V';
  header[4]='O';
  header[5]=0x1a;
- for (i=0x06; i<0x80; i++) header[i]=0;
+ for (ih=0x06; ih<0x80; ih++) header[ih]=0;
+ ih=6;
+ 
+ strncpy(s1,argv[2],255);
+ f=fopen(s1,"rt");
+ vs[0]=0;
+ if (f)
+  {
+   fgets(vs,56,f);
+   fclose(f);
+  }
+ i=strlen(vs);
+ if ((i) && (vs[i-1]=='\n')) vs[--i]=0;
+ if (!i)
+  {
+   strcpy(vs, "No info");
+   official=0;
+  }
+
+ strcpy(&header[ih], vs);
+ ih=strlen(header);
+
+ strncpy(s1,argv[1],255);
+ f=fopen(s1,"rt");
+ if (!f) { printf("Can't open file %s!\n",s1); return 1; }
+
  for (adr=0;adr<0x1e000;adr++) buff[adr]=0xff;
  err=0;
  segadr=0;
@@ -162,8 +188,18 @@ int main(int argc,char*argv[])
 
  if (err) { printf("Total %d error(s)!\n",err); return 3; }
 
+
  // comments place
- strcpy(&header[6], "Blah-blah-blah..." );
+ { 
+  time_t tt;
+  tt=time(NULL);
+  memcpy(&stm,localtime(&tt),sizeof(stm));
+ }
+ i=(WORD)(((stm.tm_year-100)&0x3f)<<9) | (((stm.tm_mon+1)&0x0f)<<5) | (stm.tm_mday&0x1f);
+ header[0x003e]=buff[0x1dffc]=(i>>8)&0x7f|official;
+ header[0x003f]=buff[0x1dffd]=i&0xff;
+
+ strncpy(&buff[0x1dff0], vs, 12);
 
  for (i=0;i<256;i++)
  {
@@ -236,6 +272,6 @@ int main(int argc,char*argv[])
  }
  while (adr<0x1e000);
  fclose(f);
- printf("Created file ZXEVO_FW.BIN");
+ printf("Created file ZXEVO_FW.BIN\n");
  return 0;
 }

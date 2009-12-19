@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 typedef unsigned char BYTE;
 typedef unsigned short int WORD;
@@ -81,21 +82,46 @@ BYTE getbyte()
 
 int main(int argc,char*argv[])
 {
+ BYTE       official=0x80;
  BYTE       h[]="0123456789ABCDEF";
  BYTE       b, m, hexlen, datatype;
  WORD       i, crc;
  LONGWORD   x0, x1, adr, segadr;
+ struct tm  stm;
+ BYTE       vs[86];
+ BYTE       E2Phead[0x98] = {
+             0x45,0x32,0x50,0x21,0x4C,0x61,0x6E,0x63,0xC0,0x20,0x30,0x00,0x03,0x00,0x00,0x10,
+             0x02,0x00,0x00,0x77,0x00,0x00,0x00,0x02,0x00,0x00,0x41,0x54,0x6D,0x65,0x67,0x61,
+             0x31,0x32,0x38 };
  WORD       tabcrc[256];
  BYTE       buff[0x2000];
  FILE*      f;
 
  printf("ZX EVO project:  Calc CRC for bootloader\n");
- if (argc!=2) { printf("usage: CRCBLDR <HexFileName>\n"); return 2; }
+ if (argc!=3) { printf("usage: CRCBLDR <HexFileName> [<VersionFileName>]\n"); return 2; }
+
+ for (adr=0;adr<0x2000;adr++) buff[adr]=0xff;
+
+ strncpy(s1,argv[2],255);
+ f=fopen(s1,"rt");
+ vs[0]=0;
+ if (f)
+  {
+   fgets(vs,13,f);
+   fclose(f);
+  }
+ i=strlen(vs);
+ if ((i) && (vs[i-1]=='\n')) vs[--i]=0;
+ if (!i)
+  {
+   strcpy(vs, "No info");
+   official=0;
+  }
+
  strncpy(s1,argv[1],255);
  f=fopen(s1,"rt");
  if (!f) { printf("Can't open file %s!\n",s1); return 1; }
 
- for (adr=0;adr<0x2000;adr++) buff[adr]=0xff;
  err=0;
  segadr=0;
  row=0;
@@ -170,10 +196,22 @@ int main(int argc,char*argv[])
   tabcrc[i]=crc;
  }
 
+ strncpy(&buff[0x1ff0], vs, 12);
+ { 
+  time_t tt;
+  tt=time(NULL);
+  memcpy(&stm,localtime(&tt),sizeof(stm));
+ }
+ i=(WORD)( (((stm.tm_year-100)&0x3f)<<9) | (((stm.tm_mon+1)&0x0f)<<5) | (stm.tm_mday&0x1f) );
+ buff[0x1ffc]=(i>>8)&0x7f|official;
+ buff[0x1ffd]=i&0xff;
+
  crc=0xffff;
  for (adr=0;adr<0x1ffe;adr++) crc=tabcrc[(crc>>8)^buff[adr]]^(crc<<8);
  buff[0x1ffe]=crc>>8;
  buff[0x1fff]=crc&0xff;
+
+// - - - - - - - -
 
  f=fopen("ZXEVO_BL.HEX","wt");
  if (!f) { printf("Can't create output file!\n"); return 1; }
@@ -216,6 +254,69 @@ int main(int argc,char*argv[])
  fputs(":00000001FF\n",f);
  fclose(f);
 
- printf("Created file ZXEVO_BL.HEX");
+ printf("Created file ZXEVO_BL.HEX\n");
+
+// - - - - - - - -
+
+ for (i=0;i<256;i++)
+ {
+  crc=i;
+  b=8;
+  do
+  {
+   if (crc&0x0001)
+    crc=(crc>>1)^0xa001;
+   else
+    crc>>=1;
+   b--;
+  }
+  while ((b)&&(crc));
+  tabcrc[i]=crc;
+ }
+
+ i=strlen(vs);
+ vs[i++]=' ';
+ b=stm.tm_mday&0x1f;
+ vs[i++]=h[b/10];
+ vs[i++]=h[b%10];
+ vs[i++]='.';
+ b=stm.tm_mon+1;
+ vs[i++]=h[b/10];
+ vs[i++]=h[b%10];
+ vs[i++]='.';
+ vs[i++]='2';
+ vs[i++]='0';
+ b=stm.tm_year-100;
+ vs[i++]=h[b/10];
+ vs[i++]=h[b%10];
+ vs[i]=0;
+ if (official) strcpy(&vs[i]," by NedoPC");
+
+ strncpy(&E2Phead[0x3a],vs,85);
+ E2Phead[0x90]=0x02;
+ E2Phead[0x91]=0x00;
+
+ crc=0xd001; // precalculated for empty space before
+ for (adr=0;adr<0x2000;adr++) crc=tabcrc[(crc&0xff)^buff[adr]]^(crc>>8);
+ for (adr=0;adr<0x1000;adr++) crc=tabcrc[(~crc)&0xff]^(crc>>8); // postcalculating for empty space after
+ E2Phead[0x94]=crc&0xff;
+ E2Phead[0x95]=crc>>8;
+
+ crc=0;
+ for (adr=0;adr<0x96;adr++) crc=tabcrc[(crc&0xff)^E2Phead[adr]]^(crc>>8);
+ E2Phead[0x96]=crc&0xff;
+ E2Phead[0x97]=crc>>8;
+
+ f=fopen("ZXEVO_BL.E2P","wb");
+ if (!f) { printf("Can't create output file!\n"); return 1; }
+ fwrite(E2Phead,1,0x98,f);
+ for (adr=0;adr<256;adr++) s1[adr]=0xff;
+ for (adr=0;adr<0x1e0;adr++) fwrite(s1,1,256,f);
+ fwrite(buff,1,0x2000,f);
+ for (adr=0;adr<0x10;adr++) fwrite(s1,1,256,f);
+ fclose(f);
+
+ printf("Created file ZXEVO_BL.E2P\n");
+
  return 0;
 }

@@ -1,31 +1,31 @@
 .MACRO  PUSHX
-        PUSH    XH
         PUSH    XL
+        PUSH    XH
 .ENDMACRO
 
 .MACRO  POPX
-        POP     XL
         POP     XH
+        POP     XL
 .ENDMACRO
 
 .MACRO  PUSHY
-        PUSH    YH
         PUSH    YL
+        PUSH    YH
 .ENDMACRO
 
 .MACRO  POPY
-        POP     YL
         POP     YH
+        POP     YL
 .ENDMACRO
 
 .MACRO  PUSHZ
-        PUSH    ZH
         PUSH    ZL
+        PUSH    ZH
 .ENDMACRO
 
 .MACRO  POPZ
-        POP     ZL
         POP     ZH
+        POP     ZL
 .ENDMACRO
 
 .MACRO  LDIX

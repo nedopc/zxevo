@@ -76,7 +76,7 @@ $(FPGACORE): top.rbf
 
 %.hex: $(TARGET)
 	avr-objcopy -O ihex $(HEX_FLASH_FLAGS)  $< $@
-	..\..\..\tools\make_fw\trunk\release\make_fw.exe $@
+	..\..\..\tools\make_fw\trunk\release\make_fw.exe $@ version.txt
 	..\..\..\tools\7z\7z.exe a -tzip -mx=9 zxevo_fw.zip zxevo_fw.bin
 
 %.eep: $(TARGET)
