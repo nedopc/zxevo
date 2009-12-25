@@ -28,7 +28,7 @@ set_global_assignment -name FAMILY ACEX1K
 set_global_assignment -name TOP_LEVEL_ENTITY main
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 6.1
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:53:26  OCTOBER 02, 2009"
-set_global_assignment -name LAST_QUARTUS_VERSION 8.1
+set_global_assignment -name LAST_QUARTUS_VERSION 6.1
 set_global_assignment -name DEVICE_FILTER_PACKAGE "ANY QFP"
 set_global_assignment -name DEVICE_FILTER_PIN_COUNT 208
 set_global_assignment -name DEVICE_FILTER_SPEED_GRADE 3
@@ -187,4 +187,3 @@ set_global_assignment -name ON_CHIP_BITSTREAM_DECOMPRESSION OFF
 set_global_assignment -name FLEX10K_DEVICE_IO_STANDARD LVTTL/LVCMOS
 set_global_assignment -name VERILOG_FILE ../main.v
 set_global_assignment -name ADD_DEFAULT_PINS_TO_SIMULATION_OUTPUT_WAVEFORMS OFF
-set_global_assignment -name MISC_FILE "D:/__PROJ__/PentEvo/FPGA2SD/quartus/main.dpf"

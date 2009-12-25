@@ -399,8 +399,8 @@ SDINIT3:LDIZ    CMD55*2
         MOV     DATA,R24
         RCALL   SD_EXCHANGE
 
-        LDIZ    CMD55*2+1
-        LDI     TEMP,5
+        LDIZ    CMD55*2+2
+        LDI     TEMP,4
         RCALL   SD_WR_PGX
         TST     DATA
         BRNE    SDINIT3
@@ -1903,7 +1903,7 @@ MSG_TRYUPDATE:
 MSG__SDCARD:
         .DB     "SD-card...",0,0
 MSG__RS232:
-        .DB     "RS-232...",$1B,"[0",$3B,"30m",0,0
+        .DB     "RS-232...",$0D,$0A,$1B,"[0mNow, start file transfer using X-Modem-CRC protocol. ",$1B,"[30m",0
 MSG_WRONGDATA:
         .DB     "Data is corrupt! Update is canceled.",0,0
 MSG_RECHECK:
