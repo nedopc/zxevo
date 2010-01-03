@@ -1,7 +1,7 @@
 // PentEvo project (c) NedoPC 2008-2009
 //
 // boot control firmware for AVR boot-time interworking
-// allows SD card access and FLASH ROM access for AVR
+// allows SD card access for AVR
 
 module main(
 

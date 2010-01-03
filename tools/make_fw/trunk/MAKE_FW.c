@@ -4,8 +4,8 @@
 #include <time.h>
 
 typedef unsigned char BYTE;
-typedef unsigned short int WORD;
-typedef unsigned int LONGWORD;
+typedef unsigned short WORD;
+typedef unsigned long LONGWORD;
 
 #define HEXLEN 0
 #define DATATYPE 1
