@@ -7,5 +7,5 @@ if exist flasher.zip del /f /q flasher.zip
 ..\..\..\tools\bin2avr\bin2avr.exe fpga.mlz
 ..\..\..\tools\avrasm\avrasm32.exe -fI evoflash.asm -l evoflash.lst
 if exist evoflash.hex ..\..\..\tools\make_fw\trunk\release\make_fw.exe evoflash.hex version.txt
-if exist evoflash.hex del /f /q evoflash.hex
+
 if exist zxevo_fw.bin ..\..\..\tools\7z\7z.exe a -tzip -mx=9 flasher.zip zxevo_fw.bin
