@@ -29,6 +29,7 @@
 .EQU    SCR_LOADDR      =$40
 .EQU    SCR_HIADDR      =$41
 .EQU    SCR_CHAR        =$44
+.EQU    COVOX           =$FB
 
 .MACRO  SS_SET
         SBI     PORTB,0
@@ -118,27 +119,17 @@ START:  CLI
 ;UART1 Разрешаем передачу
         LDI     TEMP,(1<<TXEN)
         OUTPORT UCSR1B,TEMP
-
-
 ;юўш∙рхь эрїєщ тё■ ярь Є№ ш тёх ЁхушёЄЁ√
+;очищаем нахуй всю память и все регистры
+        LDIZ    30
+CLR1:   ST      Z,ZH
+        DEC     ZL
+        BRPL    CLR1
 
-        ldi     r30,29
-        ldi     r31,0
-clr1:
-        st      Z,r31
-        dec     r30
-        brpl    clr1
-
-        ldi     r30,0
-        ldi     r31,1 ; $0100
-clr2:
-        st      Z,r0
-        adiw    r30,1
-        cpi     r31,$11 ; <$1100
-        brne    clr2
-
-
-
+        LDIZ    $0100
+CLR2:   ST      Z+,R0
+        CPI     ZH,$11 ; <$1100
+        BRNE    CLR2
 ;
         LDI     TEMP,      0B11111111
         OUTPORT PORTG,TEMP
@@ -180,22 +171,15 @@ clr2:
         OUT     SPCR,TEMP
 
 ;        SBIC    PINC,5
- ;       RJMP    UP12
-  ;      SBI     PORTB,7
+;        RJMP    UP12
+;        SBI     PORTB,7
 ;UP11:   SBIS    PINC,5
- ;       RJMP    UP11
-  ;      CBI     PORTB,7
+;        RJMP    UP11
+;        CBI     PORTB,7
 ;UP12:
 
-
-
-        ldi DATA,10
-        rcall DELAY
-
-
-
-
-
+        LDI DATA,10
+        RCALL DELAY
 
         INPORT  TEMP,DDRF
         SBR     TEMP,(1<<nCONFIG)
@@ -328,16 +312,13 @@ PUTB2:  IN      R1,SPSR
         RJMP    M0                      ;        JR      M0
                                         ;END_DEC40
 DEMLZEND:;теперь можно юзать стек
-;SPI reinit
 
 ;цф╕ь, яюър яюфэшьхЄё  CONF_DONE - чэрўшЄ, ўЄю яЁю°штър тёюёрырё№ ш чрЁрсюЄрыр, тё╕ чрхсшё№
-qwertyu:inport  DATA,PINF
-        andi    DATA,(1<<CONF_DONE)
-        breq    qwertyu
-
-
-
-
+;ждём, пока поднимется CONF_DONE - значит, что прошивка всосалась и заработала, всё заебись
+QWERTYU:INPORT  DATA,PINF
+        ANDI    DATA,(1<<CONF_DONE)
+        BREQ    QWERTYU
+;SPI reinit
         LDI     TEMP,(1<<SPE)|(0<<DORD)|(1<<MSTR)|(0<<CPOL)|(0<<CPHA)
         OUT     SPCR,TEMP
 ;для beeper-а
@@ -345,6 +326,38 @@ qwertyu:inport  DATA,PINF
 ;св.диод погасить
         SBI     PORTB,7
 ; - - - - - - - - - - - - - - - - - - -
+        LDIZ    MSG_SOUND*2
+        RCALL   PRINTSTRZ
+        LDI     COUNT,$00
+        LDI     TEMP,COVOX
+        MOV     DATA,COUNT
+        RCALL   FPGA_REG
+
+LOOP:   INC     COUNT
+        MOV     DATA,COUNT
+        RCALL   FPGA_SAME_REG
+        INC     DATA
+        CP      DATA,COUNT
+        BREQ    LOOP
+
+        DEC     DATA
+        PUSH    DATA
+        LDI     DATA,$0D
+        RCALL   PUTCHAR
+        LDI     DATA,$0A
+        RCALL   PUTCHAR
+        MOV     DATA,COUNT
+        RCALL   HEXBYTE
+        LDI     DATA,$20
+        RCALL   PUTCHAR
+        POP     DATA
+        RCALL   HEXBYTE
+
+        RJMP    LOOP
+;
+;--------------------------------------
+;--------------------------------------
+;
         LDIZ    MSG_ID_FLASH*2
         RCALL   PRINTSTRZ
 
@@ -674,6 +687,8 @@ DELAY1: LPM             ;3
 ;--------------------------------------
 ;
 ;
+MSG_SOUND:
+        .DB     $0D,$0A,$0D,$0A,"===============",$0D,$0A,"Have a nice sound!  ",$3B,")",0
 MSG_ID_FLASH:
         .DB     $0D,$0A,$0D,$0A,"===============",$0D,$0A,"ID: ",0
 MSG_F_ERASE:
