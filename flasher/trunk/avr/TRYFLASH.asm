@@ -101,24 +101,41 @@ START:  CLI
         OUT     SPL,TEMP
         LDI     TEMP,HIGH(RAMEND)
         OUT     SPH,TEMP
+;SPI init
+        LDI     TEMP,(1<<SPI2X)
+        OUT     SPSR,TEMP
+        LDI     TEMP,(1<<SPE)|(1<<DORD)|(1<<MSTR)|(0<<CPOL)|(0<<CPHA)
+        OUT     SPCR,TEMP
+;UART1 Set baud rate
+        OUTPORT UBRR1H,NULL
+        LDI     TEMP,5     ;115200 baud, 11059.2 kHz, Normal speed
+        OUTPORT UBRR1L,TEMP
+;UART1 Normal Speed
+        OUTPORT UCSR1A,NULL
+;UART1 data8bit, 2stopbits
+        LDI     TEMP,(1<<UCSZ1)|(1<<UCSZ0)|(1<<USBS)
+        OUTPORT UCSR1C,TEMP
+;UART1 Разрешаем передачу
+        LDI     TEMP,(1<<TXEN)
+        OUTPORT UCSR1B,TEMP
 
 
 ;юўш∙рхь эрїєщ тё■ ярь Є№ ш тёх ЁхушёЄЁ√
 
-	ldi	r30,29
-	ldi	r31,0
+        ldi     r30,29
+        ldi     r31,0
 clr1:
-	st	Z,r31
-	dec	r30
-	brpl	clr1
+        st      Z,r31
+        dec     r30
+        brpl    clr1
 
-	ldi	r30,0
-	ldi	r31,1 ; $0100
+        ldi     r30,0
+        ldi     r31,1 ; $0100
 clr2:
-	st	Z,r0
-	adiw	r30,1
-	cpi	r31,$11 ; <$1100
-	brne	clr2
+        st      Z,r0
+        adiw    r30,1
+        cpi     r31,$11 ; <$1100
+        brne    clr2
 
 
 
@@ -172,8 +189,8 @@ clr2:
 
 
 
-	ldi DATA,10
-	rcall DELAY
+        ldi DATA,10
+        rcall DELAY
 
 
 
@@ -328,11 +345,8 @@ qwertyu:inport  DATA,PINF
 ;св.диод погасить
         SBI     PORTB,7
 ; - - - - - - - - - - - - - - - - - - -
-        LDI     XL,0
-        LDI     XH,0
-        RCALL   SET_SCR_CURSOR
         LDIZ    MSG_ID_FLASH*2
-        RCALL   SCR_PRINTSTRZ
+        RCALL   PRINTSTRZ
 
         RCALL   F_ID
         MOV     DATA,XL
@@ -343,117 +357,66 @@ qwertyu:inport  DATA,PINF
         RCALL   HEXBYTE
 ; - - - - - - - - - - - - - - - - - - -
         LDIZ    MSG_F_ERASE*2
-        RCALL   SCR_PRINTSTRZ
+        RCALL   PRINTSTRZ
         RCALL   F_ERASE
 ; - - - - - - - - - - - - - - - - - - -
         LDIZ    MSG_F_WRITE*2
-        RCALL   SCR_PRINTSTRZ
+        RCALL   PRINTSTRZ
 
         LDIZ    ROM*2
         OUT     RAMPZ,NULL
 ; - - - - - - - - - - - - - - - - - - -
-        LDI     XL,0
-        LDI     XH,1
-        RCALL   SET_SCR_CURSOR
         LDIY    $0000
         RCALL   F_WRITE
 
-        LDI     XL,0
-        LDI     XH,2
-        RCALL   SET_SCR_CURSOR
         LDIY    $0001
         RCALL   F_WRITE
 
-        LDI     XL,0
-        LDI     XH,3
-        RCALL   SET_SCR_CURSOR
         LDIY    $0002
         RCALL   F_WRITE
 
-        LDI     XL,0
-        LDI     XH,4
-        RCALL   SET_SCR_CURSOR
         LDIY    $0003
         RCALL   F_WRITE
 
-        LDI     XL,0
-        LDI     XH,5
-        RCALL   SET_SCR_CURSOR
         LDIY    $0004
         RCALL   F_WRITE
 
-        LDI     XL,0
-        LDI     XH,6
-        RCALL   SET_SCR_CURSOR
         LDIY    $0005
         RCALL   F_WRITE
 
-        LDI     XL,0
-        LDI     XH,7
-        RCALL   SET_SCR_CURSOR
         LDIY    $0006
         RCALL   F_WRITE
 
-        LDI     XL,0
-        LDI     XH,8
-        RCALL   SET_SCR_CURSOR
         LDIY    $0007
         RCALL   F_WRITE
 
-        LDI     XL,0
-        LDI     XH,9
-        RCALL   SET_SCR_CURSOR
         LDIY    $0008
         RCALL   F_WRITE
 
-        LDI     XL,0
-        LDI     XH,10
-        RCALL   SET_SCR_CURSOR
         LDIY    $0009
         RCALL   F_WRITE
 
-        LDI     XL,0
-        LDI     XH,11
-        RCALL   SET_SCR_CURSOR
         LDIY    $000A
         RCALL   F_WRITE
 
-        LDI     XL,0
-        LDI     XH,12
-        RCALL   SET_SCR_CURSOR
         LDIY    $000B
         RCALL   F_WRITE
 
-        LDI     XL,0
-        LDI     XH,13
-        RCALL   SET_SCR_CURSOR
         LDIY    $000C
         RCALL   F_WRITE
 
-        LDI     XL,0
-        LDI     XH,14
-        RCALL   SET_SCR_CURSOR
         LDIY    $000D
         RCALL   F_WRITE
 
-        LDI     XL,0
-        LDI     XH,15
-        RCALL   SET_SCR_CURSOR
         LDIY    $000E
         RCALL   F_WRITE
 
-        LDI     XL,0
-        LDI     XH,16
-        RCALL   SET_SCR_CURSOR
         LDIY    $000F
         RCALL   F_WRITE
 ; - - - - - - - - - - - - - - - - - - -
         RCALL   F_RST
-        LDI     XL,0
-        LDI     XH,23
-        RCALL   SET_SCR_CURSOR
         LDIZ    MSG_F_COMPLETE*2
-        RCALL   SCR_PRINTSTRZ
+        RCALL   PRINTSTRZ
 STOP1:  RJMP    STOP1
 ;
 ;--------------------------------------
@@ -478,6 +441,10 @@ F_ID:   RCALL   F_RST
 ;in:    FLASH[Z] - data
 ;       YL,YH - address
 F_WRITE:
+        LDI     DATA,$0D
+        RCALL   PUTCHAR
+        LDI     DATA,$0A
+        RCALL   PUTCHAR
         MOV     DATA,YH
         RCALL   HEXBYTE
         MOV     DATA,YL
@@ -492,127 +459,14 @@ F_WRITE:
         LDI     TEMP,FLASH_CTRL
         LDI     DATA,0B00000011
         RCALL   FPGA_REG
-;1
-        LDI     TEMP,FLASH_DATA
-        RCALL   FPGA_REG
-        PUSH    DATA
-        RCALL   HEXBYTE
-        LDI     DATA,$20
-        RCALL   PUTCHAR
-        POP     DATA
-        ELPM    TEMP,Z
-        EOR     DATA,TEMP
-        SBRS    DATA,7
-        RJMP    F_WRIT9
-;2
-        LDI     TEMP,FLASH_DATA
-        RCALL   FPGA_REG
-        PUSH    DATA
-        RCALL   HEXBYTE
-        LDI     DATA,$20
-        RCALL   PUTCHAR
-        POP     DATA
-        ELPM    TEMP,Z
-        EOR     DATA,TEMP
-        SBRS    DATA,7
-        RJMP    F_WRIT9
-;3
-        LDI     TEMP,FLASH_DATA
-        RCALL   FPGA_REG
-        PUSH    DATA
-        RCALL   HEXBYTE
-        LDI     DATA,$20
-        RCALL   PUTCHAR
-        POP     DATA
-        ELPM    TEMP,Z
-        EOR     DATA,TEMP
-        SBRS    DATA,7
-        RJMP    F_WRIT9
-;4
-        LDI     TEMP,FLASH_DATA
-        RCALL   FPGA_REG
-        PUSH    DATA
-        RCALL   HEXBYTE
-        LDI     DATA,$20
-        RCALL   PUTCHAR
-        POP     DATA
-        ELPM    TEMP,Z
-        EOR     DATA,TEMP
-        SBRS    DATA,7
-        RJMP    F_WRIT9
-;5
-        LDI     TEMP,FLASH_DATA
-        RCALL   FPGA_REG
-        PUSH    DATA
-        RCALL   HEXBYTE
-        LDI     DATA,$20
-        RCALL   PUTCHAR
-        POP     DATA
-        ELPM    TEMP,Z
-        EOR     DATA,TEMP
-        SBRS    DATA,7
-        RJMP    F_WRIT9
-;6
-        LDI     TEMP,FLASH_DATA
-        RCALL   FPGA_REG
-        PUSH    DATA
-        RCALL   HEXBYTE
-        LDI     DATA,$20
-        RCALL   PUTCHAR
-        POP     DATA
-        ELPM    TEMP,Z
-        EOR     DATA,TEMP
-        SBRS    DATA,7
-        RJMP    F_WRIT9
-;7
-        LDI     TEMP,FLASH_DATA
-        RCALL   FPGA_REG
-        PUSH    DATA
-        RCALL   HEXBYTE
-        LDI     DATA,$20
-        RCALL   PUTCHAR
-        POP     DATA
-        ELPM    TEMP,Z
-        EOR     DATA,TEMP
-        SBRS    DATA,7
-        RJMP    F_WRIT9
-;8
-        LDI     TEMP,FLASH_DATA
-        RCALL   FPGA_REG
-        PUSH    DATA
-        RCALL   HEXBYTE
-        LDI     DATA,$20
-        RCALL   PUTCHAR
-        POP     DATA
-        ELPM    TEMP,Z
-        EOR     DATA,TEMP
-        SBRS    DATA,7
-        RJMP    F_WRIT9
-;9
-        LDI     TEMP,FLASH_DATA
-        RCALL   FPGA_REG
-        PUSH    DATA
-        RCALL   HEXBYTE
-        LDI     DATA,$20
-        RCALL   PUTCHAR
-        POP     DATA
-        ELPM    TEMP,Z
-        EOR     DATA,TEMP
-        SBRS    DATA,7
-        RJMP    F_WRIT9
 F_WRIT1:
-        LDI     TEMP,SCR_LOADDR
-        LDI     DATA,29
-        RCALL   FPGA_REG
-        LDI     TEMP,SCR_HIADDR
-        LDI     DATA,0
-        RCALL   FPGA_REG
-
         LDI     TEMP,FLASH_DATA
         RCALL   FPGA_REG
 
         PUSH    DATA
         RCALL   HEXBYTE
+        LDI     DATA,$20
+        RCALL   PUTCHAR
         POP     DATA
 
         ELPM    TEMP,Z
@@ -635,18 +489,13 @@ F_ERASE:LDI     DATA,$80
 
 F_ERAS1:SBI     PORTB,7 ;св.диод погасить
 
-        LDI     TEMP,SCR_LOADDR
-        LDI     DATA,17
-        RCALL   FPGA_REG
-        LDI     TEMP,SCR_HIADDR
-        LDI     DATA,0
-        RCALL   FPGA_REG
-
         LDI     TEMP,FLASH_DATA
         RCALL   FPGA_REG
 
         PUSH    DATA
         RCALL   HEXBYTE
+        LDI     DATA,$0D
+        RCALL   PUTCHAR
         POP     DATA
 
         CBI     PORTB,7 ;св.диод зажечь
@@ -772,38 +621,6 @@ RD_WHEN_RDY:
         IN      DATA,SPDR
         SS_SET
         RET
-;--------------------------------------
-;in:    XL - x (0..31)
-;       XH - y (0..23)
-SET_SCR_CURSOR:
-        LDI     TEMP,32
-        MUL     XH,TEMP
-        CLR     XH
-        ADD     XL,R0
-        ADC     XH,R1
-        SBIW    XL,1
-        LDI     TEMP,SCR_LOADDR
-        MOV     DATA,XL
-        RCALL   FPGA_REG
-        LDI     TEMP,SCR_HIADDR
-        MOV     DATA,XH
-        RJMP    FPGA_REG
-;
-;--------------------------------------
-;in:    Z == указательна строку (в младших 64K)
-SCR_PRINTSTRZ:
-        SS_SET
-        LDI     TEMP,SCR_CHAR
-        OUT     SPDR,TEMP
-        RCALL   RD_WHEN_RDY
-SCR_PRSTRZ1:
-        LPM     DATA,Z+
-        TST     DATA
-        BREQ    SCR_PRSTRZ2
-        RCALL   FPGA_SAME_REG
-        RJMP    SCR_PRSTRZ1
-SCR_PRSTRZ2:
-        RET
 ;
 ;--------------------------------------
 ;in:    DATA == byte
@@ -820,17 +637,25 @@ HEXBYT1:ADDI    DATA,$30
 ; - - - - - - - - - - - - - - - - - - -
 ;in:    DATA
 PUTCHAR:PUSH    TEMP
-        SS_SET
-        LDI     TEMP,SCR_CHAR
-        RCALL   FPGA_REG
+WRU_1:  INPORT  TEMP,UCSR1A
+        SBRS    TEMP,UDRE
+        RJMP    WRU_1
+        OUTPORT UDR1,DATA
         POP     TEMP
         RET
 ;
-
-
-
-
-
+;--------------------------------------
+;PRINTSTRZ
+;in:    Z == указательна строку
+PRINTSTRZ:
+PRSTRZ1:ELPM    DATA,Z+
+        TST     DATA
+        BREQ    PRSTRZ2
+        RCALL   PUTCHAR
+        RJMP    PRSTRZ1
+PRSTRZ2:RET
+;
+;--------------------------------------
 ;DELAY
 ;in:    DATA/10 == количество секунд
 DELAY:
@@ -846,23 +671,17 @@ DELAY1: LPM             ;3
         BRNE    DELAY1  ;2(1)
         RET
 ;
-
-
-
 ;--------------------------------------
 ;
-;01234567890123456789012345678901
-;ID: xx xx   Erase xx   Write
-;0000 11 22 33 44 55 66 77 88 99
 ;
 MSG_ID_FLASH:
-        .DB     "ID: ",0,0
+        .DB     $0D,$0A,$0D,$0A,"===============",$0D,$0A,"ID: ",0
 MSG_F_ERASE:
-        .DB     "   Erase ",0
-MSG_F_WRITE:    ;12345678901234567890123456789012
-        .DB     "   Write ",0
+        .DB     $0D,$0A,"Erase",$0D,$0A,0
+MSG_F_WRITE:
+        .DB     $0D,$0A,"Write",0
 MSG_F_COMPLETE:
-        .DB     "=========== Complete ===========",0,0
+        .DB     $0D,$0A,"=== Complete ===",0,0
 ;
 PACKED_FPGA:
 .NOLIST

@@ -1,0 +1,1084 @@
+
+AVRASM ver. 1.77.3 TRYFLASH.asm Sun Jan 10 16:56:24 2010
+
+
+000061   +          OUTPORT PORTG,TEMP
+000064   +          OUTPORT DDRG,TEMP
+000067   +          OUTPORT PORTF,TEMP
+000069   +          OUTPORT DDRF,TEMP
+00006c   +          OUTPORT PORTE,TEMP
+00006f   +          OUTPORT DDRE,TEMP
+000072   +          OUTPORT PORTD,TEMP
+000075   +          OUTPORT DDRD,TEMP
+000078   +          OUTPORT PORTC,TEMP
+00007b   +          OUTPORT DDRC,TEMP
+00007e   +          OUTPORT PORTB,TEMP
+000081   +          OUTPORT DDRB,TEMP
+000084   +          OUTPORT PORTA,TEMP
+000087   +          OUTPORT DDRA,TEMP
+00008f   +          INPORT  TEMP,DDRF
+000092   +          OUTPORT DDRF,TEMP
+000097   +          INPORT  TEMP,DDRF
+00009a   +          OUTPORT DDRF,TEMP
+00009c   +  LDFPGA2:INPORT  DATA,PINF
+0000a0   +          LDIZ    PACKED_FPGA*2
+0000a2   +          LDIY    BUFFER
+0000ad   +          ADDI    YH,HIGH(BUFFER) ;
+0000ef   +          ADDI    XH,HIGH(BUFFER) ;
+0000f8   +          ADDI    YH,HIGH(BUFFER) ;
+0000fc   +  qwertyu:inport  DATA,PINF
+000107   +          LDIZ    MSG_ID_FLASH*2
+000111   +          LDIZ    MSG_F_ERASE*2
+000115   +          LDIZ    MSG_F_WRITE*2
+000118   +          LDIZ    ROM*2
+00011e   +          LDIY    $0000
+000124   +          LDIY    $0001
+00012a   +          LDIY    $0002
+000130   +          LDIY    $0003
+000136   +          LDIY    $0004
+00013c   +          LDIY    $0005
+000142   +          LDIY    $0006
+000148   +          LDIY    $0007
+00014e   +          LDIY    $0008
+000154   +          LDIY    $0009
+00015a   +          LDIY    $000A
+000160   +          LDIY    $000B
+000166   +          LDIY    $000C
+00016c   +          LDIY    $000D
+000172   +          LDIY    $000E
+000178   +          LDIY    $000F
+00017f   +          LDIZ    MSG_F_COMPLETE*2
+00027e   +          SS_SET
+000282   +          SS_CLR
+000288   +          SS_SET
+000296   +          SS_SET
+0002a7   +          ADDI    DATA,$07
+0002a8   +  HEXBYT1:ADDI    DATA,$30
+0002aa   +          SS_SET
+          .LISTMAC
+         
+          .DEF    FF_FL   =R08
+          .DEF    FF      =R13    ;всегда = $FF
+          .DEF    ONE     =R14    ;всегда = $01
+          .DEF    NULL    =R15    ;всегда = $00
+          .DEF    DATA    =R16
+          .DEF    TEMP    =R17
+          .DEF    COUNT   =R18
+          .DEF    BITS    =R19
+         ;локально используются: R0,R1,R20,R21,R24,R25
+         
+          .EQU    DBSIZE_HI       =HIGH(4096)
+          .EQU    DBMASK_HI       =HIGH(4095)
+          .EQU    nCONFIG         =PORTF0
+          .EQU    nSTATUS         =PORTF1
+          .EQU    CONF_DONE       =PORTF2
+         
+          .EQU    SD_DATA         =$57
+          .EQU    FLASH_LOADDR    =$F0
+          .EQU    FLASH_MIDADDR   =$F1
+          .EQU    FLASH_HIADDR    =$F2
+          .EQU    FLASH_DATA      =$F3
+          .EQU    FLASH_CTRL      =$F4
+          .EQU    SCR_LOADDR      =$40
+          .EQU    SCR_HIADDR      =$41
+          .EQU    SCR_CHAR        =$44
+         
+          .MACRO  SS_SET
+                  SBI     PORTB,0
+          .ENDMACRO
+         
+          .MACRO  SS_CLR
+                  CBI     PORTB,0
+          .ENDMACRO
+         
+         
+          .DSEG
+                  .ORG    $0100
+          BUFFER:                 ;главный буфер
+         ;F_ADDR0:.BYTE   1
+         ;F_ADDR1:.BYTE   1
+         ;F_ADDR2:.BYTE   1
+         
+          .CSEG
+                  .ORG    0
+000000 940c 0048         JMP     START
+000002 940c 0048         JMP     START   ;EXT_INT0 ; IRQ0 Handler
+000004 940c 0048         JMP     START   ;EXT_INT1 ; IRQ1 Handler
+000006 940c 0048         JMP     START   ;EXT_INT2 ; IRQ2 Handler
+000008 940c 0048         JMP     START   ;EXT_INT3 ; IRQ3 Handler
+00000a 940c 0048         JMP     START   ;EXT_INT4 ; IRQ4 Handler
+00000c 940c 0048         JMP     START   ;EXT_INT5 ; IRQ5 Handler
+00000e 940c 0048         JMP     START   ;EXT_INT6 ; IRQ6 Handler
+000010 940c 0048         JMP     START   ;EXT_INT7 ; IRQ7 Handler
+000012 940c 0048         JMP     START   ;TIM2_COMP ; Timer2 Compare Handler
+000014 940c 0048         JMP     START   ;TIM2_OVF ; Timer2 Overflow Handler
+000016 940c 0048         JMP     START   ;TIM1_CAPT ; Timer1 Capture Handler
+000018 940c 0048         JMP     START   ;TIM1_COMPA ; Timer1 CompareA Handler
+00001a 940c 0048         JMP     START   ;TIM1_COMPB ; Timer1 CompareB Handler
+00001c 940c 0048         JMP     START   ;TIM1_OVF ; Timer1 Overflow Handler
+00001e 940c 0048         JMP     START   ;TIM0_COMP ; Timer0 Compare Handler
+000020 940c 0048         JMP     START   ;TIM0_OVF ; Timer0 Overflow Handler
+000022 940c 0048         JMP     START   ;SPI_STC ; SPI Transfer Complete Handler
+000024 940c 0048         JMP     START   ;USART0_RXC ; USART0 RX Complete Handler
+000026 940c 0048         JMP     START   ;USART0_DRE ; USART0,UDR Empty Handler
+000028 940c 0048         JMP     START   ;USART0_TXC ; USART0 TX Complete Handler
+00002a 940c 0048         JMP     START   ;ADC ; ADC Conversion Complete Handler
+00002c 940c 0048         JMP     START   ;EE_RDY ; EEPROM Ready Handler
+00002e 940c 0048         JMP     START   ;ANA_COMP ; Analog Comparator Handler
+000030 940c 0048         JMP     START   ;TIM1_COMPC ; Timer1 CompareC Handler
+000032 940c 0048         JMP     START   ;TIM3_CAPT ; Timer3 Capture Handler
+000034 940c 0048         JMP     START   ;TIM3_COMPA ; Timer3 CompareA Handler
+000036 940c 0048         JMP     START   ;TIM3_COMPB ; Timer3 CompareB Handler
+000038 940c 0048         JMP     START   ;TIM3_COMPC ; Timer3 CompareC Handler
+00003a 940c 0048         JMP     START   ;TIM3_OVF ; Timer3 Overflow Handler
+00003c 940c 0048         JMP     START   ;USART1_RXC ; USART1 RX Complete Handler
+00003e 940c 0048         JMP     START   ;USART1_DRE; USART1,UDR Empty Handler
+000040 940c 0048         JMP     START   ;USART1_TXC ; USART1 TX Complete Handler
+000042 940c 0048         JMP     START   ;TWI_INT ; Two-wire Serial Interface Interrupt Handler
+000044 940c 0048         JMP     START   ;SPM_RDY ; SPM Ready Handler
+         
+                  .DW     0,0
+000046 0000
+000047 0000
+         ;
+000048 94f8      START:  CLI
+000049 24ff              CLR     NULL
+00004a e011              LDI     TEMP,$01
+00004b 2ee1              MOV     ONE,TEMP
+00004c ef1f              LDI     TEMP,$FF
+00004d 2ed1              MOV     FF,TEMP
+         ;WatchDog OFF, если вдруг включен
+00004e e11f              LDI     TEMP,0B00011111
+00004f bd11              OUT     WDTCR,TEMP
+000050 bcf1              OUT     WDTCR,NULL
+         ;будем юзать стек
+000051 ef1f              LDI     TEMP,LOW(RAMEND)
+000052 bf1d              OUT     SPL,TEMP
+000053 e110              LDI     TEMP,HIGH(RAMEND)
+000054 bf1e              OUT     SPH,TEMP
+         
+         
+         ;юўш∙рхь эрїєщ тё■ ярь Є№ ш тёх ЁхушёЄЁ√
+         
+000055 e1ed      	ldi	r30,29
+000056 e0f0      	ldi	r31,0
+          clr1:
+000057 83f0      	st	Z,r31
+000058 95ea      	dec	r30
+000059 f7ea      	brpl	clr1
+         
+00005a e0e0      	ldi	r30,0
+00005b e0f1      	ldi	r31,1 ; $0100
+          clr2:
+00005c 8200      	st	Z,r0
+00005d 9631      	adiw	r30,1
+00005e 31f1      	cpi	r31,$11 ; <$1100
+00005f f7e1      	brne	clr2
+         
+         
+         
+         ;
+000060 ef1f              LDI     TEMP,      0B11111111
+000061   +          OUTPORT PORTG,TEMP
+000061 9310 0065         STS     portg+$20*(portg<$40),temp
+          .ENDMACRO
+000063 e010              LDI     TEMP,      0B00000000
+000064   +          OUTPORT DDRG,TEMP
+000064 9310 0064         STS     ddrg+$20*(ddrg<$40),temp
+          .ENDMACRO
+         
+000066 e018              LDI     TEMP,      0B00001000
+000067   +          OUTPORT PORTF,TEMP
+000067 9310 0062         STS     portf+$20*(portf<$40),temp
+          .ENDMACRO
+000069   +          OUTPORT DDRF,TEMP
+000069 9310 0061         STS     ddrf+$20*(ddrf<$40),temp
+          .ENDMACRO
+         
+00006b ef1f              LDI     TEMP,      0B11111111
+00006c   +          OUTPORT PORTE,TEMP
+00006c 9310 0023         STS     porte+$20*(porte<$40),temp
+          .ENDMACRO
+00006e e010              LDI     TEMP,      0B00000000
+00006f   +          OUTPORT DDRE,TEMP
+00006f 9310 0022         STS     ddre+$20*(ddre<$40),temp
+          .ENDMACRO
+         
+000071 ef1f              LDI     TEMP,      0B11111111
+000072   +          OUTPORT PORTD,TEMP
+000072 9310 0032         STS     portd+$20*(portd<$40),temp
+          .ENDMACRO
+000074 e010              LDI     TEMP,      0B00000000
+000075   +          OUTPORT DDRD,TEMP
+000075 9310 0031         STS     ddrd+$20*(ddrd<$40),temp
+          .ENDMACRO
+         
+000077 ed1f              LDI     TEMP,      0B11011111
+000078   +          OUTPORT PORTC,TEMP
+000078 9310 0035         STS     portc+$20*(portc<$40),temp
+          .ENDMACRO
+00007a e010              LDI     TEMP,      0B00000000
+00007b   +          OUTPORT DDRC,TEMP
+00007b 9310 0034         STS     ddrc+$20*(ddrc<$40),temp
+          .ENDMACRO
+         
+00007d e719              LDI     TEMP,      0B01111001
+00007e   +          OUTPORT PORTB,TEMP
+00007e 9310 0038         STS     portb+$20*(portb<$40),temp
+          .ENDMACRO
+000080 e817              LDI     TEMP,      0B10000111
+000081   +          OUTPORT DDRB,TEMP
+000081 9310 0037         STS     ddrb+$20*(ddrb<$40),temp
+          .ENDMACRO
+         
+000083 ef1f              LDI     TEMP,      0B11111111
+000084   +          OUTPORT PORTA,TEMP
+000084 9310 003b         STS     porta+$20*(porta<$40),temp
+          .ENDMACRO
+000086 e010              LDI     TEMP,      0B00000000
+000087   +          OUTPORT DDRA,TEMP
+000087 9310 003a         STS     ddra+$20*(ddra<$40),temp
+          .ENDMACRO
+         ;SPI init
+000089 e011              LDI     TEMP,(1<<SPI2X)
+00008a b91e              OUT     SPSR,TEMP
+00008b e710              LDI     TEMP,(1<<SPE)|(1<<DORD)|(1<<MSTR)|(0<<CPOL)|(0<<CPHA)
+00008c b91d              OUT     SPCR,TEMP
+         
+         ;        SBIC    PINC,5
+          ;       RJMP    UP12
+           ;      SBI     PORTB,7
+         ;UP11:   SBIS    PINC,5
+          ;       RJMP    UP11
+           ;      CBI     PORTB,7
+         ;UP12:
+         
+         
+         
+00008d e00a      	ldi DATA,10
+00008e d220      	rcall DELAY
+         
+         
+         
+         
+         
+         
+00008f   +          INPORT  TEMP,DDRF
+00008f 9110 0061         LDS     temp,ddrf+$20*(ddrf<$40)
+          .ENDMACRO
+000091 6011              SBR     TEMP,(1<<nCONFIG)
+000092   +          OUTPORT DDRF,TEMP
+000092 9310 0061         STS     ddrf+$20*(ddrf<$40),temp
+          .ENDMACRO
+         
+000094 e913              LDI     TEMP,147 ;40 us @ 11.0592 MHz
+000095 951a      LDFPGA1:DEC     TEMP    ;1
+000096 f7f1              BRNE    LDFPGA1 ;2
+         
+000097   +          INPORT  TEMP,DDRF
+000097 9110 0061         LDS     temp,ddrf+$20*(ddrf<$40)
+          .ENDMACRO
+000099 7f1e              CBR     TEMP,(1<<nCONFIG)
+00009a   +          OUTPORT DDRF,TEMP
+00009a 9310 0061         STS     ddrf+$20*(ddrf<$40),temp
+          .ENDMACRO
+         
+00009c   +  LDFPGA2:INPORT  DATA,PINF
+00009c 9100 0020         LDS     data,pinf+$20*(pinf<$40)
+          .ENDMACRO
+00009e 7002              ANDI    DATA,(1<<nSTATUS)
+00009f f3e1              BREQ    LDFPGA2
+         
+0000a0   +          LDIZ    PACKED_FPGA*2
+0000a0 ebe0              LDI     ZL,LOW(packed_fpga*0x2)
+0000a1 e0f5              LDI     ZH,HIGH(packed_fpga*0x2)
+          .ENDMACRO
+0000a2   +          LDIY    BUFFER
+0000a2 e0c0              LDI     YL,LOW(buffer)
+0000a3 e0d1              LDI     YH,HIGH(buffer)
+          .ENDMACRO
+                                                 ;A=DATA; A'=TEMP; B=R21; C=R20;
+         ;deMLZ                                  ;DEC40
+         ;(не трогаем стек! всё ОЗУ под буфер)
+0000a4 e810              LDI     TEMP,$80                ;        LD      A,#80
+                                                 ;        EX      AF,AF'--------
+0000a5 9005      MS:     LPM     R0,Z+                   ;MS      LDI
+0000a6 9209              ST      Y+,R0
+         ;-begin-PUT_BYTE_1---
+0000a7 b80f              OUT     SPDR,R0
+0000a8 b01e      PUTB1:  IN      R1,SPSR
+0000a9 fe17              SBRS    R1,SPIF
+0000aa cffd              RJMP    PUTB1
+         ;-end---PUT_BYTE_1---
+0000ab 50d1              SUBI    YH,HIGH(BUFFER) ;
+0000ac 70df              ANDI    YH,DBMASK_HI    ;Y warp
+0000ad   +          ADDI    YH,HIGH(BUFFER) ;
+0000ad 5fdf              SUBI    yh,(-high(buffer)&$FF)
+          .ENDMACRO
+0000ae e052      M0:     LDI     R21,$02                 ;M0      LD      BC,#2FF
+0000af ef4f              LDI     R20,$FF
+          M1:                                     ;M1      EX      AF,AF'--------
+0000b0 0f11      M1X:    ADD     TEMP,TEMP               ;M1X     ADD     A,A
+0000b1 f411              BRNE    M2                      ;        JR      NZ,M2
+0000b2 9115              LPM     TEMP,Z+                 ;        LD      A,(HL)
+                                                 ;        INC     HL
+0000b3 1f11              ROL     TEMP                    ;        RLA
+0000b4 1f44      M2:     ROL     R20                     ;M2      RL      C
+0000b5 f7d0              BRCC    M1X                     ;        JR      NC,M1X
+                                                 ;        EX      AF,AF'--------
+0000b6 955a              DEC     R21                     ;        DJNZ    X2
+0000b7 f449              BRNE    X2
+0000b8 e002              LDI     DATA,2                  ;        LD      A,2
+0000b9 9545              ASR     R20                     ;        SRA     C
+0000ba f080              BRCS    N1                      ;        JR      C,N1
+0000bb 9503              INC     DATA                    ;        INC     A
+0000bc 9543              INC     R20                     ;        INC     C
+0000bd f051              BREQ    N2                      ;        JR      Z,N2
+0000be e053              LDI     R21,$03                 ;        LD      BC,#33F
+0000bf e34f              LDI     R20,$3F
+0000c0 cfef              RJMP    M1                      ;        JR      M1
+                                                 ;
+0000c1 955a      X2:     DEC     R21                     ;X2      DJNZ    X3
+0000c2 f4b1              BRNE    X3
+0000c3 9546              LSR     R20                     ;        SRL     C
+0000c4 f300              BRCS    MS                      ;        JR      C,MS
+0000c5 9553              INC     R21                     ;        INC     B
+0000c6 cfe9              RJMP    M1                      ;        JR      M1
+          X6:                                     ;X6
+0000c7 0f04              ADD     DATA,R20                ;        ADD     A,C
+0000c8 e054      N2:     LDI     R21,$04                 ;N2
+0000c9 ef4f              LDI     R20,$FF                 ;        LD      BC,#4FF
+0000ca cfe5              RJMP    M1                      ;        JR      M1
+          N1:                                     ;N1
+0000cb 9543              INC     R20                     ;        INC     C
+0000cc f4d1              BRNE    M4                      ;        JR      NZ,M4
+                                                 ;        EX      AF,AF'--------
+0000cd 9553              INC     R21                     ;        INC     B
+0000ce 9547      N5:     ROR     R20                     ;N5      RR      C
+0000cf f160              BRCS    DEMLZEND                ;        RET     C
+0000d0 1f55              ROL     R21                     ;        RL      B
+0000d1 0f11              ADD     TEMP,TEMP               ;        ADD     A,A
+0000d2 f411              BRNE    N6                      ;        JR      NZ,N6
+0000d3 9115              LPM     TEMP,Z+                 ;        LD      A,(HL)
+                                                 ;        INC     HL
+0000d4 1f11              ROL     TEMP                    ;        RLA
+0000d5 f7c0      N6:     BRCC    N5                      ;N6      JR      NC,N5
+                                                 ;        EX      AF,AF'--------
+0000d6 0f05              ADD     DATA,R21                ;        ADD     A,B
+0000d7 e056              LDI     R21,6                   ;        LD      B,6
+0000d8 cfd7              RJMP    M1                      ;        JR      M1
+0000d9 955a      X3:     DEC     R21                     ;X3
+0000da f411              BRNE    X4                      ;        DJNZ    X4
+0000db e001              LDI     DATA,1                  ;        LD      A,1
+0000dc c00b              RJMP    M3                      ;        JR      M3
+0000dd 955a      X4:     DEC     R21                     ;X4      DJNZ    X5
+0000de f429              BRNE    X5
+0000df 9543              INC     R20                     ;        INC     C
+0000e0 f431              BRNE    M4                      ;        JR      NZ,M4
+0000e1 e055              LDI     R21,$05                 ;        LD      BC,#51F
+0000e2 e14f              LDI     R20,$1F
+0000e3 cfcc              RJMP    M1                      ;        JR      M1
+0000e4 955a      X5:     DEC     R21                     ;X5
+0000e5 f709              BRNE    X6                      ;        DJNZ    X6
+0000e6 2f54              MOV     R21,R20                 ;        LD      B,C
+0000e7 9145      M4:     LPM     R20,Z+                  ;M4      LD      C,(HL)
+                                                 ;        INC     HL
+0000e8 955a      M3:     DEC     R21                     ;M3      DEC     B
+                                                 ;        PUSH    HL
+0000e9 2fa4              MOV     XL,R20                  ;        LD      L,C
+0000ea 2fb5              MOV     XH,R21                  ;        LD      H,B
+0000eb 0fac              ADD     XL,YL                   ;        ADD     HL,DE
+0000ec 1fbd              ADC     XH,YH
+                                                 ;        LD      C,A
+                                                 ;        LD      B,0
+          LDIRLOOP:
+0000ed 50b1              SUBI    XH,HIGH(BUFFER) ;
+0000ee 70bf              ANDI    XH,DBMASK_HI    ;X warp
+0000ef   +          ADDI    XH,HIGH(BUFFER) ;
+0000ef 5fbf              SUBI    xh,(-high(buffer)&$FF)
+          .ENDMACRO
+0000f0 900d              LD      R0,X+                   ;        LDIR
+0000f1 9209              ST      Y+,R0
+         ;-begin-PUT_BYTE_2---
+0000f2 b80f              OUT     SPDR,R0
+0000f3 b01e      PUTB2:  IN      R1,SPSR
+0000f4 fe17              SBRS    R1,SPIF
+0000f5 cffd              RJMP    PUTB2
+         ;-end---PUT_BYTE_2---
+0000f6 50d1              SUBI    YH,HIGH(BUFFER) ;
+0000f7 70df              ANDI    YH,DBMASK_HI    ;Y warp
+0000f8   +          ADDI    YH,HIGH(BUFFER) ;
+0000f8 5fdf              SUBI    yh,(-high(buffer)&$FF)
+          .ENDMACRO
+0000f9 950a              DEC     DATA
+0000fa f791              BRNE    LDIRLOOP
+                                                 ;        POP     HL
+0000fb cfb2              RJMP    M0                      ;        JR      M0
+                                                 ;END_DEC40
+          DEMLZEND:;теперь можно юзать стек
+         ;SPI reinit
+         
+         ;цф╕ь, яюър яюфэшьхЄё  CONF_DONE - чэрўшЄ, ўЄю яЁю°штър тёюёрырё№ ш чрЁрсюЄрыр, тё╕ чрхсшё№
+0000fc   +  qwertyu:inport  DATA,PINF
+0000fc 9100 0020         LDS     data,pinf+$20*(pinf<$40)
+          .ENDMACRO
+0000fe 7004              andi    DATA,(1<<CONF_DONE)
+0000ff f3e1              breq    qwertyu
+         
+         
+         
+         
+000100 e510              LDI     TEMP,(1<<SPE)|(0<<DORD)|(1<<MSTR)|(0<<CPOL)|(0<<CPHA)
+000101 b91d              OUT     SPCR,TEMP
+         ;для beeper-а
+000102 9a16              SBI     DDRE,6
+         ;св.диод погасить
+000103 9ac7              SBI     PORTB,7
+         ; - - - - - - - - - - - - - - - - - - -
+000104 e0a0              LDI     XL,0
+000105 e0b0              LDI     XH,0
+000106 d183              RCALL   SET_SCR_CURSOR
+000107   +          LDIZ    MSG_ID_FLASH*2
+000107 e7e4              LDI     ZL,LOW(msg_id_flash*0x2)
+000108 e0f5              LDI     ZH,HIGH(msg_id_flash*0x2)
+          .ENDMACRO
+000109 d18c              RCALL   SCR_PRINTSTRZ
+         
+00010a d078              RCALL   F_ID
+00010b 2f0a              MOV     DATA,XL
+00010c d193              RCALL   HEXBYTE
+00010d e200              LDI     DATA,$20
+00010e d19a              RCALL   PUTCHAR
+00010f 2f0b              MOV     DATA,XH
+000110 d18f              RCALL   HEXBYTE
+         ; - - - - - - - - - - - - - - - - - - -
+000111   +          LDIZ    MSG_F_ERASE*2
+000111 e7ea              LDI     ZL,LOW(msg_f_erase*0x2)
+000112 e0f5              LDI     ZH,HIGH(msg_f_erase*0x2)
+          .ENDMACRO
+000113 d182              RCALL   SCR_PRINTSTRZ
+000114 d0fd              RCALL   F_ERASE
+         ; - - - - - - - - - - - - - - - - - - -
+000115   +          LDIZ    MSG_F_WRITE*2
+000115 e8e4              LDI     ZL,LOW(msg_f_write*0x2)
+000116 e0f5              LDI     ZH,HIGH(msg_f_write*0x2)
+          .ENDMACRO
+000117 d17e              RCALL   SCR_PRINTSTRZ
+         
+000118   +          LDIZ    ROM*2
+000118 e8e2              LDI     ZL,LOW(rom*0x2)
+000119 e3f7              LDI     ZH,HIGH(rom*0x2)
+          .ENDMACRO
+00011a befb              OUT     RAMPZ,NULL
+         ; - - - - - - - - - - - - - - - - - - -
+00011b e0a0              LDI     XL,0
+00011c e0b1              LDI     XH,1
+00011d d16c              RCALL   SET_SCR_CURSOR
+00011e   +          LDIY    $0000
+00011e e0c0              LDI     YL,LOW(0x0)
+00011f e0d0              LDI     YH,HIGH(0x0)
+          .ENDMACRO
+000120 d070              RCALL   F_WRITE
+         
+000121 e0a0              LDI     XL,0
+000122 e0b2              LDI     XH,2
+000123 d166              RCALL   SET_SCR_CURSOR
+000124   +          LDIY    $0001
+000124 e0c1              LDI     YL,LOW(0x1)
+000125 e0d0              LDI     YH,HIGH(0x1)
+          .ENDMACRO
+000126 d06a              RCALL   F_WRITE
+         
+000127 e0a0              LDI     XL,0
+000128 e0b3              LDI     XH,3
+000129 d160              RCALL   SET_SCR_CURSOR
+00012a   +          LDIY    $0002
+00012a e0c2              LDI     YL,LOW(0x2)
+00012b e0d0              LDI     YH,HIGH(0x2)
+          .ENDMACRO
+00012c d064              RCALL   F_WRITE
+         
+00012d e0a0              LDI     XL,0
+00012e e0b4              LDI     XH,4
+00012f d15a              RCALL   SET_SCR_CURSOR
+000130   +          LDIY    $0003
+000130 e0c3              LDI     YL,LOW(0x3)
+000131 e0d0              LDI     YH,HIGH(0x3)
+          .ENDMACRO
+000132 d05e              RCALL   F_WRITE
+         
+000133 e0a0              LDI     XL,0
+000134 e0b5              LDI     XH,5
+000135 d154              RCALL   SET_SCR_CURSOR
+000136   +          LDIY    $0004
+000136 e0c4              LDI     YL,LOW(0x4)
+000137 e0d0              LDI     YH,HIGH(0x4)
+          .ENDMACRO
+000138 d058              RCALL   F_WRITE
+         
+000139 e0a0              LDI     XL,0
+00013a e0b6              LDI     XH,6
+00013b d14e              RCALL   SET_SCR_CURSOR
+00013c   +          LDIY    $0005
+00013c e0c5              LDI     YL,LOW(0x5)
+00013d e0d0              LDI     YH,HIGH(0x5)
+          .ENDMACRO
+00013e d052              RCALL   F_WRITE
+         
+00013f e0a0              LDI     XL,0
+000140 e0b7              LDI     XH,7
+000141 d148              RCALL   SET_SCR_CURSOR
+000142   +          LDIY    $0006
+000142 e0c6              LDI     YL,LOW(0x6)
+000143 e0d0              LDI     YH,HIGH(0x6)
+          .ENDMACRO
+000144 d04c              RCALL   F_WRITE
+         
+000145 e0a0              LDI     XL,0
+000146 e0b8              LDI     XH,8
+000147 d142              RCALL   SET_SCR_CURSOR
+000148   +          LDIY    $0007
+000148 e0c7              LDI     YL,LOW(0x7)
+000149 e0d0              LDI     YH,HIGH(0x7)
+          .ENDMACRO
+00014a d046              RCALL   F_WRITE
+         
+00014b e0a0              LDI     XL,0
+00014c e0b9              LDI     XH,9
+00014d d13c              RCALL   SET_SCR_CURSOR
+00014e   +          LDIY    $0008
+00014e e0c8              LDI     YL,LOW(0x8)
+00014f e0d0              LDI     YH,HIGH(0x8)
+          .ENDMACRO
+000150 d040              RCALL   F_WRITE
+         
+000151 e0a0              LDI     XL,0
+000152 e0ba              LDI     XH,10
+000153 d136              RCALL   SET_SCR_CURSOR
+000154   +          LDIY    $0009
+000154 e0c9              LDI     YL,LOW(0x9)
+000155 e0d0              LDI     YH,HIGH(0x9)
+          .ENDMACRO
+000156 d03a              RCALL   F_WRITE
+         
+000157 e0a0              LDI     XL,0
+000158 e0bb              LDI     XH,11
+000159 d130              RCALL   SET_SCR_CURSOR
+00015a   +          LDIY    $000A
+00015a e0ca              LDI     YL,LOW(0xa)
+00015b e0d0              LDI     YH,HIGH(0xa)
+          .ENDMACRO
+00015c d034              RCALL   F_WRITE
+         
+00015d e0a0              LDI     XL,0
+00015e e0bc              LDI     XH,12
+00015f d12a              RCALL   SET_SCR_CURSOR
+000160   +          LDIY    $000B
+000160 e0cb              LDI     YL,LOW(0xb)
+000161 e0d0              LDI     YH,HIGH(0xb)
+          .ENDMACRO
+000162 d02e              RCALL   F_WRITE
+         
+000163 e0a0              LDI     XL,0
+000164 e0bd              LDI     XH,13
+000165 d124              RCALL   SET_SCR_CURSOR
+000166   +          LDIY    $000C
+000166 e0cc              LDI     YL,LOW(0xc)
+000167 e0d0              LDI     YH,HIGH(0xc)
+          .ENDMACRO
+000168 d028              RCALL   F_WRITE
+         
+000169 e0a0              LDI     XL,0
+00016a e0be              LDI     XH,14
+00016b d11e              RCALL   SET_SCR_CURSOR
+00016c   +          LDIY    $000D
+00016c e0cd              LDI     YL,LOW(0xd)
+00016d e0d0              LDI     YH,HIGH(0xd)
+          .ENDMACRO
+00016e d022              RCALL   F_WRITE
+         
+00016f e0a0              LDI     XL,0
+000170 e0bf              LDI     XH,15
+000171 d118              RCALL   SET_SCR_CURSOR
+000172   +          LDIY    $000E
+000172 e0ce              LDI     YL,LOW(0xe)
+000173 e0d0              LDI     YH,HIGH(0xe)
+          .ENDMACRO
+000174 d01c              RCALL   F_WRITE
+         
+000175 e0a0              LDI     XL,0
+000176 e1b0              LDI     XH,16
+000177 d112              RCALL   SET_SCR_CURSOR
+000178   +          LDIY    $000F
+000178 e0cf              LDI     YL,LOW(0xf)
+000179 e0d0              LDI     YH,HIGH(0xf)
+          .ENDMACRO
+00017a d016              RCALL   F_WRITE
+         ; - - - - - - - - - - - - - - - - - - -
+00017b d0ac              RCALL   F_RST
+00017c e0a0              LDI     XL,0
+00017d e1b7              LDI     XH,23
+00017e d10b              RCALL   SET_SCR_CURSOR
+00017f   +          LDIZ    MSG_F_COMPLETE*2
+00017f e8ee              LDI     ZL,LOW(msg_f_complete*0x2)
+000180 e0f5              LDI     ZH,HIGH(msg_f_complete*0x2)
+          .ENDMACRO
+000181 d114              RCALL   SCR_PRINTSTRZ
+000182 cfff      STOP1:  RJMP    STOP1
+         ;
+         ;--------------------------------------
+         ;--------------------------------------
+         ;
+000183 d0a4      F_ID:   RCALL   F_RST
+000184 e900              LDI     DATA,$90
+000185 d0a8              RCALL   F_CMD
+000186 ef14              LDI     TEMP,FLASH_CTRL
+000187 e003              LDI     DATA,0B00000011
+000188 d0f4              RCALL   FPGA_REG
+000189 e0c0              LDI     YL,$00
+00018a e0d0              LDI     YH,$00
+00018b d0d0              RCALL   F_IN
+00018c 2fa0              MOV     XL,DATA
+00018d e0c1              LDI     YL,$01
+00018e d0cd              RCALL   F_IN
+00018f 2fb0              MOV     XH,DATA
+000190 c097              RJMP    F_RST
+         ;
+         ;--------------------------------------
+         ;in:    FLASH[Z] - data
+         ;       YL,YH - address
+          F_WRITE:
+000191 2f0d              MOV     DATA,YH
+000192 d10d              RCALL   HEXBYTE
+000193 2f0c              MOV     DATA,YL
+000194 d10b              RCALL   HEXBYTE
+000195 e200              LDI     DATA,$20
+000196 d112              RCALL   PUTCHAR
+         
+000197 ea00              LDI     DATA,$A0
+000198 d095              RCALL   F_CMD
+000199 9106              ELPM    DATA,Z
+00019a d0cd              RCALL   F_OUT
+00019b ef14              LDI     TEMP,FLASH_CTRL
+00019c e003              LDI     DATA,0B00000011
+00019d d0df              RCALL   FPGA_REG
+         ;1
+00019e ef13              LDI     TEMP,FLASH_DATA
+00019f d0dd              RCALL   FPGA_REG
+0001a0 930f              PUSH    DATA
+0001a1 d0fe              RCALL   HEXBYTE
+0001a2 e200              LDI     DATA,$20
+0001a3 d105              RCALL   PUTCHAR
+0001a4 910f              POP     DATA
+0001a5 9116              ELPM    TEMP,Z
+0001a6 2701              EOR     DATA,TEMP
+0001a7 ff07              SBRS    DATA,7
+0001a8 c067              RJMP    F_WRIT9
+         ;2
+0001a9 ef13              LDI     TEMP,FLASH_DATA
+0001aa d0d2              RCALL   FPGA_REG
+0001ab 930f              PUSH    DATA
+0001ac d0f3              RCALL   HEXBYTE
+0001ad e200              LDI     DATA,$20
+0001ae d0fa              RCALL   PUTCHAR
+0001af 910f              POP     DATA
+0001b0 9116              ELPM    TEMP,Z
+0001b1 2701              EOR     DATA,TEMP
+0001b2 ff07              SBRS    DATA,7
+0001b3 c05c              RJMP    F_WRIT9
+         ;3
+0001b4 ef13              LDI     TEMP,FLASH_DATA
+0001b5 d0c7              RCALL   FPGA_REG
+0001b6 930f              PUSH    DATA
+0001b7 d0e8              RCALL   HEXBYTE
+0001b8 e200              LDI     DATA,$20
+0001b9 d0ef              RCALL   PUTCHAR
+0001ba 910f              POP     DATA
+0001bb 9116              ELPM    TEMP,Z
+0001bc 2701              EOR     DATA,TEMP
+0001bd ff07              SBRS    DATA,7
+0001be c051              RJMP    F_WRIT9
+         ;4
+0001bf ef13              LDI     TEMP,FLASH_DATA
+0001c0 d0bc              RCALL   FPGA_REG
+0001c1 930f              PUSH    DATA
+0001c2 d0dd              RCALL   HEXBYTE
+0001c3 e200              LDI     DATA,$20
+0001c4 d0e4              RCALL   PUTCHAR
+0001c5 910f              POP     DATA
+0001c6 9116              ELPM    TEMP,Z
+0001c7 2701              EOR     DATA,TEMP
+0001c8 ff07              SBRS    DATA,7
+0001c9 c046              RJMP    F_WRIT9
+         ;5
+0001ca ef13              LDI     TEMP,FLASH_DATA
+0001cb d0b1              RCALL   FPGA_REG
+0001cc 930f              PUSH    DATA
+0001cd d0d2              RCALL   HEXBYTE
+0001ce e200              LDI     DATA,$20
+0001cf d0d9              RCALL   PUTCHAR
+0001d0 910f              POP     DATA
+0001d1 9116              ELPM    TEMP,Z
+0001d2 2701              EOR     DATA,TEMP
+0001d3 ff07              SBRS    DATA,7
+0001d4 c03b              RJMP    F_WRIT9
+         ;6
+0001d5 ef13              LDI     TEMP,FLASH_DATA
+0001d6 d0a6              RCALL   FPGA_REG
+0001d7 930f              PUSH    DATA
+0001d8 d0c7              RCALL   HEXBYTE
+0001d9 e200              LDI     DATA,$20
+0001da d0ce              RCALL   PUTCHAR
+0001db 910f              POP     DATA
+0001dc 9116              ELPM    TEMP,Z
+0001dd 2701              EOR     DATA,TEMP
+0001de ff07              SBRS    DATA,7
+0001df c030              RJMP    F_WRIT9
+         ;7
+0001e0 ef13              LDI     TEMP,FLASH_DATA
+0001e1 d09b              RCALL   FPGA_REG
+0001e2 930f              PUSH    DATA
+0001e3 d0bc              RCALL   HEXBYTE
+0001e4 e200              LDI     DATA,$20
+0001e5 d0c3              RCALL   PUTCHAR
+0001e6 910f              POP     DATA
+0001e7 9116              ELPM    TEMP,Z
+0001e8 2701              EOR     DATA,TEMP
+0001e9 ff07              SBRS    DATA,7
+0001ea c025              RJMP    F_WRIT9
+         ;8
+0001eb ef13              LDI     TEMP,FLASH_DATA
+0001ec d090              RCALL   FPGA_REG
+0001ed 930f              PUSH    DATA
+0001ee d0b1              RCALL   HEXBYTE
+0001ef e200              LDI     DATA,$20
+0001f0 d0b8              RCALL   PUTCHAR
+0001f1 910f              POP     DATA
+0001f2 9116              ELPM    TEMP,Z
+0001f3 2701              EOR     DATA,TEMP
+0001f4 ff07              SBRS    DATA,7
+0001f5 c01a              RJMP    F_WRIT9
+         ;9
+0001f6 ef13              LDI     TEMP,FLASH_DATA
+0001f7 d085              RCALL   FPGA_REG
+0001f8 930f              PUSH    DATA
+0001f9 d0a6              RCALL   HEXBYTE
+0001fa e200              LDI     DATA,$20
+0001fb d0ad              RCALL   PUTCHAR
+0001fc 910f              POP     DATA
+0001fd 9116              ELPM    TEMP,Z
+0001fe 2701              EOR     DATA,TEMP
+0001ff ff07              SBRS    DATA,7
+000200 c00f              RJMP    F_WRIT9
+          F_WRIT1:
+000201 e410              LDI     TEMP,SCR_LOADDR
+000202 e10d              LDI     DATA,29
+000203 d079              RCALL   FPGA_REG
+000204 e411              LDI     TEMP,SCR_HIADDR
+000205 e000              LDI     DATA,0
+000206 d076              RCALL   FPGA_REG
+         
+000207 ef13              LDI     TEMP,FLASH_DATA
+000208 d074              RCALL   FPGA_REG
+         
+000209 930f              PUSH    DATA
+00020a d095              RCALL   HEXBYTE
+00020b 910f              POP     DATA
+         
+00020c 9116              ELPM    TEMP,Z
+00020d 2701              EOR     DATA,TEMP
+00020e fd07              SBRC    DATA,7
+00020f cff1              RJMP    F_WRIT1
+         
+000210 9117      F_WRIT9:ELPM    TEMP,Z+
+000211 9508              RET
+         ;
+         ;--------------------------------------
+         ;
+000212 e800      F_ERASE:LDI     DATA,$80
+000213 d01a              RCALL   F_CMD
+000214 e100              LDI     DATA,$10
+000215 d018              RCALL   F_CMD
+000216 ef14              LDI     TEMP,FLASH_CTRL
+000217 e003              LDI     DATA,0B00000011
+000218 d064              RCALL   FPGA_REG
+         
+000219 9ac7      F_ERAS1:SBI     PORTB,7 ;св.диод погасить
+         
+00021a e410              LDI     TEMP,SCR_LOADDR
+00021b e101              LDI     DATA,17
+00021c d060              RCALL   FPGA_REG
+00021d e411              LDI     TEMP,SCR_HIADDR
+00021e e000              LDI     DATA,0
+00021f d05d              RCALL   FPGA_REG
+         
+000220 ef13              LDI     TEMP,FLASH_DATA
+000221 d05b              RCALL   FPGA_REG
+         
+000222 930f              PUSH    DATA
+000223 d07c              RCALL   HEXBYTE
+000224 910f              POP     DATA
+         
+000225 98c7              CBI     PORTB,7 ;св.диод зажечь
+000226 ff07              SBRS    DATA,7
+000227 cff1              RJMP    F_ERAS1
+         ;
+         ; - - - - - - - - - - - - - - - - - - -
+         ;
+000228 ef00      F_RST:  LDI     DATA,$F0
+000229 d004              RCALL   F_CMD
+00022a e113              LDI     TEMP,19 ;~5 us @ 11.0592 MHz
+00022b 951a      F_RST1: DEC     TEMP    ;1
+00022c f7f1              BRNE    F_RST1  ;2
+00022d 9508              RET
+         ;
+         ;--------------------------------------
+         ;in:    DATA - instructions
+00022e 930f      F_CMD:  PUSH    DATA
+00022f ef14              LDI     TEMP,FLASH_CTRL
+000230 e001              LDI     DATA,0B00000001
+000231 d04b              RCALL   FPGA_REG
+000232 ef10              LDI     TEMP,FLASH_LOADDR
+000233 e505              LDI     DATA,$55
+000234 d048              RCALL   FPGA_REG
+000235 ef11              LDI     TEMP,FLASH_MIDADDR
+000236 e505              LDI     DATA,$55
+000237 d045              RCALL   FPGA_REG
+000238 ef13              LDI     TEMP,FLASH_DATA
+000239 ea0a              LDI     DATA,$AA
+00023a d042              RCALL   FPGA_REG
+00023b ef14              LDI     TEMP,FLASH_CTRL
+00023c e005              LDI     DATA,0B00000101
+00023d d03f              RCALL   FPGA_REG
+00023e e001              LDI     DATA,0B00000001
+00023f d042              RCALL   FPGA_SAME_REG
+000240 ef10              LDI     TEMP,FLASH_LOADDR
+000241 ea0a              LDI     DATA,$AA
+000242 d03a              RCALL   FPGA_REG
+000243 ef11              LDI     TEMP,FLASH_MIDADDR
+000244 e20a              LDI     DATA,$2A
+000245 d037              RCALL   FPGA_REG
+000246 ef13              LDI     TEMP,FLASH_DATA
+000247 e505              LDI     DATA,$55
+000248 d034              RCALL   FPGA_REG
+000249 ef14              LDI     TEMP,FLASH_CTRL
+00024a e005              LDI     DATA,0B00000101
+00024b d031              RCALL   FPGA_REG
+00024c e001              LDI     DATA,0B00000001
+00024d d034              RCALL   FPGA_SAME_REG
+00024e ef10              LDI     TEMP,FLASH_LOADDR
+00024f e505              LDI     DATA,$55
+000250 d02c              RCALL   FPGA_REG
+000251 ef11              LDI     TEMP,FLASH_MIDADDR
+000252 e505              LDI     DATA,$55
+000253 d029              RCALL   FPGA_REG
+000254 ef13              LDI     TEMP,FLASH_DATA
+000255 910f              POP     DATA
+000256 d026              RCALL   FPGA_REG
+000257 ef14              LDI     TEMP,FLASH_CTRL
+000258 e005              LDI     DATA,0B00000101
+000259 d023              RCALL   FPGA_REG
+00025a e001              LDI     DATA,0B00000001
+00025b c026              RJMP    FPGA_SAME_REG
+         ;
+         ;--------------------------------------
+         ;in:    YL,YH - address
+         ;out:   DATA - data
+          F_IN:
+00025c ef10              LDI     TEMP,FLASH_LOADDR
+00025d 2f0c              MOV     DATA,YL
+00025e d01e              RCALL   FPGA_REG
+00025f ef11              LDI     TEMP,FLASH_MIDADDR
+000260 2f0d              MOV     DATA,YH
+000261 d01b              RCALL   FPGA_REG
+000262 ef12              LDI     TEMP,FLASH_HIADDR
+000263 e000              LDI     DATA,$00
+000264 d018              RCALL   FPGA_REG
+000265 ef13              LDI     TEMP,FLASH_DATA
+000266 ef0f              LDI     DATA,$FF
+000267 c015              RJMP    FPGA_REG
+         ;
+         ;--------------------------------------
+         ;in:    YL,YH - address
+         ;       DATA - data
+000268 930f      F_OUT:  PUSH    DATA
+000269 ef14              LDI     TEMP,FLASH_CTRL
+00026a e001              LDI     DATA,0B00000001
+00026b d011              RCALL   FPGA_REG
+00026c ef10              LDI     TEMP,FLASH_LOADDR
+00026d 2f0c              MOV     DATA,YL
+00026e d00e              RCALL   FPGA_REG
+00026f ef11              LDI     TEMP,FLASH_MIDADDR
+000270 2f0d              MOV     DATA,YH
+000271 d00b              RCALL   FPGA_REG
+000272 ef12              LDI     TEMP,FLASH_HIADDR
+000273 e000              LDI     DATA,$00
+000274 d008              RCALL   FPGA_REG
+000275 ef13              LDI     TEMP,FLASH_DATA
+000276 910f              POP     DATA
+000277 d005              RCALL   FPGA_REG
+000278 ef14              LDI     TEMP,FLASH_CTRL
+000279 e005              LDI     DATA,0B00000101
+00027a d002              RCALL   FPGA_REG
+00027b e001              LDI     DATA,0B00000001
+00027c c005              RJMP    FPGA_SAME_REG
+         ;
+         ;--------------------------------------
+         ;
+          FPGA_REG:
+00027d 930f              PUSH    DATA
+00027e   +          SS_SET
+00027e 9ac0              SBI     PORTB,0
+          .ENDMACRO
+00027f b91f              OUT     SPDR,TEMP
+000280 d003              RCALL   RD_WHEN_RDY
+000281 910f              POP     DATA
+          FPGA_SAME_REG:
+000282   +          SS_CLR
+000282 98c0              CBI     PORTB,0
+          .ENDMACRO
+000283 b90f              OUT     SPDR,DATA
+         ;
+          RD_WHEN_RDY:
+000284 b00e              IN      R0,SPSR
+000285 fe07              SBRS    R0,SPIF
+000286 cffd              RJMP    RD_WHEN_RDY
+000287 b10f              IN      DATA,SPDR
+000288   +          SS_SET
+000288 9ac0              SBI     PORTB,0
+          .ENDMACRO
+000289 9508              RET
+         ;--------------------------------------
+         ;in:    XL - x (0..31)
+         ;       XH - y (0..23)
+          SET_SCR_CURSOR:
+00028a e210              LDI     TEMP,32
+00028b 9fb1              MUL     XH,TEMP
+00028c 27bb              CLR     XH
+00028d 0da0              ADD     XL,R0
+00028e 1db1              ADC     XH,R1
+00028f 9711              SBIW    XL,1
+000290 e410              LDI     TEMP,SCR_LOADDR
+000291 2f0a              MOV     DATA,XL
+000292 dfea              RCALL   FPGA_REG
+000293 e411              LDI     TEMP,SCR_HIADDR
+000294 2f0b              MOV     DATA,XH
+000295 cfe7              RJMP    FPGA_REG
+         ;
+         ;--------------------------------------
+         ;in:    Z == указательна строку (в младших 64K)
+          SCR_PRINTSTRZ:
+000296   +          SS_SET
+000296 9ac0              SBI     PORTB,0
+          .ENDMACRO
+000297 e414              LDI     TEMP,SCR_CHAR
+000298 b91f              OUT     SPDR,TEMP
+000299 dfea              RCALL   RD_WHEN_RDY
+          SCR_PRSTRZ1:
+00029a 9105              LPM     DATA,Z+
+00029b 2300              TST     DATA
+00029c f011              BREQ    SCR_PRSTRZ2
+00029d dfe4              RCALL   FPGA_SAME_REG
+00029e cffb              RJMP    SCR_PRSTRZ1
+          SCR_PRSTRZ2:
+00029f 9508              RET
+         ;
+         ;--------------------------------------
+         ;in:    DATA == byte
+0002a0 930f      HEXBYTE:PUSH    DATA
+0002a1 9502              SWAP    DATA
+0002a2 d001              RCALL   HEXHALF
+0002a3 910f              POP     DATA
+0002a4 700f      HEXHALF:ANDI    DATA,$0F
+0002a5 300a              CPI     DATA,$0A
+0002a6 f008              BRCS    HEXBYT1
+0002a7   +          ADDI    DATA,$07
+0002a7 5f09              SUBI    data,(-0x7&$FF)
+          .ENDMACRO
+0002a8   +  HEXBYT1:ADDI    DATA,$30
+0002a8 5d00              SUBI    data,(-0x30&$FF)
+          .ENDMACRO
+         ;
+         ; - - - - - - - - - - - - - - - - - - -
+         ;in:    DATA
+0002a9 931f      PUTCHAR:PUSH    TEMP
+0002aa   +          SS_SET
+0002aa 9ac0              SBI     PORTB,0
+          .ENDMACRO
+0002ab e414              LDI     TEMP,SCR_CHAR
+0002ac dfd0              RCALL   FPGA_REG
+0002ad 911f              POP     TEMP
+0002ae 9508              RET
+         ;
+         
+         
+         
+         
+         
+         ;DELAY
+         ;in:    DATA/10 == количество секунд
+          DELAY:
+0002af e14e              LDI     R20,$1E ;\
+0002b0 ef5e              LDI     R21,$FE ;/ 0,1 сек @ 11.0592MHz
+0002b1 95c8      DELAY1: LPM             ;3
+0002b2 95c8              LPM             ;3
+0002b3 95c8              LPM             ;3
+0002b4 95c8              LPM             ;3
+0002b5 5041              SUBI    R20,1   ;1
+0002b6 4050              SBCI    R21,0   ;1
+0002b7 4000              SBCI    DATA,0  ;1
+0002b8 f7c1              BRNE    DELAY1  ;2(1)
+0002b9 9508              RET
+         ;
+         
+         
+         
+         ;--------------------------------------
+         ;
+         ;01234567890123456789012345678901
+         ;ID: xx xx   Erase xx   Write
+         ;0000 11 22 33 44 55 66 77 88 99
+         ;
+          MSG_ID_FLASH:
+                  .DB     "ID: ",0,0
+0002ba 4449
+0002bb 203a
+0002bc 0000
+          MSG_F_ERASE:
+                  .DB     "   Erase ",0
+0002bd 2020
+0002be 4520
+0002bf 6172
+0002c0 6573
+0002c1 0020
+          MSG_F_WRITE:    ;12345678901234567890123456789012
+                  .DB     "   Write ",0
+0002c2 2020
+0002c3 5720
+0002c4 6972
+0002c5 6574
+0002c6 0020
+          MSG_F_COMPLETE:
+                  .DB     "=========== Complete ===========",0,0
+0002c7 3d3d
+0002c8 3d3d
+0002c9 3d3d
+0002ca 3d3d
+0002cb 3d3d
+0002cc 203d
+0002cd 6f43
+0002ce 706d
+0002cf 656c
+0002d0 6574
+0002d1 3d20
+0002d2 3d3d
+0002d3 3d3d
+0002d4 3d3d
+0002d5 3d3d
+0002d6 3d3d
+0002d7 0000
+         ;
+          PACKED_FPGA:
+          .NOLIST
+
+Assembly complete with no errors.
