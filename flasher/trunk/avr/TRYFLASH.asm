@@ -101,6 +101,27 @@ START:  CLI
         OUT     SPL,TEMP
         LDI     TEMP,HIGH(RAMEND)
         OUT     SPH,TEMP
+
+
+;очищаем нахуй всю память и все регистры
+
+	ldi	r30,29
+	ldi	r31,0
+clr1:
+	st	Z,r31
+	dec	r30
+	brpl	clr1
+
+	ldi	r30,0
+	ldi	r31,1 ; $0100
+clr2:
+	st	Z,r0
+	adiw	r30,1
+	cpi	r31,$11 ; <$1100
+	brne	clr2
+
+
+
 ;
         LDI     TEMP,      0B11111111
         OUTPORT PORTG,TEMP
@@ -141,14 +162,24 @@ START:  CLI
         LDI     TEMP,(1<<SPE)|(1<<DORD)|(1<<MSTR)|(0<<CPOL)|(0<<CPHA)
         OUT     SPCR,TEMP
 
-        SBIC    PINC,5
-        RJMP    UP12
-        SBI     PORTB,7
-UP11:   SBIS    PINC,5
-        RJMP    UP11
-        CBI     PORTB,7
+;        SBIC    PINC,5
+ ;       RJMP    UP12
+  ;      SBI     PORTB,7
+;UP11:   SBIS    PINC,5
+ ;       RJMP    UP11
+  ;      CBI     PORTB,7
+;UP12:
 
-UP12:
+
+
+	ldi DATA,10
+	rcall DELAY
+
+
+
+
+
+
         INPORT  TEMP,DDRF
         SBR     TEMP,(1<<nCONFIG)
         OUTPORT DDRF,TEMP
@@ -281,6 +312,15 @@ PUTB2:  IN      R1,SPSR
                                         ;END_DEC40
 DEMLZEND:;вҐЇҐам ¬®¦­® о§ вм бвҐЄ
 ;SPI reinit
+
+;ждём, пока поднимется CONF_DONE - значит, что прошивка всосалась и заработала, всё заебись
+qwertyu:inport  DATA,PINF
+        andi    DATA,(1<<CONF_DONE)
+        breq    qwertyu
+
+
+
+
         LDI     TEMP,(1<<SPE)|(0<<DORD)|(1<<MSTR)|(0<<CPOL)|(0<<CPHA)
         OUT     SPCR,TEMP
 ;¤«п beeper- 
@@ -786,6 +826,29 @@ PUTCHAR:PUSH    TEMP
         POP     TEMP
         RET
 ;
+
+
+
+
+
+;DELAY
+;in:    DATA/10 == Є®«ЁзҐбвў® бҐЄг­¤
+DELAY:
+        LDI     R20,$1E ;\
+        LDI     R21,$FE ;/ 0,1 бҐЄ @ 11.0592MHz
+DELAY1: LPM             ;3
+        LPM             ;3
+        LPM             ;3
+        LPM             ;3
+        SUBI    R20,1   ;1
+        SBCI    R21,0   ;1
+        SBCI    DATA,0  ;1
+        BRNE    DELAY1  ;2(1)
+        RET
+;
+
+
+
 ;--------------------------------------
 ;
 ;01234567890123456789012345678901
