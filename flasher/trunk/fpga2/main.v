@@ -185,17 +185,6 @@ module main(
  wire [5:0] bcolor;
  wire [5:0] color;
 
- initial
-  begin
-   hcount = 9'd0;
-   hblank = 1'b1;
-   hsync = 1'b1;
-   vcount = 9'd0;
-   vsync = 1'b1;
-   vblank = 1'b1;
-   csync = 1'b1;
-  end
-
  always @(posedge fclk)
   begin
    //
@@ -325,17 +314,6 @@ module main(
  wire spicsn_rising;
  wire spicsn_falling;
 
- initial
-  begin
-   flash_cs = 1'b0;
-   flash_oe = 1'b0;
-   flash_we = 1'b0;
-   sd_cs = 1'b0;
-   scr_wren_c = 1'b0;
-   scr_addr = 10'h000;
-   covox = 8'h7f;
-  end
-
  always @(posedge spick)
   begin
    if ( spics_n )
@@ -385,7 +363,10 @@ module main(
      if ( number==FLASH_DATA )
       outdata <= d;
      else
-      outdata <= 8'hff;
+      if ( number==COVOX )
+       outdata <= covox;
+      else
+       outdata <= 8'hff;
     end
 
   end
