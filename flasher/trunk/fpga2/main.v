@@ -332,7 +332,6 @@ module main(
    flash_we = 1'b0;
    sd_cs = 1'b0;
    scr_wren_c = 1'b0;
-   scr_wren_a = 1'b0;
    scr_addr = 10'h000;
    covox = 8'h7f;
   end
@@ -374,7 +373,6 @@ module main(
      SCR_CHAR:      begin
                      scr_char <= indata;
                      scr_wren_c <= 1'b1;
-                     scr_wren_a <= 1'b1;
                     end
      COVOX:         covox <= indata;
     endcase
@@ -382,7 +380,6 @@ module main(
    if ( spicsn_falling )
     begin
      scr_wren_c <= 1'b0;
-     scr_wren_a <= 1'b0;
      if ( ( number==SCR_FILL ) || ( number==SCR_CHAR ) )
       scr_addr <= scr_addr + 10'd1;
      if ( number==FLASH_DATA )
