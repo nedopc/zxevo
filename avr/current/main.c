@@ -13,23 +13,16 @@
 #include "ps2.h"
 #include "zx.h"
 #include "spi.h"
+#include "rs232.h"
 
 
-
-
-
+//fpga compressed data
 extern const char fpga[] PROGMEM; // linker symbol
-
 
 ULONG indata;
 UBYTE dbuf[DBSIZE];
 
-
-
-
-
 void InitHardware(void);
-
 
 int main()
 {
@@ -38,7 +31,9 @@ int main()
 
 	InitHardware();
 
-
+#ifdef LOGENABLE
+	rs232_init();
+#endif
 
 
 	PORTF |= (1<<PF3); // turn POWER on
@@ -76,33 +71,37 @@ int main()
 	TIMSK = (1<<TOIE2);
 
 
-        ps2_count = 11;
+	//init some device
+    ps2keyboard_count = 11;
+	ps2mouse_count = 12;
+	ps2mouse_initstep = 0;
+	ps2mouse_resp_count = 0;
+	ps2_flags = 0;
 
-	EICRB = (1<<ISC41) + (0<<ISC40); // falling edge INT4
-	EIFR = (1<<INTF4); // clear spurious ints there
-	EIMSK |= (1<<INT4); // enable int4
+
+	//set external interrupt
+	//INT4 - PS2 Keyboard  (falling edge)
+	//INT5 - PS2 Mouse     (falling edge)
+	EICRB = (1<<ISC41)+(0<<ISC40) + (1<<ISC51)+(0<<ISC50); // set condition for interrupt
+	EIFR = (1<<INTF4)|(1<<INTF5); // clear spurious ints there
+	EIMSK |= (1<<INT4)|(1<<INT5); // enable
 
 	zx_init();
 
+#ifdef LOGENABLE
+	to_log("zx_init OK\r\n");
+#endif
+
+
 	sei(); // globally go interrupting
 
-
-        for(;;)
-        {
-        	ps2_task();
-        	zx_task(ZX_TASK_WORK);
-        }
-
-
-
-
-
-
-
-
-
-
-
+	//main loop
+    for(;;)
+    {
+        ps2keyboard_task();
+		ps2mouse_task();
+        zx_task(ZX_TASK_WORK);
+    }
 
 }
 
