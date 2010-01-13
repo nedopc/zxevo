@@ -29,26 +29,32 @@
 .EQU    FLASH_HIADDR    =$F2
 .EQU    FLASH_DATA      =$F3
 .EQU    FLASH_CTRL      =$F4
+.EQU    SCR_LOADDR      =$40
+.EQU    SCR_HIADDR      =$41
+.EQU    SCR_CHAR        =$44
 
-.MACRO  SS_SET
+.MACRO  SPICS_SET
         SBI     PORTB,0
 .ENDMACRO
 
-.MACRO  SS_CLR
+.MACRO  SPICS_CLR
         CBI     PORTB,0
 .ENDMACRO
 
+.MACRO  LED_ON
+        CBI     PORTB,7
+.ENDMACRO
+
+.MACRO  LED_OFF
+        SBI     PORTB,7
+.ENDMACRO
 
 .DSEG
         .ORG    $0100
-BUFFER:                 ;главный буфер
-        .ORG    $0200
-BUFSECT:                ;буфер сектора
-        .ORG    $0400
-BUF4FAT:                ;временный буфер (FAT и т.п.)
-        .ORG    $0600
-HEADER:                 ;заголовок файла
-        .ORG    $0680
+BUFFER:
+        .ORG    $0300
+BUF4FAT:
+        .ORG    $0500
 CAL_FAT:.BYTE   1       ;тип обнаруженной FAT
 MANYFAT:.BYTE   1       ;количество FAT-таблиц
 BYTSSEC:.BYTE   1       ;количество секторов в кластере
@@ -67,13 +73,17 @@ NUMSECK:.BYTE   1       ;счетчик секторов в кластере
 TFILCLS:.BYTE   4       ;текущий кластер
 MPHWOST:.BYTE   1       ;кол-во секторов в последнем кластере
 KOL_CLS:.BYTE   4       ;кол-во кластеров файла минус 1
-;STEP:
+ZTFILCLS:.BYTE  4
+ZMPHWOST:.BYTE  1
+ZKOL_CLS:.BYTE  4
 SDERROR:.BYTE   1
 LASTSECFLAG:
         .BYTE   1
 F_ADDR0:.BYTE   1
 F_ADDR1:.BYTE   1
 F_ADDR2:.BYTE   1
+ERRFLG1:.BYTE   1
+ERRFLG2:.BYTE   1
 
 .CSEG
         .ORG    0
@@ -112,29 +122,83 @@ F_ADDR2:.BYTE   1
         JMP     START   ;USART1_TXC ; USART1 TX Complete Handler
         JMP     START   ;TWI_INT ; Two-wire Serial Interface Interrupt Handler
         JMP     START   ;SPM_RDY ; SPM Ready Handler
-
-        .DW     0,0
-        .DB     "================"
-        .DB     " ZX Evo Flasher "
-        .DB     "================"
 ;
-        .ORG    $DF00
+;--------------------------------------
+;
+MSG_U_TITLE:
+        .DB     $0A,$0A,$0A,$0A,$0A,$0D
+MSG_TITLE:
+        .DB     "  ZX Evolution Flasher (100113)",0
+MSG_CFGFPGA:
+        .DB     $0D,$0A,"Set temporary configuration... ",0
+MSG_OK:
+        .DB     "Ok!",$0D,$0A,0
+;
+MSG_ID_FLASH:
+        .DB     "ID flash memory chip: ",0,0
+MSG_OPENFILE:
+        .DB     "Open file from SD-card...",0
+MSG_SDERROR:
+        .DB     "SD error: ",0,0
+MSG_CARD:
+        .DB     "Card",0,0
+MSG_READERROR:
+        .DB     "Read error",0,0
+MSG_FAT:
+        .DB     "FAT",0
+MSG_FILE:
+        .DB     "File",0,0
+MSG_NOTFOUND:
+        .DB     " not found",0,0
+MSG_EMPTY:
+        .DB     " empty",0,0
+MSG_TOOBIG:
+        .DB     " too big",0,0
+MSG_F_ERASE:
+        .DB     "Erase...",0,0
+MSG_F_WRITE:
+        .DB     "Write...",0,0
+MSG_F_CHECK:
+        .DB     "Check...",0,0
+MSG_F_COMPLETE:
+        .DB     "Successfully complete.",0,0
+MSG_F_ERROR:
+        .DB     "ERROR!",0,0
+MSG_HALT:
+        .DB     "HALT!",0
+;
+CMD00:  .DB     $40,$00,$00,$00,$00,$95
+CMD08:  .DB     $48,$00,$00,$01,$AA,$87
+CMD16:  .DB     $50,$00,$00,$02,$00,$FF
+CMD55:  .DB     $77,$00,$00,$00,$00,$FF ;app_cmd
+CMD58:  .DB     $7A,$00,$00,$00,$00,$FF ;read_ocr
+CMD59:  .DB     $7B,$00,$00,$00,$00,$FF ;crc_on_off
+FILENAME:
+        .DB     "ZXEVO   ROM",0
+;
+PACKED_FPGA:
+.NOLIST
+.INCLUDE "FPGA.INC"
+.LIST
+;
+;--------------------------------------
+;
 START:  CLI
         CLR     NULL
         LDI     TEMP,$01
         MOV     ONE,TEMP
         LDI     TEMP,$FF
         MOV     FF,TEMP
-;WatchDog OFF, если вдруг включен
+;WatchDog OFF
         LDI     TEMP,0B00011111
         OUT     WDTCR,TEMP
         OUT     WDTCR,NULL
-;будем юзать стек
+;
         LDI     TEMP,LOW(RAMEND)
         OUT     SPL,TEMP
         LDI     TEMP,HIGH(RAMEND)
         OUT     SPH,TEMP
-;будем юзать ELPM
+;
         OUT     RAMPZ,ONE
 ;
         LDI     TEMP,      0B11111111
@@ -147,34 +211,29 @@ START:  CLI
         OUTPORT DDRF,TEMP
 
         LDI     TEMP,      0B11111111
-        OUTPORT PORTE,TEMP
+        OUT     PORTE,TEMP
         LDI     TEMP,      0B00000000
-        OUTPORT DDRE,TEMP
+        OUT     DDRE,TEMP
 
         LDI     TEMP,      0B11111111
-        OUTPORT PORTD,TEMP
+        OUT     PORTD,TEMP
         LDI     TEMP,      0B00000000
-        OUTPORT DDRD,TEMP
+        OUT     DDRD,TEMP
 
         LDI     TEMP,      0B11011111
-        OUTPORT PORTC,TEMP
+        OUT     PORTC,TEMP
         LDI     TEMP,      0B00000000
-        OUTPORT DDRC,TEMP
+        OUT     DDRC,TEMP
 
-        LDI     TEMP,      0B01111001
-        OUTPORT PORTB,TEMP
+        LDI     TEMP,      0B11111001
+        OUT     PORTB,TEMP
         LDI     TEMP,      0B10000111
-        OUTPORT DDRB,TEMP
+        OUT     DDRB,TEMP
 
         LDI     TEMP,      0B11111111
-        OUTPORT PORTA,TEMP
+        OUT     PORTA,TEMP
         LDI     TEMP,      0B00000000
-        OUTPORT DDRA,TEMP
-;SPI init
-        LDI     TEMP,(1<<SPI2X)
-        OUT     SPSR,TEMP
-        LDI     TEMP,(1<<SPE)|(1<<DORD)|(1<<MSTR)|(0<<CPOL)|(0<<CPHA)
-        OUT     SPCR,TEMP
+        OUT     DDRA,TEMP
 ;UART1 Set baud rate
         OUTPORT UBRR1H,NULL
         LDI     TEMP,5     ;115200 baud, 11059.2 kHz, Normal speed
@@ -187,21 +246,22 @@ START:  CLI
 ;UART1 Разрешаем передачу
         LDI     TEMP,(1<<TXEN)
         OUTPORT UCSR1B,TEMP
+;SPI init
+        LDI     TEMP,(1<<SPI2X)
+        OUT     SPSR,TEMP
+        LDI     TEMP,(1<<SPE)|(1<<DORD)|(1<<MSTR)|(0<<CPOL)|(0<<CPHA)
+        OUT     SPCR,TEMP
 
-        LDIZ    MSG_TITLE*2
-        RCALL   PRINTSTRZ
+        LDIZ    MSG_U_TITLE*2
+        RCALL   UART_PRINTSTRZ
 
-        SBIC    PINC,5
-        RJMP    UP12
-        LDIZ    MSG_POWERON*2
-        RCALL   PRINTSTRZ
-        SBI     PORTB,7
-UP11:   SBIS    PINC,5
+UP11:   SBIS    PINF,0 ;PINC,5 ; а если питание через PWR3 ?
         RJMP    UP11
-        CBI     PORTB,7
+        LDI     DATA,5
+        RCALL   DELAY
 
-UP12:   LDIZ    MSG_CFGFPGA*2
-        RCALL   PRINTSTRZ
+        LDIZ    MSG_CFGFPGA*2
+        RCALL   UART_PRINTSTRZ
 
         INPORT  TEMP,DDRF
         SBR     TEMP,(1<<nCONFIG)
@@ -215,25 +275,16 @@ LDFPGA1:DEC     TEMP    ;1
         CBR     TEMP,(1<<nCONFIG)
         OUTPORT DDRF,TEMP
 
-LDFPGA2:INPORT  DATA,PINF
-        ANDI    DATA,(1<<nSTATUS)
-        BREQ    LDFPGA2
+LDFPGA2:SBIS    PINF,nSTATUS
+        RJMP    LDFPGA2
 
         LDIZ    PACKED_FPGA*2
         LDIY    BUFFER
-                                        ;A=DATA; A'=TEMP; B=R21; C=R20;
-;deMLZ                                  ;DEC40
 ;(не трогаем стек! всё ОЗУ под буфер)
-        LDI     TEMP,$80                ;        LD      A,#80
-                                        ;        EX      AF,AF'--------
-MS:     ELPM    R0,Z+                   ;MS      LDI
+        LDI     TEMP,$80
+MS:     LPM     R0,Z+
         ST      Y+,R0
 ;-begin-PUT_BYTE_1---
-;UART тут для отладки ;)
-;WRUX1:  INPORT  R1,UCSR1A
-;        SBRS    R1,UDRE
-;        RJMP    WRUX1
-;        OUTPORT UDR1,R0
         OUT     SPDR,R0
 PUTB1:  IN      R1,SPSR
         SBRS    R1,SPIF
@@ -242,94 +293,80 @@ PUTB1:  IN      R1,SPSR
         SUBI    YH,HIGH(BUFFER) ;
         ANDI    YH,DBMASK_HI    ;Y warp
         ADDI    YH,HIGH(BUFFER) ;
-M0:     LDI     R21,$02                 ;M0      LD      BC,#2FF
+M0:     LDI     R21,$02
         LDI     R20,$FF
-M1:                                     ;M1      EX      AF,AF'--------
-M1X:    ADD     TEMP,TEMP               ;M1X     ADD     A,A
-        BRNE    M2                      ;        JR      NZ,M2
-        ELPM    TEMP,Z+                 ;        LD      A,(HL)
-                                        ;        INC     HL
-        ROL     TEMP                    ;        RLA
-M2:     ROL     R20                     ;M2      RL      C
-        BRCC    M1X                     ;        JR      NC,M1X
-                                        ;        EX      AF,AF'--------
-        DEC     R21                     ;        DJNZ    X2
+M1:
+M1X:    ADD     TEMP,TEMP
+        BRNE    M2
+        LPM     TEMP,Z+
+        ROL     TEMP
+M2:     ROL     R20
+        BRCC    M1X
+        DEC     R21
         BRNE    X2
-        LDI     DATA,2                  ;        LD      A,2
-        ASR     R20                     ;        SRA     C
-        BRCS    N1                      ;        JR      C,N1
-        INC     DATA                    ;        INC     A
-        INC     R20                     ;        INC     C
-        BREQ    N2                      ;        JR      Z,N2
-        LDI     R21,$03                 ;        LD      BC,#33F
+        LDI     DATA,2
+        ASR     R20
+        BRCS    N1
+        INC     DATA
+        INC     R20
+        BREQ    N2
+        LDI     R21,$03
         LDI     R20,$3F
-        RJMP    M1                      ;        JR      M1
-                                        ;
-X2:     DEC     R21                     ;X2      DJNZ    X3
+        RJMP    M1
+
+X2:     DEC     R21
         BRNE    X3
-        LSR     R20                     ;        SRL     C
-        BRCS    MS                      ;        JR      C,MS
-        INC     R21                     ;        INC     B
-        RJMP    M1                      ;        JR      M1
-X6:                                     ;X6
-        ADD     DATA,R20                ;        ADD     A,C
-N2:     LDI     R21,$04                 ;N2
-        LDI     R20,$FF                 ;        LD      BC,#4FF
-        RJMP    M1                      ;        JR      M1
-N1:                                     ;N1
-        INC     R20                     ;        INC     C
-        BRNE    M4                      ;        JR      NZ,M4
-                                        ;        EX      AF,AF'--------
-        INC     R21                     ;        INC     B
-N5:     ROR     R20                     ;N5      RR      C
-        BRCS    DEMLZEND                ;        RET     C
-        ROL     R21                     ;        RL      B
-        ADD     TEMP,TEMP               ;        ADD     A,A
-        BRNE    N6                      ;        JR      NZ,N6
-        ELPM    TEMP,Z+                 ;        LD      A,(HL)
-                                        ;        INC     HL
-        ROL     TEMP                    ;        RLA
-N6:     BRCC    N5                      ;N6      JR      NC,N5
-                                        ;        EX      AF,AF'--------
-        ADD     DATA,R21                ;        ADD     A,B
-        LDI     R21,6                   ;        LD      B,6
-        RJMP    M1                      ;        JR      M1
-X3:     DEC     R21                     ;X3
-        BRNE    X4                      ;        DJNZ    X4
-        LDI     DATA,1                  ;        LD      A,1
-        RJMP    M3                      ;        JR      M3
-X4:     DEC     R21                     ;X4      DJNZ    X5
+        LSR     R20
+        BRCS    MS
+        INC     R21
+        RJMP    M1
+
+X6:     ADD     DATA,R20
+N2:     LDI     R21,$04
+        LDI     R20,$FF
+        RJMP    M1
+
+N1:     INC     R20
+        BRNE    M4
+        INC     R21
+N5:     ROR     R20
+        BRCS    DEMLZEND
+        ROL     R21
+        ADD     TEMP,TEMP
+        BRNE    N6
+        LPM     TEMP,Z+
+        ROL     TEMP
+N6:     BRCC    N5
+        ADD     DATA,R21
+        LDI     R21,6
+        RJMP    M1
+X3:     DEC     R21
+        BRNE    X4
+        LDI     DATA,1
+        RJMP    M3
+X4:     DEC     R21
         BRNE    X5
-        INC     R20                     ;        INC     C
-        BRNE    M4                      ;        JR      NZ,M4
-        LDI     R21,$05                 ;        LD      BC,#51F
+        INC     R20
+        BRNE    M4
+        LDI     R21,$05
         LDI     R20,$1F
-        RJMP    M1                      ;        JR      M1
-X5:     DEC     R21                     ;X5
-        BRNE    X6                      ;        DJNZ    X6
-        MOV     R21,R20                 ;        LD      B,C
-M4:     ELPM    R20,Z+                  ;M4      LD      C,(HL)
-                                        ;        INC     HL
-M3:     DEC     R21                     ;M3      DEC     B
-                                        ;        PUSH    HL
-        MOV     XL,R20                  ;        LD      L,C
-        MOV     XH,R21                  ;        LD      H,B
-        ADD     XL,YL                   ;        ADD     HL,DE
+        RJMP    M1
+X5:     DEC     R21
+        BRNE    X6
+        MOV     R21,R20
+M4:     LPM     R20,Z+
+M3:     DEC     R21
+        MOV     XL,R20
+        MOV     XH,R21
+        ADD     XL,YL
         ADC     XH,YH
-                                        ;        LD      C,A
-                                        ;        LD      B,0
 LDIRLOOP:
         SUBI    XH,HIGH(BUFFER) ;
         ANDI    XH,DBMASK_HI    ;X warp
         ADDI    XH,HIGH(BUFFER) ;
-        LD      R0,X+                   ;        LDIR
+        LD      R0,X+
         ST      Y+,R0
 ;-begin-PUT_BYTE_2---
-;UART тут для отладки ;)
-;WRUX2:  INPORT  R1,UCSR1A
-;        SBRS    R1,UDRE
-;        RJMP    WRUX2
-;        OUTPORT UDR1,R0
         OUT     SPDR,R0
 PUTB2:  IN      R1,SPSR
         SBRS    R1,SPIF
@@ -340,44 +377,57 @@ PUTB2:  IN      R1,SPSR
         ADDI    YH,HIGH(BUFFER) ;
         DEC     DATA
         BRNE    LDIRLOOP
-                                        ;        POP     HL
-        RJMP    M0                      ;        JR      M0
-                                        ;END_DEC40
-DEMLZEND:;теперь можно юзать стек
+
+        RJMP    M0
+;теперь можно юзать стек
+DEMLZEND:
+        SBIS    PINF,CONF_DONE
+        RJMP    DEMLZEND
 ;SPI reinit
         LDI     TEMP,(1<<SPE)|(0<<DORD)|(1<<MSTR)|(0<<CPOL)|(0<<CPHA)
         OUT     SPCR,TEMP
-;для beeper-а
+
         SBI     DDRE,6
-;св.диод погасить
-        SBI     PORTB,7
-;
+        LED_OFF
+        LDIZ    MSG_OK*2
+        RCALL   UART_PRINTSTRZ
 ; - - - - - - - - - - - - - - - - - - -
-;
+        LDI     XL,0
+        LDI     XH,0
+        RCALL   SET_CURSOR
+        LDIZ    MSG_TITLE*2
+        RCALL   PRINTSTRZ
+
+        LDI     XL,0
+        LDI     XH,2
+        RCALL   SET_CURSOR
         LDIZ    MSG_ID_FLASH*2
         RCALL   PRINTSTRZ
 
         RCALL   F_ID
-        MOV     DATA,XL
+        MOV     DATA,ZL
         RCALL   HEXBYTE
         LDI     DATA,$20
-        RCALL   WRUART
-        MOV     DATA,XH
+        RCALL   PUTCHAR
+        MOV     DATA,ZH
         RCALL   HEXBYTE
 
+        LDI     XL,0
+        LDI     XH,3
+        RCALL   SET_CURSOR
         LDIZ    MSG_OPENFILE*2
         RCALL   PRINTSTRZ
 ;
 ; - - - - - - - - - - - - - - - - - - -
 ;инициализация SD карточки
-        SS_SET
+        SPICS_SET
         LDI     DATA,SD_DATA
         OUT     SPDR,DATA
 SDINIT0:IN      R0,SPSR
         SBRS    R0,SPIF
         RJMP    SDINIT0
         IN      R0,SPDR
-        SS_CLR
+        SPICS_CLR
 
         LDI     TEMP,32
         RCALL   SD_RD_DUMMY
@@ -673,7 +723,7 @@ FNDMP32:LDD     DATA,Z+$0B      ;атрибуты                        │ ║
         PUSH    ZL
         MOVW    XL,ZL
         LDIZ    FILENAME*2
-DALSHE: ELPM    DATA,Z+
+DALSHE: LPM     DATA,Z+
         TST     DATA
         BREQ    NASHEL
         LD      TEMP,X+
@@ -701,6 +751,8 @@ NASHEL: MOV     ZH,XH
         LDD     YH,Z+$15        ;считали номер первого кластера файла
         STSX    TFILCLS+0
         STSY    TFILCLS+2
+        STSX    ZTFILCLS+0
+        STSY    ZTFILCLS+2
         LDD     XL,Z+$1C
         LDD     XH,Z+$1D
         LDD     YL,Z+$1E
@@ -714,12 +766,12 @@ NASHEL: MOV     ZH,XH
        LDI     DATA,5  ;пустой файл
         RJMP    SD_ERROR
 F01:
-        TST     YH
-        BRNE    FILE_BIG        ;большой файл
-        MOV     DATA,YL
-        ANDI    DATA,$F8
-        BREQ    F02
-FILE_BIG:
+        LDI     DATA,$08
+        CP      XL,ONE
+        CPC     XH,NULL
+        CPC     YL,DATA
+        CPC     YH,NULL
+        BRCS    F02             ;большой файл
        LDI     DATA,6  ;большой файл
         RJMP    SD_ERROR
 F02:
@@ -735,65 +787,172 @@ F02:
         AND     DATA,XL
         INC     DATA
         STS     MPHWOST,DATA    ;кол-во секторов в последнем кластере
+        STS     ZMPHWOST,DATA
         LDS     DATA,BYTSSEC
         RCALL   BCDE_A
         STSX    KOL_CLS+0
         STSY    KOL_CLS+2
+        STSX    ZKOL_CLS+0
+        STSY    ZKOL_CLS+2
         STS     NUMSECK,NULL
 ; - - - - - - - - - - - - - - - - - - -
-        LDIZ    MSG_F_CONFIRM*2
-        RCALL   PRINTSTRZ
-;св.диод зажечь
-        CBI     PORTB,7
-        RCALL   SOFTBUTTON
-
+        LDI     XL,0
+        LDI     XH,4
+        RCALL   SET_CURSOR
         LDIZ    MSG_F_ERASE*2
         RCALL   PRINTSTRZ
         RCALL   F_ERASE
-;
+; - - -
+        LDI     XL,0
+        LDI     XH,5
+        RCALL   SET_CURSOR
         LDIZ    MSG_F_WRITE*2
         RCALL   PRINTSTRZ
+        LDI     XL,0
+        LDI     XH,16
+        RCALL   SET_CURSOR
+        LDI     DATA,$01 ;"░"
+        LDI     TEMP,SCR_CHAR
+        RCALL   FPGA_REG
+        LDI     TEMP,$FF
+FCHXY1: SPICS_CLR
+        SPICS_SET
+        DEC     TEMP
+        BRNE    FCHXY1
+        LDI     XL,0
+        LDI     XH,16
+        RCALL   SET_CURSOR
+
         STS     F_ADDR0,NULL
         STS     F_ADDR1,NULL
         STS     F_ADDR2,NULL
-F12:
-        RCALL   NEXTSEC
+
+F13:    RCALL   NEXTSEC
         STS     LASTSECFLAG,DATA
 
-        LDIX    BUFSECT
-        LDS     YL,F_ADDR0
-        LDS     YH,F_ADDR1
-        LDS     ZL,F_ADDR2
+        LDIZ    BUFFER
+        LDS     XL,F_ADDR0
+        LDS     XH,F_ADDR1
+        LDS     YL,F_ADDR2
 
-        MOV     DATA,YL
-        OR      DATA,YH
-        ANDI    DATA,$3F
-        BRNE    F11
-        LDI     DATA,$23 ;"#"
-        RCALL   WRUART
-F11:
-        RCALL   F_WRITE
-        ADIW    YL,1
-        ADC     ZL,NULL
+F11:    RCALL   F_WRITE
         ADIW    XL,1
-        CPI     XH,HIGH(BUFSECT+512)
+        ADC     YL,NULL
+        ADIW    ZL,1
+        CPI     ZH,HIGH(BUFFER+512)
         BRNE    F11
-
-        STS     F_ADDR0,YL
-        STS     F_ADDR1,YH
-        STS     F_ADDR2,ZH
 ;св.диод - мигать при программировании
-        SBI     PORTB,7
-        SBRC    YH,1
-        CBI     PORTB,7
+        LED_OFF
+        SBRC    XH,1
+        LED_ON
 
+        STS     F_ADDR0,XL
+        STS     F_ADDR1,XH
+        STS     F_ADDR2,YL
+
+        CPI     XL,$00
+        BRNE    F12
+        MOV     DATA,XH
+        ANDI    DATA,$07
+        BRNE    F12
+        LDI     DATA,$02 ;"▒"
+        RCALL   PUTCHAR
+F12:
         LDS     DATA,LASTSECFLAG
         TST     DATA
-        BRNE    F12
-
+        BRNE    F13
+; - - -
         RCALL   F_RST
-        LDIZ    MSG_F_COMPLETE*2
+        LDI     TEMP,FLASH_CTRL
+        LDI     DATA,0B00000011
+        RCALL   FPGA_REG
+        LDI     XL,0
+        LDI     XH,6
+        RCALL   SET_CURSOR
+        LDIZ    MSG_F_CHECK*2
         RCALL   PRINTSTRZ
+        LDI     XL,0
+        LDI     XH,16
+        RCALL   SET_CURSOR
+
+        LDSX    ZTFILCLS+0
+        LDSY    ZTFILCLS+2
+        STSX    TFILCLS+0
+        STSY    TFILCLS+2
+        LDS     DATA,ZMPHWOST
+        STS     MPHWOST,DATA
+        LDSX    ZKOL_CLS+0
+        LDSY    ZKOL_CLS+2
+        STSX    KOL_CLS+0
+        STSY    KOL_CLS+2
+        STS     NUMSECK,NULL
+        STS     ERRFLG1,NULL
+        STS     ERRFLG2,NULL
+;
+        STS     F_ADDR0,NULL
+        STS     F_ADDR1,NULL
+        STS     F_ADDR2,NULL
+
+F25:    RCALL   NEXTSEC
+        STS     LASTSECFLAG,DATA
+        LDIZ    BUFFER
+        LDS     XL,F_ADDR0
+        LDS     XH,F_ADDR1
+        LDS     YL,F_ADDR2
+
+F21:    RCALL   F_IN
+        LD      TEMP,Z+
+        CP      DATA,TEMP
+        BREQ    F26
+        STS     ERRFLG1,ONE
+F26:    ADIW    XL,1
+        ADC     YL,NULL
+        CPI     ZH,HIGH(BUFFER+512)
+        BRNE    F21
+;св.диод - мигать при проверке
+        LED_OFF
+        SBRC    XH,3
+        LED_ON
+
+        STS     F_ADDR0,XL
+        STS     F_ADDR1,XH
+        STS     F_ADDR2,YL
+
+        CPI     XL,$00
+        BRNE    F22
+        MOV     DATA,XH
+        ANDI    DATA,$07
+        BRNE    F22
+        LDS     TEMP,ERRFLG1
+        TST     TEMP
+        BREQ    F23
+        STS     ERRFLG2,ONE
+        STS     ERRFLG1,NULL
+        LDI     DATA,$58 ;"X"
+        RJMP    F24
+F23:    LDI     DATA,$03 ;"█"
+F24:    RCALL   PUTCHAR
+F22:
+        LDS     DATA,LASTSECFLAG
+        TST     DATA
+        BRNE    F25
+; - - -
+        LED_OFF
+        LDI     XL,0
+        LDI     XH,7
+        RCALL   SET_CURSOR
+        LDIZ    MSG_F_ERROR*2
+        LDS     TEMP,ERRFLG2
+        TST     TEMP
+        BRNE    F91
+        LDIZ    MSG_F_COMPLETE*2
+F91:    RCALL   PRINTSTRZ
+        LDI     XL,0
+        LDI     XH,9
+        RCALL   SET_CURSOR
+        LDIZ    MSG_HALT*2
+        RCALL   PRINTSTRZ
+        CBI     DDRE,6
 STOP1:  RJMP    STOP1
 
 ;
@@ -826,7 +985,7 @@ SD_RD_DUMMY:
 SD_WR_PGM_6:
         LDI     TEMP,6
 SD_WR_PGX:
-SDWRP61:ELPM    DATA,Z+
+SDWRP61:LPM     DATA,Z+
         RCALL   SD_EXCHANGE
         DEC     TEMP
         BRNE    SDWRP61
@@ -905,7 +1064,7 @@ SDRDSE8:
 ;--------------------------------------
 ;
 LOAD_DATA:
-        LDIZ    BUFSECT
+        LDIZ    BUFFER
         RCALL   SD_READ_SECTOR  ;читать один сектор
         RET
 ;
@@ -1175,14 +1334,14 @@ RASCHET:RCALL   BCDE200
 ;--------------------------------------
 ;out:   DATA == 0 - считан последний сектор файла
 NEXTSEC:
-        SS_SET
+        SPICS_SET
         LDI     DATA,SD_DATA
         OUT     SPDR,DATA
 NEXTSE1:IN      R0,SPSR
         SBRS    R0,SPIF
         RJMP    NEXTSE1
         IN      R0,SPDR
-        SS_CLR
+        SPICS_CLR
 
         LDIZ    KOL_CLS
         LD      DATA,Z+
@@ -1256,6 +1415,9 @@ SD_ERROR:
         LDI     TEMP,HIGH(RAMEND)
         OUT     SPH,TEMP
 
+        LDI     XL,0
+        LDI     XH,4
+        RCALL   SET_CURSOR
         LDIZ    MSG_SDERROR*2
         RCALL   PRINTSTRZ
         LDS     DATA,SDERROR
@@ -1301,52 +1463,72 @@ SD_ERR6:
 SD_ERR9:
 ;
         LDS     ZL,SDERROR
-SD_ERR1:CBI     PORTB,7
+SD_ERR1:LED_ON
         LDI     DATA,5
         RCALL   BEEP
-        SBI     PORTB,7
+        LED_OFF
         LDI     DATA,5
         RCALL   DELAY
         DEC     ZL
         BRNE    SD_ERR1
 ;
-        LDIZ    MSG_F_AGAIN*2
+        LDI     XL,0
+        LDI     XH,6
+        RCALL   SET_CURSOR
+        LDIZ    MSG_HALT*2
         RCALL   PRINTSTRZ
-        RCALL   SOFTBUTTON
-        JMP     START
+        CBI     DDRE,6
+STOP2:  RJMP    STOP2
 ;
 ;--------------------------------------
-;
+;out:   ZL,ZH
 F_ID:   RCALL   F_RST
         LDI     DATA,$90
         RCALL   F_CMD
         LDI     TEMP,FLASH_CTRL
         LDI     DATA,0B00000011
         RCALL   FPGA_REG
+        LDI     XL,$00
+        LDI     XH,$00
         LDI     YL,$00
-        LDI     YH,$00
-        LDI     ZL,$00
         RCALL   F_IN
-        MOV     XL,DATA
-        LDI     YL,$01
+        MOV     ZL,DATA
+        LDI     XL,$01
         RCALL   F_IN
-        MOV     XH,DATA
+        MOV     ZH,DATA
         RJMP    F_RST
 ;
 ;--------------------------------------
-;in:    [X] - data
-;       YL,YH,ZL - address
+;in:    RAM[Z] == data
+;       XL,XH,YL == address
 F_WRITE:LDI     DATA,$A0
         RCALL   F_CMD
-        LD      DATA,X
-        RCALL   F_OUT
         LDI     TEMP,FLASH_CTRL
-        LDI     DATA,0B00000011
+        LDI     DATA,0B00000001
         RCALL   FPGA_REG
+        LDI     TEMP,FLASH_LOADDR
+        MOV     DATA,XL
+        RCALL   FPGA_REG
+        LDI     TEMP,FLASH_MIDADDR
+        MOV     DATA,XH
+        RCALL   FPGA_REG
+        LDI     TEMP,FLASH_HIADDR
+        MOV     DATA,YL
+        RCALL   FPGA_REG
+        LDI     TEMP,FLASH_DATA
+        LD      DATA,Z
+        RCALL   FPGA_REG
+        LDI     TEMP,FLASH_CTRL
+        LDI     DATA,0B00000101
+        RCALL   FPGA_REG
+        LDI     DATA,0B00000001
+        RCALL   FPGA_SAME_REG
+        LDI     DATA,0B00000011
+        RCALL   FPGA_SAME_REG
         LDI     TEMP,FLASH_DATA
         RCALL   FPGA_REG
 F_WRIT1:RCALL   FPGA_SAME_REG
-        LD      TEMP,X
+        LD      TEMP,Z
         EOR     DATA,TEMP
         SBRC    DATA,7
         RJMP    F_WRIT1
@@ -1363,9 +1545,9 @@ F_ERASE:LDI     DATA,$80
         RCALL   FPGA_REG
         LDI     TEMP,FLASH_DATA
         RCALL   FPGA_REG
-F_ERAS1:SBI     PORTB,7 ;св.диод погасить
+F_ERAS1:LED_OFF
         RCALL   FPGA_SAME_REG
-        CBI     PORTB,7 ;св.диод зажечь
+        LED_ON
         SBRS    DATA,7
         RJMP    F_ERAS1
 ;
@@ -1379,7 +1561,7 @@ F_RST1: DEC     TEMP    ;1
         RET
 ;
 ;--------------------------------------
-;in:    DATA - instructions
+;in:    DATA == instructions
 F_CMD:  PUSH    DATA
         LDI     TEMP,FLASH_CTRL
         LDI     DATA,0B00000001
@@ -1428,103 +1610,91 @@ F_CMD:  PUSH    DATA
         RJMP    FPGA_SAME_REG
 ;
 ;--------------------------------------
-;in:    YL,YH,ZL - address
-;out:   DATA - data
-F_IN:
-        LDI     TEMP,FLASH_LOADDR
-        MOV     DATA,YL
+;in:    XL,XH,YL == address
+;out:   DATA == data
+F_IN:   LDI     TEMP,FLASH_LOADDR
+        MOV     DATA,XL
         RCALL   FPGA_REG
         LDI     TEMP,FLASH_MIDADDR
-        MOV     DATA,YH
+        MOV     DATA,XH
         RCALL   FPGA_REG
         LDI     TEMP,FLASH_HIADDR
-        MOV     DATA,ZL
+        MOV     DATA,YL
         RCALL   FPGA_REG
         LDI     TEMP,FLASH_DATA
         LDI     DATA,$FF
         RJMP    FPGA_REG
 ;
 ;--------------------------------------
-;in:    YL,YH,ZL - address
-;       DATA - data
-F_OUT:  PUSH    DATA
-        LDI     TEMP,FLASH_CTRL
-        LDI     DATA,0B00000001
-        RCALL   FPGA_REG
-        LDI     TEMP,FLASH_LOADDR
-        MOV     DATA,YL
-        RCALL   FPGA_REG
-        LDI     TEMP,FLASH_MIDADDR
-        MOV     DATA,YH
-        RCALL   FPGA_REG
-        LDI     TEMP,FLASH_DATA
-        POP     DATA
-        RCALL   FPGA_REG
-        LDI     TEMP,FLASH_CTRL
-        LDI     DATA,0B00000101
-        RCALL   FPGA_REG
-        LDI     DATA,0B00000001
-        RJMP    FPGA_SAME_REG
-;
-;--------------------------------------
 ;
 FPGA_REG:
         PUSH    DATA
-        SS_SET
+        SPICS_SET
         OUT     SPDR,TEMP
         RCALL   RD_WHEN_RDY
         POP     DATA
 FPGA_SAME_REG:
-        SS_CLR
+        SPICS_CLR
         OUT     SPDR,DATA
-        RJMP    RD_WHEN_RDY
 ;
 RD_WHEN_RDY:
         IN      R0,SPSR
         SBRS    R0,SPIF
         RJMP    RD_WHEN_RDY
         IN      DATA,SPDR
-        SS_SET
+        SPICS_SET
         RET
 ;
 ;--------------------------------------
+;UART_PRINTSTRZ
+;in:    Z == указательна строку (в младших 64K)
+UART_PRINTSTRZ:
+UPSTRZ1:LPM     DATA,Z+
+        TST     DATA
+        BREQ    UPSTRZ2
+        PUSH    TEMP
+UPCHR1: INPORT  TEMP,UCSR1A
+        SBRS    TEMP,UDRE
+        RJMP    UPCHR1
+        OUTPORT UDR1,DATA
+        POP     TEMP
+        RJMP    UPSTRZ1
+UPSTRZ2:RET
 ;
-SOFTBUTTON:
-        SBIS    PINC,7
-        RJMP    SOFTBUTTON
-SOFTB2: SBIC    PINC,7
-        RJMP    SOFTB2
-        RET
+;--------------------------------------
+;in:    XL - x (0..31)
+;       XH - y (0..23)
+SET_CURSOR:
+        LDI     TEMP,32
+        MUL     XH,TEMP
+        CLR     XH
+        ADD     XL,R0
+        ADC     XH,R1
+        SBIW    XL,1
+        LDI     TEMP,SCR_LOADDR
+        MOV     DATA,XL
+        RCALL   FPGA_REG
+        LDI     TEMP,SCR_HIADDR
+        MOV     DATA,XH
+        RJMP    FPGA_REG
 ;
 ;--------------------------------------
 ;PRINTSTRZ
-;in:    Z == указательна строку (в старших 64K)
+;in:    Z == указательна строку (в младших 64K)
 PRINTSTRZ:
-PRSTRZ1:ELPM    DATA,Z+
+        SPICS_SET
+        LDI     TEMP,SCR_CHAR
+        OUT     SPDR,TEMP
+        RCALL   RD_WHEN_RDY
+        LPM     DATA,Z+
+PRSTRZ1:RCALL   FPGA_SAME_REG
+        LPM     DATA,Z+
         TST     DATA
-        BREQ    PRSTRZ2
-        RCALL   WRUART
-        RJMP    PRSTRZ1
-PRSTRZ2:RET
+        BRNE    PRSTRZ1
+        RET
 ;
 ;--------------------------------------
-;byte in dec to uart
-;in:    DATA == byte (0..99)
-DECBYTE:SUBI    DATA,208
-        SBRS    DATA,7
-        SUBI    DATA,48
-        SUBI    DATA,232
-        SBRS    DATA,6
-        SUBI    DATA,24
-        SUBI    DATA,244
-        SBRS    DATA,5
-        SUBI    DATA,12
-        SUBI    DATA,250
-        SBRS    DATA,4
-        SUBI    DATA,6
-;
-; - - - - - - - - - - - - - - - - - - -
-;byte in hex to uart
+;out byte in hex
 ;in:    DATA == byte
 HEXBYTE:PUSH    DATA
         SWAP    DATA
@@ -1537,13 +1707,11 @@ HEXHALF:ANDI    DATA,$0F
 HEXBYT1:ADDI    DATA,$30
 ;
 ; - - - - - - - - - - - - - - - - - - -
-;WRUART
-;in:    DATA == передаваемый байт
-WRUART: PUSH    TEMP
-WRU_1:  INPORT  TEMP,UCSR1A
-        SBRS    TEMP,UDRE
-        RJMP    WRU_1
-        OUTPORT UDR1,DATA
+;PUTCHAR
+;in:    DATA == char
+PUTCHAR:PUSH    TEMP
+        LDI     TEMP,SCR_CHAR
+        RCALL   FPGA_REG
         POP     TEMP
         RET
 ;
@@ -1582,63 +1750,3 @@ DELAY1: LPM             ;3
         SBCI    DATA,0  ;1
         BRNE    DELAY1  ;2(1)
         RET
-;
-;--------------------------------------
-;
-CMD00:  .DB     $40,$00,$00,$00,$00,$95
-CMD08:  .DB     $48,$00,$00,$01,$AA,$87
-CMD16:  .DB     $50,$00,$00,$02,$00,$FF
-CMD55:  .DB     $77,$00,$00,$00,$00,$FF ;app_cmd
-CMD58:  .DB     $7A,$00,$00,$00,$00,$FF ;read_ocr
-CMD59:  .DB     $7B,$00,$00,$00,$00,$FF ;crc_on_off
-FILENAME:
-        .DB     "ZXEVO   ROM",0
-
-MSG_TITLE:
-        .DB     $0D,$0A,$0A,$0A,$0A,"-------------------------"
-        .DB     $0D,$0A,"ZX Evolution Flasher v0.0",0
-MSG_POWERON:
-        .DB     $0D,$0A,"ATX power up...",0
-MSG_CFGFPGA:
-        .DB     $0D,$0A,"Set temporary configuration...",0,0
-MSG_ID_FLASH:
-        .DB     $0D,$0A,"ID flash memory chip: ",0,0
-MSG_OPENFILE:
-        .DB     $0D,$0A,"Open file from SD-card...",0
-MSG_SDERROR:
-        .DB     $0D,$0A,"SD error: ",0,0
-MSG_CARD:
-        .DB     "Card",0,0
-MSG_READERROR:
-        .DB     "Read error",0,0
-MSG_FAT:
-        .DB     "FAT",0
-MSG_FILE:
-        .DB     "File ZXEVO.ROM",0,0
-MSG_NOTFOUND:
-        .DB     " not found",0,0
-MSG_EMPTY:
-        .DB     " empty",0,0
-MSG_TOOBIG:
-        .DB     " too big",0,0
-MSG_F_AGAIN:
-        .DB     $0D,$0A,$0A,"1) Change SD-card"
-        .DB     $0D,$0A,"2) Press 'SoftReset' button.",0,0
-
-MSG_F_CONFIRM:
-        .DB     $0D,$0A,"To confirm programming, press 'SoftReset' button.",0
-MSG_F_ERASE:
-        .DB     $0D,    "Erase  EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE          ",0,0
-MSG_F_WRITE:
-        .DB     $0D,    "Write  ::::::::::::::::::::::::::::::::",$0D,"Write  ",0,0
-MSG_F_COMPLETE:
-        .DB     $0D,$0A,"Complete!",$0A
-        .DB     $0D,$0A,"1) Change SD-card "
-        .DB     $0D,$0A,"2) Hold 'SoftReset' button and press 'HardReset' button shortly.",0,0
-;
-PACKED_FPGA:
-.NOLIST
-.INCLUDE "FPGA.INC"
-.LIST
-        .ORG    LARGEBOOTSTART-1
-CRC:    .DW     0
