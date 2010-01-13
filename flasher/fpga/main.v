@@ -59,8 +59,7 @@ module main(
     output ay_bdir,
     output ay_bc1,
 
-//    output beep,
-    output reg beep,
+    output beep,
 
     // IDE
     input [2:0] ide_a,
@@ -142,20 +141,13 @@ module main(
 
 //-----------------------------------------------------------------------------
 
- reg [7:0] main_osc;
+ reg [2:0] main_osc;
 
  always @(posedge fclk)
-  begin
-   main_osc <= main_osc + 7'h1;
-   if ( main_osc < covox )
-    beep <= 1'b1;
-   else
-    beep <= 1'b0;
-  end
+  main_osc <= main_osc + 7'h1;
 
  assign clkz_out = main_osc[2]; // 3.5 MHz
-// assign ay_clk = main_osc[3]; // 1.75 MHz
-// assign beep = ( main_osc < covox ) ? 1'b1 : 1'b0;
+ assign beep = spiint_n;
 
 //--Video----------------------------------------------------------------------
 
@@ -290,10 +282,7 @@ module main(
  localparam FLASH_CTRL    = 8'hf4;
  localparam SCR_LOADDR    = 8'h40;
  localparam SCR_HIADDR    = 8'h41;
- localparam SCR_SET_ATTR  = 8'h42;
- localparam SCR_FILL      = 8'h43;
  localparam SCR_CHAR      = 8'h44;
- localparam COVOX         = 8'hfb;
 
  reg [7:0] number;
  reg [7:0] indata;
@@ -302,15 +291,14 @@ module main(
  reg sd_cs;
  reg [1:0] spick_resync;
  reg [1:0] spicsn_resync;
- reg [18:0] flash_a;
+ reg [18:0] flash_addr;
  reg flash_cs;
  reg flash_oe;
  reg flash_we;
  reg [7:0] flash_data_out;
  reg [9:0] scr_addr;
- reg [7:0] scr_char;
+ reg [6:0] scr_char;
  reg scr_wren_c;
- reg [7:0] covox;
  wire spicsn_rising;
  wire spicsn_falling;
 
@@ -337,9 +325,9 @@ module main(
 
    if ( spicsn_rising )
     case ( number )
-     FLASH_LOADDR:  flash_a[7:0] <= indata;
-     FLASH_MIDADDR: flash_a[15:8] <= indata;
-     FLASH_HIADDR:  flash_a[18:16] <= indata[2:0];
+     FLASH_LOADDR:  flash_addr[7:0] <= indata;
+     FLASH_MIDADDR: flash_addr[15:8] <= indata;
+     FLASH_HIADDR:  flash_addr[18:16] <= indata[2:0];
      FLASH_DATA:    flash_data_out <= indata;
      FLASH_CTRL:    begin
                      flash_cs <= indata[0];
@@ -349,24 +337,20 @@ module main(
      SCR_LOADDR:    scr_addr[7:0] <= indata;
      SCR_HIADDR:    scr_addr[9:8] <= indata[1:0];
      SCR_CHAR:      begin
-                     scr_char <= indata;
+                     scr_char <= indata[6:0];
                      scr_wren_c <= 1'b1;
                     end
-     COVOX:         covox <= indata;
     endcase
 
    if ( spicsn_falling )
     begin
      scr_wren_c <= 1'b0;
-     if ( ( number==SCR_FILL ) || ( number==SCR_CHAR ) )
+     if ( number==SCR_CHAR )
       scr_addr <= scr_addr + 10'd1;
      if ( number==FLASH_DATA )
       outdata <= d;
      else
-      if ( number==COVOX )
-       outdata <= covox;
-      else
-       outdata <= 8'hff;
+      outdata <= 8'hff;
     end
 
   end
@@ -389,9 +373,9 @@ module main(
  assign sddo = sd_cs ? spido : 1'b0;
  assign sdclk = sd_cs ? spick : 1'b0;
 
- assign a[13:0]  =  flash_a[13:0];
- assign rompg0_n = ~flash_a[14];
- assign { rompg4, rompg3, rompg2, dos_n } = flash_a[18:15];
+ assign a[13:0]  =  flash_addr[13:0];
+ assign rompg0_n = ~flash_addr[14];
+ assign { rompg4, rompg3, rompg2, dos_n } = flash_addr[18:15];
  assign csrom   =  flash_cs;
  assign romoe_n = ~flash_oe;
  assign romwe_n = ~flash_we;
