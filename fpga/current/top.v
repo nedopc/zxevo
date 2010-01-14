@@ -130,7 +130,15 @@ module top(
 	wire zports_dataout;
 	wire porthit;
 
-	wire [4:0] keys;
+
+	wire [39:0] kbd_data;
+	wire [ 7:0] mus_data;
+	wire kbd_stb,mus_xstb,mus_ystb,mus_btnstb;
+
+	wire [ 4:0] kbd_port_data;
+	wire [ 7:0] mus_port_data;
+
+
 	wire tape_in;
 
 	wire [15:0] ideout;
@@ -395,24 +403,40 @@ module top(
 
 
 
-	wire [4:0] keyout;
-
-	slavespi rab( .fclk(fclk), .rst_n(rst_n), .spics_n(spics_n), .spidi(spidi), .spido(spido),
-	              .spick(spick), .a(a), .keyout(keyout), .genrst(genrst), .rstrom(rstrom) );
 
 
+	slavespi slavespi( .fclk(fclk), .rst_n(rst_n),
+	                   .spics_n(spics_n), .spidi(spidi),
+	                   .spido(spido), .spick(spick),
+	                   .status_in(8'h00), .genrst(genrst),
+	                   .rstrom(rstrom), .kbd_out(kbd_data),
+	                   .kbd_stb(kbd_stb), .mus_out(mus_data),
+	                   .mus_xstb(mus_xstb), .mus_ystb(mus_ystb),
+	                   .mus_btnstb(mus_btnstb)
+	                 );
 
+	zkbdmus zkbdmus( .fclk(fclk), .rst_n(rst_n),
+	                 .kbd_in(kdb_data), .kbd_stb(kbd_stb),
+	                 .mus_in(mus_data), .mus_xstb(mus_xstb),
+	                 .mus_ystb(mus_ystb), .mus_btnstb(mus_btnstb),
+	                 .za(a), .kbd_data(kbd_port_data),
+	                 .mus_data(mus_port_data)
+	               );
 
 
 	zports porty( .clk(zclk), .fclk(fclk), .rst_n(rst_n), .din(d), .dout(dout_ports), .dataout(ena_ports),
-	              .a(a), .iorq_n(iorq_n), .rd_n(rd_n), .wr_n(wr_n), .keyout(keyout), .porthit(porthit),
+	              .a(a), .iorq_n(iorq_n), .rd_n(rd_n), .wr_n(wr_n), .porthit(porthit),
 	              .ay_bdir(ay_bdir), .ay_bc1(ay_bc1), .border(border), .beep(beep),
 	              .p7ffd(p7ffd), .peff7(peff7), .mreq_n(mreq_n), .m1_n(m1_n), .dos(dos),
 	              .rstrom(rstrom), .vg_intrq(intrq), .vg_drq(drq), .vg_wrFF(vg_wrFF),
 	              .vg_cs_n(vg_cs_n), .sd_start(sd_start), .sd_dataout(sd_dataout),
 	              .sd_datain(sd_datain), .sdcs_n(sdcs_n),
 	              .idein(idein), .ideout(ideout), .idedataout(idedataout),
-	              .ide_a(ide_a), .ide_cs0_n(ide_cs0_n), .ide_cs1_n(ide_cs1_n), .ide_wr_n(ide_wr_n), .ide_rd_n(ide_rd_n)
+	              .ide_a(ide_a), .ide_cs0_n(ide_cs0_n), .ide_cs1_n(ide_cs1_n),
+	              .ide_wr_n(ide_wr_n), .ide_rd_n(ide_rd_n),
+
+	              .keys_in(kbd_port_data),
+	              .mus_in(mus_port_data)
 	            );
 
 
