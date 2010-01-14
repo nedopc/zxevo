@@ -29,7 +29,8 @@ module zports(
 	output ide_wr_n,
 
 
-	input [4:0] keyout,
+	input [4:0] keys_in, // keys (port FE)
+	input [7:0] mus_in,  // mouse (xxDF)
 
 	output reg [2:0] border,
 	output reg beep,
@@ -169,7 +170,7 @@ module zports(
 	begin
 		case( loa )
 		PORTFE:
-			dout = { 1'b1, 1'b0/*tape_in*/, 1'b0, keyout };
+			dout = { 1'b1, 1'b0/*tape_in*/, 1'b0, keys_in };
 
 
 		NIDE10,NIDE30,NIDE50,NIDE70,NIDE90,NIDEB0,NIDED0,NIDEF0,NIDEC8:
@@ -186,7 +187,7 @@ module zports(
 		KJOY:
 			dout = 8'h00;
 		KMOUSE:
-			dout = 8'hFF;
+			dout = mus_in;
 
 		SDCFG:
 			dout = 8'h00; // always SD inserted, SD is on R/W mode // FIXME!FIXME!FIXME!FIXME!FIXME!

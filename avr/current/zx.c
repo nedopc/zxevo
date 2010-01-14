@@ -387,22 +387,38 @@ void zx_task(UBYTE operation) // zx task, tracks when there is need to send new 
 
 			if( was_data ) // initialize transfer
 			{
-				task_state = 6;
+				task_state = 7;
 			}
 		}
 		else // sending bytes one by one in each state
 		{
 			task_state--;
 
-			if( task_state==5 )
+			if( task_state==6 ) // send (or not) reset
+			{
+				if( reset_type )
+				{
+					nSPICS_PORT |= (1<<nSPICS);  // set address of SPI register
+					spi_send(SPI_RST_REG);
+                    nSPICS_PORT &= ~(1<<nSPICS); // send data for that register
+					spi_send( reset_type );
+					nSPICS_PORT |= (1<<nSPICS);
+				}
+			}
+			else if( task_state>0 )// task_state==5..1
+			{
+				nSPICS_PORT |= (1<<nSPICS);  // set address of SPI register
+				spi_send(SPI_KBD_DAT);
+				nSPICS_PORT &= ~(1<<nSPICS);
+				spi_send( zx_map[task_state-1] );
+				nSPICS_PORT |= (1<<nSPICS);
+			}
+			else // task_state==0
 			{
 				nSPICS_PORT |= (1<<nSPICS);
-				spi_send(reset_type);
-			}
-			else // task_state==4..0
-			{
+				spi_send(SPI_KBD_STB);    // strobe input kbd data to the Z80 port engine
 				nSPICS_PORT &= ~(1<<nSPICS);
-				spi_send( zx_map[task_state] );
+				nSPICS_PORT |= (1<<nSPICS);
 			}
 		}
 	}

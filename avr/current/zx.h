@@ -67,6 +67,23 @@
 //
 
 
+// SPI registers
+//
+#define SPI_KBD_DAT   0x80
+#define SPI_KBD_STB   0x81
+//
+#define SPI_MOUSE_X   0x40
+#define SPI_MOUSE_Y   0x41
+#define SPI_MOUSE_BTN 0x42
+//
+#define SPI_RST_REG   0x20
+
+
+
+
+
+
+
 // pause between (CS|SS) and not(CS|SS)
 #define SHIFT_PAUSE 8
 //
@@ -77,6 +94,15 @@ extern volatile UBYTE shift_pause;
 	UBYTE map[5]; // send order: LSbit first, from [4] to [0]
 	UBYTE reset_type;
 };*/
+
+
+
+
+
+
+
+
+
 
 
 #define ZX_TASK_INIT 0
