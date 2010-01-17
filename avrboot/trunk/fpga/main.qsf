@@ -1,22 +1,22 @@
 # Copyright (C) 1991-2006 Altera Corporation
-# Your use of Altera Corporation's design tools, logic functions 
-# and other software and tools, and its AMPP partner logic 
-# functions, and any output files from any of the foregoing 
-# (including device programming or simulation files), and any 
-# associated documentation or information are expressly subject 
-# to the terms and conditions of the Altera Program License 
-# Subscription Agreement, Altera MegaCore Function License 
-# Agreement, or other applicable license agreement, including, 
-# without limitation, that your use is for the sole purpose of 
-# programming logic devices manufactured by Altera and sold by 
-# Altera or its authorized distributors.  Please refer to the 
+# Your use of Altera Corporation's design tools, logic functions
+# and other software and tools, and its AMPP partner logic
+# functions, and any output files from any of the foregoing
+# (including device programming or simulation files), and any
+# associated documentation or information are expressly subject
+# to the terms and conditions of the Altera Program License
+# Subscription Agreement, Altera MegaCore Function License
+# Agreement, or other applicable license agreement, including,
+# without limitation, that your use is for the sole purpose of
+# programming logic devices manufactured by Altera and sold by
+# Altera or its authorized distributors.  Please refer to the
 # applicable agreement for further details.
 
 
 # The default values for assignments are stored in the file
-#		main_assignment_defaults.qdf
+#               main_assignment_defaults.qdf
 # If this file doesn't exist, and for assignments not listed, see file
-#		assignment_defaults.qdf
+#               assignment_defaults.qdf
 
 # Altera recommends that you do not modify this file. This
 # file is updated automatically by the Quartus II software
@@ -185,5 +185,5 @@ set_global_assignment -name FMAX_REQUIREMENT "28 MHz" -section_id "FPGA clock"
 set_global_assignment -name GENERATE_RBF_FILE ON
 set_global_assignment -name ON_CHIP_BITSTREAM_DECOMPRESSION OFF
 set_global_assignment -name FLEX10K_DEVICE_IO_STANDARD LVTTL/LVCMOS
-set_global_assignment -name VERILOG_FILE ../main.v
+set_global_assignment -name VERILOG_FILE main.v
 set_global_assignment -name ADD_DEFAULT_PINS_TO_SIMULATION_OUTPUT_WAVEFORMS OFF
