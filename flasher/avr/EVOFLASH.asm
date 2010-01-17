@@ -122,18 +122,19 @@ ERRFLG2:.BYTE   1
         JMP     START   ;USART1_TXC ; USART1 TX Complete Handler
         JMP     START   ;TWI_INT ; Two-wire Serial Interface Interrupt Handler
         JMP     START   ;SPM_RDY ; SPM Ready Handler
+
 ;
 ;--------------------------------------
 ;
-MSG_U_TITLE:
-        .DB     $0A,$0A,$0A,$0A,$0A,$0D
-MSG_TITLE:
-        .DB     "  ZX Evolution Flasher (100113)",0
 MSG_CFGFPGA:
-        .DB     $0D,$0A,"Set temporary configuration... ",0
+        .DB     $0D,$0A,$0A,$0A,"Set temporary configuration... ",0
 MSG_OK:
-        .DB     "Ok!",$0D,$0A,0
+        .DB     "Ok!",$0A
+MSG_NEWLINE:
+        .DB     $0D,$0A,0,0
 ;
+MSG_TITLE:
+        .DB     "  ZX Evolution Flasher ",0
 MSG_ID_FLASH:
         .DB     "ID flash memory chip: ",0,0
 MSG_OPENFILE:
@@ -236,7 +237,7 @@ START:  CLI
         OUT     DDRA,TEMP
 ;UART1 Set baud rate
         OUTPORT UBRR1H,NULL
-        LDI     TEMP,5     ;115200 baud, 11059.2 kHz, Normal speed
+        LDI     TEMP,5     ;115200 baud @ 11059.2 kHz, Normal speed
         OUTPORT UBRR1L,TEMP
 ;UART1 Normal Speed
         OUTPORT UCSR1A,NULL
@@ -252,10 +253,7 @@ START:  CLI
         LDI     TEMP,(1<<SPE)|(1<<DORD)|(1<<MSTR)|(0<<CPOL)|(0<<CPHA)
         OUT     SPCR,TEMP
 
-        LDIZ    MSG_U_TITLE*2
-        RCALL   UART_PRINTSTRZ
-
-UP11:   SBIS    PINF,0 ;PINC,5 ; а если питание через PWR3 ?
+UP11:   SBIS    PINF,0 ;PINC,5 ; а если powergood нет вообще ?
         RJMP    UP11
         LDI     DATA,5
         RCALL   DELAY
@@ -398,6 +396,42 @@ DEMLZEND:
         LDIZ    MSG_TITLE*2
         RCALL   PRINTSTRZ
 
+        LDIZ    LARGEBOOTSTART*2-4
+;        OUT     RAMPZ,ONE
+        ELPM    XH,Z+
+        ELPM    XL,Z
+        MOV     DATA,XL
+        ANDI    DATA,$1F
+        BREQ    PRVERS9
+        MOV     TEMP,XH
+        LSL     XL
+        ROL     TEMP
+        LSL     XL
+        ROL     TEMP
+        LSL     XL
+        ROL     TEMP
+        ANDI    TEMP,$0F
+        BREQ    PRVERS9
+        CPI     TEMP,13
+        BRCC    PRVERS9
+        MOV     COUNT,XH
+        LSR     COUNT
+        ANDI    COUNT,$3F
+        CPI     COUNT,9
+        BRCS    PRVERS9
+        PUSH    DATA
+        LDI     DATA,$28 ;"("
+        RCALL   PUTCHAR
+        MOV     DATA,COUNT
+        RCALL   DECBYTE
+        MOV     DATA,TEMP
+        RCALL   DECBYTE
+        POP     DATA
+        RCALL   DECBYTE
+        LDI     DATA,$29 ;")"
+        RCALL   PUTCHAR
+PRVERS9:
+        RCALL   UART_NEWLINE
         LDI     XL,0
         LDI     XH,2
         RCALL   SET_CURSOR
@@ -412,6 +446,7 @@ DEMLZEND:
         MOV     DATA,ZH
         RCALL   HEXBYTE
 
+        RCALL   UART_NEWLINE
         LDI     XL,0
         LDI     XH,3
         RCALL   SET_CURSOR
@@ -691,7 +726,7 @@ NEXTCLS:PUSH    TEMP
         RCALL   RDFATZP
         RCALL   LST_CLS
         POP     TEMP
-        BREQ    LASTCLS
+        BRCC    LASTCLS
         INC     TEMP
         RJMP    NEXTCLS
 LASTCLS:STS     KCLSDIR,TEMP
@@ -796,6 +831,7 @@ F02:
         STSY    ZKOL_CLS+2
         STS     NUMSECK,NULL
 ; - - - - - - - - - - - - - - - - - - -
+        RCALL   UART_NEWLINE
         LDI     XL,0
         LDI     XH,4
         RCALL   SET_CURSOR
@@ -803,6 +839,7 @@ F02:
         RCALL   PRINTSTRZ
         RCALL   F_ERASE
 ; - - -
+        RCALL   UART_NEWLINE
         LDI     XL,0
         LDI     XH,5
         RCALL   SET_CURSOR
@@ -856,7 +893,8 @@ F11:    RCALL   F_WRITE
         ANDI    DATA,$07
         BRNE    F12
         LDI     DATA,$02 ;"▒"
-        RCALL   PUTCHAR
+        LDI     TEMP,SCR_CHAR
+        RCALL   FPGA_REG
 F12:
         LDS     DATA,LASTSECFLAG
         TST     DATA
@@ -866,6 +904,7 @@ F12:
         LDI     TEMP,FLASH_CTRL
         LDI     DATA,0B00000011
         RCALL   FPGA_REG
+        RCALL   UART_NEWLINE
         LDI     XL,0
         LDI     XH,6
         RCALL   SET_CURSOR
@@ -931,13 +970,15 @@ F26:    ADIW    XL,1
         LDI     DATA,$58 ;"X"
         RJMP    F24
 F23:    LDI     DATA,$03 ;"█"
-F24:    RCALL   PUTCHAR
+F24:    LDI     TEMP,SCR_CHAR
+        RCALL   FPGA_REG
 F22:
         LDS     DATA,LASTSECFLAG
         TST     DATA
         BRNE    F25
 ; - - -
         LED_OFF
+        RCALL   UART_NEWLINE
         LDI     XL,0
         LDI     XH,7
         RCALL   SET_CURSOR
@@ -947,6 +988,7 @@ F22:
         BRNE    F91
         LDIZ    MSG_F_COMPLETE*2
 F91:    RCALL   PRINTSTRZ
+        RCALL   UART_NEWLINE
         LDI     XL,0
         LDI     XH,9
         RCALL   SET_CURSOR
@@ -1122,28 +1164,25 @@ RDDIRS1:RCALL   REALSEC
         RET
 ;
 ;--------------------------------------
-;
-LST_CLS:LDS     DATA,CAL_FAT
+;out:   sreg.C == CLR - EOCmark
+;(chng: TEMP)
+LST_CLS:LDI     TEMP,$0F
+        LDS     DATA,CAL_FAT
         TST     DATA
         BRNE    LST_CL1
-        CPI     XH,$0F
-        BRNE    LST_NO
-        CPI     XL,$FF
+        CPI     XL,$F7
+        CPC     XH,TEMP
         RET
 LST_CL1:DEC     DATA
         BRNE    LST_CL2
-        CPI     XH,$FF
-        BRNE    LST_NO
-        CPI     XL,$FF
+        CPI     XL,$F7
+        CPC     XH,FF
         RET
-LST_CL2:CPI     YH,$0F
-        BRNE    LST_NO
-        CPI     YL,$FF
-        BRNE    LST_NO
-        CPI     XH,$FF
-        BRNE    LST_NO
-        CPI     XL,$FF
-LST_NO: RET
+LST_CL2:CPI     XL,$F7
+        CPC     XH,FF
+        CPC     YL,FF
+        CPC     YH,TEMP
+        RET
 ;
 ;--------------------------------------
 ;
@@ -1415,6 +1454,7 @@ SD_ERROR:
         LDI     TEMP,HIGH(RAMEND)
         OUT     SPH,TEMP
 
+        RCALL   UART_NEWLINE
         LDI     XL,0
         LDI     XH,4
         RCALL   SET_CURSOR
@@ -1472,6 +1512,7 @@ SD_ERR1:LED_ON
         DEC     ZL
         BRNE    SD_ERR1
 ;
+        RCALL   UART_NEWLINE
         LDI     XL,0
         LDI     XH,6
         RCALL   SET_CURSOR
@@ -1646,18 +1687,17 @@ RD_WHEN_RDY:
         RET
 ;
 ;--------------------------------------
-;UART_PRINTSTRZ
+;
+UART_NEWLINE:
+        LDIZ    MSG_NEWLINE*2
+;
+; - - - - - - - - - - - - - - - - - - -
 ;in:    Z == указательна строку (в младших 64K)
 UART_PRINTSTRZ:
 UPSTRZ1:LPM     DATA,Z+
         TST     DATA
         BREQ    UPSTRZ2
-        PUSH    TEMP
-UPCHR1: INPORT  TEMP,UCSR1A
-        SBRS    TEMP,UDRE
-        RJMP    UPCHR1
-        OUTPORT UDR1,DATA
-        POP     TEMP
+        RCALL   UART_PUTCHAR
         RJMP    UPSTRZ1
 UPSTRZ2:RET
 ;
@@ -1682,18 +1722,30 @@ SET_CURSOR:
 ;PRINTSTRZ
 ;in:    Z == указательна строку (в младших 64K)
 PRINTSTRZ:
-        SPICS_SET
-        LDI     TEMP,SCR_CHAR
-        OUT     SPDR,TEMP
-        RCALL   RD_WHEN_RDY
-        LPM     DATA,Z+
-PRSTRZ1:RCALL   FPGA_SAME_REG
-        LPM     DATA,Z+
+PRSTRZ1:LPM     DATA,Z+
         TST     DATA
-        BRNE    PRSTRZ1
-        RET
+        BREQ    PRSTRZ2
+        RCALL   PUTCHAR
+        RJMP    PRSTRZ1
+PRSTRZ2:RET
 ;
 ;--------------------------------------
+;out byte in dec
+;in:    DATA == byte (0..99)
+DECBYTE:SUBI    DATA,208
+        SBRS    DATA,7
+        SUBI    DATA,48
+        SUBI    DATA,232
+        SBRS    DATA,6
+        SUBI    DATA,24
+        SUBI    DATA,244
+        SBRS    DATA,5
+        SUBI    DATA,12
+        SUBI    DATA,250
+        SBRS    DATA,4
+        SUBI    DATA,6
+;
+; - - - - - - - - - - - - - - - - - - -
 ;out byte in hex
 ;in:    DATA == byte
 HEXBYTE:PUSH    DATA
@@ -1709,9 +1761,18 @@ HEXBYT1:ADDI    DATA,$30
 ; - - - - - - - - - - - - - - - - - - -
 ;PUTCHAR
 ;in:    DATA == char
-PUTCHAR:PUSH    TEMP
+PUTCHAR:PUSH    DATA
+        PUSH    TEMP
         LDI     TEMP,SCR_CHAR
         RCALL   FPGA_REG
+        POP     TEMP
+        POP     DATA
+UART_PUTCHAR:
+        PUSH    TEMP
+UPCHR1: INPORT  TEMP,UCSR1A
+        SBRS    TEMP,UDRE
+        RJMP    UPCHR1
+        OUTPORT UDR1,DATA
         POP     TEMP
         RET
 ;
@@ -1750,3 +1811,6 @@ DELAY1: LPM             ;3
         SBCI    DATA,0  ;1
         BRNE    DELAY1  ;2(1)
         RET
+;
+;--------------------------------------
+;

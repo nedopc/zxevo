@@ -117,8 +117,8 @@ START1: CLR     NULL
         RCALL   CALK_CRC_FLASH
         BRNE    BAD_BOOTLDR_CRC ;что делать, если не правильная crc у bootloaderа ? я делаю перезапуск.
 ;хочет ли пользователь обновиться ?
-        SBIS    PINC,7
-        RJMP    UPDATE_ME        ;если нажато "SoftReset"
+        SBIS    PINC,7           ;нажат "SoftReset" ?
+        RJMP    UPDATE_ME
 ;проверка CRC программы
 START8: RCALL   CRCMAIN
         BRNE    UPDATE_ME        ;если некорректная CRC
@@ -173,7 +173,7 @@ UPDATE_ME:
         OUT     SPCR,TEMP
 ;UART1 Set baud rate
         OUTPORT UBRR1H,NULL
-        LDI     TEMP,5     ;115200 baud, 11059.2 kHz, Normal speed
+        LDI     TEMP,5     ;115200 baud @ 11059.2 kHz, Normal speed
         OUTPORT UBRR1L,TEMP
 ;UART1 Normal Speed
         OUTPORT UCSR1A,NULL
@@ -201,16 +201,21 @@ UPDATE_ME:
 UP01:   LDIZ    MAIN_VERS*2
         RCALL   PRINTVERS
 UP02:
-        RCALL   NEWLINE2
+        RCALL   NEWLINE
+;        RCALL   NEWLINE2
+;        SBIC    PINC,5
+;        RJMP    UP12
+;        LDIZ    MSG_POWERON*2
+;        RCALL   PRINTSTRZ
+;        SBI     PORTB,7
+;UP11:   SBIS    PINC,5
+;        RJMP    UP11
+;        CBI     PORTB,7
 
-        SBIC    PINC,5
-        RJMP    UP12
-        LDIZ    MSG_POWERON*2
-        RCALL   PRINTSTRZ
-        SBI     PORTB,7
-UP11:   SBIS    PINC,5
+UP11:   SBIS    PINF,0 ;PINC,5 ; а если powergood нет вообще ?
         RJMP    UP11
-        CBI     PORTB,7
+        LDI     DATA,5
+        RCALL   DELAY
 
 UP12:   LDIZ    MSG_CFGFPGA*2
         RCALL   PRINTSTRZ
@@ -234,19 +239,11 @@ LDFPGA2:INPORT  DATA,PINF
         LDIZ    PACKED_FPGA*2
         OUT     RAMPZ,ONE
         LDIY    BUFFER
-                                        ;A=DATA; A'=TEMP; B=R21; C=R20;
-;deMLZ                                  ;DEC40
 ;(не трогаем стек! всё ОЗУ под буфер)
-        LDI     TEMP,$80                ;        LD      A,#80
-                                        ;        EX      AF,AF'--------
-MS:     ELPM    R0,Z+                   ;MS      LDI
+        LDI     TEMP,$80
+MS:     ELPM    R0,Z+
         ST      Y+,R0
 ;-begin-PUT_BYTE_1---
-;UART тут для отладки ;)
-;WRUX1:  INPORT  R1,UCSR1A
-;        SBRS    R1,UDRE
-;        RJMP    WRUX1
-;        OUTPORT UDR1,R0
         OUT     SPDR,R0
 PUTB1:  IN      R1,SPSR
         SBRS    R1,SPIF
@@ -255,94 +252,77 @@ PUTB1:  IN      R1,SPSR
         SUBI    YH,HIGH(BUFFER) ;
         ANDI    YH,DBMASK_HI    ;Y warp
         ADDI    YH,HIGH(BUFFER) ;
-M0:     LDI     R21,$02                 ;M0      LD      BC,#2FF
+M0:     LDI     R21,$02
         LDI     R20,$FF
-M1:                                     ;M1      EX      AF,AF'--------
-M1X:    ADD     TEMP,TEMP               ;M1X     ADD     A,A
-        BRNE    M2                      ;        JR      NZ,M2
-        ELPM    TEMP,Z+                 ;        LD      A,(HL)
-                                        ;        INC     HL
-        ROL     TEMP                    ;        RLA
-M2:     ROL     R20                     ;M2      RL      C
-        BRCC    M1X                     ;        JR      NC,M1X
-                                        ;        EX      AF,AF'--------
-        DEC     R21                     ;        DJNZ    X2
+M1:
+M1X:    ADD     TEMP,TEMP
+        BRNE    M2
+        ELPM    TEMP,Z+
+        ROL     TEMP
+M2:     ROL     R20
+        BRCC    M1X
+        DEC     R21
         BRNE    X2
-        LDI     DATA,2                  ;        LD      A,2
-        ASR     R20                     ;        SRA     C
-        BRCS    N1                      ;        JR      C,N1
-        INC     DATA                    ;        INC     A
-        INC     R20                     ;        INC     C
-        BREQ    N2                      ;        JR      Z,N2
-        LDI     R21,$03                 ;        LD      BC,#33F
+        LDI     DATA,2
+        ASR     R20
+        BRCS    N1
+        INC     DATA
+        INC     R20
+        BREQ    N2
+        LDI     R21,$03
         LDI     R20,$3F
-        RJMP    M1                      ;        JR      M1
-                                        ;
-X2:     DEC     R21                     ;X2      DJNZ    X3
+        RJMP    M1
+X2:     DEC     R21
         BRNE    X3
-        LSR     R20                     ;        SRL     C
-        BRCS    MS                      ;        JR      C,MS
-        INC     R21                     ;        INC     B
-        RJMP    M1                      ;        JR      M1
-X6:                                     ;X6
-        ADD     DATA,R20                ;        ADD     A,C
-N2:     LDI     R21,$04                 ;N2
-        LDI     R20,$FF                 ;        LD      BC,#4FF
-        RJMP    M1                      ;        JR      M1
-N1:                                     ;N1
-        INC     R20                     ;        INC     C
-        BRNE    M4                      ;        JR      NZ,M4
-                                        ;        EX      AF,AF'--------
-        INC     R21                     ;        INC     B
-N5:     ROR     R20                     ;N5      RR      C
-        BRCS    DEMLZEND                ;        RET     C
-        ROL     R21                     ;        RL      B
-        ADD     TEMP,TEMP               ;        ADD     A,A
-        BRNE    N6                      ;        JR      NZ,N6
-        ELPM    TEMP,Z+                 ;        LD      A,(HL)
-                                        ;        INC     HL
-        ROL     TEMP                    ;        RLA
-N6:     BRCC    N5                      ;N6      JR      NC,N5
-                                        ;        EX      AF,AF'--------
-        ADD     DATA,R21                ;        ADD     A,B
-        LDI     R21,6                   ;        LD      B,6
-        RJMP    M1                      ;        JR      M1
-X3:     DEC     R21                     ;X3
-        BRNE    X4                      ;        DJNZ    X4
-        LDI     DATA,1                  ;        LD      A,1
-        RJMP    M3                      ;        JR      M3
-X4:     DEC     R21                     ;X4      DJNZ    X5
+        LSR     R20
+        BRCS    MS
+        INC     R21
+        RJMP    M1
+X6:     ADD     DATA,R20
+N2:     LDI     R21,$04
+        LDI     R20,$FF
+        RJMP    M1
+N1:     INC     R20
+        BRNE    M4
+        INC     R21
+N5:     ROR     R20
+        BRCS    DEMLZEND
+        ROL     R21
+        ADD     TEMP,TEMP
+        BRNE    N6
+        ELPM    TEMP,Z+
+        ROL     TEMP
+N6:     BRCC    N5
+        ADD     DATA,R21
+        LDI     R21,6
+        RJMP    M1
+X3:     DEC     R21
+        BRNE    X4
+        LDI     DATA,1
+        RJMP    M3
+X4:     DEC     R21
         BRNE    X5
-        INC     R20                     ;        INC     C
-        BRNE    M4                      ;        JR      NZ,M4
-        LDI     R21,$05                 ;        LD      BC,#51F
+        INC     R20
+        BRNE    M4
+        LDI     R21,$05
         LDI     R20,$1F
-        RJMP    M1                      ;        JR      M1
-X5:     DEC     R21                     ;X5
-        BRNE    X6                      ;        DJNZ    X6
-        MOV     R21,R20                 ;        LD      B,C
-M4:     ELPM    R20,Z+                  ;M4      LD      C,(HL)
-                                        ;        INC     HL
-M3:     DEC     R21                     ;M3      DEC     B
-                                        ;        PUSH    HL
-        MOV     XL,R20                  ;        LD      L,C
-        MOV     XH,R21                  ;        LD      H,B
-        ADD     XL,YL                   ;        ADD     HL,DE
+        RJMP    M1
+X5:     DEC     R21
+        BRNE    X6
+        MOV     R21,R20
+M4:     ELPM    R20,Z+
+M3:     DEC     R21
+        MOV     XL,R20
+        MOV     XH,R21
+        ADD     XL,YL
         ADC     XH,YH
-                                        ;        LD      C,A
-                                        ;        LD      B,0
 LDIRLOOP:
         SUBI    XH,HIGH(BUFFER) ;
         ANDI    XH,DBMASK_HI    ;X warp
         ADDI    XH,HIGH(BUFFER) ;
-        LD      R0,X+                   ;        LDIR
+        LD      R0,X+
         ST      Y+,R0
 ;-begin-PUT_BYTE_2---
-;UART тут для отладки ;)
-;WRUX2:  INPORT  R1,UCSR1A
-;        SBRS    R1,UDRE
-;        RJMP    WRUX2
-;        OUTPORT UDR1,R0
         OUT     SPDR,R0
 PUTB2:  IN      R1,SPSR
         SBRS    R1,SPIF
@@ -353,10 +333,11 @@ PUTB2:  IN      R1,SPSR
         ADDI    YH,HIGH(BUFFER) ;
         DEC     DATA
         BRNE    LDIRLOOP
-                                        ;        POP     HL
-        RJMP    M0                      ;        JR      M0
-                                        ;END_DEC40
-DEMLZEND:;теперь можно юзать стек
+        RJMP    M0
+;теперь можно юзать стек
+DEMLZEND:
+        SBIS    PINF,CONF_DONE
+        RJMP    DEMLZEND
 ;SPI reinit
         LDI     TEMP,(1<<SPE)|(0<<DORD)|(1<<MSTR)|(0<<CPOL)|(0<<CPHA)
         OUT     SPCR,TEMP
@@ -636,7 +617,7 @@ NEXTCLS:PUSH    TEMP
         RCALL   RDFATZP
         RCALL   LST_CLS
         POP     TEMP
-        BREQ    LASTCLS
+        BRCC    LASTCLS
         INC     TEMP
         RJMP    NEXTCLS
 LASTCLS:STS     KCLSDIR,TEMP
@@ -922,26 +903,12 @@ SDRDSE8:
 LOAD_DATA:
         LDIZ    BUFSECT
         RCALL   SD_READ_SECTOR  ;читать один сектор
-;;;;;;;;
-;       LDIZ    BUFSECT
-;RAMOU1:LD      DATA,Z+
-;       RCALL   WRUART
-;       CPI     ZH,HIGH(BUFSECT+512)
-;       BRNE    RAMOU1
-;;;;;;;;
         RET
 ;
 ;--------------------------------------
 ;
 LOADLST:LDIZ    BUF4FAT
         RCALL   SD_READ_SECTOR  ;читать один сектор
-;;;;;;;;
-;       LDIZ    BUF4FAT
-;RAMOU2:LD      DATA,Z+
-;       RCALL   WRUART
-;       CPI     ZH,HIGH(BUF4FAT+512)
-;       BRNE    RAMOU2
-;;;;;;;;
         LDIZ    BUF4FAT
         RET
 ;
@@ -992,28 +959,25 @@ RDDIRS1:RCALL   REALSEC
         RET
 ;
 ;--------------------------------------
-;
-LST_CLS:LDS     DATA,CAL_FAT
+;out:   sreg.C == CLR - EOCmark
+;(chng: TEMP)
+LST_CLS:LDI     TEMP,$0F
+        LDS     DATA,CAL_FAT
         TST     DATA
         BRNE    LST_CL1
-        CPI     XH,$0F
-        BRNE    LST_NO
-        CPI     XL,$FF
+        CPI     XL,$F7
+        CPC     XH,TEMP
         RET
 LST_CL1:DEC     DATA
         BRNE    LST_CL2
-        CPI     XH,$FF
-        BRNE    LST_NO
-        CPI     XL,$FF
+        CPI     XL,$F7
+        CPC     XH,FF
         RET
-LST_CL2:CPI     YH,$0F
-        BRNE    LST_NO
-        CPI     YL,$FF
-        BRNE    LST_NO
-        CPI     XH,$FF
-        BRNE    LST_NO
-        CPI     XL,$FF
-LST_NO: RET
+LST_CL2:CPI     XL,$F7
+        CPC     XH,FF
+        CPC     YL,FF
+        CPC     YH,TEMP
+        RET
 ;
 ;--------------------------------------
 ;
@@ -1036,6 +1000,7 @@ RDFATZP:LDS     DATA,CAL_FAT
         ADIW    ZL,1
         LD      YL,Z+
         LD      YH,Z
+        ANDI    YH,$0F
         RET
 ;FAT16
 RDFATS1:LDIY    0
@@ -1346,7 +1311,7 @@ UUPD00: PUSH    TEMP
         BRNE    UUPD01
         DEC     TEMP
         BRNE    UUPD00
-        RJMP    START1
+        RJMP    START8  ;проверка CRC основной программы и если всё Ok её запуск.
 
 UUPD01: OR      CRC_LO,CRC_HI
         BREQ    UUPD03
@@ -1358,6 +1323,8 @@ UUPD04:
         RCALL   WRUART
         RCALL   WRUART
         RCALL   DELAY_3SEC
+        LDIZ    MSG_CLRCURRLINE*2
+        RCALL   PRINTSTRZ
         RCALL   NEWLINE
         LDI     DATA,ANSI_RED
         RCALL   ANSI_COLOR
@@ -1438,9 +1405,8 @@ UUPD_F2:LDI     DATA,CAN
         RCALL   WRUART
 UUPD_F1:RCALL   WRUART
         RCALL   DELAY_3SEC
-;        RCALL   NEWLINE
-;        LDIZ    MSG_SUCCESSFULLY*2
-;        RCALL   PRINTSTRZ
+        LDIZ    MSG_CLRCURRLINE*2
+        RCALL   PRINTSTRZ
         RJMP    CHECKIT ;проверка CRC основной программы и если всё Ok её запуск.
 ;
 ;--------------------------------------
@@ -1523,8 +1489,6 @@ PRINTVERS:
         LDI     DATA,ANSI_GREEN
         RCALL   ANSI_COLOR
         LDI     COUNT,12
-        LDIX    MSG_NEWLINE2-26
-        PUSHX
 PRVERS2:ELPM    DATA,Z+
         TST     DATA
         BREQ    PRVERS1
@@ -1567,8 +1531,13 @@ PRVERS1:LDI     DATA,$20
         RCALL   HEXBYTE
         MOV     DATA,COUNT
         RCALL   DECBYTE
-        MOV     DATA,XH
+        SBRS    XH,7
 PRVERS9:RET
+;
+;--------------------------------------
+;
+NEDOPC: LDIZ    MSG_BY_NEDOPC*2
+        RJMP    PRINTSTRZ
 ;
 ;--------------------------------------
 ;
@@ -1694,7 +1663,7 @@ DELAY_3SEC:
         LDI     DATA,30
 ; - - - - - - - - - - - - - - - - - - -
 ;DELAY
-;in:    DATA/10 == количество секунд
+;in:    DATA/10  секунд
 DELAY:
         LDI     R20,$1E ;\
         LDI     R21,$FE ;/ 0,1 сек @ 11.0592MHz
@@ -1866,10 +1835,6 @@ CMD58:  .DB     $7A,$00,$00,$00,$00,$FF ;read_ocr
 CMD59:  .DB     $7B,$00,$00,$00,$00,$FF ;crc_on_off
 FILENAME:       .DB     "ZXEVO_FWBIN",0
 SIGNATURE:      .DB     "ZXEVO",$1A
-TABPC:  .DB     $07,$FF,$08,$95,$BE,$B7,$AD,$B7,$EC,$91,$FE,$91,$75,$96,$EE,$0F
-        .DB     $FF,$1F,$2A,$E0,$07,$91,$02,$95,$10,$91,$9B,$00,$15,$FF,$FC,$CF
-        .DB     $00,$93,$9C,$00,$2A,$95,$B1,$F7,$08,$95,$02,$26,$97,$02,$E4,$56
-        .DB     $46,$F6,$05,$34
 MSG_NEWLINE2:
         .DB     $0D,$0A
 MSG_NEWLINE:
@@ -1878,6 +1843,8 @@ MSG_BADCRC:
         .DB     $1B,"[31mBad CRC!",0
 MSG_BOOT:
         .DB     "boot: ",0,0
+MSG_BY_NEDOPC:
+        .DB     " by NedoPC",0,0
 MSG_MAIN:
         .DB     "main: ",0,0
 MSG_SDERROR:
@@ -1894,8 +1861,8 @@ MSG_WRONGFILE:
         .DB     "Wrong file",0,0
 MSG_NOTFOUND:
         .DB     " not found",0,0
-MSG_POWERON:
-        .DB     "ATX power up...",0
+;MSG_POWERON:
+;        .DB     "ATX power up...",0
 MSG_CFGFPGA:
         .DB     $0D,$0A,"Set temporary configuration...",0,0
 MSG_TRYUPDATE:
@@ -1904,6 +1871,8 @@ MSG__SDCARD:
         .DB     "SD-card...",0,0
 MSG__RS232:
         .DB     "RS-232...",$0D,$0A,$1B,"[0mNow, start file transfer using X-Modem-CRC protocol. ",$1B,"[30m",0
+MSG_CLRCURRLINE:
+        .DB     $0D,$1B,"[K",0,0
 MSG_WRONGDATA:
         .DB     "Data is corrupt! Update is canceled.",0,0
 MSG_RECHECK:
