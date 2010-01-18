@@ -9,6 +9,7 @@
 #include "pins.h"
 #include "getfaraddress.h"
 #include "spi.h"
+#include "rs232.h"
 
 
 
@@ -393,6 +394,12 @@ void zx_task(UBYTE operation) // zx task, tracks when there is need to send new 
 		else // sending bytes one by one in each state
 		{
 			task_state--;
+#ifdef LOGENABLE
+	char log_task_state[] = "TS..\r\n";
+	log_task_state[2] = ((task_state >> 4) <= 9 )?'0'+(task_state >> 4):'A'+(task_state >> 4)-10;
+	log_task_state[3] = ((task_state & 0x0F) <= 9 )?'0'+(task_state & 0x0F):'A'+(task_state & 0x0F)-10;
+	to_log(log_task_state);
+#endif
 
 			if( task_state==6 ) // send (or not) reset
 			{
@@ -400,9 +407,15 @@ void zx_task(UBYTE operation) // zx task, tracks when there is need to send new 
 				{
 					nSPICS_PORT |= (1<<nSPICS);  // set address of SPI register
 					spi_send(SPI_RST_REG);
-                    nSPICS_PORT &= ~(1<<nSPICS); // send data for that register
+					nSPICS_PORT &= ~(1<<nSPICS); // send data for that register
 					spi_send( reset_type );
 					nSPICS_PORT |= (1<<nSPICS);
+#ifdef LOGENABLE
+	char log_reset_type[] = "TR..\r\n";
+	log_reset_type[2] = ((reset_type >> 4) <= 9 )?'0'+(reset_type >> 4):'A'+(reset_type >> 4)-10;
+	log_reset_type[3] = ((reset_type & 0x0F) <= 9 )?'0'+(reset_type & 0x0F):'A'+(reset_type & 0x0F)-10;
+	to_log(log_reset_type);
+#endif
 				}
 			}
 			else if( task_state>0 )// task_state==5..1
@@ -412,13 +425,26 @@ void zx_task(UBYTE operation) // zx task, tracks when there is need to send new 
 				nSPICS_PORT &= ~(1<<nSPICS);
 				spi_send( zx_map[task_state-1] );
 				nSPICS_PORT |= (1<<nSPICS);
+#ifdef LOGENABLE
+	char log_zxmap_task_state[] = "TK..\r\n";
+	log_zxmap_task_state[2] = ((zx_map[task_state-1] >> 4) <= 9 )?'0'+(zx_map[task_state-1] >> 4):'A'+(zx_map[task_state-1] >> 4)-10;
+	log_zxmap_task_state[3] = ((zx_map[task_state-1] & 0x0F) <= 9 )?'0'+(zx_map[task_state-1] & 0x0F):'A'+(zx_map[task_state-1] & 0x0F)-10;
+	to_log(log_zxmap_task_state);
+#endif
 			}
 			else // task_state==0
 			{
 				nSPICS_PORT |= (1<<nSPICS);
 				spi_send(SPI_KBD_STB);    // strobe input kbd data to the Z80 port engine
 				nSPICS_PORT &= ~(1<<nSPICS);
+				nSPICS_PORT &= ~(1<<nSPICS);
+				nSPICS_PORT &= ~(1<<nSPICS);
 				nSPICS_PORT |= (1<<nSPICS);
+				nSPICS_PORT |= (1<<nSPICS);
+				nSPICS_PORT |= (1<<nSPICS);
+#ifdef LOGENABLE
+	to_log("STB\r\n");
+#endif
 			}
 		}
 	}

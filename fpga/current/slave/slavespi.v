@@ -137,20 +137,20 @@ module slavespi(
 	//
 	always @(posedge fclk)
 	begin
-		if( !scs_n && sel_kbdreg )
+		if( !scs_n && sel_kbdreg && sck_01 )
 			kbd_reg[39:0] <= { sdo, kbd_reg[39:1] };
 
-		if( !scs_n && (sel_musxcr || sel_musycr || sel_musbtn) )
+		if( !scs_n && (sel_musxcr || sel_musycr || sel_musbtn) && sck_01 )
             mouse_buf[7:0] <= { sdo, mouse_buf[7:1] };
 
-		if( !scs_n && sel_rstreg )
+		if( !scs_n && sel_rstreg && sck_01 )
 			rst_reg[7:0] <= { sdo, rst_reg[7:1] };
 	end
 
 
 	// output data
 	assign kbd_out = kbd_reg;
-	assign kbd_stb = sel_kbdreg && scs_n_01;
+	assign kbd_stb = sel_kbdstb && scs_n_01;
 
 	assign mus_out    = mouse_buf;
 	assign mus_xstb   = sel_musxcr && scs_n_01;

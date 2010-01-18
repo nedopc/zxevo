@@ -4,7 +4,7 @@
 void rs232_init(void);
 void rs232_transmit(UBYTE data);
 
-//#define LOGENABLE
+#define LOGENABLE
 #ifdef LOGENABLE
 void to_log(char* ptr);
 #endif

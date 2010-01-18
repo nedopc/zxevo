@@ -17,7 +17,7 @@ module zkbdmus(
 	input  wire        mus_btnstb,
 
 
-	input  wire [15:8] za,
+	input  wire [7:0] zah,
 
 	output wire [ 4:0] kbd_data,
 	output wire [ 7:0] mus_data
@@ -28,7 +28,7 @@ module zkbdmus(
 
 	wire [4:0] keys [0:7]; // key matrix
 
-	wand [4:0] kout; // wire AND
+	reg [4:0] kout; // wire AND
 
 
 
@@ -61,21 +61,26 @@ module zkbdmus(
 	assign keys[6][4:0] = { kbd[06],kbd[14],kbd[22],kbd[30],kbd[38] };
 	assign keys[7][4:0] = { kbd[07],kbd[15],kbd[23],kbd[31],kbd[39] };
 	//
-	assign kout = {5{za[ 8]}} | (~keys[0]); //  wire AND!
-	assign kout = {5{za[ 9]}} | (~keys[1]);
-	assign kout = {5{za[10]}} | (~keys[2]);
-	assign kout = {5{za[11]}} | (~keys[3]);
-	assign kout = {5{za[12]}} | (~keys[4]);
-	assign kout = {5{za[13]}} | (~keys[5]);
-	assign kout = {5{za[14]}} | (~keys[6]);
-	assign kout = {5{za[15]}} | (~keys[7]);
+	always @*
+	begin
+		kout = 5'b11111;
+
+		kout = kout & ({5{zah[0]}} | (~keys[0]));
+		kout = kout & ({5{zah[1]}} | (~keys[1]));
+		kout = kout & ({5{zah[2]}} | (~keys[2]));
+		kout = kout & ({5{zah[3]}} | (~keys[3]));
+		kout = kout & ({5{zah[4]}} | (~keys[4]));
+		kout = kout & ({5{zah[5]}} | (~keys[5]));
+		kout = kout & ({5{zah[6]}} | (~keys[6]));
+		kout = kout & ({5{zah[7]}} | (~keys[7]));
+	end
 	//
 	assign kbd_data = kout;
 
 	// make mouse
     // FADF - buttons, FBDF - x, FFDF - y
 	//
-	assign mus_data = za[8] ? ( za[10] ? musy : musx ) : musbtn;
+	assign mus_data = zah[0] ? ( zah[2] ? musy : musx ) : musbtn;
 
 
 
