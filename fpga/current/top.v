@@ -416,10 +416,10 @@ module top(
 	                 );
 
 	zkbdmus zkbdmus( .fclk(fclk), .rst_n(rst_n),
-	                 .kbd_in(kdb_data), .kbd_stb(kbd_stb),
+	                 .kbd_in(kbd_data), .kbd_stb(kbd_stb),
 	                 .mus_in(mus_data), .mus_xstb(mus_xstb),
 	                 .mus_ystb(mus_ystb), .mus_btnstb(mus_btnstb),
-	                 .za(a), .kbd_data(kbd_port_data),
+	                 .zah(a[15:8]), .kbd_data(kbd_port_data),
 	                 .mus_data(mus_port_data)
 	               );
 
