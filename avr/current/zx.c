@@ -10,9 +10,14 @@
 #include "getfaraddress.h"
 #include "spi.h"
 #include "rs232.h"
+#include "ps2.h"
 
 
 
+//zx mouse registers
+volatile UBYTE zx_mouse_button;
+volatile UBYTE zx_mouse_x;
+volatile UBYTE zx_mouse_y;
 
 
 
@@ -34,9 +39,6 @@ UBYTE zx_map[5]; // keys bitmap. send order: LSbit first, from [4] to [0]
 
 
 volatile UBYTE shift_pause;
-
-
-
 
 
 
@@ -436,11 +438,11 @@ void zx_task(UBYTE operation) // zx task, tracks when there is need to send new 
 			{
 				nSPICS_PORT |= (1<<nSPICS);
 				spi_send(SPI_KBD_STB);    // strobe input kbd data to the Z80 port engine
+//				nSPICS_PORT &= ~(1<<nSPICS);
+//				nSPICS_PORT &= ~(1<<nSPICS);
 				nSPICS_PORT &= ~(1<<nSPICS);
-				nSPICS_PORT &= ~(1<<nSPICS);
-				nSPICS_PORT &= ~(1<<nSPICS);
-				nSPICS_PORT |= (1<<nSPICS);
-				nSPICS_PORT |= (1<<nSPICS);
+//				nSPICS_PORT |= (1<<nSPICS);
+//				nSPICS_PORT |= (1<<nSPICS);
 				nSPICS_PORT |= (1<<nSPICS);
 #ifdef LOGENABLE
 	to_log("STB\r\n");
@@ -466,19 +468,6 @@ void zx_clr_kb(void)
 		zx_counters[i] = 0;
 	while( (--i)>=0 );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 void to_zx(UBYTE scancode, UBYTE was_E0, UBYTE was_release)
@@ -601,3 +590,50 @@ UBYTE zx_fifo_copy(void)
 	return zx_fifo[zx_fifo_out_ptr]; // get byte but leave it in fifo
 }
 
+
+
+void zx_mouse_reset(void)
+{
+	zx_mouse_x = 0xFF;
+	zx_mouse_y = 0xFF;
+	zx_mouse_button = 0xFF;
+}
+
+void zx_mouse_task(void)
+{
+	if ( ps2_flags&PS2MOUSE_ZX_READY_FLAG )
+	{
+#ifdef LOGENABLE
+	char log_zxmouse[] = "ZXM.. .. ..\r\n";
+	log_zxmouse[3] = ((zx_mouse_button >> 4) <= 9 )?'0'+(zx_mouse_button >> 4):'A'+(zx_mouse_button >> 4)-10;
+	log_zxmouse[4] = ((zx_mouse_button & 0x0F) <= 9 )?'0'+(zx_mouse_button & 0x0F):'A'+(zx_mouse_button & 0x0F)-10;
+	log_zxmouse[6] = ((zx_mouse_x >> 4) <= 9 )?'0'+(zx_mouse_x >> 4):'A'+(zx_mouse_x >> 4)-10;
+	log_zxmouse[7] = ((zx_mouse_x & 0x0F) <= 9 )?'0'+(zx_mouse_x & 0x0F):'A'+(zx_mouse_x & 0x0F)-10;
+	log_zxmouse[9] = ((zx_mouse_y >> 4) <= 9 )?'0'+(zx_mouse_y >> 4):'A'+(zx_mouse_y >> 4)-10;
+	log_zxmouse[10] = ((zx_mouse_y & 0x0F) <= 9 )?'0'+(zx_mouse_y & 0x0F):'A'+(zx_mouse_y & 0x0F)-10;
+	to_log(log_zxmouse);
+#endif
+		//TODO: пока сделал скопом, потом сделать по одному байту за заход
+
+		nSPICS_PORT |= (1<<nSPICS);  // set address of SPI register
+		spi_send(SPI_MOUSE_BTN);
+		nSPICS_PORT &= ~(1<<nSPICS);
+		spi_send(zx_mouse_button);
+		nSPICS_PORT |= (1<<nSPICS);
+
+		nSPICS_PORT |= (1<<nSPICS);  // set address of SPI register
+		spi_send(SPI_MOUSE_X);
+		nSPICS_PORT &= ~(1<<nSPICS);
+		spi_send(zx_mouse_x);
+		nSPICS_PORT |= (1<<nSPICS);
+
+		nSPICS_PORT |= (1<<nSPICS);  // set address of SPI register
+		spi_send(SPI_MOUSE_Y);
+		nSPICS_PORT &= ~(1<<nSPICS);
+		spi_send(zx_mouse_y);
+		nSPICS_PORT |= (1<<nSPICS);
+
+		//data sended - reset flag
+		ps2_flags&=~(PS2MOUSE_ZX_READY_FLAG);
+	}
+}

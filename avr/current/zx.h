@@ -97,14 +97,6 @@ extern volatile UBYTE shift_pause;
 
 
 
-
-
-
-
-
-
-
-
 #define ZX_TASK_INIT 0
 #define ZX_TASK_WORK 1
 
@@ -127,7 +119,16 @@ UBYTE zx_fifo_copy(void);
 
 
 
+//zx mouse registers
+extern volatile UBYTE zx_mouse_button; //button and
+extern volatile UBYTE zx_mouse_x;  //x coord
+extern volatile UBYTE zx_mouse_y;  //y coord
 
+//reset zx mouse registers to default value
+void zx_mouse_reset(void);
+
+//send zx mouse registers to fpga
+void zx_mouse_task(void);
 
 
 #endif
