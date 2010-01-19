@@ -78,6 +78,7 @@ int main()
 	ps2mouse_resp_count = 0;
 	ps2_flags = 0;
 
+	zx_mouse_reset();
 
 	//set external interrupt
 	//INT4 - PS2 Keyboard  (falling edge)
@@ -101,6 +102,7 @@ int main()
         ps2keyboard_task();
 		ps2mouse_task();
         zx_task(ZX_TASK_WORK);
+		zx_mouse_task();
     }
 
 }

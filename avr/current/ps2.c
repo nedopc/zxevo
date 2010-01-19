@@ -257,6 +257,33 @@ void ps2mouse_task(void)
 			//initialization complete - working mode
 			case 0:
 				//TODO: send to ZX here
+				ps2mouse_resp_count++;
+				switch( ps2mouse_resp_count )
+				{
+				case 1:
+					//byte 1: Y overflow | X overflow | Y sign bit | X sign bit | 1 | Middle Btn | Right Btn | Left Btn
+					zx_mouse_button = (zx_mouse_button&0xF0) + (byte&0x0F);
+					break;
+				case 2:
+					//byte 2: X movement
+					zx_mouse_x += byte;
+					break;
+				case 3:
+					//byte 3: Y movement
+					zx_mouse_y += byte;
+					if ( !(ps2_flags&PS2MOUSE_TYPE_FLAG) )
+					{
+						//classical mouse
+						ps2mouse_resp_count = 0;
+						ps2_flags |= PS2MOUSE_ZX_READY_FLAG;
+					}
+					break;
+				case 4:
+					//byte 4: wheel movement
+					zx_mouse_button += ((byte<<4)&0xF0);
+					ps2_flags |= PS2MOUSE_ZX_READY_FLAG;
+					ps2mouse_resp_count = 0;
+				}
 				break;
 
 			//reset command
