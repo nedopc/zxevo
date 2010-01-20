@@ -14,6 +14,7 @@
 #include "zx.h"
 #include "spi.h"
 #include "rs232.h"
+#include "rtc.h"
 
 
 //fpga compressed data
@@ -87,6 +88,7 @@ int main()
 	EIFR = (1<<INTF4)|(1<<INTF5); // clear spurious ints there
 	EIMSK |= (1<<INT4)|(1<<INT5); // enable
 
+	rtc_init();
 	zx_init();
 
 #ifdef LOGENABLE
