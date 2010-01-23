@@ -37,16 +37,25 @@ void ps2keyboard_parse(UBYTE);
 
 //=======  ps2 mouse  ================
 
-//timeout for waiting response from mouse
+/** Timeout for waiting response from mouse. */
 #define PS2MOUSE_TIMEOUT 20
 
-extern volatile UWORD ps2mouse_shifter; //content received/sended data
-extern volatile UBYTE ps2mouse_count;  //counter for current received/sended bit
+/** Received/sended PS/2 mouse data register.*/
+extern volatile UWORD ps2mouse_shifter;
+
+/** Counter of current received/sended PS/2 mouse data bit.*/
+extern volatile UBYTE ps2mouse_count;
+
+/** Timeout register for detecting send/response PS/2 mouse timeouts.*/
 extern volatile UBYTE ps2mouse_timeout;
+
+/** Index of PS/2 mouse initialization step (@see ps2mouse_init_sequence).*/
 extern volatile UBYTE ps2mouse_initstep;
+
+/** Counter of PS/2 mouse response bytes.*/
 extern volatile UBYTE ps2mouse_resp_count;
 
-//void ps2mouse_init(void);
+/** Check and translate data from PS/2 mouse.*/
 void ps2mouse_task(void);
 
 #endif //PS2_H

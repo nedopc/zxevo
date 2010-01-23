@@ -15,7 +15,7 @@
 #include "spi.h"
 #include "rs232.h"
 #include "rtc.h"
-
+#include "atx.h"
 
 //fpga compressed data
 extern const char fpga[] PROGMEM; // linker symbol
@@ -27,8 +27,7 @@ void InitHardware(void);
 
 int main()
 {
-	UBYTE j;
-
+start:
 
 	InitHardware();
 
@@ -36,20 +35,9 @@ int main()
 	rs232_init();
 #endif
 
-
-	PORTF |= (1<<PF3); // turn POWER on
-
-	j=50;
-	do _delay_ms(20); while(--j); //1 sec delay
-
-
-	//begin configuring, led ON
-	PORTB &= ~(1<<LED);
-
+	wait_for_atx_power();
 
 	spi_init();
-
-
 
 	DDRF |= (1<<nCONFIG); // pull low for a time
 	_delay_us(40);
@@ -58,11 +46,8 @@ int main()
 	indata = (ULONG)GET_FAR_ADDRESS(fpga); // prepare for data fetching
 	depacker_dirty();
 
-
 	//LED off
 	PORTB |= (1<<LED);
-
-
 
 	// start timer (led dimming and timeouts for ps/2)
 	TCCR2 = 0b01110011; // FOC2=0, {WGM21,WGM20}=01, {COM21,COM20}=11, {CS22,CS21,CS20}=011
@@ -77,9 +62,9 @@ int main()
 	ps2mouse_count = 12;
 	ps2mouse_initstep = 0;
 	ps2mouse_resp_count = 0;
-	ps2_flags = 0;
 
-	zx_mouse_reset();
+	//enable mouse
+	zx_mouse_reset(1);
 
 	//set external interrupt
 	//INT4 - PS2 Keyboard  (falling edge)
@@ -99,14 +84,16 @@ int main()
 	sei(); // globally go interrupting
 
 	//main loop
-    for(;;)
+	do
     {
         ps2keyboard_task();
 		ps2mouse_task();
         zx_task(ZX_TASK_WORK);
 		zx_mouse_task();
     }
+	while( atx_power_task() );
 
+	goto start;
 }
 
 void InitHardware(void)
@@ -121,7 +108,7 @@ void InitHardware(void)
 	PORTG = 0b11111111;
 	DDRG  = 0b00000000;
 
-	PORTF = 0b11110000; // ATX off (zero output), fpga config/etc inputs
+//	PORTF = 0b11110000; // ATX off (zero output), fpga config/etc inputs
 	DDRF  = 0b00001000;
 
 	PORTE = 0b11111111;
