@@ -22,6 +22,8 @@ module videoout(
 	input hsync,
 	input vsync,
 
+	input vga_hsync,
+
 	output reg [1:0] vred, // to
 	output reg [1:0] vgrn, //   the     DAC
 	output reg [1:0] vblu, //      video
@@ -44,7 +46,7 @@ module videoout(
 		vgrn[1:0] <= color[3:2];
 		vblu[1:0] <= color[1:0];
 
-		vhsync <= hsync;
+		vhsync <= vga_hsync; // FUK MAJ MOZG
 		vvsync <= vsync;
 
 		vcsync <= ~(hsync ^ vsync);
