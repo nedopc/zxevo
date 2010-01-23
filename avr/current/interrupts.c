@@ -9,6 +9,7 @@
 #include "rs232.h"
 #include "zx.h"
 #include "spi.h"
+#include "atx.h"
 
 ISR(TIMER2_OVF_vect)
 {
@@ -58,6 +59,18 @@ ISR(TIMER2_OVF_vect)
 		{
 			ps2mouse_count = 12;
 		}
+	}
+
+	//check soft reset
+	if ( SOFTRES_PIN & (1<<SOFTRES) )
+	{
+		//not pressed
+		atx_counter = 0;
+	}
+	else
+	{
+		//pressed
+		atx_counter++;
 	}
 }
 

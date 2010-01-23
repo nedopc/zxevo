@@ -592,11 +592,21 @@ UBYTE zx_fifo_copy(void)
 
 
 
-void zx_mouse_reset(void)
+void zx_mouse_reset(UBYTE enable)
 {
-	zx_mouse_x = 0xFF;
-	zx_mouse_y = 0xFF;
+	if ( enable )
+	{
+		//ZX autodetecting found mouse on this values
+		zx_mouse_x = 0;
+		zx_mouse_y = 1;
+	}
+	else
+	{
+		//ZX autodetecting not found mouse on this values
+		zx_mouse_y = zx_mouse_x = 0xFF;
+	}
 	zx_mouse_button = 0xFF;
+	ps2_flags|=(PS2MOUSE_ZX_READY_FLAG);
 }
 
 void zx_mouse_task(void)

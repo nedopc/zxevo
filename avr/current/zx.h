@@ -117,17 +117,31 @@ UBYTE zx_fifo_isempty(void);
 UBYTE zx_fifo_get(void);
 UBYTE zx_fifo_copy(void);
 
+/**
+ * ZX mouse button register.
+ * Bits description:
+ * 7..4 - wheel code (if present) or 1111 if wheel not present;
+ * 3    - always 1;
+ * 2    - middle button (0, if pressed);
+ * 1    - right button (0, if pressed);
+ * 0    - left button (0, if pressed).
+ */
+extern volatile UBYTE zx_mouse_button;
 
+/** ZX mouse X coordinate register. */
+extern volatile UBYTE zx_mouse_x;
 
-//zx mouse registers
-extern volatile UBYTE zx_mouse_button; //button and
-extern volatile UBYTE zx_mouse_x;  //x coord
-extern volatile UBYTE zx_mouse_y;  //y coord
+/** ZX mouse Y coordinate register. */
+extern volatile UBYTE zx_mouse_y;
 
-//reset zx mouse registers to default value
-void zx_mouse_reset(void);
+/**
+ * Reset ZX mouse registers to default value.
+ * @par enable [in] - ==0 values like no mouse connected
+ *                    !=0 values like mouse connected
+ */
+void zx_mouse_reset(UBYTE enable);
 
-//send zx mouse registers to fpga
+/** Send values of ZX mouse registers to fpga. */
 void zx_mouse_task(void);
 
 

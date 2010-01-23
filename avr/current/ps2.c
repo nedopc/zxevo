@@ -183,7 +183,7 @@ UBYTE ps2mouse_init_sequence[] =
 	"\xF2"      // get device type
 	"\xE8\x02"  // set resolution
 	"\xE6"      // set scaling 1:1
-//	"\xF3\x14"  // set sample rate 20
+	"\xF3\x64"  // set sample rate 100
 	"\xF4"      // enable
 	;
 
@@ -218,6 +218,9 @@ void ps2mouse_task(void)
 		 ( ps2mouse_resp_count == 0) &&
 		 ( ps2mouse_init_sequence[ps2mouse_initstep] != 0 ) )
 	{
+		//delay need for pause between release and hold clk pin
+		_delay_us(100);
+
 		//initialization not complete
 		//send next command to mouse
 		ps2mouse_send(ps2mouse_init_sequence[ps2mouse_initstep]);
@@ -232,6 +235,9 @@ void ps2mouse_task(void)
 #ifdef LOGENABLE
 		to_log("MSerr\r\n");
 #endif
+		//disable mouse
+		zx_mouse_reset(0);
+
 		//TODO: чета делать чтобы плуг анд плай был
 		//типа если маус уже проинициализирован то инитить заново
 	}
@@ -262,7 +268,7 @@ void ps2mouse_task(void)
 				{
 				case 1:
 					//byte 1: Y overflow | X overflow | Y sign bit | X sign bit | 1 | Middle Btn | Right Btn | Left Btn
-					zx_mouse_button = (zx_mouse_button&0xF0) + (byte&0x0F);
+					zx_mouse_button = (zx_mouse_button&0xF0) + ((byte^0x07)&0x0F);
 					break;
 				case 2:
 					//byte 2: X movement

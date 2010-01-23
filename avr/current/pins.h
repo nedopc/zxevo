@@ -65,7 +65,17 @@
 #define nSPICS_PIN  PINB
 #define nSPICS_DDR  DDRB
 
+/** ATX POWER ON */
+#define ATXPWRON      PF3
+#define ATXPWRON_PORT PORTF
+#define ATXPWRON_PIN  PINF
+#define ATXPWRON_DDR  DDRF
 
+/** SOFT RESET */
+#define SOFTRES      PC7
+#define SOFTRES_PORT PORTC
+#define SOFTRES_PIN  PINC
+#define SOFTRES_DDR  DDRC
 
 #endif
 
