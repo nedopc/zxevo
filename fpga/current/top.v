@@ -385,7 +385,7 @@ module top(
 	                 .vblank(vblank), .vsync(vsync), .int_start(int_start),
 	                 .vpix(vpix), .hint_start(hint_start) );
 
-	vga_synch vga_synch( .clk(clk), .hsync_start(hsync_start), .vga_hsync(vga_hsync) );
+	vga_synch vga_synch( .clk(fclk), .hsync_start(hsync_start), .vga_hsync(vga_hsync) );
 
 
 
