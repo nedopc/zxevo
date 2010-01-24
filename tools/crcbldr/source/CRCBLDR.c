@@ -3,8 +3,6 @@
 #include <string.h>
 #include <time.h>
 
-// #define thirdpart 1
-
 typedef unsigned char BYTE;
 typedef unsigned short WORD;
 typedef unsigned long LONGWORD;
@@ -84,11 +82,8 @@ BYTE getbyte()
 
 int main(int argc,char*argv[])
 {
-#ifndef thirdpart
- BYTE       official=0x80;
-#endif
  BYTE       h[]="0123456789ABCDEF";
- BYTE       b, m, hexlen, datatype;
+ BYTE       b, m, o, hexlen, datatype;
  WORD       i, crc;
  LONGWORD   x0, x1, adr, segadr;
  struct tm  stm;
@@ -101,10 +96,16 @@ int main(int argc,char*argv[])
  BYTE       buff[0x2000];
  FILE*      f;
 
+ o=0;
  printf("ZX EVO project:  Calc CRC for bootloader\n");
- if (argc!=3) { printf("usage: CRCBLDR <HexFileName> [<VersionFileName>]\n"); return 2; }
+ if (argc<3) { printf("usage: CRCBLDR <HexFileName> [<VersionFileName>]\n"); return 2; }
 
  for (adr=0;adr<0x2000;adr++) buff[adr]=0xff;
+ if (argc==4)
+  {
+   strncpy(s1,argv[3],1);
+   if (s1[0]=='o') o=0x80;
+  }
 
  strncpy(s1,argv[2],255);
  f=fopen(s1,"rt");
@@ -119,9 +120,7 @@ int main(int argc,char*argv[])
  if (!i)
   {
    strcpy(vs, "No info");
-#ifndef thirdpart
-   official=0;
-#endif
+   o=0;
   }
 
  strncpy(s1,argv[1],255);
@@ -203,17 +202,13 @@ int main(int argc,char*argv[])
  }
 
  strncpy(&buff[0x1ff0], vs, 12);
- { 
+ {
   time_t tt;
   tt=time(NULL);
   memcpy(&stm,localtime(&tt),sizeof(stm));
  }
  i=(WORD)( (((stm.tm_year-100)&0x3f)<<9) | (((stm.tm_mon+1)&0x0f)<<5) | (stm.tm_mday&0x1f) );
-#ifdef thirdpart
- buff[0x1ffc]=(i>>8)&0x7f;
-#else
- buff[0x1ffc]=(i>>8)&0x7f|official;
-#endif
+ buff[0x1ffc]=(i>>8)&0x7f|o;
  buff[0x1ffd]=i&0xff;
 
  crc=0xffff;
@@ -300,9 +295,7 @@ int main(int argc,char*argv[])
  vs[i++]=h[b/10];
  vs[i++]=h[b%10];
  vs[i]=0;
-#ifndef thirdpart
- if (official) strcpy(&vs[i]," by NedoPC");
-#endif
+ if (o) strcpy(&vs[i]," by NedoPC");
 
  strncpy(&E2Phead[0x3a],vs,85);
  E2Phead[0x90]=0x02;
