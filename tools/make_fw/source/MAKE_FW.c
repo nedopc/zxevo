@@ -82,9 +82,8 @@ BYTE getbyte()
 
 int main(int argc,char*argv[])
 {
- BYTE       official=0x80;
  BYTE       h[]="0123456789ABCDEF";
- BYTE       b, m, hexlen, datatype;
+ BYTE       b, m, o, hexlen, datatype;
  WORD       i, ih, crc;
  LONGWORD   x0, x1, adr, segadr;
  struct tm  stm;
@@ -95,7 +94,7 @@ int main(int argc,char*argv[])
  FILE*      f;
 
  printf("ZX EVO project:  HEX to BIN + CRC + Header\n");
- if (argc!=3) { printf("usage: MAKE_FW <HexFileName> [<VersionFileName>]\n"); return 2; }
+ if (argc<3) { printf("usage: MAKE_FW <HexFileName> <VersionFileName>\n"); return 2; }
 
  header[0]='Z';
  header[1]='X';
@@ -105,7 +104,13 @@ int main(int argc,char*argv[])
  header[5]=0x1a;
  for (ih=0x06; ih<0x80; ih++) header[ih]=0;
  ih=6;
- 
+ o=0;
+ if (argc==4)
+  {
+   strncpy(s1,argv[3],1);
+   if (s1[0]=='o') o=0x80;
+  }
+
  strncpy(s1,argv[2],255);
  f=fopen(s1,"rt");
  vs[0]=0;
@@ -119,7 +124,7 @@ int main(int argc,char*argv[])
  if (!i)
   {
    strcpy(vs, "No info");
-   official=0;
+   o=0;
   }
 
  strcpy(&header[ih], vs);
@@ -190,13 +195,13 @@ int main(int argc,char*argv[])
 
 
  // comments place
- { 
+ {
   time_t tt;
   tt=time(NULL);
   memcpy(&stm,localtime(&tt),sizeof(stm));
  }
  i=(WORD)(((stm.tm_year-100)&0x3f)<<9) | (((stm.tm_mon+1)&0x0f)<<5) | (stm.tm_mday&0x1f);
- header[0x003e]=buff[0x1dffc]=(i>>8)&0x7f|official;
+ header[0x003e]=buff[0x1dffc]=(i>>8)&0x7f|o;
  header[0x003f]=buff[0x1dffd]=i&0xff;
 
  strncpy(&buff[0x1dff0], vs, 12);

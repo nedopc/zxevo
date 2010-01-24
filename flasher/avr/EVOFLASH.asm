@@ -1,6 +1,23 @@
 .NOLIST
 .INCLUDE "M128DEF.INC"
 .INCLUDE "_MACROS.ASM"
+
+.MACRO  SPICS_SET
+        SBI     PORTB,0
+.ENDMACRO
+
+.MACRO  SPICS_CLR
+        CBI     PORTB,0
+.ENDMACRO
+
+.MACRO  LED_ON
+        CBI     PORTB,7
+.ENDMACRO
+
+.MACRO  LED_OFF
+        SBI     PORTB,7
+.ENDMACRO
+
 .LIST
 .LISTMAC
 
@@ -32,23 +49,9 @@
 .EQU    SCR_LOADDR      =$40
 .EQU    SCR_HIADDR      =$41
 .EQU    SCR_CHAR        =$44
-
-.MACRO  SPICS_SET
-        SBI     PORTB,0
-.ENDMACRO
-
-.MACRO  SPICS_CLR
-        CBI     PORTB,0
-.ENDMACRO
-
-.MACRO  LED_ON
-        CBI     PORTB,7
-.ENDMACRO
-
-.MACRO  LED_OFF
-        SBI     PORTB,7
-.ENDMACRO
-
+;
+;--------------------------------------
+;
 .DSEG
         .ORG    $0100
 BUFFER:
@@ -84,50 +87,51 @@ F_ADDR1:.BYTE   1
 F_ADDR2:.BYTE   1
 ERRFLG1:.BYTE   1
 ERRFLG2:.BYTE   1
-
+;
+;--------------------------------------
+;
 .CSEG
         .ORG    0
         JMP     START
-        JMP     START   ;EXT_INT0 ; IRQ0 Handler
-        JMP     START   ;EXT_INT1 ; IRQ1 Handler
-        JMP     START   ;EXT_INT2 ; IRQ2 Handler
-        JMP     START   ;EXT_INT3 ; IRQ3 Handler
-        JMP     START   ;EXT_INT4 ; IRQ4 Handler
-        JMP     START   ;EXT_INT5 ; IRQ5 Handler
-        JMP     START   ;EXT_INT6 ; IRQ6 Handler
-        JMP     START   ;EXT_INT7 ; IRQ7 Handler
-        JMP     START   ;TIM2_COMP ; Timer2 Compare Handler
-        JMP     START   ;TIM2_OVF ; Timer2 Overflow Handler
-        JMP     START   ;TIM1_CAPT ; Timer1 Capture Handler
-        JMP     START   ;TIM1_COMPA ; Timer1 CompareA Handler
-        JMP     START   ;TIM1_COMPB ; Timer1 CompareB Handler
-        JMP     START   ;TIM1_OVF ; Timer1 Overflow Handler
-        JMP     START   ;TIM0_COMP ; Timer0 Compare Handler
-        JMP     START   ;TIM0_OVF ; Timer0 Overflow Handler
-        JMP     START   ;SPI_STC ; SPI Transfer Complete Handler
-        JMP     START   ;USART0_RXC ; USART0 RX Complete Handler
-        JMP     START   ;USART0_DRE ; USART0,UDR Empty Handler
-        JMP     START   ;USART0_TXC ; USART0 TX Complete Handler
-        JMP     START   ;ADC ; ADC Conversion Complete Handler
-        JMP     START   ;EE_RDY ; EEPROM Ready Handler
-        JMP     START   ;ANA_COMP ; Analog Comparator Handler
-        JMP     START   ;TIM1_COMPC ; Timer1 CompareC Handler
-        JMP     START   ;TIM3_CAPT ; Timer3 Capture Handler
-        JMP     START   ;TIM3_COMPA ; Timer3 CompareA Handler
-        JMP     START   ;TIM3_COMPB ; Timer3 CompareB Handler
-        JMP     START   ;TIM3_COMPC ; Timer3 CompareC Handler
-        JMP     START   ;TIM3_OVF ; Timer3 Overflow Handler
-        JMP     START   ;USART1_RXC ; USART1 RX Complete Handler
-        JMP     START   ;USART1_DRE; USART1,UDR Empty Handler
-        JMP     START   ;USART1_TXC ; USART1 TX Complete Handler
-        JMP     START   ;TWI_INT ; Two-wire Serial Interface Interrupt Handler
-        JMP     START   ;SPM_RDY ; SPM Ready Handler
-
+        JMP     START   ;EXT_INT0       ; IRQ0 Handler
+        JMP     START   ;EXT_INT1       ; IRQ1 Handler
+        JMP     START   ;EXT_INT2       ; IRQ2 Handler
+        JMP     START   ;EXT_INT3       ; IRQ3 Handler
+        JMP     START   ;EXT_INT4       ; IRQ4 Handler
+        JMP     START   ;EXT_INT5       ; IRQ5 Handler
+        JMP     START   ;EXT_INT6       ; IRQ6 Handler
+        JMP     START   ;EXT_INT7       ; IRQ7 Handler
+        JMP     START   ;TIM2_COMP      ; Timer2 Compare Handler
+        JMP     START   ;TIM2_OVF       ; Timer2 Overflow Handler
+        JMP     START   ;TIM1_CAPT      ; Timer1 Capture Handler
+        JMP     START   ;TIM1_COMPA     ; Timer1 CompareA Handler
+        JMP     START   ;TIM1_COMPB     ; Timer1 CompareB Handler
+        JMP     START   ;TIM1_OVF       ; Timer1 Overflow Handler
+        JMP     START   ;TIM0_COMP      ; Timer0 Compare Handler
+        JMP     START   ;TIM0_OVF       ; Timer0 Overflow Handler
+        JMP     START   ;SPI_STC        ; SPI Transfer Complete Handler
+        JMP     START   ;USART0_RXC     ; USART0 RX Complete Handler
+        JMP     START   ;USART0_DRE     ; USART0,UDR Empty Handler
+        JMP     START   ;USART0_TXC     ; USART0 TX Complete Handler
+        JMP     START   ;ADC            ; ADC Conversion Complete Handler
+        JMP     START   ;EE_RDY         ; EEPROM Ready Handler
+        JMP     START   ;ANA_COMP       ; Analog Comparator Handler
+        JMP     START   ;TIM1_COMPC     ; Timer1 CompareC Handler
+        JMP     START   ;TIM3_CAPT      ; Timer3 Capture Handler
+        JMP     START   ;TIM3_COMPA     ; Timer3 CompareA Handler
+        JMP     START   ;TIM3_COMPB     ; Timer3 CompareB Handler
+        JMP     START   ;TIM3_COMPC     ; Timer3 CompareC Handler
+        JMP     START   ;TIM3_OVF       ; Timer3 Overflow Handler
+        JMP     START   ;USART1_RXC     ; USART1 RX Complete Handler
+        JMP     START   ;USART1_DRE     ; USART1,UDR Empty Handler
+        JMP     START   ;USART1_TXC     ; USART1 TX Complete Handler
+        JMP     START   ;TWI_INT        ; Two-wire Serial Interface Interrupt Handler
+        JMP     START   ;SPM_RDY        ; SPM Ready Handler
 ;
 ;--------------------------------------
 ;
 MSG_CFGFPGA:
-        .DB     $0D,$0A,$0A,$0A,"Set temporary configuration... ",0
+        .DB     $0D,$0A,$0A,$0A,"Load FPGA configuration... ",0
 MSG_OK:
         .DB     "Ok!",$0A
 MSG_NEWLINE:
@@ -252,7 +256,7 @@ START:  CLI
         OUT     SPSR,TEMP
         LDI     TEMP,(1<<SPE)|(1<<DORD)|(1<<MSTR)|(0<<CPOL)|(0<<CPHA)
         OUT     SPCR,TEMP
-
+;ждём включения ATX, а потом ещё чуть-чуть.
 UP11:   SBIS    PINF,0 ;PINC,5 ; а если powergood нет вообще ?
         RJMP    UP11
         LDI     DATA,5
@@ -260,7 +264,7 @@ UP11:   SBIS    PINF,0 ;PINC,5 ; а если powergood нет вообще ?
 
         LDIZ    MSG_CFGFPGA*2
         RCALL   UART_PRINTSTRZ
-
+;загрузка FPGA
         INPORT  TEMP,DDRF
         SBR     TEMP,(1<<nCONFIG)
         OUTPORT DDRF,TEMP
@@ -284,8 +288,7 @@ MS:     LPM     R0,Z+
         ST      Y+,R0
 ;-begin-PUT_BYTE_1---
         OUT     SPDR,R0
-PUTB1:  IN      R1,SPSR
-        SBRS    R1,SPIF
+PUTB1:  SBIS    SPSR,SPIF
         RJMP    PUTB1
 ;-end---PUT_BYTE_1---
         SUBI    YH,HIGH(BUFFER) ;
@@ -366,8 +369,7 @@ LDIRLOOP:
         ST      Y+,R0
 ;-begin-PUT_BYTE_2---
         OUT     SPDR,R0
-PUTB2:  IN      R1,SPSR
-        SBRS    R1,SPIF
+PUTB2:  SBIS    SPSR,SPIF
         RJMP    PUTB2
 ;-end---PUT_BYTE_2---
         SUBI    YH,HIGH(BUFFER) ;
@@ -431,6 +433,8 @@ DEMLZEND:
         LDI     DATA,$29 ;")"
         RCALL   PUTCHAR
 PRVERS9:
+; - - - - - - - - - - - - - - - - - - -
+;информация о Flash-ROM чипе
         RCALL   UART_NEWLINE
         LDI     XL,0
         LDI     XH,2
@@ -445,7 +449,7 @@ PRVERS9:
         RCALL   PUTCHAR
         MOV     DATA,ZH
         RCALL   HEXBYTE
-
+; - - - - - - - - - - - - - - - - - - -
         RCALL   UART_NEWLINE
         LDI     XL,0
         LDI     XH,3
@@ -453,16 +457,10 @@ PRVERS9:
         LDIZ    MSG_OPENFILE*2
         RCALL   PRINTSTRZ
 ;
-; - - - - - - - - - - - - - - - - - - -
 ;инициализация SD карточки
-        SPICS_SET
-        LDI     DATA,SD_DATA
-        OUT     SPDR,DATA
-SDINIT0:IN      R0,SPSR
-        SBRS    R0,SPIF
-        RJMP    SDINIT0
-        IN      R0,SPDR
-        SPICS_CLR
+        LDI     TEMP,SD_DATA
+        SER     DATA
+        RCALL   FPGA_REG
 
         LDI     TEMP,32
         RCALL   SD_RD_DUMMY
@@ -471,7 +469,7 @@ SDINIT1:LDIZ    CMD00*2
         RCALL   SD_WR_PGM_6
         DEC     R24
         BRNE    SDINIT2
-       LDI     DATA,1  ;нет SD
+        LDI     DATA,1  ;нет SD
         RJMP    SD_ERROR
 SDINIT2:CPI     DATA,$01
         BRNE    SDINIT1
@@ -576,7 +574,7 @@ RDF055: LDD     DATA,Z+$15
         INC     TEMP
 RDF056: CPI     TEMP,4
         BREQ    RDF057
-       LDI     DATA,3  ;не найдена FAT
+        LDI     DATA,3  ;не найдена FAT
         RJMP    SD_ERROR
 RDF057: STS     CAL_FAT,FF
         LDIY    0
@@ -770,7 +768,7 @@ DALSHE: LPM     DATA,Z+
         RJMP    FNDMP31
 ;нет такого файла
 FNDMP37:
-       LDI     DATA,4  ;нет файла
+        LDI     DATA,4  ;нет файла
         RJMP    SD_ERROR
 ;найден описатель
 NASHEL: MOV     ZH,XH
@@ -798,7 +796,7 @@ NASHEL: MOV     ZH,XH
         OR      DATA,YL
         OR      DATA,YH
         BRNE    F01
-       LDI     DATA,5  ;пустой файл
+        LDI     DATA,5  ;пустой файл
         RJMP    SD_ERROR
 F01:
         LDI     DATA,$08
@@ -806,8 +804,8 @@ F01:
         CPC     XH,NULL
         CPC     YL,DATA
         CPC     YH,NULL
-        BRCS    F02             ;большой файл
-       LDI     DATA,6  ;большой файл
+        BRCS    F02
+        LDI     DATA,5  ;большой файл
         RJMP    SD_ERROR
 F02:
         LDI     R24,LOW(511)
@@ -831,6 +829,8 @@ F02:
         STSY    ZKOL_CLS+2
         STS     NUMSECK,NULL
 ; - - - - - - - - - - - - - - - - - - -
+;всё нормально, начинаем
+;стирание
         RCALL   UART_NEWLINE
         LDI     XL,0
         LDI     XH,4
@@ -838,7 +838,7 @@ F02:
         LDIZ    MSG_F_ERASE*2
         RCALL   PRINTSTRZ
         RCALL   F_ERASE
-; - - -
+;запись
         RCALL   UART_NEWLINE
         LDI     XL,0
         LDI     XH,5
@@ -878,10 +878,10 @@ F11:    RCALL   F_WRITE
         ADIW    ZL,1
         CPI     ZH,HIGH(BUFFER+512)
         BRNE    F11
-;св.диод - мигать при программировании
+
         LED_OFF
         SBRC    XH,1
-        LED_ON
+        LED_ON  ;мигать при программировании
 
         STS     F_ADDR0,XL
         STS     F_ADDR1,XH
@@ -899,7 +899,7 @@ F12:
         LDS     DATA,LASTSECFLAG
         TST     DATA
         BRNE    F13
-; - - -
+;проверка
         RCALL   F_RST
         LDI     TEMP,FLASH_CTRL
         LDI     DATA,0B00000011
@@ -948,10 +948,10 @@ F26:    ADIW    XL,1
         ADC     YL,NULL
         CPI     ZH,HIGH(BUFFER+512)
         BRNE    F21
-;св.диод - мигать при проверке
+
         LED_OFF
         SBRC    XH,3
-        LED_ON
+        LED_ON  ;мигать при проверке
 
         STS     F_ADDR0,XL
         STS     F_ADDR1,XH
@@ -976,7 +976,7 @@ F22:
         LDS     DATA,LASTSECFLAG
         TST     DATA
         BRNE    F25
-; - - -
+;стоп
         LED_OFF
         RCALL   UART_NEWLINE
         LDI     XL,0
@@ -1006,12 +1006,7 @@ SD_RECEIVE:
 ;in:    DATA
 ;out:   DATA
 SD_EXCHANGE:
-        OUT     SPDR,DATA
-SDEXCH: IN      R0,SPSR
-        SBRS    R0,SPIF
-        RJMP    SDEXCH
-        IN      DATA,SPDR
-        RET
+        RJMP    FPGA_SAME_REG
 ;
 ;--------------------------------------
 ;in;    TEMP - n
@@ -1104,14 +1099,14 @@ SDRDSE8:
         RJMP    SD_ERROR
 ;
 ;--------------------------------------
-;
+;чтение сектора данных
 LOAD_DATA:
         LDIZ    BUFFER
         RCALL   SD_READ_SECTOR  ;читать один сектор
         RET
 ;
 ;--------------------------------------
-;
+;чтение сектора служ.инф. (FAT/DIR/...)
 LOADLST:LDIZ    BUF4FAT
         RCALL   SD_READ_SECTOR  ;читать один сектор
         LDIZ    BUF4FAT
@@ -1371,16 +1366,12 @@ RASCHET:RCALL   BCDE200
         RET
 ;
 ;--------------------------------------
+;чтение очередного сектора файла в BUFFER
 ;out:   DATA == 0 - считан последний сектор файла
 NEXTSEC:
-        SPICS_SET
-        LDI     DATA,SD_DATA
-        OUT     SPDR,DATA
-NEXTSE1:IN      R0,SPSR
-        SBRS    R0,SPIF
-        RJMP    NEXTSE1
-        IN      R0,SPDR
-        SPICS_CLR
+        LDI     TEMP,SD_DATA
+        SER     DATA
+        RCALL   FPGA_REG
 
         LDIZ    KOL_CLS
         LD      DATA,Z+
@@ -1446,7 +1437,7 @@ LSTCLSF:LDSX    TFILCLS+0
         RET
 ;
 ;--------------------------------------
-;
+;ошибки
 SD_ERROR:
         STS     SDERROR,DATA
         LDI     TEMP,LOW(RAMEND)
@@ -1521,7 +1512,8 @@ SD_ERR1:LED_ON
         CBI     DDRE,6
 STOP2:  RJMP    STOP2
 ;
-;--------------------------------------
+;======================================
+;чтение ID Flash-ROM чипа
 ;out:   ZL,ZH
 F_ID:   RCALL   F_RST
         LDI     DATA,$90
@@ -1540,6 +1532,7 @@ F_ID:   RCALL   F_RST
         RJMP    F_RST
 ;
 ;--------------------------------------
+;запись одного байта во Flash-ROM
 ;in:    RAM[Z] == data
 ;       XL,XH,YL == address
 F_WRITE:LDI     DATA,$A0
@@ -1576,7 +1569,7 @@ F_WRIT1:RCALL   FPGA_SAME_REG
         RET
 ;
 ;--------------------------------------
-;
+;стирание Flash-ROM
 F_ERASE:LDI     DATA,$80
         RCALL   F_CMD
         LDI     DATA,$10
@@ -1593,7 +1586,7 @@ F_ERAS1:LED_OFF
         RJMP    F_ERAS1
 ;
 ; - - - - - - - - - - - - - - - - - - -
-;
+;сброс Flash-ROM чипа
 F_RST:  LDI     DATA,$F0
         RCALL   F_CMD
         LDI     TEMP,19 ;~5 us @ 11.0592 MHz
@@ -1602,6 +1595,7 @@ F_RST1: DEC     TEMP    ;1
         RET
 ;
 ;--------------------------------------
+;комманда в Flash-ROM чип
 ;in:    DATA == instructions
 F_CMD:  PUSH    DATA
         LDI     TEMP,FLASH_CTRL
@@ -1651,6 +1645,7 @@ F_CMD:  PUSH    DATA
         RJMP    FPGA_SAME_REG
 ;
 ;--------------------------------------
+;чтение одного байта Flash-ROM
 ;in:    XL,XH,YL == address
 ;out:   DATA == data
 F_IN:   LDI     TEMP,FLASH_LOADDR
@@ -1667,20 +1662,27 @@ F_IN:   LDI     TEMP,FLASH_LOADDR
         RJMP    FPGA_REG
 ;
 ;--------------------------------------
-;
+;обмен с регистрами в FPGA
+;in:    TEMP == номер регистра
+;       DATA == данные
+;out:   DATA == данные
 FPGA_REG:
         PUSH    DATA
         SPICS_SET
         OUT     SPDR,TEMP
         RCALL   RD_WHEN_RDY
         POP     DATA
+;обмен без установки регистра
+;in:    DATA == данные
+;out:   DATA == данные
 FPGA_SAME_REG:
         SPICS_CLR
         OUT     SPDR,DATA
-;
+;ожидание окончания обмена с FPGA по SPI
+;и чтение пришедших данных
+;out:   DATA == данные
 RD_WHEN_RDY:
-        IN      R0,SPSR
-        SBRS    R0,SPIF
+        SBIS    SPSR,SPIF
         RJMP    RD_WHEN_RDY
         IN      DATA,SPDR
         SPICS_SET
@@ -1692,6 +1694,7 @@ UART_NEWLINE:
         LDIZ    MSG_NEWLINE*2
 ;
 ; - - - - - - - - - - - - - - - - - - -
+;вывод строки на UART
 ;in:    Z == указательна строку (в младших 64K)
 UART_PRINTSTRZ:
 UPSTRZ1:LPM     DATA,Z+
@@ -1702,8 +1705,9 @@ UPSTRZ1:LPM     DATA,Z+
 UPSTRZ2:RET
 ;
 ;--------------------------------------
-;in:    XL - x (0..31)
-;       XH - y (0..23)
+;установка позиции печати на экране
+;in:    XL == x (0..31)
+;       XH == y (0..23)
 SET_CURSOR:
         LDI     TEMP,32
         MUL     XH,TEMP
@@ -1719,7 +1723,7 @@ SET_CURSOR:
         RJMP    FPGA_REG
 ;
 ;--------------------------------------
-;PRINTSTRZ
+;вывод строки на экран и на UART
 ;in:    Z == указательна строку (в младших 64K)
 PRINTSTRZ:
 PRSTRZ1:LPM     DATA,Z+
@@ -1759,7 +1763,7 @@ HEXHALF:ANDI    DATA,$0F
 HEXBYT1:ADDI    DATA,$30
 ;
 ; - - - - - - - - - - - - - - - - - - -
-;PUTCHAR
+;вывод символа на экран и на UART
 ;in:    DATA == char
 PUTCHAR:PUSH    DATA
         PUSH    TEMP
@@ -1777,7 +1781,7 @@ UPCHR1: INPORT  TEMP,UCSR1A
         RET
 ;
 ;--------------------------------------
-;in:    DATA - длительность *0.1s
+;in:    DATA == продолжительность *0.1 сек
 BEEP:
 BEE2:   LDI     TEMP,100;100 периодов 1кГц
 BEE1:   CBI     PORTE,6
@@ -1797,10 +1801,8 @@ BEEPDL1:SBIW    R24,1
         RET
 ;
 ;--------------------------------------
-;DELAY
-;in:    DATA/10 == количество секунд
-DELAY:
-        LDI     R20,$1E ;\
+;in:    DATA == продолжительность *0.1 сек
+DELAY:  LDI     R20,$1E ;\
         LDI     R21,$FE ;/ 0,1 сек @ 11.0592MHz
 DELAY1: LPM             ;3
         LPM             ;3
