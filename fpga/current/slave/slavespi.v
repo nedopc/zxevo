@@ -27,6 +27,14 @@ module slavespi(
 	output wire        mus_btnstb,
 
 
+	input  wire [ 7:0] gluclock_addr,
+
+	input  wire [ 7:0] wait_write,
+	output wire [ 7:0] wait_read,
+	input  wire        wait_rnw,
+
+	output wire        wait_end,
+
 	output wire       genrst, // positive pulse, causes Z80 reset
 	output wire [1:0] rstrom  // number of ROM page to reset to
 );
@@ -51,20 +59,21 @@ module slavespi(
 	wire scs_n_01 = (~spics_n_sync[2]) &   spics_n_sync[1] ;
 	wire scs_n_10 =   spics_n_sync[2]  & (~spics_n_sync[1]);
 	//
-    wire sck_01 = (~spick_sync[2]) &   spick_sync[1] ;
-    wire sck_10 =   spick_sync[2]  & (~spick_sync[1]);
+	wire sck_01 = (~spick_sync[2]) &   spick_sync[1] ;
+	wire sck_10 =   spick_sync[2]  & (~spick_sync[1]);
 
 
 	reg [7:0] regnum; // register number holder
 
 	reg [7:0] shift_out;
 
-	wire [7:0] data_in;
+	reg [7:0] data_in;
 
 
 
 	// register selectors
 	wire sel_kbdreg, sel_kbdstb, sel_musxcr, sel_musycr, sel_musbtn, sel_rstreg;
+	wire sel_waitreg, sel_gluadr;
 
 	// keyboard register
 	reg [39:0] kbd_reg;
@@ -75,6 +84,8 @@ module slavespi(
 	// reset register
 	reg [7:0] rst_reg;
 
+	// wait data out register
+	reg [7:0] wait_reg;
 
 
 
@@ -106,6 +117,15 @@ module slavespi(
 
 	// send data to avr
 	//
+	always @*
+	begin
+		if( sel_waitreg )
+			data_in = wait_write; // TODO: add here selection of different input registers
+		else if( sel_gluadr )
+			data_in = gluclock_addr;
+		else data_in = 8'hFF;
+	end
+	//
 	always @(posedge fclk)
 	begin
 		if( scs_n_01 || scs_n_10 ) // both edges
@@ -131,6 +151,10 @@ module slavespi(
 	assign sel_musbtn = ( regnum[6] &&  regnum[1]               ); // $42
 	//
 	assign sel_rstreg = ( regnum[5] ) ; // $20
+	//
+	assign sel_waitreg = ( regnum[4] && !regnum[0] ); // $10
+	assign sel_gluadr  = ( regnum[4] &&  regnum[0] ); // $11
+
 
 
 	// registers data-in
@@ -145,6 +169,9 @@ module slavespi(
 
 		if( !scs_n && sel_rstreg && sck_01 )
 			rst_reg[7:0] <= { sdo, rst_reg[7:1] };
+
+		if( !scs_n && sel_waitreg && sck_01 )
+			wait_reg[7:0] <= { sdo, wait_reg[7:1] };
 	end
 
 
@@ -160,7 +187,8 @@ module slavespi(
 	assign genrst = sel_rstreg && scs_n_01;
 	assign rstrom = rst_reg[5:4];
 
-
+	assign wait_read = wait_reg;
+	assign wait_end = sel_waitreg && scs_n_01;
 
 
 

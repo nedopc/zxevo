@@ -139,6 +139,19 @@ module top(
 	wire [ 7:0] mus_port_data;
 
 
+
+
+	wire [7:0] wait_read,wait_write;
+	wire wait_rnw;
+	wire wait_start_gluclock;
+	wire wait_end;
+	wire [7:0] gluclock_addr;
+	wire [6:0] waits;
+
+
+
+
+
 	wire tape_in;
 
 	wire [15:0] ideout;
@@ -179,10 +192,8 @@ module top(
 
 
 	assign nmi_n=1'bZ;
-	assign wait_n=1'bZ;
 	assign res= ~rst_n;
 
-	assign spiint_n=1'b1;
 
 
 
@@ -411,11 +422,16 @@ module top(
 	slavespi slavespi( .fclk(fclk), .rst_n(rst_n),
 	                   .spics_n(spics_n), .spidi(spidi),
 	                   .spido(spido), .spick(spick),
-	                   .status_in(8'h00), .genrst(genrst),
+	                   .status_in({wait_rnw, waits[6:0]}), .genrst(genrst),
 	                   .rstrom(rstrom), .kbd_out(kbd_data),
 	                   .kbd_stb(kbd_stb), .mus_out(mus_data),
 	                   .mus_xstb(mus_xstb), .mus_ystb(mus_ystb),
-	                   .mus_btnstb(mus_btnstb)
+	                   .mus_btnstb(mus_btnstb),
+	                   .gluclock_addr(gluclock_addr),
+	                   .wait_write(wait_write),
+	                   .wait_read(wait_read),
+	                   .wait_rnw(wait_rnw),
+	                   .wait_end(wait_end)
 	                 );
 
 	zkbdmus zkbdmus( .fclk(fclk), .rst_n(rst_n),
@@ -439,12 +455,30 @@ module top(
 	              .ide_wr_n(ide_wr_n), .ide_rd_n(ide_rd_n),
 
 	              .keys_in(kbd_port_data),
-	              .mus_in(mus_port_data)
+	              .mus_in(mus_port_data),
+
+	              .gluclock_addr(gluclock_addr),
+	              .wait_start_gluclock(wait_start_gluclock),
+	              .wait_rnw(wait_rnw),
+	              .wait_write(wait_write),
+	              .wait_read(wait_read)
 	            );
 
 
 	zint preryv( .fclk(fclk), .zclk(zclk), .int_start(int_start), .iorq_n(iorq_n), .m1_n(m1_n),
 	             .int_n(int_n) );
+
+
+
+	zwait zwait( .wait_start_gluclock(wait_start_gluclock),
+	             .wait_end(wait_end),
+	             .rst_n(rst_n),
+	             .wait_n(wait_n),
+	             .waits(waits),
+	             .spiint_n(spiint_n) );
+
+	assign wait_n = 1'bZ;
+
 
 
 
