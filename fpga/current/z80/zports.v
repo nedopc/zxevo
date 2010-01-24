@@ -53,8 +53,15 @@ module zports(
 	output reg sdcs_n,
 	output sd_start,
 	output [7:0] sd_datain,
-	input [7:0] sd_dataout
+	input [7:0] sd_dataout,
 
+
+	output reg  [ 7:0] gluclock_addr,
+
+	output wire        wait_start_gluclock, // begin wait from some ports
+	output reg         wait_rnw,   // whether it was read(=1) or write(=0)
+	output reg  [ 7:0] wait_write,
+	input  wire [ 7:0] wait_read
 );
 
 
@@ -112,6 +119,8 @@ module zports(
 
 	reg pre_bc1,pre_bdir;
 
+
+	wire gluclock_on;
 
 
 
@@ -195,6 +204,14 @@ module zports(
 			dout = sd_dataout;
 
 
+		PORTF7: begin
+			if( !a[14] && gluclock_on ) // $BFF7 - data i/o
+				dout = wait_read;
+			else // any other $xxF7 port
+				dout = 8'hFF;
+		end
+
+
 		default:
 			dout = 8'hFF;
 		endcase
@@ -205,6 +222,7 @@ module zports(
 	assign portfe_wr    = ( (loa==PORTFE) && port_wr);
 	assign portfd_wr    = ( (loa==PORTFD) && port_wr);
 	assign portf7_wr    = ( (loa==PORTF7) && port_wr);
+	assign portf7_rd    = ( (loa==PORTF7) && port_rd);
 
 	assign ideout_hi_wr = ( (loa==NIDE11) && port_wr);
 	assign idein_lo_rd  = ( (loa==NIDE10) && port_rd);
@@ -314,15 +332,57 @@ module zports(
 //		lvd's style
 //		else if( (a[15:8]==8'hEF) && portf7_wr && (!block1m) )
 //		koe's style
-		else if( (a[15:8]==8'hEF) && portf7_wr )
+		else if( /*(a[15:8]==8'hEF)*/ !a[12] && portf7_wr )
 			peff7_int <= din; // 4 - turbooff, 0 - p16c on, 2 - block1meg
 	end
 	assign block1m = peff7_int[2];
 
 	assign p7ffd = { (block1m ? 3'b0 : p7ffd_int[7:5]),p7ffd_rom_int,p7ffd_int[3:0]};
 
-	// video modes + turbo are always modifiable. page0 ram is being blocked off
-	assign peff7 = block1m ? { 2'b00, peff7_int[5], peff7_int[4], 3'b000, peff7_int[0] } : peff7_int;
+	assign peff7 = block1m ? { peff7_int[7], 1'b0, peff7_int[5], peff7_int[4], 3'b000, peff7_int[0] } : peff7_int;
+
+
+	// gluclock ports (bit7:eff7 is above)
+
+	assign gluclock_on = peff7_int[7];
+
+	always @(posedge clk)
+	begin
+		if( gluclock_on && portf7_wr ) // gluclocks on
+		begin
+			if( !a[13] ) // $DFF7 - addr reg
+				gluclock_addr <= din;
+
+			// write to waiting register is not here - in separate section managing wait_write
+		end
+	end
+
+
+
+
+
+
+	// write to wait registers
+	always @(posedge clk)
+	begin
+		// gluclocks
+		if( gluclock_on && portf7_wr && !a[14] ) // $BFF7 - data reg
+			wait_write <= din;
+	end
+
+	// wait from wait registers
+	assign wait_start_gluclock = ( gluclock_on && !a[14] && (portf7_rd || portf7_wr) ); // $BFF7 - gluclock r/w
+
+	always @(posedge clk) // wait rnw - only meanful during wait
+	begin
+		if( port_wr )
+			wait_rnw <= 1'b0;
+
+		if( port_rd )
+			wait_rnw <= 1'b1;
+	end
+
+
 
 
 
