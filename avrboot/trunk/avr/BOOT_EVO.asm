@@ -1,6 +1,23 @@
 .NOLIST
 .INCLUDE "M128DEF.INC"
 .INCLUDE "_MACROS.ASM"
+
+.MACRO  SDCS_SET
+        SBI     PORTB,0
+.ENDMACRO
+
+.MACRO  SDCS_CLR
+        CBI     PORTB,0
+.ENDMACRO
+
+.MACRO  LED_ON
+        CBI     PORTB,7
+.ENDMACRO
+
+.MACRO  LED_OFF
+        SBI     PORTB,7
+.ENDMACRO
+
 .LIST
 .LISTMAC
 
@@ -41,6 +58,11 @@
 .EQU    ANSI_YELLOW     =$33
 .EQU    ANSI_WHITE      =$37
 
+.EQU    FLASHSIZE=480   ;размер обновляемой области в блоках по 256 байт
+.EQU    MAIN_VERS=$EFF8 ;указатель на описатель версии осн.прошивки
+;
+;--------------------------------------
+;
 .DSEG
         .ORG    $0100
 BUFFER:                 ;главный буфер
@@ -68,23 +90,22 @@ KCLSDIR:.BYTE   1       ;кол-во кластеров директории
 NUMSECK:.BYTE   1       ;счетчик секторов в кластере
 TFILCLS:.BYTE   4       ;текущий кластер
 MPHWOST:.BYTE   1       ;кол-во секторов в последнем кластере
-KOL_CLS:.BYTE   4       ;кол-во полных кластеров файла
+KOL_CLS:.BYTE   4       ;кол-во кластеров файла минус 1
 STEP:
 SDERROR:.BYTE   1
-
+LASTSECFLAG:
+        .BYTE   1
+;
+;--------------------------------------
+;
 .CSEG
-        .ORG    LARGEBOOTSTART
+        .ORG    $F000
 BOOTLOADER_BEGIN:
-;
-;FLASHSIZE - размер обновляемой области в блоках по 256 байт
-.EQU    FLASHSIZE       =BOOTLOADER_BEGIN/128
-.EQU    MAIN_VERS       =BOOTLOADER_BEGIN-8
-;
 RESET:  CLI
-;Причина реcета? Если не PowerOn и не ExtReset то на основную программу
+;Причина реcета? Если Watchdog то на основную программу
         IN      DATA,MCUCSR
-        ANDI    DATA,0B00000011
-        BRNE    START1
+        ANDI    DATA,0B00001000
+        BREQ    START1
         JMP     0
 ;
 BAD_BOOTLDR_CRC:
@@ -102,10 +123,10 @@ START1: CLR     NULL
         LDI     TEMP,0B00011111
         OUT     WDTCR,TEMP
         OUT     WDTCR,NULL
-;LED on
-        CBI     PORTB,7
+;
+        LED_ON
         SBI     DDRB,7
-;будем юзать стек
+;стек
         LDI     TEMP,LOW(RAMEND)
         OUT     SPL,TEMP
         LDI     TEMP,HIGH(RAMEND)
@@ -119,21 +140,17 @@ START1: CLR     NULL
 ;хочет ли пользователь обновиться ?
         SBIS    PINC,7           ;нажат "SoftReset" ?
         RJMP    UPDATE_ME
-;проверка CRC программы
+;проверка CRC осн.программы
 START8: RCALL   CRCMAIN
         BRNE    UPDATE_ME        ;если некорректная CRC
-START9: IN      TEMP,MCUCSR
-        ANDI    TEMP,0B11111100
-        OUT     MCUCSR,TEMP
-        LDI     TEMP,0B00011000
+;
+;запуск watchdog-а (по срабатыванию переход на осн.программу)
+START9: LDI     TEMP,0B00011000
         OUT     WDTCR,TEMP
 GAVGAV: RJMP    GAVGAV
 ;
-CRCMAIN:LDIZ    $0000                           ;адрес в байтах
-        OUT     RAMPZ,NULL
-        LDIY    FLASHSIZE<<7                    ;длина в словах
-        RJMP    CALK_CRC_FLASH
-;
+;--------------------------------------
+;проверка CRC осн.программы после обновления
 CHECKIT:RCALL   NEWLINE
         LDIZ    MSG_RECHECK*2
         RCALL   PRINTSTRZ
@@ -159,9 +176,9 @@ CHK_BAD:LDI     DATA,ANSI_RED
 ;
 UPDATE_ME:
         LDI     TEMP,      0B01111001 ;
-        OUTPORT PORTB,TEMP
+        OUT     PORTB,TEMP
         LDI     TEMP,      0B10000111 ; LED on, spi outs
-        OUTPORT DDRB,TEMP
+        OUT     DDRB,TEMP
 
         LDI     TEMP,      0B00001000 ; ATX on
         OUTPORT DDRF,TEMP
@@ -183,7 +200,7 @@ UPDATE_ME:
 ;UART1 Разрешаем передачу
         LDI     TEMP,(1<<TXEN)
         OUTPORT UCSR1B,TEMP
-
+;вывод информации о версиях
         LDIZ    MSG_TITLE*2
         RCALL   PRINTSTRZ
         LDIZ    MSG_BOOT*2
@@ -200,26 +217,16 @@ UPDATE_ME:
         RJMP    UP02
 UP01:   LDIZ    MAIN_VERS*2
         RCALL   PRINTVERS
-UP02:
-        RCALL   NEWLINE
-;        RCALL   NEWLINE2
-;        SBIC    PINC,5
-;        RJMP    UP12
-;        LDIZ    MSG_POWERON*2
-;        RCALL   PRINTSTRZ
-;        SBI     PORTB,7
-;UP11:   SBIS    PINC,5
-;        RJMP    UP11
-;        CBI     PORTB,7
-
+UP02:   RCALL   NEWLINE
+;ждём включения ATX, а потом ещё чуть-чуть.
 UP11:   SBIS    PINF,0 ;PINC,5 ; а если powergood нет вообще ?
         RJMP    UP11
         LDI     DATA,5
         RCALL   DELAY
 
-UP12:   LDIZ    MSG_CFGFPGA*2
+        LDIZ    MSG_CFGFPGA*2
         RCALL   PRINTSTRZ
-
+;загрузка FPGA
         INPORT  TEMP,DDRF
         SBR     TEMP,(1<<nCONFIG)
         OUTPORT DDRF,TEMP
@@ -232,9 +239,8 @@ LDFPGA1:DEC     TEMP    ;1
         CBR     TEMP,(1<<nCONFIG)
         OUTPORT DDRF,TEMP
 
-LDFPGA2:INPORT  DATA,PINF
-        ANDI    DATA,(1<<nSTATUS)
-        BREQ    LDFPGA2
+LDFPGA2:SBIS    PINF,nSTATUS
+        RJMP    LDFPGA2
 
         LDIZ    PACKED_FPGA*2
         OUT     RAMPZ,ONE
@@ -245,8 +251,7 @@ MS:     ELPM    R0,Z+
         ST      Y+,R0
 ;-begin-PUT_BYTE_1---
         OUT     SPDR,R0
-PUTB1:  IN      R1,SPSR
-        SBRS    R1,SPIF
+PUTB1:  SBIS    SPSR,SPIF
         RJMP    PUTB1
 ;-end---PUT_BYTE_1---
         SUBI    YH,HIGH(BUFFER) ;
@@ -324,8 +329,7 @@ LDIRLOOP:
         ST      Y+,R0
 ;-begin-PUT_BYTE_2---
         OUT     SPDR,R0
-PUTB2:  IN      R1,SPSR
-        SBRS    R1,SPIF
+PUTB2:  SBIS    SPSR,SPIF
         RJMP    PUTB2
 ;-end---PUT_BYTE_2---
         SUBI    YH,HIGH(BUFFER) ;
@@ -341,9 +345,7 @@ DEMLZEND:
 ;SPI reinit
         LDI     TEMP,(1<<SPE)|(0<<DORD)|(1<<MSTR)|(0<<CPOL)|(0<<CPHA)
         OUT     SPCR,TEMP
-;св.диод погасить
-        SBI     PORTB,7
-
+        LED_OFF
         RCALL   NEWLINE
         LDIZ    MSG_TRYUPDATE*2
         RCALL   PRINTSTRZ
@@ -352,7 +354,7 @@ DEMLZEND:
 ;
 ;--------------------------------------
 ;инициализация SD карточки
-        CBI     PORTB,0 ;SDCS=0
+        SDCS_CLR
         LDI     TEMP,32
         RCALL   SD_RD_DUMMY
         SER     R24
@@ -360,7 +362,7 @@ SDINIT1:LDIZ    CMD00*2
         RCALL   SD_WR_PGM_6
         DEC     R24
         BRNE    SDINIT2
-       LDI     DATA,1  ;нет SD
+        LDI     DATA,1  ;нет SD
         RJMP    SD_ERROR
 SDINIT2:CPI     DATA,$01
         BRNE    SDINIT1
@@ -396,7 +398,7 @@ SDINIT5:LDIZ    CMD16*2
         TST     DATA
         BRNE    SDINIT5
 
-        SBI     PORTB,0 ;SDCS=1
+        SDCS_SET
 ;
 ;--------------------------------------
 ;поиск FAT, инициализация переменных
@@ -467,7 +469,7 @@ RDF055: LDD     DATA,Z+$15
         INC     TEMP
 RDF056: CPI     TEMP,4
         BREQ    RDF057
-       LDI     DATA,3  ;не найдена FAT
+        LDI     DATA,3  ;не найдена FAT
         RJMP    SD_ERROR
 RDF057: STS     CAL_FAT,FF
         LDIY    0
@@ -662,7 +664,7 @@ DALSHE: ELPM    DATA,Z+
         RJMP    FNDMP31
 ;нет такого файла
 FNDMP37:
-       LDI     DATA,4  ;нет файла
+        LDI     DATA,4  ;нет файла
         RJMP    SD_ERROR
 ;найден описатель
 NASHEL: MOV     ZH,XH
@@ -682,17 +684,26 @@ NASHEL: MOV     ZH,XH
         LDD     XH,Z+$1D
         LDD     YL,Z+$1E
         LDD     YH,Z+$1F        ;считали длину файла
-        LDI     R24,LOW(511)
+        MOV     DATA,XL
+        OR      DATA,XH
+        OR      DATA,YL
+        OR      DATA,YH
+        BRNE    F01
+        RJMP    SDUPD_ERR
+F01:    LDI     R24,LOW(511)
         LDI     R25,HIGH(511)
         RCALL   HLDEPBC
         RCALL   BCDE200         ;получили кол-во секторов
+        SBIW    XL,1
+        SBC     YL,NULL
+        SBC     YH,NULL
         LDS     DATA,BYTSSEC
         DEC     DATA
         AND     DATA,XL
         INC     DATA
         STS     MPHWOST,DATA    ;кол-во секторов в последнем кластере
         LDS     DATA,BYTSSEC
-        RCALL   BCDE_A          ;получили кол-во (полных) кластеров
+        RCALL   BCDE_A
         STSX    KOL_CLS+0
         STSY    KOL_CLS+2
         STS     NUMSECK,NULL
@@ -700,6 +711,7 @@ NASHEL: MOV     ZH,XH
 ;--------------------------------------
 ;загружаем данные из файла, шьём во флеш
         RCALL   NEXTSEC
+        STS     LASTSECFLAG,DATA
         STS     STEP,NULL
 
         LDIY    BUFSECT
@@ -713,12 +725,9 @@ SDUPD01:LD      DATA,Y+
         DEC     R20
         BRNE    SDUPD01
         OR      CRC_LO,CRC_HI
-        BREQ    SDUPD02
-SDUPD03:
-       LDI     DATA,5  ;ошибка в файле (CRC/signature)
-        RJMP    SD_ERROR
-SDUPD02:RCALL   CHECK_SIGNATURE
-        BRNE    SDUPD03
+        BRNE    SDUPD_ERR
+        RCALL   CHECK_SIGNATURE
+        BRNE    SDUPD_ERR
 
         LDI     XL,LOW(HEADER+$40)
 ;        LDI     XH,HIGH(HEADER+$40)
@@ -732,15 +741,18 @@ SDUPD12:LSR     BITS
         MOV     FF_FL,FF
         RCALL   BLOCK_FLASH
         BREQ    SDUPD90
-SDUPD11:
-;св.диод - мигать при обновлении
-        SBI     PORTB,7
+
+SDUPD11:LED_OFF
         SBRS    ZH,5
-        CBI     PORTB,7
+        LED_ON  ;мигать при обновлении
 
         DEC     COUNT
         BRNE    SDUPD12
         RJMP    SDUPD13
+;-------
+SDUPD_ERR:
+        LDI     DATA,5  ;ошибка в файле (CRC/signature/length)
+        RJMP    SD_ERROR
 ;подготавливаем данные
 ;если необходимо загружаем с SD
 SDUPD20:PUSHX
@@ -768,7 +780,11 @@ SDUPD31:LD      DATA,Y+
         DEC     R20
         BRNE    SDUPD31
 
+        LDS     DATA,LASTSECFLAG
+        TST     DATA
+        BREQ    SDUPD_ERR
         RCALL   NEXTSEC
+        STS     LASTSECFLAG,DATA
         STS     STEP,NULL
 
         LDIY    BUFSECT
@@ -797,8 +813,7 @@ SD_RECEIVE:
 ;out:   DATA
 SD_EXCHANGE:
         OUT     SPDR,DATA
-SDEXCH: IN      R0,SPSR
-        SBRS    R0,SPIF
+SDEXCH: SBIS    SPSR,SPIF
         RJMP    SDEXCH
         IN      DATA,SPDR
         RET
@@ -838,7 +853,7 @@ SDWNFF1:RET
 ;in:    Z - куда
 ;       Y,X - №сектора
 SD_READ_SECTOR:
-        CBI     PORTB,0 ;SDCS=0
+        SDCS_CLR
 
         PUSHZ
         LDIZ    CMD58*2
@@ -891,22 +906,21 @@ SDRDSE4:RCALL   SD_WAIT_NOTFF
         CPI     DATA,$FF
         BRNE    SDRDSE4
 
-        SBI     PORTB,0 ;SDCS=1
+        SDCS_SET
         RET
 
-SDRDSE8:
-       LDI     DATA,2  ;ошибка при чтении сектора
+SDRDSE8:LDI     DATA,2  ;ошибка при чтении сектора
         RJMP    SD_ERROR
 ;
 ;--------------------------------------
-;
+;чтение сектора данных
 LOAD_DATA:
         LDIZ    BUFSECT
         RCALL   SD_READ_SECTOR  ;читать один сектор
         RET
 ;
 ;--------------------------------------
-;
+;чтение сектора служ.инф. (FAT/DIR/...)
 LOADLST:LDIZ    BUF4FAT
         RCALL   SD_READ_SECTOR  ;читать один сектор
         LDIZ    BUF4FAT
@@ -1167,7 +1181,8 @@ RASCHET:RCALL   BCDE200
         RET
 ;
 ;--------------------------------------
-;out:   sreg.Z == SET - считан последний сектор файла
+;чтение очередного сектора файла в BUFSECT
+;out:   DATA == 0 - считан последний сектор файла
 NEXTSEC:LDIZ    KOL_CLS
         LD      DATA,Z+
         LD      TEMP,Z+
@@ -1212,7 +1227,7 @@ NEXTSEC:LDIZ    KOL_CLS
         LD      DATA,Z
         SBC     DATA,NULL
         ST      Z+,DATA
-NEXT_OK:TST     ONE
+NEXT_OK:SER     DATA
         RET
 
 LSTCLSF:LDSX    TFILCLS+0
@@ -1228,26 +1243,19 @@ LSTCLSF:LDSX    TFILCLS+0
         INC     DATA
         STS     NUMSECK,DATA
         LDS     TEMP,MPHWOST
-;        TST     TEMP
-;        BREQ    NEXT_OK
-        CP      TEMP,DATA
+        SUB     DATA,TEMP
         RET
 ;
 ;--------------------------------------
-;
+;ошибка при попытке обновления с SD
 SD_ERROR:
         STS     SDERROR,DATA
-        SBI     PORTB,0 ;SDCS=1
+        SDCS_SET
         LDI     TEMP,LOW(RAMEND)
         OUT     SPL,TEMP
         LDI     TEMP,HIGH(RAMEND)
         OUT     SPH,TEMP
 
-;;UPDATE_FROM_UART:
-;UART1 Разрешаем приём/передачу
-        LDI     TEMP,(1<<RXEN)|(1<<TXEN)
-        OUTPORT UCSR1B,TEMP
-;
         RCALL   NEWLINE
         LDIZ    MSG_SDERROR*2
         RCALL   PRINTSTRZ
@@ -1285,16 +1293,19 @@ SD_ERR5:
         RCALL   PRINTSTRZ
 SD_ERR9:
 ;
-;
         LDS     ZL,SDERROR
-SD_ERR1:CBI     PORTB,7
+SD_ERR1:LED_OFF
         LDI     DATA,5
         RCALL   BEEP
-        SBI     PORTB,7
+        LED_ON
         LDI     DATA,5
         RCALL   DELAY
         DEC     ZL
         BRNE    SD_ERR1
+;обновление по RS-232
+;UART1 Разрешаем приём/передачу
+        LDI     TEMP,(1<<RXEN)|(1<<TXEN)
+        OUTPORT UCSR1B,TEMP
 ;
         RCALL   NEWLINE
         LDIZ    MSG_TRYUPDATE*2
@@ -1368,10 +1379,6 @@ UUPD18: CLR     FF_FL
         BRNE    UUPD11
 ;-------
 UUPD20:
-;        LDIY    BUFFER
-;UUPD20A:ST      Y+,FF
-;        TST     YL
-;        BRNE    UUPD20A
         LDI     XL,LOW(HEADER+$40)
 ;        LDI     XH,HIGH(HEADER+$40)
         CLR     ADR1
@@ -1436,11 +1443,10 @@ XMRXERR:SUBI    YL,128
 XMODEM_PACKET_RECEIVER:
         RCALL   WRUART
         LDI     TEMP,6 ;таймаут 3 сек.
-XMRX3:
-;св.диод - мигать при ожидании
-        SBI     PORTB,7
+
+XMRX3:  LED_OFF
         SBRC    TEMP,0
-        CBI     PORTB,7
+        LED_ON  ;мигать при ожидании
 
         LDI     R20,$00 ;\
         LDI     R21,$70 ; > ~0,5 сек
@@ -1457,10 +1463,10 @@ XMRX2:  RCALL   INUART
         BREQ    XMRX1
         CPI     DATA,SOH
         BRNE    XMRX1
-;св.диод - мигать
-        SBI     PORTB,7
+
+        LED_OFF
         SBRS    ADR1,1
-        CBI     PORTB,7
+        LED_ON
 
         RCALL   RDUART  ;block num
         RCALL   RDUART  ;block num (inverted)
@@ -1483,7 +1489,7 @@ XMRX4:  RCALL   RDUART
         CLZ
         RET
 ;
-;--------------------------------------
+;======================================
 ;
 PRINTVERS:
         LDI     DATA,ANSI_GREEN
@@ -1561,7 +1567,6 @@ NEWLINE2:
 NEWLINE:LDIZ    MSG_NEWLINE*2
 ;
 ; - - - - - - - - - - - - - - - - - - -
-;PRINTSTRZ
 ;in:    Z == указательна строку (в старших 64K)
 PRINTSTRZ:
         OUT     RAMPZ,ONE
@@ -1602,7 +1607,6 @@ HEXHALF:ANDI    DATA,$0F
 HEXBYT1:ADDI    DATA,$30
 ;
 ; - - - - - - - - - - - - - - - - - - -
-;WRUART
 ;in:    DATA == передаваемый байт
 WRUART: PUSH    TEMP
 WRU_1:  INPORT  TEMP,UCSR1A
@@ -1613,7 +1617,6 @@ WRU_1:  INPORT  TEMP,UCSR1A
         RET
 ;
 ;--------------------------------------
-;RDUART
 ;out:   DATA == принятый байт
 RDUART: INPORT  DATA,UCSR1A
         SBRS    DATA,RXC
@@ -1622,7 +1625,6 @@ RDUART: INPORT  DATA,UCSR1A
         RET
 ;
 ;--------------------------------------
-;INUART
 ;out:   sreg.Z == CLR - есть данные (DATA == принятый байт)
 ;                 SET - нет данных
 INUART: INPORT  DATA,UCSR1A
@@ -1633,10 +1635,8 @@ INUART: INPORT  DATA,UCSR1A
 INU9:   RET
 ;
 ;--------------------------------------
-;in:    DATA - длительность *0.1s
-BEEP:   ;SBI     PORTB,0 ;SDCS=1
-        OUT     SPCR,NULL       ;SPI off
-
+;in:    DATA == продолжительность *0.1 сек
+BEEP:   OUT     SPCR,NULL       ;SPI off
 BEE2:   LDI     TEMP,100;100 периодов 1кГц
 BEE1:   SBI     PORTB,1
         RCALL   BEEPDLY
@@ -1646,9 +1646,6 @@ BEE1:   SBI     PORTB,1
         BRNE    BEE1
         DEC     DATA
         BRNE    BEE2
-;;SPI reinit
-;        LDI     TEMP,(1<<SPE)|(0<<DORD)|(1<<MSTR)|(0<<CPOL)|(0<<CPHA)
-;        OUT     SPCR,TEMP
         RET
 
 BEEPDLY:LDI     R24,$64
@@ -1662,8 +1659,7 @@ BEEPDL1:SBIW    R24,1
 DELAY_3SEC:
         LDI     DATA,30
 ; - - - - - - - - - - - - - - - - - - -
-;DELAY
-;in:    DATA/10  секунд
+;in:    DATA == продолжительность *0.1 сек
 DELAY:
         LDI     R20,$1E ;\
         LDI     R21,$FE ;/ 0,1 сек @ 11.0592MHz
@@ -1678,7 +1674,11 @@ DELAY1: LPM             ;3
         RET
 ;
 ;--------------------------------------
-;CALK_CRC_FLASH
+;проверка CRC осн.программы
+CRCMAIN:LDIZ    $0000                           ;адрес в байтах
+        OUT     RAMPZ,NULL
+        LDIY    FLASHSIZE<<7                    ;длина в словах
+; - - - - - - - - - - - - - - - - - - -
 ;in:    Z == адрес в байтах
 ;       Y == кол-во слов
 ;out:   sreg.Z == SET - crc ok!
@@ -1689,10 +1689,10 @@ CCRCFL1:ELPM    DATA,Z+
         RCALL   CRC_UPDATE
         ELPM    DATA,Z+
         RCALL   CRC_UPDATE
-;св.диод - мигать при подсчёте CRC
-        SBI     PORTB,7
+
+        LED_OFF
         SBRS    ZH,5
-        CBI     PORTB,7
+        LED_ON  ;мигать при подсчёте CRC
 
         SBIW    YL,1
         BRNE    CCRCFL1
@@ -1700,13 +1700,11 @@ CCRCFL1:ELPM    DATA,Z+
         RET
 ;
 ;--------------------------------------
-;
 ;in:    DATA - byte
 ;       CRC_LO,CRC_HI
 ;out:   CRC_LO,CRC_HI
 ;cng:   TEMP
 CRC_UPDATE:
-;        PUSH    TEMP
         EOR     CRC_HI,DATA
         LDI     TEMP,8
 CRC_UP2:LSL     CRC_LO
@@ -1716,11 +1714,9 @@ CRC_UP2:LSL     CRC_LO
         EOR     CRC_HI,POLY_HI
 CRC_UP1:DEC     TEMP
         BRNE    CRC_UP2
-;        POP     TEMP
         RET
 ;
 ;--------------------------------------
-;BLOCK_FLASH
 ;in:    [BUFFER] == data
 ;       ADR1 == mid address
 ;       ADR2 == high address
@@ -1778,7 +1774,6 @@ BLKFL3: ELPM    DATA,Z+
         BRNE    BLKFL3
 ;
 ;--------------------------------------
-;INCADR
 ;out:   sreg.Z == SET - это был последний блок (выше по адресам обновлять запрещено!)
 ;chng:  TEMP
 INCADR:
@@ -1800,7 +1795,6 @@ CRITICAL_ERROR:
         RJMP    START1
 ;
 ;--------------------------------------
-;DO_SPM
 ;in:    DATA == значение для SPMCSR
 DO_SPM: PUSH    TEMP
 WAIT1SPM:                       ; check for previous SPM complete
@@ -1861,8 +1855,6 @@ MSG_WRONGFILE:
         .DB     "Wrong file",0,0
 MSG_NOTFOUND:
         .DB     " not found",0,0
-;MSG_POWERON:
-;        .DB     "ATX power up...",0
 MSG_CFGFPGA:
         .DB     $0D,$0A,"Set temporary configuration...",0,0
 MSG_TRYUPDATE:

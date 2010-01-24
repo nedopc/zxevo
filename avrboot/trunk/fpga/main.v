@@ -1,9 +1,6 @@
-// PentEvo project (c) NedoPC 2008-2009
-//
-// boot control firmware for AVR boot-time interworking
-// allows SD card access for AVR
-
 module main(
+
+//--Input/Output Definition----------------------------------------------------
 
     // clocks
     input fclk,
@@ -116,6 +113,7 @@ module main(
     output spiint_n
 );
 
+//--Dummy----------------------------------------------------------------------
 
     assign iorq1_n = 1'b1;
     assign iorq2_n = 1'b1;
@@ -148,6 +146,8 @@ module main(
     assign csrom = 1'b0;
     assign romoe_n = 1'b1;
     assign romwe_n = 1'b1;
+
+//--Main wires-----------------------------------------------------------------
 
     assign sdclk  = spick & ~spics_n;
     assign sddo   = spido;
