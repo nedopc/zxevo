@@ -62,7 +62,7 @@ zxevo_bl.e2p    - собранный проект (для PonyProg2000)
 tools\mhmt\mhmt.exe
 tools\bin2avr\bin2avr.exe
 tools\avra\avra.exe
-tools\crcbldr\trunk\crcbldr.exe
+tools\crcbldr\crcbldr.exe
 
 
 ------------------------------------------------------------------------------

@@ -44,7 +44,7 @@ zxevo_fw.bin    - собранный проект
 tools\mhmt\mhmt.exe
 tools\bin2avr\bin2avr.exe
 tools\avra\avra.exe
-tools\make_fw\trunk\make_fw.exe
+tools\make_fw\make_fw.exe
 
 
 ------------------------------------------------------------------------------
