@@ -383,11 +383,11 @@ module top(
 	                 .cpu_strobe(cpu_strobe) );
 
 
-	wire vga_hsync,hsync,hblank,hpix,hsync_start,line_start,hint_start;
+	wire vga_hsync,hsync,hblank,hpix,hsync_start,line_start,hint_start,scanin_start,scanout_start;
 
 	synch horiz_sync( .clk(fclk), .init(1'b0), .cend(cend), .pre_cend(pre_cend),
 	                  .hsync(hsync), .hblank(hblank), .hpix(hpix), .hsync_start(hsync_start),
-	                  .line_start(line_start), .hint_start(hint_start) );
+	                  .line_start(line_start), .hint_start(hint_start), .scanin_start(scanin_start) );
 
 
 	wire vblank,vsync,int_start,vpix;
@@ -396,7 +396,7 @@ module top(
 	                 .vblank(vblank), .vsync(vsync), .int_start(int_start),
 	                 .vpix(vpix), .hint_start(hint_start) );
 
-	vga_synch vga_synch( .clk(fclk), .hsync_start(hsync_start), .vga_hsync(vga_hsync) );
+	vga_synch vga_synch( .clk(fclk), .hsync_start(hsync_start), .vga_hsync(vga_hsync), .scanout_start(scanout_start) );
 
 
 
@@ -409,9 +409,11 @@ module top(
 
 
 
-	videoout vidia( .clk(fclk), .pixel(pixel), .border({ 1'b0,border[1],1'b0,border[2],1'b0,border[0] }), .hblank(hblank), .vblank(vblank),
-	                .hpix(hpix), .vpix(vpix), .hsync(hsync), .vsync(vsync), .vred(vred), .vgrn(vgrn), .vga_hsync(vga_hsync),
-	                .vblu(vblu), .vhsync(vhsync), .vvsync(vvsync), .vcsync(vcsync), .hsync_start(hsync_start) );
+	videoout vidia( .clk(fclk), .pixel(pixel), .border({ 1'b0,border[1],1'b0,border[2],1'b0,border[0] }),
+	                .hblank(hblank), .vblank(vblank), .hpix(hpix), .vpix(vpix), .hsync(hsync), .vsync(vsync),
+	                .vred(vred), .vgrn(vgrn), .vga_hsync(vga_hsync), .vblu(vblu),
+	                .vhsync(vhsync), .vvsync(vvsync), .vcsync(vcsync), .hsync_start(hsync_start),
+	                .scanin_start(scanin_start), .scanout_start(scanout_start) );
 
 
 
