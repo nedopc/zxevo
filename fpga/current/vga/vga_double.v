@@ -90,11 +90,11 @@ pg0 pg1
 
 	mem1536 line_buf( .clk(clk),
 
-	                  .wraddr({ptr_in [9:8], pages,ptr_in [7:0]}),
+	                  .wraddr({ptr_in[9:8], pages, ptr_in[7:0]}),
 	                  .wrdata({2'b00,pix_in}),
 	                  .wr_stb(wr_stb),
 
-	                  .rdaddr({ptr_out[9:8],~pages,ptr_out[7:0]}),
+	                  .rdaddr({ptr_out[9:8], (~pages), ptr_out[7:0]}),
 	                  .rddata(data_out)
 	                );
 
