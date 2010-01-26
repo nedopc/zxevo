@@ -14,12 +14,16 @@ module vga_synch(
 
 	output reg  vga_hsync,
 
+	output reg scanout_start,
+
 	input  wire hsync_start
 );
 
 
 //	localparam HSYNC_BEG = 9'd00;
 	localparam HSYNC_END = 10'd96;
+
+	localparam SCANOUT_BEG = 10'd112;
 
 	localparam HPERIOD = 10'd896;
 
@@ -54,6 +58,15 @@ module vga_synch(
 			vga_hsync <= 1'b1;
 		else if( hcount==HSYNC_END )
 			vga_hsync <= 1'b0;
+	end
+
+
+	always @(posedge clk)
+	begin
+		if( hcount==SCANOUT_BEG )
+			scanout_start <= 1'b1;
+		else
+			scanout_start <= 1'b0;
 	end
 
 

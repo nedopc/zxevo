@@ -40,6 +40,7 @@ module synch(
 
 	output reg hint_start, // horizontal position of INT start, for fine tuning
 
+	output reg scanin_start,
 
 	output reg hpix // marks gate during which pixels are outting
 
@@ -53,6 +54,8 @@ module synch(
 
 	localparam HPIX_BEG = 9'd148; // 64 cycles from line_start to pixels beginning
 	localparam HPIX_END = 9'd404;
+
+	localparam SCANIN_BEG = 9'd84; // when scan-doubler starts pixel storing
 
 	localparam HINT_BEG = 9'd03;
 
@@ -109,11 +112,15 @@ module synch(
 
 			if( hcount==HBLNK_END )
 				line_start <= 1'b1;
+
+			if( hcount==SCANIN_BEG )
+				scanin_start <= 1'b1;
 		end
 		else
 		begin
 			hsync_start <= 1'b0;
 			line_start <= 1'b0;
+			scanin_start <= 1'b0;
 		end
 	end
 
