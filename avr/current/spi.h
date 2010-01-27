@@ -6,10 +6,7 @@
 
 void spi_init(void);
 
-void spi_send(UBYTE byte);
-
-//UBYTE spi_read(void);
-
+UBYTE spi_send(UBYTE byte);
 
 #endif
 

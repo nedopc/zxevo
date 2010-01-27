@@ -7,6 +7,8 @@
 #include "rtc.h"
 #include "rs232.h"
 
+volatile UBYTE gluk_regs[16];
+
 //stop transmit
 #define tw_send_stop() {TWCR = (1<<TWINT)|(1<<TWEN)|(1<<TWSTO);}
 
@@ -162,4 +164,41 @@ UBYTE rtc_read(UBYTE addr)
 	}
 	tw_send_stop();
 	return ret;
+}
+
+void gluk_inc(void)
+{
+	if ( ++gluk_regs[GLUK_REG_SEC] == 60 )
+	{
+		gluk_regs[GLUK_REG_SEC] = 0;
+		if ( ++gluk_regs[GLUK_REG_MIN] == 60 )
+		{
+			gluk_regs[GLUK_REG_MIN] = 0;
+			if ( ++gluk_regs[GLUK_REG_HOUR] == 24 )
+			{
+				gluk_regs[GLUK_REG_HOUR] = 0;
+			}
+		}
+	}
+#ifdef LOGENABLE
+{
+	char log_int_rtc[] = "00.00.00\r\n";
+	log_int_rtc[0] = '0' + gluk_regs[GLUK_REG_HOUR]/10;
+	log_int_rtc[1] = '0' + gluk_regs[GLUK_REG_HOUR]%10;
+	log_int_rtc[3] = '0' + gluk_regs[GLUK_REG_MIN]/10;
+	log_int_rtc[4] = '0' + gluk_regs[GLUK_REG_MIN]%10;
+	log_int_rtc[6] = '0' + gluk_regs[GLUK_REG_SEC]/10;
+	log_int_rtc[7] = '0' + gluk_regs[GLUK_REG_SEC]%10;
+	to_log(log_int_rtc);
+}
+#endif
+}
+
+UBYTE get_gluk_reg(UBYTE index)
+{
+	if( index < sizeof(gluk_regs)/sizeof(gluk_regs[0]) )
+	{
+		return gluk_regs[index];
+	}
+	return 0xFF;
 }

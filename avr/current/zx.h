@@ -67,21 +67,31 @@
 //
 
 
-// SPI registers
+/**
+ * SPI registers.
+ */
 //
 #define SPI_KBD_DAT   0x80
 #define SPI_KBD_STB   0x81
-//
+
+/** ZX mouse X coordinate register.*/
 #define SPI_MOUSE_X   0x40
+/** ZX mouse Y coordinate register.*/
 #define SPI_MOUSE_Y   0x41
+/** ZX mouse Y coordinate register.*/
 #define SPI_MOUSE_BTN 0x42
-//
+
+/** ZX reset register */
 #define SPI_RST_REG   0x20
 
+/** ZX Gluk address register */
+#define SPI_GLUK_ADDR 0x11
+/** ZX all data for wait registers */
+#define SPI_WAIT_DATA 0x10
 
 
-
-
+/** Send/recv data for spi registers. */
+UBYTE zx_spi_send(UBYTE addr, UBYTE data, UBYTE mask);
 
 
 // pause between (CS|SS) and not(CS|SS)
@@ -143,6 +153,21 @@ void zx_mouse_reset(UBYTE enable);
 
 /** Send values of ZX mouse registers to fpga. */
 void zx_mouse_task(void);
+
+
+/**
+ *  ZX WAIT ports indexes:
+ */
+/** Gluk clock port. */
+#define ZXW_GLUK_CLOCK 0x01
+
+
+/**
+ * Work with WAIT ports.
+ * @par status [in] - bit 7 - CPU is 0 -write, 1-read wait port
+ *                    bits 6..0 is index of port
+ */
+void zx_wait_task(UBYTE status);
 
 
 #endif
