@@ -97,6 +97,7 @@ start:
 		{
 			//get status byte
 			UBYTE status;
+			nSPICS_PORT &= ~(1<<nSPICS); // fix for status locking
 			nSPICS_PORT |= (1<<nSPICS);
 			status = spi_send(0);
 			zx_wait_task( status );
