@@ -10,9 +10,10 @@ void spi_init(void)
 	SPSR = 0b00000001;
 }
 
-void spi_send(UBYTE byte)
+UBYTE spi_send(UBYTE byte)
 {
 		SPDR = byte;
 		while( !( SPSR&(1<<SPIF) ) );
+		return SPDR;
 }
 

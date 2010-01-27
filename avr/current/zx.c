@@ -11,6 +11,7 @@
 #include "spi.h"
 #include "rs232.h"
 #include "ps2.h"
+#include "rtc.h"
 
 
 
@@ -254,7 +255,7 @@ void zx_init(void)
 	BYTE i;
 
 	i=39;
-	do zx_counters[i] = zx_counters[i] = 0x00; while( (--i)>=0 );
+	do /*zx_counters[i] =*/ zx_counters[i] = 0x00; while( (--i)>=0 );
 
 	zx_fifo_in_ptr=zx_fifo_out_ptr=0;
 
@@ -274,6 +275,21 @@ void zx_init(void)
 
 }
 
+UBYTE zx_spi_send(UBYTE addr, UBYTE data, UBYTE mask)
+{
+	UBYTE status;
+	UBYTE ret;
+	nSPICS_PORT |= (1<<nSPICS);  // set address of SPI register
+	status = spi_send(addr);
+	nSPICS_PORT &= ~(1<<nSPICS); // send data for that register
+	ret = spi_send(data);
+	nSPICS_PORT |= (1<<nSPICS);
+
+	//if CPU waited
+	if ( status&mask ) zx_wait_task(status);
+
+	return ret;
+}
 
 
 void zx_task(UBYTE operation) // zx task, tracks when there is need to send new keymap to the fpga
@@ -407,11 +423,12 @@ void zx_task(UBYTE operation) // zx task, tracks when there is need to send new 
 			{
 				if( reset_type )
 				{
-					nSPICS_PORT |= (1<<nSPICS);  // set address of SPI register
-					spi_send(SPI_RST_REG);
-					nSPICS_PORT &= ~(1<<nSPICS); // send data for that register
-					spi_send( reset_type );
-					nSPICS_PORT |= (1<<nSPICS);
+//					nSPICS_PORT |= (1<<nSPICS);  // set address of SPI register
+//					spi_send(SPI_RST_REG);
+//					nSPICS_PORT &= ~(1<<nSPICS); // send data for that register
+//					spi_send( reset_type );
+//					nSPICS_PORT |= (1<<nSPICS);
+					zx_spi_send(SPI_RST_REG, reset_type, 0x7F);
 #ifdef LOGENABLE
 	char log_reset_type[] = "TR..\r\n";
 	log_reset_type[2] = ((reset_type >> 4) <= 9 )?'0'+(reset_type >> 4):'A'+(reset_type >> 4)-10;
@@ -422,11 +439,12 @@ void zx_task(UBYTE operation) // zx task, tracks when there is need to send new 
 			}
 			else if( task_state>0 )// task_state==5..1
 			{
-				nSPICS_PORT |= (1<<nSPICS);  // set address of SPI register
-				spi_send(SPI_KBD_DAT);
-				nSPICS_PORT &= ~(1<<nSPICS);
-				spi_send( zx_map[task_state-1] );
-				nSPICS_PORT |= (1<<nSPICS);
+//				nSPICS_PORT |= (1<<nSPICS);  // set address of SPI register
+//				spi_send(SPI_KBD_DAT);
+//				nSPICS_PORT &= ~(1<<nSPICS);
+//				spi_send( zx_map[task_state-1] );
+//				nSPICS_PORT |= (1<<nSPICS);
+				zx_spi_send(SPI_KBD_DAT, zx_map[task_state-1], 0x7F);
 #ifdef LOGENABLE
 	char log_zxmap_task_state[] = "TK..\r\n";
 	log_zxmap_task_state[2] = ((zx_map[task_state-1] >> 4) <= 9 )?'0'+(zx_map[task_state-1] >> 4):'A'+(zx_map[task_state-1] >> 4)-10;
@@ -436,14 +454,16 @@ void zx_task(UBYTE operation) // zx task, tracks when there is need to send new 
 			}
 			else // task_state==0
 			{
+				UBYTE status;
 				nSPICS_PORT |= (1<<nSPICS);
-				spi_send(SPI_KBD_STB);    // strobe input kbd data to the Z80 port engine
+				status = spi_send(SPI_KBD_STB);    // strobe input kbd data to the Z80 port engine
 //				nSPICS_PORT &= ~(1<<nSPICS);
 //				nSPICS_PORT &= ~(1<<nSPICS);
 				nSPICS_PORT &= ~(1<<nSPICS);
 //				nSPICS_PORT |= (1<<nSPICS);
 //				nSPICS_PORT |= (1<<nSPICS);
 				nSPICS_PORT |= (1<<nSPICS);
+				if ( status&0x7F ) zx_wait_task(status);
 #ifdef LOGENABLE
 	to_log("STB\r\n");
 #endif
@@ -625,25 +645,65 @@ void zx_mouse_task(void)
 #endif
 		//TODO: пока сделал скопом, потом сделать по одному байту за заход
 
-		nSPICS_PORT |= (1<<nSPICS);  // set address of SPI register
-		spi_send(SPI_MOUSE_BTN);
-		nSPICS_PORT &= ~(1<<nSPICS);
-		spi_send(zx_mouse_button);
-		nSPICS_PORT |= (1<<nSPICS);
+//		nSPICS_PORT |= (1<<nSPICS);  // set address of SPI register
+//		spi_send(SPI_MOUSE_BTN);
+//		nSPICS_PORT &= ~(1<<nSPICS);
+//		spi_send(zx_mouse_button);
+//		nSPICS_PORT |= (1<<nSPICS);
+		zx_spi_send(SPI_MOUSE_BTN, zx_mouse_button, 0x7F);
 
-		nSPICS_PORT |= (1<<nSPICS);  // set address of SPI register
-		spi_send(SPI_MOUSE_X);
-		nSPICS_PORT &= ~(1<<nSPICS);
-		spi_send(zx_mouse_x);
-		nSPICS_PORT |= (1<<nSPICS);
+//		nSPICS_PORT |= (1<<nSPICS);  // set address of SPI register
+//		spi_send(SPI_MOUSE_X);
+//		nSPICS_PORT &= ~(1<<nSPICS);
+//		spi_send(zx_mouse_x);
+//		nSPICS_PORT |= (1<<nSPICS);
+		zx_spi_send(SPI_MOUSE_X, zx_mouse_y, 0x7F);
 
-		nSPICS_PORT |= (1<<nSPICS);  // set address of SPI register
-		spi_send(SPI_MOUSE_Y);
-		nSPICS_PORT &= ~(1<<nSPICS);
-		spi_send(zx_mouse_y);
-		nSPICS_PORT |= (1<<nSPICS);
+//		nSPICS_PORT |= (1<<nSPICS);  // set address of SPI register
+//		spi_send(SPI_MOUSE_Y);
+//		nSPICS_PORT &= ~(1<<nSPICS);
+//		spi_send(zx_mouse_y);
+//		nSPICS_PORT |= (1<<nSPICS);
+		zx_spi_send(SPI_MOUSE_Y, zx_mouse_y, 0x7F);
 
 		//data sended - reset flag
 		ps2_flags&=~(PS2MOUSE_ZX_READY_FLAG);
 	}
+}
+
+
+void zx_wait_task(UBYTE status)
+{
+	UBYTE addr;
+	UBYTE data = 0xFF;
+
+	//reset flag
+	ps2_flags &= ~SPI_INT_FLAG;
+
+	//prepare data
+	switch( status&0x7F )
+	{
+	default:
+	case ZXW_GLUK_CLOCK:
+		{
+			addr = zx_spi_send(SPI_GLUK_ADDR, data, 0);
+			if ( status&0x80 ) data = get_gluk_reg(addr);
+			break;
+		}
+	}
+
+	data = zx_spi_send(SPI_WAIT_DATA, data, 0);
+
+	if ( !(status&0x80) )
+	{
+		//save data
+	}
+#ifdef LOGENABLE
+	char log_wait[] = "W..A..\r\n";
+	log_wait[1] = ((status >> 4) <= 9 )?'0'+(status >> 4):'A'+(status >> 4)-10;
+	log_wait[2] = ((status & 0x0F) <= 9 )?'0'+(status & 0x0F):'A'+(status & 0x0F)-10;
+	log_wait[4] = ((addr >> 4) <= 9 )?'0'+(addr >> 4):'A'+(addr >> 4)-10;
+	log_wait[5] = ((addr & 0x0F) <= 9 )?'0'+(addr & 0x0F):'A'+(addr & 0x0F)-10;
+	to_log(log_wait);
+#endif
 }

@@ -10,6 +10,7 @@
 #include "zx.h"
 #include "spi.h"
 #include "atx.h"
+#include "rtc.h"
 
 ISR(TIMER2_OVF_vect)
 {
@@ -147,4 +148,18 @@ ISR(INT5_vect)
 	ps2mouse_timeout = PS2MOUSE_TIMEOUT;
 }
 
+ // SPI_INT
+ISR(INT6_vect)
+{
+	ps2_flags |= SPI_INT_FLAG;
+	EIFR = (1<<INTF6);
+}
+
+ // RTC up data
+ISR(INT7_vect)
+{
+	gluk_inc();
+
+	EIFR = (1<<INTF7);
+}
 

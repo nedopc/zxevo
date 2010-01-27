@@ -69,9 +69,11 @@ start:
 	//set external interrupt
 	//INT4 - PS2 Keyboard  (falling edge)
 	//INT5 - PS2 Mouse     (falling edge)
-	EICRB = (1<<ISC41)+(0<<ISC40) + (1<<ISC51)+(0<<ISC50); // set condition for interrupt
-	EIFR = (1<<INTF4)|(1<<INTF5); // clear spurious ints there
-	EIMSK |= (1<<INT4)|(1<<INT5); // enable
+	//INT6 - SPI  (falling edge)
+	//INT7 - RTC  (falling edge)
+	EICRB = (1<<ISC41)+(0<<ISC40) + (1<<ISC51)+(0<<ISC50) + (1<<ISC61)+(0<<ISC60) + (1<<ISC71)+(0<<ISC70); // set condition for interrupt
+	EIFR = (1<<INTF4)|(1<<INTF5)|(1<<INTF6)|(1<<INTF7); // clear spurious ints there
+	EIMSK |= (1<<INT4)|(1<<INT5)|(1<<INT6)|(1<<INT7); // enable
 
 	rtc_init();
 	zx_init();
@@ -90,6 +92,15 @@ start:
 		ps2mouse_task();
         zx_task(ZX_TASK_WORK);
 		zx_mouse_task();
+
+		if ( ps2_flags&SPI_INT_FLAG )
+		{
+			//get status byte
+			UBYTE status;
+			nSPICS_PORT |= (1<<nSPICS);
+			status = spi_send(0);
+			zx_wait_task( status );
+		}
     }
 	while( atx_power_task() );
 
