@@ -122,6 +122,9 @@ void rtc_init(void)
 //	rtc_read(2);
 //	rtc_read(3);
 //	rtc_read(4);
+
+	//set Gluk registers
+	gluk_regs[GLUK_REG_B] = 0x06;
 }
 
 void rtc_write(UBYTE addr, UBYTE data)
@@ -180,25 +183,44 @@ void gluk_inc(void)
 			}
 		}
 	}
-#ifdef LOGENABLE
-{
-	char log_int_rtc[] = "00.00.00\r\n";
-	log_int_rtc[0] = '0' + gluk_regs[GLUK_REG_HOUR]/10;
-	log_int_rtc[1] = '0' + gluk_regs[GLUK_REG_HOUR]%10;
-	log_int_rtc[3] = '0' + gluk_regs[GLUK_REG_MIN]/10;
-	log_int_rtc[4] = '0' + gluk_regs[GLUK_REG_MIN]%10;
-	log_int_rtc[6] = '0' + gluk_regs[GLUK_REG_SEC]/10;
-	log_int_rtc[7] = '0' + gluk_regs[GLUK_REG_SEC]%10;
-	to_log(log_int_rtc);
-}
-#endif
+//#ifdef LOGENABLE
+//{
+//	char log_int_rtc[] = "00.00.00\r\n";
+//	log_int_rtc[0] = '0' + gluk_regs[GLUK_REG_HOUR]/10;
+//	log_int_rtc[1] = '0' + gluk_regs[GLUK_REG_HOUR]%10;
+//	log_int_rtc[3] = '0' + gluk_regs[GLUK_REG_MIN]/10;
+//	log_int_rtc[4] = '0' + gluk_regs[GLUK_REG_MIN]%10;
+//	log_int_rtc[6] = '0' + gluk_regs[GLUK_REG_SEC]/10;
+//	log_int_rtc[7] = '0' + gluk_regs[GLUK_REG_SEC]%10;
+//	to_log(log_int_rtc);
+//}
+//#endif
 }
 
 UBYTE get_gluk_reg(UBYTE index)
 {
 	if( index < sizeof(gluk_regs)/sizeof(gluk_regs[0]) )
 	{
+		//clock registers from array
 		return gluk_regs[index];
 	}
-	return 0xFF;
+	else
+	{
+		//other registers from cmos
+		return rtc_read(index&0x3F);
+	}
+}
+
+void set_gluk_reg(UBYTE index, UBYTE data)
+{
+	if( index < sizeof(gluk_regs)/sizeof(gluk_regs[0]) )
+	{
+		//clock registers from array
+		gluk_regs[index] = data;
+	}
+	else
+	{
+		//other registers to cmos
+		rtc_write(index&0x3F, data);
+	}
 }

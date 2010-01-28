@@ -84,6 +84,9 @@
 /** ZX reset register */
 #define SPI_RST_REG   0x20
 
+/** ZX VGA MODE register */
+#define SPI_VGA_REG   0x08
+
 /** ZX Gluk address register */
 #define SPI_GLUK_ADDR 0x11
 /** ZX all data for wait registers */
@@ -169,6 +172,8 @@ void zx_mouse_task(void);
  */
 void zx_wait_task(UBYTE status);
 
+/** Switch vga mode on ZX */
+void zx_vga_switcher(void);
 
 #endif
 

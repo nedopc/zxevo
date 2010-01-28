@@ -65,5 +65,8 @@ void gluk_inc(void);
  */
 UBYTE get_gluk_reg(UBYTE index);
 
+void set_gluk_reg(UBYTE index, UBYTE data);
+
+
 
 #endif //__RTC_H__
