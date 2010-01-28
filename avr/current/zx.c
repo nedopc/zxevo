@@ -657,7 +657,7 @@ void zx_mouse_task(void)
 //		nSPICS_PORT &= ~(1<<nSPICS);
 //		spi_send(zx_mouse_x);
 //		nSPICS_PORT |= (1<<nSPICS);
-		zx_spi_send(SPI_MOUSE_X, zx_mouse_y, 0x7F);
+		zx_spi_send(SPI_MOUSE_X, zx_mouse_x, 0x7F);
 
 //		nSPICS_PORT |= (1<<nSPICS);  // set address of SPI register
 //		spi_send(SPI_MOUSE_Y);
