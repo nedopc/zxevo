@@ -151,6 +151,13 @@ module top(
 
 
 
+	// config signals
+	wire [7:0] not_used;
+	wire cfg_vga_on;
+
+
+
+
 
 	wire tape_in;
 
@@ -409,11 +416,11 @@ module top(
 
 
 
-	videoout vidia( .clk(fclk), .pixel(pixel), .border({ 1'b0,border[1],1'b0,border[2],1'b0,border[0] }),
+	videoout vidia( .clk(fclk), .pixel(pixel), .border({ border[1],1'b0,border[2],1'b0,border[0],1'b0 }),
 	                .hblank(hblank), .vblank(vblank), .hpix(hpix), .vpix(vpix), .hsync(hsync), .vsync(vsync),
 	                .vred(vred), .vgrn(vgrn), .vga_hsync(vga_hsync), .vblu(vblu),
 	                .vhsync(vhsync), .vvsync(vvsync), .vcsync(vcsync), .hsync_start(hsync_start),
-	                .scanin_start(scanin_start), .scanout_start(scanout_start) );
+	                .scanin_start(scanin_start), .scanout_start(scanout_start), .cfg_vga_on(cfg_vga_on) );
 
 
 
@@ -433,7 +440,8 @@ module top(
 	                   .wait_write(wait_write),
 	                   .wait_read(wait_read),
 	                   .wait_rnw(wait_rnw),
-	                   .wait_end(wait_end)
+	                   .wait_end(wait_end),
+	                   .config0( { not_used[7:1], cfg_vga_on} )
 	                 );
 
 	zkbdmus zkbdmus( .fclk(fclk), .rst_n(rst_n),
