@@ -200,7 +200,7 @@ KEY_3 ,NO_KEY, // 7A keypad 3
 KEY_SS,KEY_J , // 7B keypad -
 KEY_SS,KEY_B , // 7C keypad *
 KEY_9 ,NO_KEY, // 7D keypad 9
-NO_KEY,NO_KEY, // 7E
+NO_KEY,NO_KEY, // 7E Scroll Lock
 NO_KEY,NO_KEY  // 7F
 };
 
@@ -279,6 +279,7 @@ UBYTE zx_spi_send(UBYTE addr, UBYTE data, UBYTE mask)
 {
 	UBYTE status;
 	UBYTE ret;
+	nSPICS_PORT &= ~(1<<nSPICS); // fix for status locking
 	nSPICS_PORT |= (1<<nSPICS);  // set address of SPI register
 	status = spi_send(addr);
 	nSPICS_PORT &= ~(1<<nSPICS); // send data for that register
@@ -528,6 +529,9 @@ void to_zx(UBYTE scancode, UBYTE was_E0, UBYTE was_release)
 			tbl1 = pgm_read_byte_far( tblptr++ );
 			tbl2 = pgm_read_byte_far( tblptr );
 		}
+
+		//check key of vga mode switcher
+		if ( ( scancode == 0x7E ) && !was_release) zx_vga_switcher();
 	}
 
 	if( tbl1!=NO_KEY )
@@ -674,7 +678,7 @@ void zx_mouse_task(void)
 
 void zx_wait_task(UBYTE status)
 {
-	UBYTE addr;
+	UBYTE addr = 0;
 	UBYTE data = 0xFF;
 
 	//reset flag
@@ -683,7 +687,6 @@ void zx_wait_task(UBYTE status)
 	//prepare data
 	switch( status&0x7F )
 	{
-	default:
 	case ZXW_GLUK_CLOCK:
 		{
 			addr = zx_spi_send(SPI_GLUK_ADDR, data, 0);
@@ -692,18 +695,37 @@ void zx_wait_task(UBYTE status)
 		}
 	}
 
-	data = zx_spi_send(SPI_WAIT_DATA, data, 0);
+	if ( status&0x80 ) zx_spi_send(SPI_WAIT_DATA, data, 0);
+	else data = zx_spi_send(SPI_WAIT_DATA, data, 0);
 
 	if ( !(status&0x80) )
 	{
 		//save data
+		switch( status&0x7F )
+		{
+		case ZXW_GLUK_CLOCK:
+			{
+				set_gluk_reg(addr, data);
+				break;
+			}
+		}
 	}
 #ifdef LOGENABLE
-	char log_wait[] = "W..A..\r\n";
+	char log_wait[] = "W..A..D..\r\n";
 	log_wait[1] = ((status >> 4) <= 9 )?'0'+(status >> 4):'A'+(status >> 4)-10;
 	log_wait[2] = ((status & 0x0F) <= 9 )?'0'+(status & 0x0F):'A'+(status & 0x0F)-10;
 	log_wait[4] = ((addr >> 4) <= 9 )?'0'+(addr >> 4):'A'+(addr >> 4)-10;
 	log_wait[5] = ((addr & 0x0F) <= 9 )?'0'+(addr & 0x0F):'A'+(addr & 0x0F)-10;
+	log_wait[7] = ((data >> 4) <= 9 )?'0'+(data >> 4):'A'+(data >> 4)-10;
+	log_wait[8] = ((data & 0x0F) <= 9 )?'0'+(data & 0x0F):'A'+(data & 0x0F)-10;
 	to_log(log_wait);
 #endif
+}
+
+void zx_vga_switcher(void)
+{
+	static UBYTE vga_flag=0;
+
+	vga_flag = (vga_flag)?0:1;
+	zx_spi_send(SPI_VGA_REG, vga_flag, 0x7F);
 }
