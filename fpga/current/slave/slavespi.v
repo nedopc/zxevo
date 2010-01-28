@@ -35,6 +35,8 @@ module slavespi(
 
 	output wire        wait_end,
 
+	output wire [ 7:0] config0, // config bits for overall system
+
 	output wire       genrst, // positive pulse, causes Z80 reset
 	output wire [1:0] rstrom  // number of ROM page to reset to
 );
@@ -73,7 +75,7 @@ module slavespi(
 
 	// register selectors
 	wire sel_kbdreg, sel_kbdstb, sel_musxcr, sel_musycr, sel_musbtn, sel_rstreg;
-	wire sel_waitreg, sel_gluadr;
+	wire sel_waitreg, sel_gluadr, sel_cfg0;
 
 	// keyboard register
 	reg [39:0] kbd_reg;
@@ -87,7 +89,8 @@ module slavespi(
 	// wait data out register
 	reg [7:0] wait_reg;
 
-
+	//
+	reg [7:0] cfg0_reg_in, cfg0_reg_out; // one for shifting, second for storing values
 
 
 
@@ -154,7 +157,8 @@ module slavespi(
 	//
 	assign sel_waitreg = ( regnum[4] && !regnum[0] ); // $10
 	assign sel_gluadr  = ( regnum[4] &&  regnum[0] ); // $11
-
+	//
+	assign sel_cfg0 = regnum[3]; // $08
 
 
 	// registers data-in
@@ -172,6 +176,12 @@ module slavespi(
 
 		if( !scs_n && sel_waitreg && sck_01 )
 			wait_reg[7:0] <= { sdo, wait_reg[7:1] };
+
+		if( !scs_n && sel_cfg0 && sck_01 )
+			cfg0_reg_in[7:0] <= { sdo, cfg0_reg_in[7:1] };
+
+		if( scs_n_01 && sel_cfg0 )
+			cfg0_reg_out <= cfg0_reg_in;
 	end
 
 
@@ -190,7 +200,7 @@ module slavespi(
 	assign wait_read = wait_reg;
 	assign wait_end = sel_waitreg && scs_n_01;
 
-
+	assign config0 = cfg0_reg_out;
 
 endmodule
 

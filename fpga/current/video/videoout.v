@@ -38,7 +38,9 @@ module videoout(
 	output reg vhsync,
 	output reg vvsync,
 
-	output reg vcsync
+	output reg vcsync,
+
+	input  wire cfg_vga_on
 );
 
 
@@ -62,11 +64,11 @@ module videoout(
 
 	always @(posedge clk)
 	begin
-		vred[1:0] <= vga_color[5:4];
-		vgrn[1:0] <= vga_color[3:2];
-		vblu[1:0] <= vga_color[1:0];
+		vred[1:0] <= cfg_vga_on ? vga_color[5:4] : color[5:4];
+		vgrn[1:0] <= cfg_vga_on ? vga_color[3:2] : color[3:2];
+		vblu[1:0] <= cfg_vga_on ? vga_color[1:0] : color[1:0];
 
-		vhsync <= vga_hsync; // FUK MAJ MOZG
+		vhsync <= cfg_vga_on ? vga_hsync : hsync;
 		vvsync <= vsync;
 
 		vcsync <= ~(hsync ^ vsync);
