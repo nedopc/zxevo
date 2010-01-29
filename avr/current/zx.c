@@ -690,7 +690,7 @@ void zx_wait_task(UBYTE status)
 	case ZXW_GLUK_CLOCK:
 		{
 			addr = zx_spi_send(SPI_GLUK_ADDR, data, 0);
-			if ( status&0x80 ) data = get_gluk_reg(addr);
+			if ( status&0x80 ) data = gluk_get_reg(addr);
 			break;
 		}
 	}
@@ -705,7 +705,7 @@ void zx_wait_task(UBYTE status)
 		{
 		case ZXW_GLUK_CLOCK:
 			{
-				set_gluk_reg(addr, data);
+				gluk_set_reg(addr, data);
 				break;
 			}
 		}

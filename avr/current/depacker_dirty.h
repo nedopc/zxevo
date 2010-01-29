@@ -3,9 +3,6 @@
 
 #include "mytypes.h"
 
-
-
-
 // size and mask of output buffer
 #define DBSIZE 2048
 #define DBMASK 2047

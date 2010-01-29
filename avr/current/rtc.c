@@ -103,6 +103,33 @@ static UBYTE tw_read_data(UBYTE* data)
    return TWSR & 0xF8;
 }
 
+static UBYTE bcd_to_hex(UBYTE data)
+{
+	//convert BCD to HEX
+	return  (data>>4)*10 + (data&0x0F);
+}
+
+static UBYTE hex_to_bcd(UBYTE data)
+{
+	//convert HEX to BCD
+	return  ((data/10)<<4) + (data%10);
+}
+
+static UBYTE days_of_months()
+{
+	//return number of days in month
+	static const UBYTE days[12] = {31,28,31,30,31,30,31,31,30,31,30,31};
+	UBYTE tmp = gluk_regs[GLUK_REG_MONTH]-1;
+
+   	if ( tmp > sizeof(days)-1 ) tmp = 0; //check range
+
+	tmp = days[tmp];
+
+	//check leap-year
+	if ( (tmp == 28) && ( ( gluk_regs[GLUK_REG_YEAR]&0x03 ) == 0 ) ) tmp++;
+
+	return tmp;
+}
 
 void rtc_init(void)
 {
@@ -115,16 +142,9 @@ void rtc_init(void)
 	//write 0 to control/status register [0] on PCF8583
 	rtc_write(0, 0);
 
-	//test
-//	rtc_read(4);
-//	rtc_read(5);
-//	rtc_read(6);
-//	rtc_read(2);
-//	rtc_read(3);
-//	rtc_read(4);
-
-	//set Gluk registers
-	gluk_regs[GLUK_REG_B] = 0x06;
+	//set Gluk clock registers
+	gluk_init();
+	if ( gluk_regs[GLUK_REG_SEC] == 0 ) gluk_init();
 }
 
 void rtc_write(UBYTE addr, UBYTE data)
@@ -169,17 +189,69 @@ UBYTE rtc_read(UBYTE addr)
 	return ret;
 }
 
+void gluk_init(void)
+{
+	UBYTE tmp;
+	//default values
+	gluk_regs[GLUK_REG_A] = 0x00;
+	gluk_regs[GLUK_REG_B] = 0x02;
+	gluk_regs[GLUK_REG_C] = 0x00;
+	gluk_regs[GLUK_REG_D] = 0x80;
+
+	//setup
+
+	//read month and day of week
+	tmp = rtc_read(6);
+	gluk_regs[GLUK_REG_MONTH] = bcd_to_hex(0x1F&tmp);
+	gluk_regs[GLUK_REG_DAY_WEEK] = tmp>>5;
+
+	//read year and day of month
+	tmp = rtc_read(5);
+	gluk_regs[GLUK_REG_DAY_MONTH] = bcd_to_hex(0x3F&tmp);
+	gluk_regs[GLUK_REG_YEAR] = tmp>>6;
+	tmp = rtc_read(RTC_YEAR_ADD_REG);
+	if ( (tmp&0x03) > gluk_regs[GLUK_REG_YEAR] )
+	{
+		//count of year over - correct year
+		tmp += 4;
+		if ( tmp >= 100 ) tmp = 0;
+	}
+	gluk_regs[GLUK_REG_YEAR] += tmp&0xFC;
+	rtc_write(RTC_YEAR_ADD_REG,gluk_regs[GLUK_REG_YEAR]); //save year
+
+	//read time
+	gluk_regs[GLUK_REG_HOUR] = bcd_to_hex(0x3F&rtc_read(4)); //TODO 12/24 format
+	gluk_regs[GLUK_REG_MIN] = bcd_to_hex(rtc_read(3));
+	gluk_regs[GLUK_REG_SEC] = bcd_to_hex(rtc_read(2));
+}
+
 void gluk_inc(void)
 {
-	if ( ++gluk_regs[GLUK_REG_SEC] == 60 )
+	if ( ++gluk_regs[GLUK_REG_SEC] >= 60 )
 	{
 		gluk_regs[GLUK_REG_SEC] = 0;
-		if ( ++gluk_regs[GLUK_REG_MIN] == 60 )
+		if ( ++gluk_regs[GLUK_REG_MIN] >= 60 )
 		{
 			gluk_regs[GLUK_REG_MIN] = 0;
-			if ( ++gluk_regs[GLUK_REG_HOUR] == 24 )
+			if ( ++gluk_regs[GLUK_REG_HOUR] >= 24 )
 			{
 				gluk_regs[GLUK_REG_HOUR] = 0;
+				if ( ++gluk_regs[GLUK_REG_DAY_WEEK] > 7  )
+				{
+					gluk_regs[GLUK_REG_DAY_WEEK] = 1;
+				}
+				if ( ++gluk_regs[GLUK_REG_DAY_MONTH] > days_of_months() )
+				{
+					gluk_regs[GLUK_REG_DAY_MONTH] = 1;
+					if ( ++gluk_regs[GLUK_REG_MONTH] > 12 )
+					{
+						gluk_regs[GLUK_REG_MONTH] = 1;
+						if( ++gluk_regs[GLUK_REG_YEAR] >= 100 )
+						{
+							gluk_regs[GLUK_REG_YEAR] = 0;
+						}
+					}
+				}
 			}
 		}
 	}
@@ -197,30 +269,67 @@ void gluk_inc(void)
 //#endif
 }
 
-UBYTE get_gluk_reg(UBYTE index)
+UBYTE gluk_get_reg(UBYTE index)
 {
 	if( index < sizeof(gluk_regs)/sizeof(gluk_regs[0]) )
 	{
 		//clock registers from array
-		return gluk_regs[index];
+		UBYTE tmp = gluk_regs[index];
+		if ( ( index<10 ) && ( (gluk_regs[GLUK_REG_B]&GLUK_B_DATA_MODE) == 0 ) )
+		{
+			//clock registers mast be in BCD if HEX-bit not set in reg B
+			tmp = hex_to_bcd(tmp);
+		}
+		return tmp;
 	}
 	else
 	{
-		//other registers from cmos
+		//other from nvram
 		return rtc_read(index&0x3F);
 	}
 }
 
-void set_gluk_reg(UBYTE index, UBYTE data)
+void gluk_set_reg(UBYTE index, UBYTE data)
 {
 	if( index < sizeof(gluk_regs)/sizeof(gluk_regs[0]) )
 	{
-		//clock registers from array
-		gluk_regs[index] = data;
+		if ( index<10 )
+		{
+			//write to clock registers
+			if ( (gluk_regs[GLUK_REG_B]&GLUK_B_DATA_MODE) == 0 )
+			{
+				//array of registers must be in Hex, but data in BCD if HEX-bit not set in reg B
+				data = bcd_to_hex(data);
+			}
+			gluk_regs[index] = data;
+
+			//write to nvram if need
+			switch( index )
+			{
+				case GLUK_REG_SEC:
+					rtc_write(2, hex_to_bcd(gluk_regs[GLUK_REG_SEC]));
+					break;
+				case GLUK_REG_MIN:
+					rtc_write(3, hex_to_bcd(gluk_regs[GLUK_REG_MIN]));
+					break;
+				case GLUK_REG_HOUR:
+					rtc_write(4, 0x3F&hex_to_bcd(gluk_regs[GLUK_REG_HOUR]));
+					break;
+				case GLUK_REG_MONTH:
+				case GLUK_REG_DAY_WEEK:
+					rtc_write(6, (hex_to_bcd(gluk_regs[GLUK_REG_DAY_WEEK])<<5)+(0x1F&hex_to_bcd(gluk_regs[GLUK_REG_MONTH])));
+					break;
+				case GLUK_REG_YEAR:
+					rtc_write(RTC_YEAR_ADD_REG, gluk_regs[GLUK_REG_YEAR]);
+				case GLUK_REG_DAY_MONTH:
+					rtc_write(5, (hex_to_bcd(gluk_regs[GLUK_REG_YEAR])<<6)+(0x3F&hex_to_bcd(gluk_regs[GLUK_REG_DAY_MONTH])));
+					break;
+			}
+		}
 	}
 	else
 	{
-		//other registers to cmos
+		//write to nvram
 		rtc_write(index&0x3F, data);
 	}
 }
