@@ -322,7 +322,7 @@ void gluk_set_reg(UBYTE index, UBYTE data)
 				case GLUK_REG_YEAR:
 					rtc_write(RTC_YEAR_ADD_REG, gluk_regs[GLUK_REG_YEAR]);
 				case GLUK_REG_DAY_MONTH:
-					rtc_write(5, (hex_to_bcd(gluk_regs[GLUK_REG_YEAR])<<6)+(0x3F&hex_to_bcd(gluk_regs[GLUK_REG_DAY_MONTH])));
+					rtc_write(5, (gluk_regs[GLUK_REG_YEAR]<<6)+(0x3F&hex_to_bcd(gluk_regs[GLUK_REG_DAY_MONTH])));
 					break;
 			}
 		}

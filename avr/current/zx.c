@@ -710,7 +710,7 @@ void zx_wait_task(UBYTE status)
 			}
 		}
 	}
-#ifdef LOGENABLE
+/*#ifdef LOGENABLE
 	char log_wait[] = "W..A..D..\r\n";
 	log_wait[1] = ((status >> 4) <= 9 )?'0'+(status >> 4):'A'+(status >> 4)-10;
 	log_wait[2] = ((status & 0x0F) <= 9 )?'0'+(status & 0x0F):'A'+(status & 0x0F)-10;
@@ -719,7 +719,7 @@ void zx_wait_task(UBYTE status)
 	log_wait[7] = ((data >> 4) <= 9 )?'0'+(data >> 4):'A'+(data >> 4)-10;
 	log_wait[8] = ((data & 0x0F) <= 9 )?'0'+(data & 0x0F):'A'+(data & 0x0F)-10;
 	to_log(log_wait);
-#endif
+#endif   */
 }
 
 void zx_vga_switcher(void)
