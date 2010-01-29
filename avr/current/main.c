@@ -4,7 +4,6 @@
 
 #include <util/delay.h>
 
-
 #include "mytypes.h"
 #include "depacker_dirty.h"
 #include "getfaraddress.h"
@@ -21,15 +20,60 @@
 extern const char fpga[] PROGMEM; // linker symbol
 
 ULONG indata;
+
+//buffer for depacking FPGA configuration
+//you can USED for other purposed after setup FPGA
 UBYTE dbuf[DBSIZE];
 
-void InitHardware(void);
+void put_buffer(UWORD size)
+{
+	// writes specified length of buffer to the output
+	UBYTE * ptr = dbuf;
+
+	do
+	{
+		spi_send( *(ptr++) );
+
+	} while(--size);
+}
+
+void hardware_init(void)
+{
+	//Initialized AVR pins
+
+	cli(); // disable interrupts
+
+	// configure pins
+
+	PORTG = 0b11111111;
+	DDRG  = 0b00000000;
+
+//	PORTF = 0b11110000; // ATX off (zero output), fpga config/etc inputs
+	DDRF  = 0b00001000;
+
+	PORTE = 0b11111111;
+	DDRE  = 0b00000000; // inputs pulled up
+
+	PORTD = 0b11111111;
+	DDRD  = 0b00000000; // same
+
+	PORTC = 0b11011111;
+	DDRC  = 0b00000000; // PWRGOOD input, other pulled up
+
+	PORTB = 0b11110001;
+	DDRB  = 0b10000111; // LED off, spi outs inactive
+
+	PORTA = 0b11111111;
+	DDRA  = 0b00000000; // pulled up
+
+	ACSR = 0x80; // DISABLE analog comparator
+}
 
 int main()
 {
 start:
 
-	InitHardware();
+	hardware_init();
 
 #ifdef LOGENABLE
 	rs232_init();
@@ -97,7 +141,7 @@ start:
 		{
 			//get status byte
 			UBYTE status;
-			nSPICS_PORT &= ~(1<<nSPICS); // fix for status locking
+			nSPICS_PORT &= ~(1<<nSPICS);
 			nSPICS_PORT |= (1<<nSPICS);
 			status = spi_send(0);
 			zx_wait_task( status );
@@ -107,51 +151,3 @@ start:
 
 	goto start;
 }
-
-void InitHardware(void)
-{
-
-	cli(); // disable interrupts
-
-
-
-	// configure pins
-
-	PORTG = 0b11111111;
-	DDRG  = 0b00000000;
-
-//	PORTF = 0b11110000; // ATX off (zero output), fpga config/etc inputs
-	DDRF  = 0b00001000;
-
-	PORTE = 0b11111111;
-	DDRE  = 0b00000000; // inputs pulled up
-
-	PORTD = 0b11111111;
-	DDRD  = 0b00000000; // same
-
-	PORTC = 0b11011111;
-	DDRC  = 0b00000000; // PWRGOOD input, other pulled up
-
-	PORTB = 0b11110001;
-	DDRB  = 0b10000111; // LED off, spi outs inactive
-
-	PORTA = 0b11111111;
-	DDRA  = 0b00000000; // pulled up
-
-
-	ACSR = 0x80; // DISABLE analog comparator
-}
-
-
-void put_buffer(UWORD size)
-{ // writes specified length of buffer to the output
-	UBYTE * ptr;
-	ptr=dbuf;
-
-	do
-	{
-		spi_send( *(ptr++) );
-
-	} while(--size);
-}
-

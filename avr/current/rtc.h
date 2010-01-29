@@ -1,30 +1,42 @@
 #ifndef __RTC_H__
 #define __RTC_H__
+/**
+ * @file
+ * @brief RTC support.
+ * @author http://www.nedopc.com
+ *
+ * RTC PCF8583 support for ZX Evolution.
+ *
+ * ZX Evolution emulate Gluk clock standard:
+ * - full read/write time emulate;
+ * - full read/write nvram emulate;
+ * - registers A,B,C,D read only;
+ * - alarm functions not emulated.
+ */
 
 /** Address of PCF8583 RTC chip.*/
 #define RTC_ADDRESS  0xA0
+
+/** Register for year additional data. */
+#define RTC_YEAR_ADD_REG  0xFF
 
 /** Init RTC.*/
 void rtc_init(void);
 
 /**
  * Write byte to RTC.
- * @par addr [in] - address of internal register on RTC
- * @par data [in] - data to write
+ * @param addr [in] - address of internal register on RTC
+ * @param data [in] - data to write
  */
 void rtc_write(UBYTE addr, UBYTE data);
 
 /**
  * Read byte from RTC.
  * @return data
- * @par addr [in] - address of internal register on RTC
+ * @param addr [in] - address of internal register on RTC
  */
 UBYTE rtc_read(UBYTE addr);
 
-
-/**
- * Constants for Gluk clock scheme emulation.
- */
 
 /** Seconds register index. */
 #define GLUK_REG_SEC        0x00
@@ -55,18 +67,30 @@ UBYTE rtc_read(UBYTE addr);
 /** D register index. */
 #define GLUK_REG_D          0x0D
 
-/** Increment Gluk clock registers on one second */
+/** B register 2 bit - data mode (A 1 in DM signifies binary data while a 0 in DM specifies BCD data). */
+#define GLUK_B_DATA_MODE    0x04
+/** B register 1 bit - 24/12 mode (A 1 indicates the 24-hour mode and a 0 indicates the 12-hour mode.). */
+#define GLUK_B_24_12_MODE   0x02
+
+/** Read values from RTC and setup Gluk clock registers. */
+void gluk_init(void);
+
+/** Increment Gluk clock registers on one second. */
 void gluk_inc(void);
 
 /**
  * Get Gluk clock registers data.
  * @return registers data
- * @par index [in] - index of Gluck clock register
+ * @param index [in] - index of Gluck clock register
  */
-UBYTE get_gluk_reg(UBYTE index);
+UBYTE gluk_get_reg(UBYTE index);
 
-void set_gluk_reg(UBYTE index, UBYTE data);
-
+/**
+ * Set Gluk clock registers data.
+ * @param index [in] - index of Gluck clock register
+ * @param data [in] - data
+ */
+void gluk_set_reg(UBYTE index, UBYTE data);
 
 
 #endif //__RTC_H__
