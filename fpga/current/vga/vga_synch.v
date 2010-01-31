@@ -6,7 +6,7 @@
 //
 // KVIK PHEEKS just to double HSYNC not scan-doubling
 // beginning  of every other vga_hsync coincides with beginning of tv_hsync
-// length is 96 clocks @ 28mhz
+// length is HSYNC_END clocks @ 28mhz
 
 module vga_synch(
 
@@ -21,9 +21,12 @@ module vga_synch(
 
 
 //	localparam HSYNC_BEG = 9'd00;
-	localparam HSYNC_END = 10'd96;
+//	localparam HSYNC_END = 10'd96;
 
-	localparam SCANOUT_BEG = 10'd112;
+//	localparam SCANOUT_BEG = 10'd112;
+
+	localparam HSYNC_END	= 10'd106;
+	localparam SCANOUT_BEG	= 10'd159;
 
 	localparam HPERIOD = 10'd896;
 

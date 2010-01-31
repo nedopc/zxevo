@@ -24,7 +24,7 @@ pg0 pg1
 4xx 5xx
 */
 
-	reg [9:0] ptr_in;  // count up to 768 or $300
+	reg [9:0] ptr_in;  // count up to 720
 	reg [9:0] ptr_out; //
 
 	reg pages; // swapping of pages
@@ -43,11 +43,11 @@ pg0 pg1
 	begin
 		if( scanin_start )
 		begin
-			ptr_in[9:8] <= 2'b00;
+			ptr_in[9:0] <= 10'd0;
 		end
 		else
 		begin
-			if( ptr_in[9:8]!=2'b11 )
+			if( ptr_in[9:4]!=6'h2D ) //  720>>4 = 0x2d
 			begin
 				wr_stb <= ~wr_stb;
 				if( wr_stb )
@@ -64,11 +64,11 @@ pg0 pg1
 	begin
 		if( scanout_start )
 		begin
-			ptr_out[9:8] <= 2'b00;
+			ptr_out[9:0] <= 10'd0;
 		end
 		else
 		begin
-			if( ptr_out[9:8]!=2'b11 )
+			if( ptr_out[9:4]!=6'h2D ) //  720>>4 = 0x2d
 			begin
 				ptr_out <= ptr_out + 10'd1;
 			end
@@ -78,7 +78,7 @@ pg0 pg1
 	//read data
 	always @(posedge clk)
 	begin
-		if( ptr_out[9:8]!=2'b11 )
+		if( ptr_out[9:4]!=6'h2D ) //  720>>4 = 0x2d
 			pix_out <= data_out[5:0];
 		else
 			pix_out <= 6'd0;

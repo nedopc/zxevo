@@ -31,9 +31,9 @@ module syncv(
 
 
 	localparam VBLNK_BEG = 9'd00;
-	localparam VSYNC_BEG = 9'd03;
-	localparam VSYNC_END = 9'd07;
-	localparam VBLNK_END = 9'd25;
+	localparam VSYNC_BEG = 9'd08;
+	localparam VSYNC_END = 9'd11;
+	localparam VBLNK_END = 9'd32;
 
 	localparam INT_BEG = 9'd0;
 
