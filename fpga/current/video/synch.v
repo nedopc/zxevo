@@ -50,14 +50,14 @@ module synch(
 	localparam HBLNK_BEG = 9'd00;
 	localparam HSYNC_BEG = 9'd10;
 	localparam HSYNC_END = 9'd43;
-	localparam HBLNK_END = 9'd84;
+	localparam HBLNK_END = 9'd88;
 
-	localparam HPIX_BEG = 9'd148; // 64 cycles from line_start to pixels beginning
-	localparam HPIX_END = 9'd404;
+	localparam HPIX_BEG = 9'd140; // 52 cycles from line_start to pixels beginning
+	localparam HPIX_END = 9'd396;
 
-	localparam SCANIN_BEG = 9'd84; // when scan-doubler starts pixel storing
+	localparam SCANIN_BEG = 9'd88; // when scan-doubler starts pixel storing
 
-	localparam HINT_BEG = 9'd03;
+	localparam HINT_BEG = 9'd443;
 
 
 	localparam HPERIOD = 9'd448;

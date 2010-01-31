@@ -41,10 +41,10 @@ module fetch(
 );
 
 
-	localparam START_FETCH = 6'd48;
+	localparam START_FETCH = 6'd36;
 
 
-// begin data fetching 16 cycles before actual start if hpix, (64-16)=48 cycles after line_start.
+// begin data fetching 16 cycles before actual start if hpix, (52-16)=36 cycles after line_start.
 
 	reg [15:0] fbuf [0:3]; // reading memory data
 
@@ -74,7 +74,7 @@ module fetch(
 
 
 	wire flash;
-	reg [5:0] flashctr;
+	reg [4:0] flashctr;
 
 
 	reg [3:0] zxcolor;
@@ -110,9 +110,9 @@ module fetch(
 	// flash generator
 	always @(posedge clk) if( int_start )
 	begin
-		flashctr <= flashctr + 6'd1;
+		flashctr <= flashctr + 5'd1;
 	end
-	assign flash = flashctr[5];
+	assign flash = flashctr[4];
 
 
 	// fetchmode generator
