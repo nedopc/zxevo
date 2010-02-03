@@ -31,6 +31,7 @@ module zports(
 
 	input [4:0] keys_in, // keys (port FE)
 	input [7:0] mus_in,  // mouse (xxDF)
+	input [4:0] kj_in,
 
 	output reg [2:0] border,
 	output reg beep,
@@ -194,7 +195,7 @@ module zports(
 			dout = { vg_intrq, vg_drq, 6'b111111 };
 
 		KJOY:
-			dout = 8'h00;
+			dout = {3'b000, kj_in};
 		KMOUSE:
 			dout = mus_in;
 

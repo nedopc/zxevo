@@ -25,6 +25,7 @@ module slavespi(
 	output wire        mus_xstb,
 	output wire        mus_ystb,
 	output wire        mus_btnstb,
+	output wire        kj_stb,
 
 
 	input  wire [ 7:0] gluclock_addr,
@@ -74,8 +75,8 @@ module slavespi(
 
 
 	// register selectors
-	wire sel_kbdreg, sel_kbdstb, sel_musxcr, sel_musycr, sel_musbtn, sel_rstreg;
-	wire sel_waitreg, sel_gluadr, sel_cfg0;
+	wire sel_kbdreg, sel_kbdstb, sel_musxcr, sel_musycr, sel_musbtn, sel_kj;
+	wire sel_rstreg, sel_waitreg, sel_gluadr, sel_cfg0;
 
 	// keyboard register
 	reg [39:0] kbd_reg;
@@ -146,19 +147,20 @@ module slavespi(
 
 	// reg number decoding
 	//
-	assign sel_kbdreg = ( regnum[7] && !regnum[0] ); // $80
-	assign sel_kbdstb = ( regnum[7] &&  regnum[0] ); // $81
+	assign sel_kbdreg = ( (regnum[7:4]==4'h1) && !regnum[0] ); // $10
+	assign sel_kbdstb = ( (regnum[7:4]==4'h1) &&  regnum[0] ); // $11
 	//
-	assign sel_musxcr = ( regnum[6] && !regnum[1] && !regnum[0] ); // $40
-	assign sel_musycr = ( regnum[6] && !regnum[1] &&  regnum[0] ); // $41
-	assign sel_musbtn = ( regnum[6] &&  regnum[1]               ); // $42
+	assign sel_musxcr = ( (regnum[7:4]==4'h2) && !regnum[1] && !regnum[0] ); // $20
+	assign sel_musycr = ( (regnum[7:4]==4'h2) && !regnum[1] &&  regnum[0] ); // $21
+	assign sel_musbtn = ( (regnum[7:4]==4'h2) &&  regnum[1] && !regnum[0] ); // $22
+	assign sel_kj     = ( (regnum[7:4]==4'h2) &&  regnum[1] &&  regnum[0] ); // $23
 	//
-	assign sel_rstreg = ( regnum[5] ) ; // $20
+	assign sel_rstreg = ( (regnum[7:4]==4'h3) ) ; // $30
 	//
-	assign sel_waitreg = ( regnum[4] && !regnum[0] ); // $10
-	assign sel_gluadr  = ( regnum[4] &&  regnum[0] ); // $11
+	assign sel_waitreg = ( (regnum[7:4]==4'h4) && !regnum[0] ); // $40
+	assign sel_gluadr  = ( (regnum[7:4]==4'h4) &&  regnum[0] ); // $41
 	//
-	assign sel_cfg0 = regnum[3]; // $08
+	assign sel_cfg0 = (regnum[7:4]==4'h5); // $50
 
 
 	// registers data-in
@@ -168,7 +170,7 @@ module slavespi(
 		if( !scs_n && sel_kbdreg && sck_01 )
 			kbd_reg[39:0] <= { sdo, kbd_reg[39:1] };
 
-		if( !scs_n && (sel_musxcr || sel_musycr || sel_musbtn) && sck_01 )
+		if( !scs_n && (sel_musxcr || sel_musycr || sel_musbtn || sel_kj) && sck_01 )
             mouse_buf[7:0] <= { sdo, mouse_buf[7:1] };
 
 		if( !scs_n && sel_rstreg && sck_01 )
@@ -193,6 +195,7 @@ module slavespi(
 	assign mus_xstb   = sel_musxcr && scs_n_01;
 	assign mus_ystb   = sel_musycr && scs_n_01;
 	assign mus_btnstb = sel_musbtn && scs_n_01;
+	assign kj_stb     = sel_kj     && scs_n_01;
 
 	assign genrst = sel_rstreg && scs_n_01;
 	assign rstrom = rst_reg[5:4];

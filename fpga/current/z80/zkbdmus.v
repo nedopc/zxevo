@@ -15,12 +15,14 @@ module zkbdmus(
 	input  wire        mus_xstb,
 	input  wire        mus_ystb,
 	input  wire        mus_btnstb,
+	input  wire        kj_stb,
 
 
 	input  wire [7:0] zah,
 
 	output wire [ 4:0] kbd_data,
-	output wire [ 7:0] mus_data
+	output wire [ 7:0] mus_data,
+	output reg  [ 4:0] kj_data
 );
 
 	reg [39:0] kbd;
@@ -47,6 +49,9 @@ module zkbdmus(
 
 		if( mus_btnstb )
 			musbtn <= mus_in;
+
+		if( kj_stb )
+			kj_data <= mus_in[4:0];
     end
 
 
@@ -78,7 +83,7 @@ module zkbdmus(
 	assign kbd_data = kout;
 
 	// make mouse
-    // FADF - buttons, FBDF - x, FFDF - y
+	// FADF - buttons, FBDF - x, FFDF - y
 	//
 	assign mus_data = zah[0] ? ( zah[2] ? musy : musx ) : musbtn;
 
