@@ -133,9 +133,10 @@ module top(
 
 	wire [39:0] kbd_data;
 	wire [ 7:0] mus_data;
-	wire kbd_stb,mus_xstb,mus_ystb,mus_btnstb;
+	wire kbd_stb,mus_xstb,mus_ystb,mus_btnstb,kj_stb;
 
 	wire [ 4:0] kbd_port_data;
+	wire [ 4:0] kj_port_data;
 	wire [ 7:0] mus_port_data;
 
 
@@ -435,7 +436,7 @@ module top(
 	                   .rstrom(rstrom), .kbd_out(kbd_data),
 	                   .kbd_stb(kbd_stb), .mus_out(mus_data),
 	                   .mus_xstb(mus_xstb), .mus_ystb(mus_ystb),
-	                   .mus_btnstb(mus_btnstb),
+	                   .mus_btnstb(mus_btnstb), .kj_stb(kj_stb),
 	                   .gluclock_addr(gluclock_addr),
 	                   .wait_write(wait_write),
 	                   .wait_read(wait_read),
@@ -448,6 +449,7 @@ module top(
 	                 .kbd_in(kbd_data), .kbd_stb(kbd_stb),
 	                 .mus_in(mus_data), .mus_xstb(mus_xstb),
 	                 .mus_ystb(mus_ystb), .mus_btnstb(mus_btnstb),
+	                 .kj_stb(kj_stb), .kj_data(kj_port_data),
 	                 .zah(a[15:8]), .kbd_data(kbd_port_data),
 	                 .mus_data(mus_port_data)
 	               );
@@ -466,6 +468,7 @@ module top(
 
 	              .keys_in(kbd_port_data),
 	              .mus_in(mus_port_data),
+	              .kj_in(kj_port_data),
 
 	              .gluclock_addr(gluclock_addr),
 	              .wait_start_gluclock(wait_start_gluclock),

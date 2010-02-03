@@ -71,26 +71,26 @@
  * SPI registers.
  */
 //
-#define SPI_KBD_DAT   0x80
-#define SPI_KBD_STB   0x81
+#define SPI_KBD_DAT   0x10
+#define SPI_KBD_STB   0x11
 
 /** ZX mouse X coordinate register.*/
-#define SPI_MOUSE_X   0x40
+#define SPI_MOUSE_X   0x20
 /** ZX mouse Y coordinate register.*/
-#define SPI_MOUSE_Y   0x41
+#define SPI_MOUSE_Y   0x21
 /** ZX mouse Y coordinate register.*/
-#define SPI_MOUSE_BTN 0x42
+#define SPI_MOUSE_BTN 0x22
 
 /** ZX reset register */
-#define SPI_RST_REG   0x20
+#define SPI_RST_REG   0x30
 
 /** ZX VGA MODE register */
-#define SPI_VGA_REG   0x08
+#define SPI_VGA_REG   0x50
 
 /** ZX Gluk address register */
-#define SPI_GLUK_ADDR 0x11
+#define SPI_GLUK_ADDR 0x41
 /** ZX all data for wait registers */
-#define SPI_WAIT_DATA 0x10
+#define SPI_WAIT_DATA 0x40
 
 
 /** Send/recv data for spi registers. */

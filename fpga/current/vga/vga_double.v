@@ -43,11 +43,12 @@ pg0 pg1
 	begin
 		if( scanin_start )
 		begin
-			ptr_in[9:0] <= 10'd0;
+			ptr_in[9:8] <= 2'b00;
+			ptr_in[4:3] <= 2'b11;
 		end
 		else
 		begin
-			if( ptr_in[9:4]!=6'h2D ) //  720>>4 = 0x2d
+			if( ptr_in[9:8]!=2'b11 ) //  768-720=48
 			begin
 				wr_stb <= ~wr_stb;
 				if( wr_stb )
@@ -64,11 +65,12 @@ pg0 pg1
 	begin
 		if( scanout_start )
 		begin
-			ptr_out[9:0] <= 10'd0;
+			ptr_out[9:8] <= 2'b00;
+			ptr_out[4:3] <= 2'b11;
 		end
 		else
 		begin
-			if( ptr_out[9:4]!=6'h2D ) //  720>>4 = 0x2d
+			if( ptr_out[9:8]!=2'b11 )
 			begin
 				ptr_out <= ptr_out + 10'd1;
 			end
