@@ -15,6 +15,7 @@
 #include "rs232.h"
 #include "rtc.h"
 #include "atx.h"
+#include "joystick.h"
 
 //fpga compressed data
 extern const char fpga[] PROGMEM; // linker symbol
@@ -136,7 +137,9 @@ start:
 		ps2mouse_task();
         zx_task(ZX_TASK_WORK);
 		zx_mouse_task();
+		joystick_task();
 
+		//
 		if ( ps2_flags&SPI_INT_FLAG )
 		{
 			//get status byte
