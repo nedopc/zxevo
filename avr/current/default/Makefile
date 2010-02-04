@@ -35,7 +35,7 @@ HEX_EEPROM_FLAGS += --change-section-lma .eeprom=0 --no-change-warnings
 
 
 ## Objects that must be built in order to link
-OBJECTS = zx.o interrupts.o main.o ps2.o spi.o depacker_dirty.o rs232.o rtc.o atx.o
+OBJECTS = zx.o interrupts.o main.o ps2.o spi.o depacker_dirty.o rs232.o rtc.o atx.o joystick.o
 
 ## Objects explicitly added by the user
 #LINKONLYOBJECTS = fpga.o
@@ -70,6 +70,9 @@ rtc.o: ../rtc.c ../rtc.h
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
 atx.o: ../atx.c ../atx.h
+	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+
+joystick.o: ../joystick.c ../joystick.h
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
 ##Link
