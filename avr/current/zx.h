@@ -81,6 +81,9 @@
 /** ZX mouse Y coordinate register.*/
 #define SPI_MOUSE_BTN 0x22
 
+/** Kempston joystick register.*/
+#define SPI_KEMPSTON_JOYSTICK 0x23
+
 /** ZX reset register */
 #define SPI_RST_REG   0x30
 
