@@ -17,6 +17,7 @@ ISR(TIMER2_OVF_vect)
 	static UBYTE counter=0x00;
 	static BYTE dir=0x01;
 	static BYTE ocr=0x00;
+	static BYTE scankbd=0;
 
 	counter++; // just fucking shit to fadein-fadeout LED :-)))
 	if( counter&128 )
@@ -73,6 +74,43 @@ ISR(TIMER2_OVF_vect)
 		//pressed
 		atx_counter++;
 	}
+
+	if ( scankbd==0 )
+	{
+		zx_realkbd[0] = PINA;
+		DDRC  = 0b00010000;
+		PORTC = 0b11001111;
+		zx_realkbd_endscan = 4;
+		scankbd=4;
+	}
+	else if ( scankbd==1 )
+	{
+		zx_realkbd[1] = PINA;
+		DDRC  = 0b00000001;
+		PORTC = 0b11011110;
+		scankbd=0;
+	}
+	else if ( scankbd==2 )
+	{
+		zx_realkbd[2] = PINA;
+		DDRC  = 0b00000010;
+		PORTC = 0b11011101;
+		scankbd=1;
+	}
+	else if ( scankbd==3 )
+	{
+		zx_realkbd[3] = PINA;
+		DDRC  = 0b00000100;
+		PORTC = 0b11011011;
+		scankbd=2;
+	}
+	else if ( scankbd==4 )
+	{
+		zx_realkbd[4] = PINA;
+		DDRC  = 0b00001000;
+		PORTC = 0b11010111;
+		scankbd=3;
+	}
 }
 
 
@@ -84,9 +122,9 @@ ISR(INT4_vect) // receive PS/2 keyboard data. TODO: sending mode...
 	if( !(--ps2keyboard_count) )
 	{
 		PS2KBCLK_PORT &= ~(1<<PS2KBCLK);
-                PS2KBCLK_DDR  |= (1<<PS2KBCLK);
+				PS2KBCLK_DDR  |= (1<<PS2KBCLK);
 
-                EIFR = (1<<INTF4); // clr any additional int which can happen when we pulldown clock pin
+				EIFR = (1<<INTF4); // clr any additional int which can happen when we pulldown clock pin
 	}
 
 	ps2keyboard_timeout = PS2KEYBOARD_TIMEOUT;
@@ -103,7 +141,7 @@ ISR(INT5_vect)
 		//send mode
 		if( --ps2mouse_count )
 		{
-	  		if ( ps2mouse_shifter&1 ) PS2MSDAT_PORT |= (1<<PS2MSDAT);
+			if ( ps2mouse_shifter&1 ) PS2MSDAT_PORT |= (1<<PS2MSDAT);
 			else PS2MSDAT_PORT &= ~(1<<PS2MSDAT);
 
 			ps2mouse_shifter >>= 1;
@@ -111,10 +149,10 @@ ISR(INT5_vect)
 			if( ps2mouse_count == 11 )
 			{
 				//first interrupt is programmed
-				PS2MSDAT_DDR |= (1<<PS2MSDAT);   //ps2mouse data pin to output mode
+				PS2MSDAT_DDR |= (1<<PS2MSDAT);	 //ps2mouse data pin to output mode
 				_delay_us(200);  //hold ps2mouse clk pin ~200us
 				PS2MSCLK_PORT |= (1<<PS2MSCLK);  //release ps2mouse clk pin
-    		    PS2MSCLK_DDR  &= ~(1<<PS2MSCLK);
+				PS2MSCLK_DDR  &= ~(1<<PS2MSCLK);
 			}
 			else if( ps2mouse_count == 1)
 			{
@@ -125,7 +163,7 @@ ISR(INT5_vect)
 		{
 			//ack received
 			PS2MSCLK_PORT &= ~(1<<PS2MSCLK);
-    	    PS2MSCLK_DDR  |= (1<<PS2MSCLK);
+			PS2MSCLK_DDR  |= (1<<PS2MSCLK);
 		}
 	}
 	else
@@ -137,7 +175,7 @@ ISR(INT5_vect)
 		if( (--ps2mouse_count) == 1 )
 		{
 			PS2MSCLK_PORT &= ~(1<<PS2MSCLK);
-    		PS2MSCLK_DDR  |= (1<<PS2MSCLK);
+			PS2MSCLK_DDR  |= (1<<PS2MSCLK);
 			ps2mouse_count = 0;
 		}
 	}
