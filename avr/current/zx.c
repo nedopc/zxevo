@@ -41,6 +41,8 @@ UBYTE zx_map[5]; // keys bitmap. send order: LSbit first, from [4] to [0]
 
 volatile UBYTE shift_pause;
 
+volatile UBYTE zx_realkbd_endscan;
+volatile UBYTE zx_realkbd[10];
 
 
 
@@ -262,7 +264,7 @@ void zx_init(void)
 	zx_task(ZX_TASK_INIT);
 
 
-	nSPICS_DDR  |= (1<<nSPICS);
+	nSPICS_DDR	|= (1<<nSPICS);
 	nSPICS_PORT &= ~(1<<nSPICS);
 	_delay_us(10);
 	nSPICS_PORT |= (1<<nSPICS);
@@ -352,7 +354,7 @@ void zx_task(UBYTE operation) // zx task, tracks when there is need to send new 
 
 					if( code&PRESS_MASK ) // reset key pressed
 					{
-						reset_type  = 0x30 & ((code+1)<<4);
+						reset_type	= 0x30 & ((code+1)<<4);
 						reset_type += 2;
 
 						break; // flush immediately
@@ -368,7 +370,7 @@ void zx_task(UBYTE operation) // zx task, tracks when there is need to send new 
 					{
 						if( (PRESS_MASK&prev_code) && (PRESS_MASK&code) )
 						{
-							if(	/* prev key was CS|SS down */
+							if( /* prev key was CS|SS down */
 								( (PRESS_MASK|KEY_CS)<=prev_code && prev_code<=(PRESS_MASK|KEY_SS) ) &&
 								/* curr key is not-CS|SS down */
 								( code<(PRESS_MASK|KEY_CS) || (PRESS_MASK|KEY_SS)<code )
@@ -378,7 +380,7 @@ void zx_task(UBYTE operation) // zx task, tracks when there is need to send new 
 
 						if( (!(PRESS_MASK&prev_code)) && (!(PRESS_MASK&code)) )
 						{
-							if(	/* prev key was not-CS|SS up */
+							if( /* prev key was not-CS|SS up */
 								( prev_code<KEY_CS || KEY_SS<prev_code ) &&
 								/* curr key is CS|SS up */
 								( KEY_CS<=prev_code && prev_code<=KEY_SS )
@@ -393,7 +395,7 @@ void zx_task(UBYTE operation) // zx task, tracks when there is need to send new 
 					keybit = 0x0080 >> (code&7); // KEY_MASK - надмножество битов 7
 
 					if( code&PRESS_MASK )
-						zx_map[keynum] |=   keybit;
+						zx_map[keynum] |=	keybit;
 					else
 						zx_map[keynum] &= (~keybit);
 
@@ -402,6 +404,16 @@ void zx_task(UBYTE operation) // zx task, tracks when there is need to send new 
 					shift_pause = SHIFT_PAUSE; // init wait timer
 
 					was_data = 1;
+				}
+			}
+
+			if ( zx_realkbd_endscan )
+			{
+				zx_realkbd_endscan = 0;
+				for (BYTE i=0; i<5; i++)
+				{
+					 was_data |= zx_realkbd[i] ^ zx_realkbd[i+5];
+					 zx_realkbd[i+5] = zx_realkbd[i];
 				}
 			}
 
@@ -445,7 +457,7 @@ void zx_task(UBYTE operation) // zx task, tracks when there is need to send new 
 //				nSPICS_PORT &= ~(1<<nSPICS);
 //				spi_send( zx_map[task_state-1] );
 //				nSPICS_PORT |= (1<<nSPICS);
-				zx_spi_send(SPI_KBD_DAT, zx_map[task_state-1], 0x7F);
+				zx_spi_send(SPI_KBD_DAT, zx_map[task_state-1] | ~zx_realkbd[task_state-1], 0x7F);
 #ifdef LOGENABLE
 	char log_zxmap_task_state[] = "TK..\r\n";
 	log_zxmap_task_state[2] = ((zx_map[task_state-1] >> 4) <= 9 )?'0'+(zx_map[task_state-1] >> 4):'A'+(zx_map[task_state-1] >> 4)-10;
@@ -482,6 +494,12 @@ void zx_clr_kb(void)
 	do
 		zx_map[i] = 0;
 	while( (--i)>=0 );
+
+	i=0;
+	do
+		zx_realkbd[i] = 0xff;
+	while( (++i)<=9 );
+	zx_realkbd_endscan = 0;
 
 
 	i=39;
@@ -719,7 +737,7 @@ void zx_wait_task(UBYTE status)
 	log_wait[7] = ((data >> 4) <= 9 )?'0'+(data >> 4):'A'+(data >> 4)-10;
 	log_wait[8] = ((data & 0x0F) <= 9 )?'0'+(data & 0x0F):'A'+(data & 0x0F)-10;
 	to_log(log_wait);
-#endif   */
+#endif	 */
 }
 
 void zx_vga_switcher(void)

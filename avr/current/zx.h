@@ -13,17 +13,17 @@
 #define PRESS_MASK 128
 #define KEY_MASK   127
 //
-#define KEY_SP  0
-#define KEY_EN  1
-#define KEY_P   2
-#define KEY_0   3
-#define KEY_1   4
-#define KEY_Q   5
-#define KEY_A   6
-#define KEY_CS  7
+#define KEY_SP	0
+#define KEY_EN	1
+#define KEY_P	2
+#define KEY_0	3
+#define KEY_1	4
+#define KEY_Q	5
+#define KEY_A	6
+#define KEY_CS	7
 //
-#define KEY_SS  8
-#define KEY_L   9
+#define KEY_SS	8
+#define KEY_L	9
 #define KEY_O  10
 #define KEY_9  11
 #define KEY_2  12
@@ -105,6 +105,11 @@ UBYTE zx_spi_send(UBYTE addr, UBYTE data, UBYTE mask);
 //
 extern volatile UBYTE shift_pause;
 
+extern volatile UBYTE zx_realkbd_endscan;
+// real keys bitmap. send order: LSbit first, from [4] to [0]
+// [5]..[9] - previous state
+extern volatile UBYTE zx_realkbd[10];
+
 /*struct zx {
 	UBYTE counters[40];
 	UBYTE map[5]; // send order: LSbit first, from [4] to [0]
@@ -137,10 +142,10 @@ UBYTE zx_fifo_copy(void);
  * ZX mouse button register.
  * Bits description:
  * 7..4 - wheel code (if present) or 1111 if wheel not present;
- * 3    - always 1;
- * 2    - middle button (0, if pressed);
- * 1    - right button (0, if pressed);
- * 0    - left button (0, if pressed).
+ * 3	- always 1;
+ * 2	- middle button (0, if pressed);
+ * 1	- right button (0, if pressed);
+ * 0	- left button (0, if pressed).
  */
 extern volatile UBYTE zx_mouse_button;
 
@@ -153,7 +158,7 @@ extern volatile UBYTE zx_mouse_y;
 /**
  * Reset ZX mouse registers to default value.
  * @par enable [in] - ==0 values like no mouse connected
- *                    !=0 values like mouse connected
+ *					  !=0 values like mouse connected
  */
 void zx_mouse_reset(UBYTE enable);
 
@@ -162,7 +167,7 @@ void zx_mouse_task(void);
 
 
 /**
- *  ZX WAIT ports indexes:
+ *	ZX WAIT ports indexes:
  */
 /** Gluk clock port. */
 #define ZXW_GLUK_CLOCK 0x01
@@ -171,7 +176,7 @@ void zx_mouse_task(void);
 /**
  * Work with WAIT ports.
  * @par status [in] - bit 7 - CPU is 0 -write, 1-read wait port
- *                    bits 6..0 is index of port
+ *					  bits 6..0 is index of port
  */
 void zx_wait_task(UBYTE status);
 
