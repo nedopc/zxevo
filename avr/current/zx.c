@@ -41,8 +41,7 @@ UBYTE zx_map[5]; // keys bitmap. send order: LSbit first, from [4] to [0]
 
 volatile UBYTE shift_pause;
 
-volatile UBYTE zx_realkbd_endscan;
-volatile UBYTE zx_realkbd[10];
+UBYTE zx_realkbd[11];
 
 
 
@@ -407,14 +406,14 @@ void zx_task(UBYTE operation) // zx task, tracks when there is need to send new 
 				}
 			}
 
-			if ( zx_realkbd_endscan )
+			if ( zx_realkbd[10] )
 			{
-				zx_realkbd_endscan = 0;
 				for (BYTE i=0; i<5; i++)
 				{
 					 was_data |= zx_realkbd[i] ^ zx_realkbd[i+5];
 					 zx_realkbd[i+5] = zx_realkbd[i];
 				}
+				zx_realkbd[10] = 0;
 			}
 
 			if( was_data ) // initialize transfer
@@ -457,11 +456,13 @@ void zx_task(UBYTE operation) // zx task, tracks when there is need to send new 
 //				nSPICS_PORT &= ~(1<<nSPICS);
 //				spi_send( zx_map[task_state-1] );
 //				nSPICS_PORT |= (1<<nSPICS);
-				zx_spi_send(SPI_KBD_DAT, zx_map[task_state-1] | ~zx_realkbd[task_state-1], 0x7F);
+				UBYTE key_data;
+				key_data = zx_map[task_state-1] | ~zx_realkbd[task_state-1];
+				zx_spi_send(SPI_KBD_DAT, key_data, 0x7F);
 #ifdef LOGENABLE
 	char log_zxmap_task_state[] = "TK..\r\n";
-	log_zxmap_task_state[2] = ((zx_map[task_state-1] >> 4) <= 9 )?'0'+(zx_map[task_state-1] >> 4):'A'+(zx_map[task_state-1] >> 4)-10;
-	log_zxmap_task_state[3] = ((zx_map[task_state-1] & 0x0F) <= 9 )?'0'+(zx_map[task_state-1] & 0x0F):'A'+(zx_map[task_state-1] & 0x0F)-10;
+	log_zxmap_task_state[2] = ((key_data >> 4) <= 9 )?'0'+(key_data >> 4):'A'+(key_data >> 4)-10;
+	log_zxmap_task_state[3] = ((key_data & 0x0F) <= 9 )?'0'+(key_data & 0x0F):'A'+(key_data & 0x0F)-10;
 	to_log(log_zxmap_task_state);
 #endif
 			}
@@ -499,7 +500,7 @@ void zx_clr_kb(void)
 	do
 		zx_realkbd[i] = 0xff;
 	while( (++i)<=9 );
-	zx_realkbd_endscan = 0;
+	zx_realkbd[10] = 0;
 
 
 	i=39;

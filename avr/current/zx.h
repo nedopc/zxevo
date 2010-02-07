@@ -105,10 +105,10 @@ UBYTE zx_spi_send(UBYTE addr, UBYTE data, UBYTE mask);
 //
 extern volatile UBYTE shift_pause;
 
-extern volatile UBYTE zx_realkbd_endscan;
 // real keys bitmap. send order: LSbit first, from [4] to [0]
 // [5]..[9] - previous state
-extern volatile UBYTE zx_realkbd[10];
+// [10] - end scan flag
+extern UBYTE zx_realkbd[11];
 
 /*struct zx {
 	UBYTE counters[40];
