@@ -18,6 +18,7 @@ ISR(TIMER2_OVF_vect)
 	static BYTE dir=0x01;
 	static BYTE ocr=0x00;
 	static BYTE scankbd=0;
+	static BYTE cskey=0xff;
 
 	counter++; // just fucking shit to fadein-fadeout LED :-)))
 	if( counter&128 )
@@ -77,7 +78,10 @@ ISR(TIMER2_OVF_vect)
 
 	if ( scankbd==0 )
 	{
-		zx_realkbd[0] = PINA;
+		UBYTE tmp;
+		tmp = PINA;
+		zx_realkbd[5] = tmp & cskey;
+		cskey = tmp | 0xfe;
 		DDRC  = 0b00010000;
 		PORTC = 0b11001111;
 		zx_realkbd[10] = 4;
@@ -85,28 +89,28 @@ ISR(TIMER2_OVF_vect)
 	}
 	else if ( scankbd==1 )
 	{
-		zx_realkbd[1] = PINA;
+		zx_realkbd[6] = PINA;
 		DDRC  = 0b00000001;
 		PORTC = 0b11011110;
 		scankbd=0;
 	}
 	else if ( scankbd==2 )
 	{
-		zx_realkbd[2] = PINA;
+		zx_realkbd[7] = PINA;
 		DDRC  = 0b00000010;
 		PORTC = 0b11011101;
 		scankbd=1;
 	}
 	else if ( scankbd==3 )
 	{
-		zx_realkbd[3] = PINA;
+		zx_realkbd[8] = PINA;
 		DDRC  = 0b00000100;
 		PORTC = 0b11011011;
 		scankbd=2;
 	}
 	else if ( scankbd==4 )
 	{
-		zx_realkbd[4] = PINA;
+		zx_realkbd[9] = PINA;
 		DDRC  = 0b00001000;
 		PORTC = 0b11010111;
 		scankbd=3;
