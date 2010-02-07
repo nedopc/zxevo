@@ -408,10 +408,12 @@ void zx_task(UBYTE operation) // zx task, tracks when there is need to send new 
 
 			if ( zx_realkbd[10] )
 			{
-				for (BYTE i=0; i<5; i++)
+				for (UBYTE i=0; i<5; i++)
 				{
-					 was_data |= zx_realkbd[i] ^ zx_realkbd[i+5];
-					 zx_realkbd[i+5] = zx_realkbd[i];
+					 UBYTE tmp;
+					 tmp = zx_realkbd[i+5];
+					 was_data |= zx_realkbd[i] ^ tmp;
+					 zx_realkbd[i] = tmp;
 				}
 				zx_realkbd[10] = 0;
 			}
