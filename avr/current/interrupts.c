@@ -80,7 +80,7 @@ ISR(TIMER2_OVF_vect)
 		zx_realkbd[0] = PINA;
 		DDRC  = 0b00010000;
 		PORTC = 0b11001111;
-		zx_realkbd_endscan = 4;
+		zx_realkbd[10] = 4;
 		scankbd=4;
 	}
 	else if ( scankbd==1 )
