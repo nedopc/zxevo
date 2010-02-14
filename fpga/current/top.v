@@ -155,7 +155,7 @@ module top(
 	// config signals
 	wire [7:0] not_used;
 	wire cfg_vga_on;
-
+	wire set_nmi;
 
 
 
@@ -199,7 +199,9 @@ module top(
 	defparam myrst.RST_CNT_SIZE = 6;
 
 
-	assign nmi_n=1'bZ;
+
+	assign nmi_n=set_nmi ? 1'b0 : 1'bZ;
+
 	assign res= ~rst_n;
 
 
@@ -442,7 +444,7 @@ module top(
 	                   .wait_read(wait_read),
 	                   .wait_rnw(wait_rnw),
 	                   .wait_end(wait_end),
-	                   .config0( { not_used[7:1], cfg_vga_on} )
+	                   .config0( { not_used[7:2], set_nmi, cfg_vga_on} )
 	                 );
 
 	zkbdmus zkbdmus( .fclk(fclk), .rst_n(rst_n),
