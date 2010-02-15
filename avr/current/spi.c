@@ -1,8 +1,8 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
+
 #include "pins.h"
 #include "mytypes.h"
-
 
 void spi_init(void)
 {
@@ -12,8 +12,8 @@ void spi_init(void)
 
 UBYTE spi_send(UBYTE byte)
 {
-		SPDR = byte;
-		while( !( SPSR&(1<<SPIF) ) );
-		return SPDR;
+	SPDR = byte;
+	while( !( SPSR&(1<<SPIF) ) );
+	return SPDR;
 }
 

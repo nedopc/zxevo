@@ -5,12 +5,6 @@
 
 // ============  ps2 common ===================
 
-extern volatile UBYTE ps2_flags;
-#define PS2MOUSE_DIRECTION_FLAG 0x01 //direction for data 0 - Receive/1 - Send
-#define PS2MOUSE_TYPE_FLAG      0x02 //type mouse 0 - classical (3bytes in packet)/1 - msoft (4bytes in packet)
-#define PS2MOUSE_ZX_READY_FLAG  0x04 //data for zx 0 - not ready/1 - ready
-#define SPI_INT_FLAG            0x08 //spi int 0 - not received/1 - received
-
 /**
  * Decode received data.
  * @return decoded data.

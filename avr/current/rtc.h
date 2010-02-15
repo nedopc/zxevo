@@ -12,13 +12,17 @@
  * - full read/write nvram emulate;
  * - registers A,B,C,D read only;
  * - alarm functions not emulated.
+ *
+ * Save modes of ZX Evolution to RTC NVRAM.
  */
 
 /** Address of PCF8583 RTC chip.*/
 #define RTC_ADDRESS  0xA0
 
 /** Register for year additional data. */
-#define RTC_YEAR_ADD_REG  0xFF
+#define RTC_YEAR_ADD_REG     0xFF
+/** Register for common modes. */
+#define RTC_COMMON_MODE_REG  0xFE
 
 /** Init RTC.*/
 void rtc_init(void);

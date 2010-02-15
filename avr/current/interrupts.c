@@ -5,6 +5,7 @@
 
 #include "mytypes.h"
 #include "pins.h"
+#include "main.h"
 #include "ps2.h"
 #include "rs232.h"
 #include "zx.h"
@@ -140,7 +141,7 @@ ISR(INT4_vect) // receive PS/2 keyboard data. TODO: sending mode...
  // receive/send PS/2 mouse data
 ISR(INT5_vect)
 {
-	if( (ps2_flags&PS2MOUSE_DIRECTION_FLAG) != 0 )
+	if( (flags_register&FLAG_PS2MOUSE_DIRECTION) != 0 )
 	{
 		//send mode
 		if( --ps2mouse_count )
@@ -193,7 +194,7 @@ ISR(INT5_vect)
  // SPI_INT
 ISR(INT6_vect)
 {
-	ps2_flags |= SPI_INT_FLAG;
+	flags_register |= FLAG_SPI_INT;
 	EIFR = (1<<INTF6);
 }
 
