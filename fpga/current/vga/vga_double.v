@@ -44,7 +44,7 @@ pg0 pg1
 		if( scanin_start )
 		begin
 			ptr_in[9:8] <= 2'b00;
-			ptr_in[4:3] <= 2'b11;
+			ptr_in[5:4] <= 2'b11;
 		end
 		else
 		begin
@@ -66,7 +66,7 @@ pg0 pg1
 		if( scanout_start )
 		begin
 			ptr_out[9:8] <= 2'b00;
-			ptr_out[4:3] <= 2'b11;
+			ptr_out[5:4] <= 2'b11;
 		end
 		else
 		begin
@@ -80,7 +80,7 @@ pg0 pg1
 	//read data
 	always @(posedge clk)
 	begin
-		if( ptr_out[9:4]!=6'h2D ) //  720>>4 = 0x2d
+		if( ptr_out[9:8]!=2'b11 )
 			pix_out <= data_out[5:0];
 		else
 			pix_out <= 6'd0;
