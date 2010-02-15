@@ -4,14 +4,13 @@
 #include <util/delay.h>
 
 #include "mytypes.h"
+#include "main.h"
 #include "ps2.h"
 #include "zx.h"
 #include "pins.h"
 #include "spi.h"
 #include "rs232.h"
 
-//ps2 flags register
-volatile UBYTE ps2_flags;
 
 UBYTE ps2_decode(UBYTE count, UWORD shifter)
 {
@@ -190,10 +189,10 @@ UBYTE ps2mouse_init_sequence[] =
 static void ps2mouse_release_clk(void)
 {
 	ps2mouse_count = 12; //counter reinit
-	if( ps2_flags & PS2MOUSE_DIRECTION_FLAG )
+	if( flags_register & FLAG_PS2MOUSE_DIRECTION )
 	{
 		PS2MSDAT_DDR &= ~(1<<PS2MSDAT); //ps2 mouse data pin to input mode
-		ps2_flags &= ~(PS2MOUSE_DIRECTION_FLAG); //clear direction
+		flags_register &= ~(FLAG_PS2MOUSE_DIRECTION); //clear direction
 	}
 
 	//release ps2 receiver (disabled by now)
@@ -205,7 +204,7 @@ static void ps2mouse_release_clk(void)
 void ps2mouse_send(UBYTE data)
 {
 	ps2mouse_shifter = ps2_encode(data); //prepare data
-	ps2_flags |= PS2MOUSE_DIRECTION_FLAG; //set send mode
+	flags_register |= FLAG_PS2MOUSE_DIRECTION; //set send mode
 	PS2MSCLK_PORT &= ~(1<<PS2MSCLK); //bring ps2 mouse clk pin -
     PS2MSCLK_DDR  |= (1<<PS2MSCLK);  //generate interruption
 }
@@ -244,7 +243,7 @@ void ps2mouse_task(void)
 
 	if ( ps2mouse_count!=0 ) return; // not received anything
 
-	if ( !(ps2_flags&PS2MOUSE_DIRECTION_FLAG) )
+	if ( !(flags_register&FLAG_PS2MOUSE_DIRECTION) )
 	{
 		//receive complete
 		byte = ps2_decode(ps2mouse_count, ps2mouse_shifter);
@@ -277,17 +276,17 @@ void ps2mouse_task(void)
 				case 3:
 					//byte 3: Y movement
 					zx_mouse_y += byte;
-					if ( !(ps2_flags&PS2MOUSE_TYPE_FLAG) )
+					if ( !(flags_register&FLAG_PS2MOUSE_TYPE) )
 					{
 						//classical mouse
 						ps2mouse_resp_count = 0;
-						ps2_flags |= PS2MOUSE_ZX_READY_FLAG;
+						flags_register |= FLAG_PS2MOUSE_ZX_READY;
 					}
 					break;
 				case 4:
 					//byte 4: wheel movement
 					zx_mouse_button += ((byte<<4)&0xF0);
-					ps2_flags |= PS2MOUSE_ZX_READY_FLAG;
+					flags_register |= FLAG_PS2MOUSE_ZX_READY;
 					ps2mouse_resp_count = 0;
 				}
 				break;
@@ -334,11 +333,11 @@ void ps2mouse_task(void)
 
 					if ( byte > 0 )
 					{
-						ps2_flags |= PS2MOUSE_TYPE_FLAG;
+						flags_register |= FLAG_PS2MOUSE_TYPE;
 					}
 					else
 					{
-						ps2_flags &= ~(PS2MOUSE_TYPE_FLAG);
+						flags_register &= ~(FLAG_PS2MOUSE_TYPE);
 					}
 				}
 				break;

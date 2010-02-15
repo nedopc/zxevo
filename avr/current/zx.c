@@ -8,6 +8,7 @@
 #include "zx.h"
 #include "pins.h"
 #include "getfaraddress.h"
+#include "main.h"
 #include "spi.h"
 #include "rs232.h"
 #include "ps2.h"
@@ -651,12 +652,12 @@ void zx_mouse_reset(UBYTE enable)
 		zx_mouse_y = zx_mouse_x = 0xFF;
 	}
 	zx_mouse_button = 0xFF;
-	ps2_flags|=(PS2MOUSE_ZX_READY_FLAG);
+	flags_register|=(FLAG_PS2MOUSE_ZX_READY);
 }
 
 void zx_mouse_task(void)
 {
-	if ( ps2_flags&PS2MOUSE_ZX_READY_FLAG )
+	if ( flags_register&FLAG_PS2MOUSE_ZX_READY )
 	{
 #ifdef LOGENABLE
 	char log_zxmouse[] = "ZXM.. .. ..\r\n";
@@ -692,7 +693,7 @@ void zx_mouse_task(void)
 		zx_spi_send(SPI_MOUSE_Y, zx_mouse_y, 0x7F);
 
 		//data sended - reset flag
-		ps2_flags&=~(PS2MOUSE_ZX_READY_FLAG);
+		flags_register&=~(FLAG_PS2MOUSE_ZX_READY);
 	}
 }
 
@@ -703,7 +704,7 @@ void zx_wait_task(UBYTE status)
 	UBYTE data = 0xFF;
 
 	//reset flag
-	ps2_flags &= ~SPI_INT_FLAG;
+	flags_register &= ~FLAG_SPI_INT;
 
 	//prepare data
 	switch( status&0x7F )
@@ -745,8 +746,12 @@ void zx_wait_task(UBYTE status)
 
 void zx_vga_switcher(void)
 {
-	static UBYTE vga_flag=0;
+	//invert VGA mode
+	modes_register ^= MODE_VGA;
 
-	vga_flag = (vga_flag)?0:1;
-	zx_spi_send(SPI_VGA_REG, vga_flag, 0x7F);
+	//send mode to FPGA
+	zx_spi_send(SPI_VGA_REG, modes_register&MODE_VGA, 0x7F);
+
+	//save mode register to RTC NVRAM
+	rtc_write(RTC_COMMON_MODE_REG, modes_register);
 }

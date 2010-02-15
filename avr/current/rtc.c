@@ -1,9 +1,11 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <util/twi.h>
+
 #include "pins.h"
 #include "mytypes.h"
-
+#include "main.h"
+#include "zx.h"
 #include "rtc.h"
 #include "rs232.h"
 
@@ -145,6 +147,11 @@ void rtc_init(void)
 	//set Gluk clock registers
 	gluk_init();
 	if ( gluk_regs[GLUK_REG_SEC] == 0 ) gluk_init();
+
+	//restore mode register from NVRAM
+	modes_register = rtc_read(RTC_COMMON_MODE_REG);
+	//set modes on fpga
+	zx_spi_send(SPI_VGA_REG, modes_register&MODE_VGA, 0);
 }
 
 void rtc_write(UBYTE addr, UBYTE data)

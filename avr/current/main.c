@@ -8,7 +8,7 @@
 #include "depacker_dirty.h"
 #include "getfaraddress.h"
 #include "pins.h"
-
+#include "main.h"
 #include "ps2.h"
 #include "zx.h"
 #include "spi.h"
@@ -17,8 +17,16 @@
 #include "atx.h"
 #include "joystick.h"
 
-//fpga compressed data
-extern const char fpga[] PROGMEM; // linker symbol
+/** FPGA compressed data (linker symbol). */
+extern const char fpga[] PROGMEM;
+
+//Common flag register.
+volatile UBYTE flags_register;
+
+// Common modes register.
+volatile UBYTE modes_register;
+
+
 
 ULONG indata;
 
@@ -102,11 +110,13 @@ start:
 	TIMSK = (1<<TOIE2);
 
 
-	//init some device
+	//init some counters and registers
     ps2keyboard_count = 11;
 	ps2mouse_count = 12;
 	ps2mouse_initstep = 0;
 	ps2mouse_resp_count = 0;
+	flags_register = 0;
+	modes_register = 0;
 
 	//enable mouse
 	zx_mouse_reset(1);
@@ -140,7 +150,7 @@ start:
 		joystick_task();
 
 		//
-		if ( ps2_flags&SPI_INT_FLAG )
+		if ( flags_register&FLAG_SPI_INT )
 		{
 			//get status byte
 			UBYTE status;
