@@ -9,12 +9,12 @@
  * Kempston joystick support for ZX Evolution.
  *
  * Kempston joystick port bits (if bit set - button pressed):
- * 0: right;
- * 1: left;
- * 2: down;
- * 3: up;
- * 4: fire;
- * 5-7: 0.
+ * - 0: right;
+ * - 1: left;
+ * - 2: down;
+ * - 3: up;
+ * - 4: fire;
+ * - 5-7: 0.
  */
 
 /** Kempstone joystick task. */
