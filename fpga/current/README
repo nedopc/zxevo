@@ -1,13 +1,13 @@
 ==============================================================================
-31.01.2010, DDp:
-~~~~~~~~~~
+31.01.2010 - 21.01.2010, DDp:
+~~~~~~~~~~~~~~~~~~~~~~~
 --- TV Horisintal ---
                     (  0)
-h.front porch    10
-                    ( 10)
+h.front porch    12
+                    ( 12)
 h.sync.pulse     33
-                    ( 43)
-h.back porch     45
+                    ( 45)
+h.back porch     43
                     ( 88)
 h.border (L)     52
                     (140)
@@ -39,8 +39,8 @@ h.front porch    17             0.607 us
                     (  0)
 v.front porch     8
                     (  8)
-v.sync.pulse      3
-                    ( 11)
+v.sync.pulse      2
+                    ( 10)
 v.back porch     21
                     ( 32)
 v.visible       288
