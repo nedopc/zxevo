@@ -7,6 +7,7 @@
  * @section history Revision history
  *
  * @subsection current Current version.
+ * - Fix Update Flag in register C (emulation Gluk clock).
  * - Add modes register and save/restore it to RTC NVRAM.
  * - Add support for zx (mechanical) keyboard.
  * - Add support for Kempston joystick.
@@ -36,5 +37,18 @@ extern volatile UBYTE flags_register;
 extern volatile UBYTE modes_register;
 /** VGA mode (0 - not set/1 - set). */
 #define MODE_VGA 0x01
+
+/** Data buffer. */
+extern UBYTE dbuf[];
+
+/** Input data */
+extern ULONG indata;
+
+/**
+ * Writes specified length of buffer to SPI.
+ * @param size [in] - size of buffer.
+ */
+void put_buffer(UWORD size);
+
 
 #endif //__MAIN_H__

@@ -262,6 +262,10 @@ void gluk_inc(void)
 			}
 		}
 	}
+
+	//set update flag
+	gluk_regs[GLUK_REG_C] |= GLUK_C_UPDATE_FLAG;
+
 //#ifdef LOGENABLE
 //{
 //	char log_int_rtc[] = "00.00.00\r\n";
@@ -287,6 +291,13 @@ UBYTE gluk_get_reg(UBYTE index)
 			//clock registers mast be in BCD if HEX-bit not set in reg B
 			tmp = hex_to_bcd(tmp);
 		}
+
+		if ( index == GLUK_REG_C )
+		{
+			//clear update flag
+			gluk_regs[GLUK_REG_C] &= ~GLUK_C_UPDATE_FLAG;
+		}
+
 		return tmp;
 	}
 	else

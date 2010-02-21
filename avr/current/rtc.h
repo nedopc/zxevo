@@ -73,8 +73,10 @@ UBYTE rtc_read(UBYTE addr);
 
 /** B register 2 bit - data mode (A 1 in DM signifies binary data while a 0 in DM specifies BCD data). */
 #define GLUK_B_DATA_MODE    0x04
-/** B register 1 bit - 24/12 mode (A 1 indicates the 24-hour mode and a 0 indicates the 12-hour mode.). */
+/** B register 1 bit - 24/12 mode (A 1 indicates the 24-hour mode and a 0 indicates the 12-hour mode). */
 #define GLUK_B_24_12_MODE   0x02
+/** C register 4 bit - Update-ended interrupt flag [UF] (Bit is set after each update cycle, UF is cleared by reading Register C or a RESET). */
+#define GLUK_C_UPDATE_FLAG  0x10
 
 /** Read values from RTC and setup Gluk clock registers. */
 void gluk_init(void);
