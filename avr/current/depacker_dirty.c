@@ -1,5 +1,8 @@
 #include <avr/io.h>
 #include <avr/pgmspace.h>
+
+#include "mytypes.h"
+#include "main.h"
 #include "depacker_dirty.h"
 
 

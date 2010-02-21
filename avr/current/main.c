@@ -27,7 +27,6 @@ volatile UBYTE flags_register;
 volatile UBYTE modes_register;
 
 
-
 ULONG indata;
 
 //buffer for depacking FPGA configuration

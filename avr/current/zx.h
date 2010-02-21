@@ -1,9 +1,21 @@
 #ifndef ZX_H
 #define ZX_H
 
-#include "mytypes.h"
-
-
+/**
+ * @file
+ * @brief Interchange with FPGA registers (ZX ports) via SPI.
+ * @author http://www.nedopc.com
+ *
+ * Interchange with ZX ports:
+ * - keyboard port (nowait);
+ * - mouse port (nowait);
+ * - kempstone joystick (nowait);
+ * - gluk clock (wait).
+ *
+ * Configure internal FPGA registers (set modes):
+ * - vga/tv mode;
+ * - reset CPU.
+ */
 
 // key code is 7 bits, 8th bit is press/release (1=press,0=release)
 //
@@ -67,32 +79,30 @@
 //
 
 
-/**
- * SPI registers.
- */
-//
+/** ZX keyboard data. */
 #define SPI_KBD_DAT   0x10
+/** ZX keyboard stop bit. */
 #define SPI_KBD_STB   0x11
 
-/** ZX mouse X coordinate register.*/
+/** ZX mouse X coordinate register. */
 #define SPI_MOUSE_X   0x20
-/** ZX mouse Y coordinate register.*/
+/** ZX mouse Y coordinate register. */
 #define SPI_MOUSE_Y   0x21
-/** ZX mouse Y coordinate register.*/
+/** ZX mouse Y coordinate register. */
 #define SPI_MOUSE_BTN 0x22
 
-/** Kempston joystick register.*/
+/** Kempston joystick register. */
 #define SPI_KEMPSTON_JOYSTICK 0x23
 
-/** ZX reset register */
+/** ZX reset register. */
 #define SPI_RST_REG   0x30
 
-/** ZX VGA MODE register */
+/** ZX VGA MODE register. */
 #define SPI_VGA_REG   0x50
 
-/** ZX Gluk address register */
+/** ZX Gluk address register. */
 #define SPI_GLUK_ADDR 0x41
-/** ZX all data for wait registers */
+/** ZX all data for wait registers. */
 #define SPI_WAIT_DATA 0x40
 
 
@@ -100,9 +110,9 @@
 UBYTE zx_spi_send(UBYTE addr, UBYTE data, UBYTE mask);
 
 
-// pause between (CS|SS) and not(CS|SS)
+/** Pause between (CS|SS) and not(CS|SS). */
 #define SHIFT_PAUSE 8
-//
+/** */
 extern volatile UBYTE shift_pause;
 
 // real keys bitmap. send order: LSbit first, from [4] to [0]
@@ -121,6 +131,10 @@ extern UBYTE zx_realkbd[11];
 #define ZX_TASK_INIT 0
 #define ZX_TASK_WORK 1
 
+/**
+ * Interchange via SPI.
+ * @param operation [in] - operation type.
+ */
 void zx_task(UBYTE operation);
 
 void zx_init(void);
@@ -157,8 +171,7 @@ extern volatile UBYTE zx_mouse_y;
 
 /**
  * Reset ZX mouse registers to default value.
- * @par enable [in] - ==0 values like no mouse connected
- *					  !=0 values like mouse connected
+ * @param enable [in] - 0: values like no mouse connected, other: values like mouse connected
  */
 void zx_mouse_reset(UBYTE enable);
 
@@ -166,17 +179,13 @@ void zx_mouse_reset(UBYTE enable);
 void zx_mouse_task(void);
 
 
-/**
- *	ZX WAIT ports indexes:
- */
 /** Gluk clock port. */
 #define ZXW_GLUK_CLOCK 0x01
 
-
 /**
  * Work with WAIT ports.
- * @par status [in] - bit 7 - CPU is 0 -write, 1-read wait port
- *					  bits 6..0 is index of port
+ * @param status [in] - bit 7 - CPU is 0 -write, 1-read wait port
+ *		                bits 6..0 is index of port
  */
 void zx_wait_task(UBYTE status);
 
