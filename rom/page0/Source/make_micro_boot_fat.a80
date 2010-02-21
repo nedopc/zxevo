@@ -1,0 +1,43 @@
+
+	
+	DEVICE ZXSPECTRUM48
+	
+	INCLUDE "fat\sdcomand.a80"
+	INCLUDE "fat\ports_ngs.a80"
+	
+BUF_512	EQU #4000		;#200 астеп времхъ яейрнпю
+ERORDRV EQU BUF_512+#200	;2 бнгбпюр я ньхайни б A
+CAL_FAT EQU ERORDRV+2		;1 йюкхап FAT
+MANYFAT EQU CAL_FAT+1		;1 йнкхвеярбн FAT-рюакхж
+BYTSSEC EQU MANYFAT+1		;1 йнкхвеярбн яейрнпнб б йкюярепе
+ROOTCLS EQU BYTSSEC+1		;4 яейрнп мювюкю ROOT дхпейрнпхх
+ROOTZAP EQU ROOTCLS+4		;2 йнк-бн гюохяеи б ROOT дхпейрнпхх
+SEC_FAT EQU ROOTZAP+2		;4 йнкхвеярбн яейрнпнб ндмни тюр
+RSVDSEC EQU SEC_FAT+4		;2 пюглеп пегепбмни накюярх
+STARTRZ EQU RSVDSEC+2		;4 мювюкн дхяйю/пюгдекю
+FRSTDAT EQU STARTRZ+4		;4 юдпея оепбнцн яейрнпю дюммшу нр BPB
+SEC_DSC EQU FRSTDAT+4		;4 йнкхвеярбн яейрнпнб мю дхяйе/пюгдеке
+CLS_DSC EQU SEC_DSC+4		;4 йнкхвеярбн йкюярепнб мю дхяйе/пюгдеке
+FATSTR  EQU CLS_DSC+4		;4 мювюкн оепбни FAT рюакхжш
+FILE_SZ EQU FATSTR+4		;4 пюглеп тюикю б аюирюу
+KOLWCLS EQU FILE_SZ+4		;4 йнкхвеярбн ябнандмшу йкюярепнб
+LST0ZAP EQU KOLWCLS+4		;4 оепбши ябнандмши йкюяреп
+LSTLOAD EQU LST0ZAP+4		;4 мнлеп яейрнпю гюцпсфеммнцн б астеп
+TEK_DIR EQU LSTLOAD+4		;4 йкюяреп рейсыеи DIR
+TEK_ZAP EQU TEK_DIR+4		;2 рейсыюъ гюохяэ б DIR
+SAVEZAP EQU TEK_ZAP+2		;2 янупюмеммюъ рейсыюъ онгхжхъ
+TEK_LVL EQU SAVEZAP+2		;1 рейсыхи спнбемэ йюрюкнцю
+TEK_LEV EQU TEK_LVL+1		;1 цксахмю мюунфдемхъ б дхпейрнпхъу
+FREECLS EQU TEK_LEV+1		;8 янупюмемше оепелеммше дкъ нрйюрю
+KOLFIND	EQU FREECLS+8		;1 йнкхвеярбн мюидеммшу он люяйе тюикнб
+AFILCLS	EQU KOLFIND+1		;4 мнлеп рейсыецн йкюярепю
+
+	
+	ORG ERORDRV+#100
+	
+Start_Cod
+
+	include "fat\micro_boot_fat.a80"
+End_Cod
+	
+	SAVEBIN "micro_boot_fat.rom",Start_Cod,End_Cod-Start_Cod

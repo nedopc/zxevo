@@ -1,0 +1,13 @@
+	
+	DEVICE ZXSPECTRUM48
+
+
+Start_Code	equ #6000
+	
+	org Start_Code	;#5fe4
+Start_Cod	;incbin "stek.bin"
+	
+	include "main.a80"
+End_Cod
+	
+	SAVEBIN "main.rom",Start_Cod,End_Cod-Start_Cod

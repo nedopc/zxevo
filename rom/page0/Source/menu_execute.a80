@@ -1,0 +1,160 @@
+
+;янгдюмхе пюл дхяйю мю 512 йхк
+RAM_508
+	LD HL,508*4
+	JR KILRAMd
+
+;янгдюмхе пюл дхяйю мю 640 йхк
+RAM_640
+	LD HL,636*4
+	JR KILRAMd
+
+;янгдюмхе пюл дхяйю мю 768 йхк
+RAM_764
+	LD HL,764*4
+	JR KILRAMd
+
+;янгдюмхе пюл дхяйю мю 896 йхк
+RAM_892	LD HL,892*4
+KILRAMd	LD (SECFREE),HL
+	LD A,#F7
+	CALL PAGE_A
+	LD HL,#C000
+	LD D,H
+	LD E,L
+	INC DE
+	LD BC,#0FFF
+	LD (HL),L
+	LDIR
+	LD HL,DSKINFO
+	LD DE,#C8E1
+	LD C,DSK_END-DSKINFO
+	LDIR
+	CALL PAGE_0
+	JP RESTART
+
+_STUPID	LD SP,GlukStk
+	CALL PAGE_0
+	EI
+	CALL resVG
+	LD IX,mSTUPID
+	CALL DRAWWIN
+	CALL GLUKEY
+	LD A,#FF
+	LD (gFenv),A
+	CALL GLUDIN		;HL
+	LD A,1
+	LD (gFenv),A
+	JP RESTART
+
+;оепеундхкйю б аюяхй128
+BAS128	CALL SYSTEM
+	DI
+	XOR A
+	CALL PAGE_A
+	RST 0
+
+;оепеундхкйю б аюяхй48
+BAS48	CALL SYSTEM
+	RST 0
+
+;оепеундхкйю б ршпдня
+DOS128	CALL SYSTEM
+	LD IX,0
+	JP DOSIX
+
+;лемчую гювхярйх ярпюмхж, тнплюрхпнбюмхъ пюлдхяйю х дхяйермши йнохп
+_KILLS	LD IX,mKILLS
+	CALL DRAWWIN
+	LD IX,aKILLS
+	JP _RULILKA
+
+;гюмскемхе бяе оюлърх
+KIALPGS	LD A,#D7	;ОПЮБШЕ 512K
+	CALL KIPGSU
+	LD A,#F7	;КЕБШЕ 512K
+	JR 3F
+
+;гюмскемхе 128й оюлърх
+KIPGS	LD A,#17
+3	CALL KIPGSU
+	JP RESTART
+
+;янаярбеммн гюмскърнп
+KIPGSU	DI
+	LD DE,0
+	LD HL,0
+	ADD HL,SP
+KIPGS0	CP #15
+	JR Z,2F
+	CP #12
+	JR Z,2F
+	LD BC,#7FFD
+	OUT (C),A
+	LD SP,0
+	LD B,D
+1	DUP 32
+	PUSH DE
+	EDUP
+	DJNZ 1B
+	LD SP,HL
+2	LD C,A
+	AND #C7
+	RET Z
+	AND 7
+	LD A,C
+	JR NZ,$+4
+	SUB #38
+	DEC A
+	JR KIPGS0
+
+COPYDISK
+	LD A,(DRV_SYM)
+	LD (CDsrc),A
+	LD IX,mINSOUT
+	CALL DRAWWIN
+	CALL GLUKEY
+	LD A,(#5C08)
+	SUB "1"
+	CP 4
+	JR NC,COPYDQ
+	LD (CDtrg),A
+COPDSK	LD DE,0
+COPDSK0
+CDsrc	EQU $+1
+	LD A,0
+	CALL COPDSKPP
+	LD BC,#4005
+	PUSH DE
+	CALL #3D13
+	POP DE
+CDtrg	EQU $+1
+	LD A,0
+	CALL COPDSKPP
+	LD BC,#4006
+	CALL #3D13
+	LD DE,(#5CF4)
+	LD A,D
+	CP #A0
+	JR NZ,COPDSK0
+COPYDQ	JP RESTART
+
+COPDSKPP
+	CALL SELDRVPP
+	CALL GET_DRV_SYM
+	LD HL,#C000
+	RET
+
+	INCLUDE "HDDBOOT.A80"
+
+CDBOOTGO
+	INCLUDE "CDBOOT.a80"
+
+	ENT
+
+HDDRDLN	EQU $-HDDREAD
+
+CDBOOT	XOR A
+	CALL CLSA
+	CALL HDDBINI
+	JP CDBOOTGO

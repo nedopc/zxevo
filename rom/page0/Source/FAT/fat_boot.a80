@@ -1,0 +1,252 @@
+
+;бшанп сярпниярбю дкъ гюцпсгйх
+FATBOOT	LD HL,FLAGS
+	SET 3,(HL)
+	CALL COM_DEV
+	DB Devfind		;яйюмхпнбюмхе сярпниярб
+	JP C,_STUPID
+	EXA
+	EXX
+	LD BC,mMAIN
+	LD DE,mBOOT
+	LD A,(BC)
+	INC A
+	INC BC
+	LD (DE),A	;оепелеярхкх X+1
+	INC DE
+	LD A,(BC)
+	INC A
+	INC BC
+	LD (DE),A	;оепелеярхкх Y+1
+	INC DE
+	EX DE,HL
+	INC HL		;опносярхкх онйю бшянрс, онкнфхл онгфе
+	LD (HL),#14	;онкнфхкх ьхпхмс нймю
+	INC HL
+	LD (HL),#0F	;онкнфхкх жбер нймю
+	INC HL
+	EX DE,HL
+	EXX
+	EXA
+	LD B,E		;б "B" йнкхвеярбн мюидеммшу пюгдекнб
+	LD C,0
+	LD A,E
+	PUSH AF
+	ADD A,2
+	LD (mBOOT+2),A	;онкнфхкх бшянрс нймю
+	LD DE,6
+WFATC1	LD C,(HL)	;бгъкх рхо пюгдекю
+	INC HL
+	LD A,(HL)	;MASTER хкх SLAVE
+	INC HL
+	ADD A,C
+	EXX
+	SUB 4		;-4 хан дхяйнбндш ме свхршбючряъ
+	ADD A,A
+	ADD A,A
+	ADD A,A
+	ADD A,A		;слмнфхкх мю #10
+	LD HL,TXT4MENU_DEVICE
+	LD C,A
+	LD B,0
+	ADD HL,BC	;онксвхкх юдпея нрйсдю рейяр бгърэ
+	LD BC,#10	;дкхмю оепемняю 16 аюир
+	EXX
+	LD A,L
+	RRCA
+	RRCA
+	RRCA
+	AND #1F
+	ADD A,#45	;асйбю мюидеммнцн сярпниярбю
+	EXX
+	LD (DE),A	;онкнфхкх асйбс мюидеммн сярпниярбю
+	INC DE
+	LDIR		;оеперюыхкх онкмне хлъ сярпниярбю
+;	EXX
+;	LD A,(HL)	;бгъкх рхо пюгдекю
+;	EXX
+;	LD C,A
+;	ADD A,A
+;	ADD A,A
+;	ADD A,C		
+;	LD C,A
+;	LD B,0
+;	LD HL,TXT4MENU_TYPE
+;	ADD HL,BC	;онксвхкх юдпея рейяр бгърэ
+;	LD C,5
+;	LDIR		;оепемня 5 аюир
+	EXX
+	ADD HL,DE
+	DJNZ WFATC1	;пюгдекш йнмвхкхяэ
+	EXX
+	LD A,#FF
+	LD (DE),A	;йнмеж рейярю б лемч
+	INC DE
+	LD (fBOOT),DE
+	EX DE,HL
+	LD (HL),LOW (5*#20+#0C-wide+#5800)
+	INC HL
+	LD (HL),HIGH (5*#20+#0C-wide+#5800)
+	INC HL
+	LD (HL),#15
+	INC HL
+	POP AF
+	LD (HL),A
+	INC HL
+	LD (HL),#1F
+	INC HL
+	LD (ADR_SEL),HL
+	INC HL
+	LD B,A
+1	LD (HL),LOW SEL_FAT
+	INC HL
+	LD (HL),HIGH SEL_FAT
+	INC HL
+	DJNZ 1B
+	LD (HL),LOW RESTART
+	INC HL
+	LD (HL),HIGH RESTART
+	LD HL,#2758
+	EXX
+	LD A,(gBASICS)
+	LD (aBOfiles),A
+	LD IX,mBOOT
+	CALL DRAWWIN
+	LD IX,0
+fBOOT	EQU $-2
+	JP _NKLILKA2
+
+TXT4MENU_DEVICE;рейяр дкъ нрнапюфемхъ мюидеммшу пюгдекнб, он 16 аюир ярпнйю
+	   ;1234567890123456
+	DC ":ZContr  SDCard "
+	DC ":NeoGS   SDCard "
+	DC ":HDDNemo MASTER "
+	DC ":HDDNemo  SLAVE "
+	
+TXT4MENU_TYPE;рхо пюгдекю
+	DC "FAT12"
+	DC "FAT16"
+	DC "FAT32"
+
+;оепейкчвемхе мю сярпниярбю х бшбнд мюидеммнцн мю мел
+SEL_FAT	LD HL,0
+ADR_SEL EQU $-2
+	LD A,(HL)	;онксвхкх мнлеп осмйрю лемч
+	DEC A		;-1=мнлеп сярпниярбю
+	CALL COM_DEV
+	DB Set_vol	;бшапюкх сярпниярбн он мнлепс
+	CALL COM_FAT
+	DB Wc_fat	;хмхжхюкхгюжхъ тюр дпюибепю дкъ бшапюммнцн сярпниярбю
+	LD DE,ADR_CAT
+	CALL COM_FAT
+	DB Fhobeta	;онхяй унаерю тюикнб "$C " C опнбепйюлх
+	AND A
+	JP Z,_STUPID
+	LD (gBASICS),A
+	LD A,#FF
+	LD (DE),A
+	LD HL,mBOOTWAS
+	LD DE,mBOOT
+	LD BC,mBOOTln
+	LDIR
+	LD HL,ADR_CAT
+	XOR A
+	LD (BOOTPG),A
+	LD IX,mBOOT		;DE=buf98_2
+	CALL LDIR98FF
+	LD A,(gBASICS)
+	LD (aBOfiles),A
+	ADD A,2
+	LD (IX+2),A
+	CALL DRAWWIN
+	LD IX,aBOOT
+	JP _NKLILKA2
+
+;гюосяй бшапюммнцн тюикю
+RUN_HOB	DI
+	LD A,(POS_CUR)	;бгъкх мнлеп осмйрю лемч
+	DEC A		;явер ме я 0, -1
+	LD L,A
+	LD H,0
+	ADD HL,HL
+	ADD HL,HL
+	LD DE,SKLAD
+	ADD HL,DE	;бшвхякхкх нрйсдю бгърэ мнлеп йкюярепю тюикю
+	LD DE,AFILCLS
+	LD BC,4
+	LDIR		;оепемеякх б оепелеммше тюр дпюибепю
+	CALL PAGE_0
+	CALL COM_DEV
+	DB Kol_vol
+	LD A,D
+	ADD A,A
+	ADD A,A
+	ADD A,A
+	LD C,A
+	LD B,0
+	ADD HL,BC
+	INC HL
+	LD A,(HL)
+	EXA
+	LD A,D		;мнлеп рейсыецн сярпниярбю б "A"
+	LD HL,#5800
+	LD DE,#5801
+	LD BC,#02FF
+	LD (HL),0
+	LDIR		;гювепмхкх щйпюм дкъ люяйхпнбйх гюосяйюкйх
+	LD HL,ERORDRV
+	LD DE,#4200
+	LD BC,#100
+	LDIR		;оепемня оепелеммшу тюрю дкъ рейсыецн сярпниярбю
+	PUSH DE		;ячдю оепемня йндю х гюосяй
+	LD HL,MICROBOOT
+	LD BC,END_MICROBOOT-MICROBOOT
+	LDIR		;оепемеякх гюосяйюкйс
+	RET		;гюосяй гюосяйюкйх :)
+
+;цпсгхкйю MOD б оюлърэ NEOGS
+LOADFIL LD IY,(BYTSSEC)			;LY=йнк-бн яейрнпнб б йкюярепе
+        LD A,LY
+        CP #20
+        JR C,LDMF5
+        
+LD_F5   LD DE,(AFILCLS),BC,(AFILCLS+2)
+        CALL REALSEC
+        LD A,HY
+        AND A
+        JR NZ,LD_F9
+        LD A,LY:AND #E0
+        RLCA:RLCA:RLCA
+	LD HY,A
+LD_F9   LD A,#20
+        LD HL,#C000
+        CALL TO_DRV
+        DB Rdmulti
+        AND A:JP NZ,ERR_DRV
+;        LD HL,#20:ADD HL,DE:EX DE,HL
+;        LD HL,0:ADC HL,BC:LD BC,HL
+;        DEC HY:JR NZ,LD_F9
+	DEC HY
+        LD DE,(AFILCLS),BC,(AFILCLS+2)
+        CALL RDFATZP,LST_CLS
+        LD (AFILCLS+2),BC
+        LD (AFILCLS),DE
+        RET
+;        LD A,H
+;        AND A
+;        JR NZ,LD_F5
+;        RET
+
+LDMF5   LD HL,#C000
+LDMF2   LD DE,(AFILCLS),BC,(AFILCLS+2)
+        PUSH HL:CALL REALSEC:POP HL
+LDMF3   LD A,LY
+	CALL TO_DRV
+	DB Rdmulti
+        AND A:JP NZ,ERR_DRV:PUSH HL
+        LD BC,(AFILCLS+2),DE,(AFILCLS)
+        CALL RDFATZP,LST_CLS:POP HL
+        LD (AFILCLS+2),BC
+        LD (AFILCLS),DE,A,H
+        AND A:JR NZ,LDMF2
+        RET

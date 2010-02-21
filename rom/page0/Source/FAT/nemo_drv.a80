@@ -1,0 +1,103 @@
+
+;LAST UPDATE: 09.02.2010 savelij
+
+Hddinit EQU 0
+Hddoff  EQU 1
+Hddrds  EQU 2
+Hddrdm  EQU 3
+
+;ОБЩАЯ ТОЧКА ВХОДА ДЛЯ РАБОТЫ С HDD NEMO
+        EXA:EX (SP),HL:LD A,(HL):INC HL
+        EX (SP),HL:ADD A,A:PUSH HL
+        LD HL,TBLHDDN:ADD A,L:LD L,A,A,H
+        ADC A,0:LD H,A,A,(HL):INC HL
+        LD H,(HL),L,A:EXA:EX (SP),HL:RET
+
+TBLHDDN DW HDDINIT
+        DW HDDOFF
+        DW HDDRDS;READ SINGLE
+        DW HDDRDM;READ MULTI
+
+;Входные параметры общие:
+;HL-адрес загрузки в память
+;BCDE-32-х битный номер сектора
+;A-количество блоков (блок=512 байт)
+;только для многоблочной записи/чтении
+
+P_1F7   EQU #F0
+;РЕГИСТР СОСТОЯНИЯ/РЕГИСТР КОМАНД
+P_1F6   EQU #D0
+;CHS-НОМЕР ГОЛОВЫ И УСТР/LBA АДРЕС 24-27
+P_1F5   EQU #B0
+;CHS-ЦИЛИНДР 8-15/LBA АДРЕС 16-23
+P_1F4   EQU #90
+;CHS-ЦИЛИНДР 0-7/LBA АДРЕС 8-15
+P_1F3   EQU #70
+;CHS-НОМЕР СЕКТОРА/LBA АДРЕС 0-7
+P_1F2   EQU #50
+;СЧЕТЧИК СЕКТОРОВ
+P_1F1   EQU #30
+;ПОРТ ОШИБОК/СВОЙСТВ
+P_1F0   EQU #10
+;ПОРТ ДАННЫХ
+P_3F6   EQU #C8
+;РЕГИСТР СОСТОЯНИЯ/УПРАВЛЕНИЯ
+P_HI    EQU #19
+;СТАРШИЕ 8 БИТ
+PRT_RW  EQU P_1F0*256+P_HI
+;ПОРТЫ ЧТЕНИЯ/ЗАПИСИ ОДНИМ СЛОВОМ
+
+;НА ВЫХОДЕ:
+;H-ДЛЯ MASTER 0-HDD, 1-CDROM, #FF-NONE
+;L-ДЛЯ SLAVE  0-HDD, 1-CDROM, #FF-NONE
+HDDINIT LD A,#E0:PUSH HL:CALL ID_DEV
+        POP HL:LD D,A:LD A,#F0:PUSH DE
+        CALL ID_DEV:POP DE:LD E,A
+        EX DE,HL:XOR A
+
+HDDOFF  RET
+
+HDDRDS  LD A,1
+HDDRDM  PUSH BC,DE:CALL SETHREG:EXA
+        LD C,P_1F7,A,#20:OUT (C),A
+        LD C,P_1F7
+HDDRD1  IN A,(C):AND #88:CP 8
+        JR NZ,HDDRD1:EXA
+HDDRD2  EXA:CALL READSEC:LD C,P_1F7
+HDDRD3  IN A,(C):AND #80:JR NZ,HDDRD3
+        EXA:DEC A:JR NZ,HDDRD2
+	POP DE,BC
+        LD A,B:AND #0F:LD B,A:XOR A:RET
+
+READSEC LD DE,PRT_RW,A,#40
+READSC1 LD C,D:INI:LD C,E:INI
+        LD C,D:INI:LD C,E:INI
+        LD C,D:INI:LD C,E:INI
+        LD C,D:INI:LD C,E:INI
+        DEC A:JR NZ,READSC1:RET
+
+SETHREG PUSH DE:LD DE,BC,BC,#FF00+P_1F6
+        OUT (C),D:EXA:LD C,P_1F7
+SETHRE1 IN A,(C):AND #80
+        JR NZ,SETHRE1:LD C,P_1F5
+        OUT (C),E:POP DE:LD C,P_1F4
+        OUT (C),D:LD C,P_1F3:OUT (C),E
+        LD C,P_1F2:EXA:OUT (C),A:RET
+
+;HL-АДРЕС БУФЕРА СЕКТОРА ИДЕНТИФИКАЦИИ
+;A=E0-ДЛЯ MASTER, A=F0-ДЛЯ SLAVE
+ID_DEV  LD BC,#FF00+P_1F6:OUT (C),A
+        LD C,P_1F7:IN A,(C):AND A
+        JR Z,NO_DEV:INC A:JR Z,NO_DEV
+        XOR A:LD C,P_1F5:OUT (C),A
+        LD C,P_1F4:OUT (C),A:LD A,#EC
+        LD C,P_1F7:OUT (C),A:LD C,P_1F7
+ID_DEV1 IN A,(C):AND A:JR Z,NO_DEV
+        INC A:JR Z,NO_DEV:DEC A
+        RRCA:JR C,ID_DEV2:RLCA:AND #88
+        CP 8:JR NZ,ID_DEV1
+ID_DEV2 LD C,P_1F4:IN E,(C):LD C,P_1F5
+        IN D,(C):LD A,D:OR E
+        JP Z,READSEC:LD HL,#EB14
+        SBC HL,DE:LD A,1:RET Z
+NO_DEV  LD A,#FF:RET

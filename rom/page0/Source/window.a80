@@ -1,0 +1,544 @@
+
+DRAWWIN	LD HL,JPNZkey
+	LD (HL),#C2
+	LD C,(IX)	;X
+	LD B,(IX+1)	;Y
+        EX DE,HL
+	LD A,C
+	ADD A,A
+	ADD A,A
+	ADD A,A
+	LD C,A
+	LD A,B
+	ADD A,A
+	ADD A,A
+	ADD A,A
+	CALL #22B0
+	EX DE,HL
+	PUSH IX
+	POP HL
+	INC HL
+	INC HL
+	INC HL
+	LD B,(HL)	;ШИРИНА-1
+	INC HL
+	DEC B
+	LD A,(HL)
+	INC HL
+	LD (COL_SYM),A	;ЦВЕТ ОКНА
+	PUSH DE
+	LD C,B
+	CALL PR32
+	DEC C
+	JR NZ,$-4
+	CALL PR3232
+	POP DE
+	PUSH DE
+	CALL NXCOLLN	;C=0
+	CALL PRTX
+	INC HL
+	LD (KNOPKI),HL	;ПОЛОЖИТЬ АДРЕС СПИСКА КНОПОК ТЕКУЩЕГО МЕНЮ
+	PUSH BC
+	CALL PR32
+	DJNZ $-3
+	POP BC
+	LD A,C		;напечатано строк
+	ADD A,A
+	ADD A,A
+	ADD A,A
+	ADD A,6+8
+	LD D,A
+	LD A,B
+	ADD A,A
+	ADD A,A
+	ADD A,A
+	ADD A,#10*wide+#0D-#10
+	LD E,A
+	POP HL
+	INC H
+	LD C,#40
+        PUSH BC
+        PUSH HL
+	LD B,E
+	CALL HORLN
+	LD B,D
+	CALL VERLN
+	POP HL
+	POP BC
+	LD B,D
+	CALL VERLN
+	LD B,E
+HORLN	LD A,(HL)
+HORLN0	OR C
+	RRC C
+	JR NC,$+5
+	LD (HL),A
+	INC L
+	LD A,(HL)
+	DJNZ HORLN0
+	OR C
+	LD (HL),A
+	RET
+	
+VERLN0	CALL INC_H
+VERLN	LD A,(HL)
+	OR C
+	LD (HL),A
+	DJNZ VERLN0
+	RET
+	
+NXCOLLN	LD A,E
+	ADD A,#20
+	LD E,A
+	RET NC
+	LD A,D
+	ADD A,8
+	LD D,A
+	RET
+	
+PRSP0	LD A,(HL)
+	INC HL
+	PUSH DE
+	PUSH HL
+	LD H,(HL)
+	LD L,A
+	CALL PRT_HL_
+	POP HL
+	POP DE
+	INC HL
+	CALL NXCOLLN
+	DJNZ PRSP0
+	RET	
+
+PRT_HL_	LD A,H
+	CALL PRT_A_
+	LD A,L
+PRT_A_ 	PUSH AF
+	RRCA
+	RRCA
+	RRCA
+	RRCA
+	CALL $+4
+	POP AF
+	AND #0F
+	CP #0A
+	CCF
+	ADC A,"0"
+	DAA
+PRSN	AND #7F
+PRSYM	CP #20
+	JR NC,1F
+	CP #80
+	JR C,1F
+	LD A,"."
+1	PUSH DE
+	PUSH BC
+	PUSH HL
+	ADD A,A
+	LD L,A
+	LD H,#0F
+	ADD HL,HL
+	ADD HL,HL
+	LD B,4
+PRSN0	LD A,(HL)
+	RRCA
+	OR (HL)
+	INC L
+	EX DE,HL
+	LD (HL),A
+	INC H
+	EX DE,HL
+	LD A,(HL)
+	RRCA
+	OR (HL)
+	INC L
+	EX DE,HL
+	LD (HL),A
+	INC H
+	EX DE,HL
+	DJNZ PRSN0
+	POP HL
+PR32Q	POP BC
+	LD A,D
+	RRCA
+	RRCA
+	RRCA
+	ADD A,#4F
+	LD D,A
+	LD A,7
+COL_SYM	EQU $-1		;ЦВЕТ СИМВОЛА
+	LD (DE),A
+	POP DE
+	INC E
+	RET NZ
+	LD A,D
+	ADD A,8
+	LD D,A
+	RET
+
+PR3232	CALL PR32
+PR32	PUSH DE
+	PUSH BC
+	XOR A
+	DUP 4
+	LD (DE),A
+	INC D
+	LD (DE),A
+	INC D
+	EDUP
+	JR PR32Q
+
+PRCR	CALL PR3232
+PRCRDE	LD DE,0
+	CALL NXCOLLN
+	INC C
+PRTX	LD (PRCRDE+1),DE
+	CALL PR3232
+PRTX0	LD A,(HL)
+	CP #FF
+	RET Z
+	CALL PRSN
+	BIT 7,(HL)
+	INC HL
+	JR Z,PRTX0
+	JR PRCR
+
+INC_H	INC H
+	LD A,H
+	AND 7
+	RET NZ
+	LD A,L
+	ADD A,#20
+	LD L,A
+	RET C
+	LD A,H
+	SUB 8
+	LD H,A
+	RET	
+
+NAMEROM	LD A,6
+	LD (COL_SYM),A
+	LD DE,#100	;С 0 ПОЗИЦИИ 1 СТРОКИ
+	LD HL,NAME_ROM	;ИМЯ ПРОШИВКИ
+
+PRINT_MSG
+	PUSH HL
+	LD A,D
+	CALL #0E9E	;HL=adrln,D:=A
+	LD A,E
+	ADD A,L
+	LD L,A
+	EX DE,HL
+	POP HL
+
+PRTXT	LD A,(HL)
+	INC HL
+	CP #FF
+	RET Z
+	CALL PRSN
+	JR PRTXT
+
+_NKLILKA
+	LD HL,JPNZkey
+	LD (HL),#C3	;many
+_RULILKA
+	LD A,(IX+5)
+	LD (POS_CUR),A
+	EI	
+        LD A,(FLAGS)
+	AND 2
+	JR Z,_rulNMO
+;FIX koleso myshi
+mKEYPR	HALT
+	LD A,#FA
+	IN A,(#DF)
+	CPL
+	AND 7
+	JR NZ,mKEYPR
+_rulNMO	CALL SAVE2X2	;если меню напечатали поверх стрелки
+	CALL SET_ADR	;УСТАНОВКА НОВОГО АДРЕСА ДЛЯ ЦВЕТНОЙ ПОЛОСКИ
+	RES 5,(IY+1)
+	JR MAINLOP
+
+;НАЖАТА СТРЕЛКА ВНИЗ
+UP	LD A,(POS_CUR)
+	DEC A
+	JR NZ,SET_POS
+RIGHT	LD A,(IX+3)
+	JR SET_POS
+
+;если на ABCD/Mem и если FIRE,то генерировать кнопку
+Yabcd	LD A,L
+	SUB 13*8
+	RRCA
+	RRCA
+	RRCA
+	RRCA
+	AND 3
+	ADD A,"1"
+YabcdU	LD (#5C08),A	;фальш.кнопка CY=0
+	JR NO_SELECT	;разрешить fire
+
+;НАЖАТА СТРЕЛКА ВНИЗ
+DOWN	LD A,(POS_CUR)
+	INC A
+	LD C,(IX+3)
+	INC C
+	CP C
+	JR NZ,SET_POS
+LEFT	LD A,1
+SET_POS	LD (POS_CUR),A
+	CALL COL_CURSOR
+	CALL GLUDIN
+MAINLOP	RES 5,(IY+1)
+GLUNOKY	CALL g1Fknow
+	LD A,(FLAGS)
+	AND 2
+	JR Z,MAINnMO
+	LD A,#FF
+	LD (#5C08),A	;выкл.фальш.кнопку
+	HALT
+	LD HL,(arXY)
+	PUSH HL
+	CALL MOUSE
+	POP BC
+			;проверить: видно ли ABCD и Mem?
+			;если видно, мышь на них?
+	LD A,L
+	SUB 13*8
+	CP 7*8
+	JR NC,NOabcd
+	LD A,H
+	AND #F8
+	JR Z,Yabcd
+	CP #10
+	JR NZ,NOabcd
+	LD A,"m"
+	JR YabcdU
+
+NOabcd	OR A
+	SBC HL,BC
+	JR NZ,Moved
+	CALL MOUOPT
+	CP 1
+POS_CUR	EQU $-1		;ПОЗИЦИЯ КУРСОРА
+	JR Z,NO_SELECT	;разрешить fire
+	SCF
+	JR NO_SELECT	;запретить
+
+;БЫЛО ДВИЖЕНИЕ МЫШИ
+Moved	CALL MOUOPT	;CY=1:мышь не на опции
+	JR C,NO_SELECT
+	LD (POS_CUR),A
+NO_SELECT
+	LD BC,#FADF
+	IN A,(C)
+	RL C
+	AND 7
+	BIT 0,C
+	JR NZ,1F
+	CP 6
+	JP Z,MAINabcd	;JENT
+1	CP 5
+	JP Z,EDIT
+_fMMBQ	CALL REST2X2
+	CALL PRINTTIME
+	CALL AR
+	JR MAINqMO
+
+MAINnMO	CALL PRINTTIME
+	HALT
+MAINqMO	BIT 5,(IY+1)
+	JR Z,GLUNOKY
+	CALL #1F54	;ПРОВЕРКА НА BREAK
+	JR NC,EDIT
+GLUYEKY LD A,(IY-#32)
+	LD L,A
+	CP "q"
+	JP Z,UP		;НАЖАТО ВВЕРХ
+	CP "a"
+	JP Z,DOWN	;НАЖАТО ВНИЗ
+	SUB 7
+	JR Z,EDIT	;НАЖАТ EDIT (CS+1)
+	DEC A
+	JP Z,LEFT	;НАЖАТО ВЛЕВО
+	DEC A		
+	JP Z,RIGHT	;НАЖАТО ВПРАВО
+	DEC A
+	JP Z,DOWN	;НАЖАТО ВНИЗ
+	DEC A
+	JP Z,UP		;НАЖАТО ВВЕРХ
+	CP 2
+	JR Z,ENTER	;НАЖАТ ENTER
+	CP #15
+	JR Z,ENTER	;НАЖАЛИ SPACE
+ 	CP #62
+	JR Z,CHNGMODE	;НАЖАТА "M"
+	CP #6C
+	JP Z,CHNGTURBO	;НАЖАТА "W"
+	SUB #26
+	CP 4
+	JP C,SelDrv	;НАЖАТ ВЫБОР ДИСКОВОДОВ "A-D"
+	SUB 7
+	JR Z,MOUonof	;НАЖАТА "8" ВКЛЮЧЕНИЕ/ВЫКЛЮЧЕНИ МЫШИ
+	DEC A
+	JP Z,CMOonof	;НАЖАТА "9" ВКЛЮЧЕНИЕ/ВЫКЛЮЧЕНИЕ ЧАСОВ
+	LD A,L
+	OR #20		;6.6R
+	LD HL,0
+KNOPKI	EQU $-2
+	LD C,(IX+3)
+	LD B,0
+	CPIR		;СКАНИРОВАНИЕ СПИСКА ЗАДАННЫХ КЛАВИШ
+JPNZkey	JP NZ,MAINLOP	;НЕТ В СПИСКЕ 
+	LD A,(IX+3)
+	SUB C
+	LD (POS_CUR),A	;НОМЕР НАЖАТОЙ КЛАВИШИ ПО УКАЗАННОМУ СПИСКУ
+	JR ENTERU
+
+;ВКЛЮЧЕНИЕ/ВЫКЛЮЧЕНИЕ КУРСОРА МЫШИ
+MOUonof	LD HL,FLAGS
+	LD A,(HL)
+	XOR 2		;ИНВЕРСИЯ ОТОБРАЖЕНИЯ МЫШИ
+	LD (HL),A
+	AND 2
+	CALL NZ,DETECTMOUSE	;ЕСЛИ ВКЛЮЧИЛИ, ПРОВЕРЯЕМ НАЛИЧИЕ
+	CALL NC,REST2X2	;ЕСЛИ МЫШЬ НЕ НАЙДЕНА, ТО ВЫКЛЮЧАЕМ ОТОБРАЖЕНИЕ
+	JP MAINLOP
+
+EDIT	LD A,(IX+3)
+	INC A		;+2*(hgt+1)=адрес выхода
+	JR ENTERU
+
+MAINabcd
+	LD A,(#5C08)
+	INC A
+	JR NZ,GLUYEKY	;JR JENT
+ENTER	LD A,(POS_CUR)
+ENTERU	LD (SEL_NUM),A	;надо для detect BOOTPGclick
+	LD A,(POS_CUR)
+	LD (IX+5),A
+	LD A,(FLAGS)
+	AND 2
+	CALL NZ,TIMElp
+	CALL REST2X2
+	CALL GLUDIN
+	PUSH IX
+	POP HL
+	LD A,0		;ВЫБРАННЫЙ НОМЕР
+SEL_NUM	EQU $-1
+	ADD A,A		;*2
+	ADD A,4		;+4
+	ADD A,L
+	JR NC,$+3
+	INC H
+	LD L,A
+	LD A,(HL)
+	INC HL
+	LD H,(HL)
+	LD L,A
+	JP (HL)
+
+CHNGMODE
+	LD HL,MEMMODE
+	DEC (HL)
+	JP P,CHNGMODEY
+	LD (HL),2
+CHNGMODEY
+	LD A,(FLAGS)
+	AND 4
+	JP Z,RESTART
+	LD A,(MEMMODE)
+	LD L,A
+	LD A,(SYSREG1)
+	AND #10
+	RLCA
+	RLCA
+	RLCA
+	OR L
+	LD L,A
+	LD H,#0E
+	CALL WRITECMOS
+	JP RESTART
+
+CHNGTURBO
+	LD HL,SYSREG1
+	LD A,(HL)
+	XOR #10
+	LD (HL),A
+	JR CHNGMODEY
+
+GLUDIN	LD HL,din+#0D
+GLUDINHL
+	LD A,#0D
+_dinout	LD BC,#FFFD
+	OUT (C),A
+	LD B,#BF
+	OUTD
+	SUB 1
+	JR NC,_dinout
+	RET
+
+HREPRAR	HALT
+	CALL REST2X2
+AR	LD BC,0
+arXY	EQU $-2
+	LD A,B
+	CALL 8881
+	LD (REST2X2+1),HL
+	PUSH HL
+	CALL SAVE2X2
+	LD A,6
+_morg	EQU $-1
+	INC A
+	LD HL,FLAGS
+	CP #0C
+	JR NZ,3F
+	LD A,1
+	XOR (HL)
+	LD (HL),A
+	XOR A
+3	LD (_morg),A
+	LD A,(arXY)
+	AND 7
+	CPL
+	ADD A,9
+	LD C,A
+	LD A,(FLAGS)
+	AND 1
+	LD HL,SPRAR
+	JR Z,2F
+	LD HL,SPRAR2
+2	LD B,8
+	POP DE
+PRAR0	PUSH BC
+	LD B,C
+	LD C,(HL)
+	INC HL
+	PUSH HL
+	LD L,(HL)
+	EX DE,HL
+	LD A,#FF
+	LD D,0
+1	SCF
+	RL C
+	RLA
+	SLA E
+	RL D
+	DJNZ 1B
+	AND (HL)
+	OR D
+	LD (HL),A
+	INC L
+	LD A,(HL)
+	AND C
+	OR E
+	LD (HL),A
+	DEC L
+	CALL INC_H
+	EX DE,HL
+	POP HL
+	INC HL
+	POP BC
+	DJNZ PRAR0
+	RET

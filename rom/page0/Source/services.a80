@@ -1,0 +1,193 @@
+;ГЛАВНАЯ собиралка/запускалка Глюка из кусочков
+
+;в ROM4 #3D2F=NOP:RET, #60=OUT(C),A:POP BC,AF:INC SP,SP
+;лучше во всех,для совместимости
+
+STACK2	EQU #9C00	;push af,bc,de,hl
+hldebcaf EQU STACK2-8	;push AF,BC,DE,HL,IY,IX,SP
+SPKEEP	EQU hldebcaf-14	;старый стек
+OLDSTSZ	EQU 11		;в т.ч (SP-2)
+DEPKADR	EQU #6000	;#5FE4	;depack to
+
+        ORG	#0000
+RSTROM
+       
+;в 1-й стек (для STS) кладется AF,BC,оставляется SP-2
+;остальное в стеке STACK2
+;т.к.1-й стек неизвестно где,а то и в ПЗУ.
+;при дребезге сброс двукратный!!! сработает именно 2-й
+;ПРИ ОДНОКРАТНОМ СБРОСЕ СОХРАНИТСЯ ВСЕ,что не обнулил Z80
+;при двукратном - кроме AF
+GLUMAGIC
+	DI
+	DEC SP
+	DEC SP
+	PUSH AF
+	POP AF
+	INC SP
+	INC SP
+	XOR A
+	DEC A
+	JR NZ,$-1
+RSTGO	DEC SP
+	DEC SP
+	DEC SP
+	DEC SP
+	PUSH BC
+	XOR A
+	OUT (#FE),A
+	JP RSTKEYS
+
+	DS #38-$,#FF
+        RET	
+        
+	DS #66-$,#FF
+	JR GLUMAGIC
+
+;проверка нажатия двух клавиш (портим только AF,BC)
+RSTKEYS	LD BC,#FEFF
+TST2K	LD A,B
+	IN A,(#FE)
+	DUP 5
+	RRA
+	JR C,$+3
+	INC C
+	EDUP
+	RLC B
+	JR C,TST2K		;C=число кнопок минус 1
+	DEC C			;минус 2
+	JP P,GTSTKEY
+;"H"=cache
+;"D"=demo
+;SPC=DOS
+;CS=STS#57
+;key "0"     "U"            "SS"       "5"   "7"
+;ROM0#00(ACE) 2#00(B128/ASM) 4#62(STS)  5#62  7#62  if GLUK=6
+                            ;0#62 unusable unusable if GLUK=2
+                        ;unusable unusable unusable if GLUK=0
+
+iNSTS57	LD A,#7F
+	IN A,(#FE)
+	RRA
+	LD A,#10
+	JR NC,iGROM0		;СБРОС В ТЫРДОС
+				;SS=ROM4:#62 (PUSH #62:#3D2F)
+	LD A,#EF
+	IN A,(#FE)
+	RRA			;"0"
+	JR C,iNOROM0		;0=ROM0:#00 (XOR A:iGROM0)
+	XOR A			;СБРОС В БАСИК128
+iGROM0	LD HL,#5C07
+	LD (HL),#C9		;for iG128
+iGRAMOU	DEC HL
+	LD (HL),#79
+	DEC HL
+	LD (HL),#ED		;OUT(C),A
+	LD SP,HL
+	LD DE,0
+	PUSH DE
+	LD DE,#3D2F
+	PUSH DE
+	JP (HL)
+
+iG128	LD HL,#5C07
+	LD (HL),#C7
+	JR iGRAMOU
+
+iNOROM0	LD A,#3F
+	LD I,A
+	JP L3E00
+
+	INCLUDE "dec40.a80"
+
+LOADADR	INCBIN	"main_pack.rom"
+	
+BONUADR	INCBIN	"cmosset_pack.rom"
+
+        BLOCK #3D2F-$,#FF
+        NOP	
+        RET	
+
+DEMO	LD BC,#7FFD
+	LD A,#10
+	OUT (C),A
+	EI
+szdemoini	EQU $-DEMO
+
+        INCBIN	"grass.bin"
+
+L3E00	POP BC
+	POP AF
+	INC SP
+	INC SP
+	LD (SPKEEP),SP
+	LD SP,STACK2
+	EXX
+	EXA
+	PUSH AF
+	PUSH BC
+	PUSH DE
+	PUSH HL
+	EXX
+	EXA
+	PUSH AF
+	PUSH BC
+	PUSH DE
+	PUSH HL
+	PUSH IY
+	PUSH IX
+	LD HL,(SPKEEP)
+	PUSH HL			;собственно,он там и лежал
+	LD DE,OLDSTSZ*2-2	;6.61
+	ADD HL,DE
+	LD B,OLDSTSZ
+iCOPST	DEC HL
+	LD D,(HL)
+	DEC HL
+	LD E,(HL)
+	PUSH DE
+	DJNZ iCOPST
+	LD HL,DEPKADR
+	LD SP,HL
+	XOR A
+	IN A,(#FE)
+	PUSH AF
+	EX DE,HL
+	LD HL,LOADADR		;РАСПАКОВКА ГЛЮКА
+	CALL DEC40		;DEHR1
+	LD IY,#5C3A
+	LD (IY+1),#CC
+	IM 1			;тут была палитра до 6.61
+	LD A,#FD
+	IN A,(#FE)
+	AND 4			;"D"
+	JR Z,GDEMO
+	POP AF			;in a,(#00fe)
+	CPL
+	AND #1F
+J6000	JP Z,#6000		;ЗАПУСК ГЛЮКА
+				;цифры, U,H,SS,CS,X не вызывают HELP!
+
+CMOSHELP			;CMOS setup & HELP
+	LD HL,BONUADR		;РАСПАКОВКА И ЗАПУСК CMOS SETUP
+	LD DE,#6000
+	PUSH DE
+	PUSH AF
+	CALL DEC40
+	POP AF
+	RET
+
+GTSTKEY	LD SP,#6000
+	SCF
+	JR CMOSHELP
+
+GDEMO	LD HL,#6000-szdemoini
+	LD SP,HL
+	EX DE,HL
+	PUSH DE
+	LD HL,DEMO
+	LD B,3
+	LDIR
+	RET
+
+        block #4000-$,#ff

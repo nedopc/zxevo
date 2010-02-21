@@ -1,0 +1,202 @@
+
+;LAST UPDATE: 09.02.2010 savelij
+
+BUFFSEC EQU DRV_VAR
+
+MASTER  EQU 0
+SLAVE   EQU #80
+
+DRV_A   EQU 0		;DRIVE A
+DRV_B   EQU 1		;DRIVE B
+DRV_C   EQU 2		;DRIVE C
+DRV_D   EQU 3		;DRIVE D
+SDZ     EQU 4		;SD йюпрю мю ZC
+SDG     EQU 5		;SD йюпрю мю NeoGS
+HDDN    EQU 6		;HDD мю NEMO
+HDDS    EQU 7		;HDD мю SMUC
+
+ADRTVOL EQU DRV_VAR-#0100	;юдпея рюакхжш мюидеммшу пюгдекнб
+				;ял тнплюр рюакхжш мюидеммшу пюгдекнб
+				;#F0 8 аюир мю пюгдек*#1E йнк пюгдекнб
+GO_DEV  EQU ADRTVOL+#F0		;2 юдпея бшгнбю дпюибепю сярпниярбю
+KOLDVOL EQU GO_DEV+2		;1 йнкхвеярбн мюидеммшу пюгдекнб
+SETDVOL EQU KOLDVOL+1		;1 мнлеп бшапюммнцн пюгдекю
+ADRTEKV EQU SETDVOL+1		;2 юдпея нохяюрекъ рейсыецн пюгдекю
+			;GO_DRV  EQU ADRTEKV+2
+			;2 юдпея бшгшбюелнцн дпюибепю
+
+        PUSH HL:LD HL,(GO_DEV)
+        EX (SP),HL:RET
+
+			;PUSH HL:LD HL,(GO_DRV)
+			;EX (SP),HL:RET
+
+        EXA:EX (SP),HL:LD A,(HL):INC HL
+        EX (SP),HL:ADD A,A:PUSH IX,IY,HL
+        LD HL,EXITDEV:EX (SP),HL:PUSH HL
+        LD HL,TABLDEV:ADD A,L:LD L,A,A,H
+        ADC A,0:LD H,A,A,(HL):INC HL
+        LD H,(HL),L,A:EXA:EX (SP),HL:RET
+
+EXITDEV POP IY,IX:RET
+
+Devfind EQU 0
+Set_vol EQU 1
+Kol_vol EQU 2
+
+TABLDEV DW DEVFIND;00 онхяй сярпниярб
+        DW SET_VOL;01 бшанп пюгдекю
+        DW KOL_VOL;02 гюопня мюидемнцн
+
+;тнплюр рюакхжш мюидеммшу пюгдекнб
+;+0(1)-0-DRIVE A
+;      1-DRIVE B
+;      2-DRIVE C
+;      3-DRIVE D
+;      4-SD йюпрю ZC
+;      5-SD йюпрю NEOGS
+;      6-HDD NEMO
+;      7-HDD SMUC
+;+1(1)-дкъ SD-рсон 0
+;      хмюве HDD/CD 0-MASTER, 1-SLAVE
+;+2(1)-рхо пюгдекю, б рюакхже рнкэйн
+;пюгдекш:
+;00=01-FAT12
+;01=06,0E-FAT16
+;02=0B,0C-FAT32
+;+3(4)-ярюпрнбши яейрнп
+;+7(1)-пегепб
+
+;рнвйю бундю дкъ онхяйю пюгдекнб
+;HL-юдпея йсдю онйкюярэ рюакхжс пюгдекнб
+;мю бшунде:
+;A-йнк-бн пюгдекнб
+DEVFIND XOR A:LD (KOLDVOL),A
+        LD IX,ADRTVOL
+
+;NEMO
+        LD HL,BUFFSEC:CALL COMHDDN:DB 0
+        LD A,H:AND A:PUSH HL
+        LD A,HDDN+MASTER,HL,BUFFSEC
+        CALL Z,RD0HDD:POP HL:LD A,L
+        AND A:LD HL,BUFFSEC,A,HDDN+SLAVE
+        CALL Z,RD0HDD
+
+;SMUC
+;        LD HL,BUFFSEC:CALL COMHDDS:DB 0
+;        LD A,H:AND A:PUSH HL
+;        LD A,HDDS+MASTER,HL,BUFFSEC
+;        CALL Z,RD0HDDS:POP HL:LD A,L
+;        AND A:LD HL,BUFFSEC,A,HDDS+SLAVE
+;        CALL Z,RD0HDDS
+
+;SD ON NEOGS
+        CALL INSTSDD:AND A:JR NZ,DEVFND1
+        CALL COMSDG:DB 0
+        AND A:CALL Z,RD0SDG
+
+;SD ON Z-CONTROLLER
+DEVFND1 CALL COMSDZ:DB 0:AND A
+        CALL Z,RD0SD
+
+        CALL SETVOLD:SCF
+        RET Z:DEC A:CALL SET_VOL:RET C
+
+KOL_VOL LD HL,(ADRTEKV):INC HL,HL
+        LD A,(HL),DE,(KOLDVOL)
+        LD HL,ADRTVOL:AND A:RET
+
+SETVOLD LD A,LX:RRCA:RRCA:RRCA:AND #1F
+        LD (KOLDVOL),A:AND A:RET
+
+RD0SDG  LD HL,BUFFSEC,A,SDG:PUSH AF
+        LD DE,0,BC,DE:PUSH HL
+        CALL COMSDG:DB 2:JR RD0HDD_
+
+RD0SD   LD HL,BUFFSEC,A,SDZ
+        PUSH AF:LD DE,0,BC,DE:PUSH HL
+        CALL COMSDZ:DB 2:JR RD0HDD_
+
+;RD0HDDS PUSH AF,HL:BIT 7,A:LD B,#E0
+;        JR Z,$+4:LD B,#F0,DE,0,C,E
+;        CALL COMHDDS:DB 2:JR RD0HDD_
+
+RD0HDD  PUSH AF,HL:BIT 7,A:LD B,#E0
+        JR Z,$+4:LD B,#F0,DE,0,C,E
+        CALL COMHDDN:DB 2
+RD0HDD_ LD DE,#01BE:POP IY:PUSH IY
+        ADD IY,DE:LD BC,#0400
+RD0HDD0 LD A,(IY):AND A:JR Z,RD0HDD1
+        CP #80:JR NZ,RD0HDD2
+RD0HDD1 LD A,(IY+4):CALL CP_RAZD
+        JR NZ,RD0HDD2:INC C
+RD0HDD2 LD DE,#10:ADD IY,DE:DJNZ RD0HDD0
+        LD A,C:AND A:POP HL
+        JP NZ,SCANMBR:PUSH HL:POP IY
+        LD C,(IY+#0D):XOR A:LD E,A,B,8
+        RR C:ADC A,0:DJNZ $-4:DEC A
+        JR NZ,$+3:INC E:LD A,(IY+#0E)
+        OR (IY+#0F):JR Z,$+3:INC E
+        LD A,(IY+#13):OR (IY+#14)
+        JR NZ,$+3:INC E:LD A,(IY+#20)
+        OR (IY+#21),(IY+#22),(IY+#22)
+        JR NZ,$+3:INC E
+        LD A,(IY+#15):AND #F0:CP #F0
+        JR NZ,$+3:INC E:LD A,E:CP 4
+        INC SP,SP:RET NZ:DEC SP,SP
+        POP AF:BIT 7,A:LD B,0:JR Z,$+3
+        INC B:AND #7F:LD C,A:PUSH IX
+        POP HL:XOR A:LD (HL),C:INC HL
+        LD (HL),B:INC HL:LD (HL),#FF
+        INC HL:LD (HL),A:INC HL
+        LD (HL),A:INC HL:LD (HL),A
+        INC HL:LD (HL),A:INC HL
+        LD (HL),A,DE,8:ADD IX,DE
+        CALL SETVOLD:DEC A:CALL SET_VOL
+        CALL COM_FAT:DB Wc_fat
+        LD (IX-6),A:RET
+
+;мю бунде:
+;A-BIT 7-0/1-MASTER/SLAVE
+;BITS 6-0-рхо мняхрекъ
+SCANMBR POP AF:LD DE,#01BE:ADD HL,DE:EXX
+        BIT 7,A:LD B,0:JR Z,$+3:INC B
+        AND #7F:LD C,A:EXX:LD B,0,A,4
+SCNMBR0 EXA:LD A,(HL),C,4:ADD HL,BC
+        LD C,#0C:AND A:JR Z,SCNMBR1
+        CP #80:JR NZ,SCNMBR2
+SCNMBR1 LD A,(HL):AND A:JR Z,SCNMBR2
+        CALL CP_RAZD:JR NZ,SCNMBR2
+SCNMBR3 EXX:LD (IX),C,(IX+1),B:EXX
+        LD (IX+2),E,C,4:PUSH IX:POP DE
+        INC DE,DE,DE:ADD HL,BC:LDI:LDI
+        LDI:LDI:LD (IX+7),0
+SCNMBR4 LD C,8:ADD IX,BC:LD C,4
+SCNMBR2 ADD HL,BC:EXA:DEC A
+        JR NZ,SCNMBR0
+SCNMBR5 CALL SETVOLD:SCF:RET Z:DEC A
+
+SET_VOL LD HL,KOLDVOL:CP (HL):CCF:RET C
+        LD (SETDVOL),A,L,A,H,0:ADD HL,HL
+        ADD HL,HL,HL,HL:LD DE,ADRTVOL
+        ADD HL,DE:LD (ADRTEKV),HL
+        LD A,(HL):CP 4;LD HL,DISKETA
+        JR C,SET_DRV:SUB 4:LD HL,COMSDZ
+        JR Z,SET_DRV:DEC A:LD HL,COMSDG
+        JR Z,SET_DRV:DEC A:LD HL,GO2HDDN
+        JR Z,SET_DRV:LD HL,0;GO2HDDS
+SET_DRV LD (GO_DEV),HL:XOR A:RET
+
+GO2HDDN PUSH AF,HL:LD A,B:AND #0F:LD B,A
+        LD HL,(ADRTEKV):INC HL:LD A,(HL)
+        AND 1:RLCA:RLCA:RLCA:RLCA:OR #E0
+        OR B:LD B,A:POP HL,AF:JP COMHDDN
+
+;GO2HDDS PUSH AF,HL:LD A,B:AND #0F:LD B,A
+;        LD HL,(ADRTEKV):INC HL:LD A,(HL)
+;        AND 1:RLCA:RLCA:RLCA:RLCA:OR #E0
+;        OR B:LD B,A:POP HL,AF:JP COMHDDS
+
+CP_RAZD CP 6:LD E,1:RET Z:CP #0E:RET Z
+        CP #0B:LD E,2:RET Z:CP #0C:RET Z
+        CP 1:LD E,0:RET

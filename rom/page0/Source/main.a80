@@ -1,0 +1,574 @@
+
+;VERSION
+g1		EQU "0"
+g2		EQU "1"
+g3		EQU " "
+
+;схема Nemo:
+hddstat		EQU #F0
+hddcmd		EQU #F0
+hddhead		EQU #D0
+hddcylhi	EQU #B0
+hddcyllo	EQU #90
+hddsec		EQU #70
+hddcount	EQU #50
+hdderr		EQU #30
+hdddatlo	EQU #10
+hdddathi	EQU #11
+hddupr		EQU #C8
+hdduprON	EQU 0
+
+ADR_CAT		EQU #9C00	;,#900
+MOUSE_BUFF	EQU #A500	;БУФЕР ДЛЯ СОХРАНЕНИЯ ПОД МЫШЬЮ
+COLBUF		EQU MOUSE_BUFF+#10	;БУФЕР СОХРАНЕНИЯ ЦВЕТА
+
+f20		EQU #14		;окно BOOT
+len98		EQU (f20-1)*8
+GlukStk		EQU #5FE4
+
+hldebcaf	EQU ADR_CAT-8	;push AF,BC,DE,HL,IY,IX,SP
+SPKEEP		EQU hldebcaf-14	;старый стек
+OLDSTSZ		EQU 11		;в т.ч (SP-2)
+OLDSTAK		EQU SPKEEP-(2*OLDSTSZ)
+
+wide		EQU 1		;два пробела с боков
+
+SYSREG_EFF7	EQU #EFF7
+SET_ADR_CMOS	EQU #DFF7
+RD_WR_CMOS	EQU #BFF7
+CMOS_ON		EQU #80
+CMOS_OFF	EQU 0
+
+	DI
+	CALL PAGE_0
+	LD HL,BAS_VAR
+	LD DE,#5C00
+	LD BC,END_BAS_VAR-BAS_VAR
+	LDIR
+	LD HL,#3E00
+	PUSH HL
+	LD HL,#1303
+	PUSH HL
+	LD (#5C3D),SP
+	LD (TEK_SP),SP
+	LD H,0
+	CALL READCMOS
+	INC H
+	LD HL,FLAGS
+	JR NZ,2F
+	RES 2,(HL)
+	JR 1F
+	
+2	SET 2,(HL)
+	LD H,#0B
+	CALL READCMOS		;READ CMOS
+	AND 4
+	JR Z,3F
+	LD A,1
+	LD (BCDon),A		;1=not BCD
+	LD HL,PnWtSr0
+	LD (adrPnWt),HL
+3	LD H,#0E
+	CALL READCMOS
+	LD A,H
+	AND #80
+	RRCA
+	RRCA
+	RRCA
+	LD (SYSREG1),A
+	LD A,H
+	AND 3
+	LD (MEMMODE),A
+1	CALL SET_SYSREG1	;OUT#EFF7,0 - видимо,на всяк.сл.
+	LD A,#17
+	CALL PAGE_A
+	LD HL,#4000
+	LD DE,#E000
+	LD BC,#1B00
+	LDIR			;СОХРАНЕНИЕ ОСНОВНОГО ЭКРАНА В 7 СТРАНИЦУ
+	CALL PAGE_0
+	CALL DETECTMOUSE
+	CALL GLUDIN
+	DI
+	CALL MOUSE
+	LD HL,#6FCC
+	LD (arXY),HL
+RESTART	LD SP,0
+TEK_SP	EQU $-2
+	CALL PAGE_0
+	CALL SYSTEM
+	CALL resVG
+	LD HL,DSTUPID
+	LD (#5C3D),HL
+	LD A,#C3
+	LD (#5CC2),A
+	LD HL,ONERR
+	LD (#5CC3),HL
+	XOR A
+	LD (yIKNOW),A
+	LD A,(SYSREG1)
+	AND #10
+	LD HL,T_FAST
+	JR Z,2F
+	LD HL,T_SLOW
+2	LD DE,Tmode
+	LD BC,4
+	LDIR
+	LD A,(MEMMODE)
+	AND A
+	LD HL,T_ALL
+	JR Z,1F		;ALL MEMORY
+	LD HL,T_48
+	DEC A
+	JR Z,1F		;48K
+	LD HL,T_128	;128K
+1	INC DE
+	LD C,3
+	LDIR
+	CALL S_FACE
+	LD IX,mMAIN
+	CALL DRAWWIN
+				;подсветка опций ЗДЕСЬ БЫЛА
+	CALL NAMEROM
+	LD IX,aMAIN
+	JP _RULILKA
+
+PAGE_0	LD A,#10
+PAGE_A	PUSH BC
+	LD BC,#7FFD
+	OUT (C),A
+	POP BC
+	RET
+
+S_FACE	LD A,4
+	CALL CLSA
+	LD A,#41
+	LD (COL_SYM),A
+	LD HL,Tdrvs
+	LD DE,#400D
+	CALL PRTXT
+	LD A,(#5CF8)
+	ADD A,A
+	ADD A,#0D
+	LD L,A
+	LD H,#58
+	LD (HL),5
+	LD A,#42
+	LD (COL_SYM),A
+	LD HL,Tmode
+	LD DE,#404D
+	CALL PRTXT
+	LD A,7
+	LD (COL_SYM),A
+	LD HL,TREGS
+	LD DE,#4063-wide
+	CALL PRTX
+	LD DE,#48BA
+	LD A,">"
+        CALL PRSN
+	LD A,5
+	LD (COL_SYM),A
+	LD DE,#489B
+	LD HL,OLDSTAK
+	LD B,OLDSTSZ
+	CALL PRSP0
+	LD HL,SPKEEP
+	LD DE,#4060
+	LD B,7
+	CALL PRSP0
+	LD DE,#40C6
+	LD B,4
+	CALL PRSP0
+	LD H,#11
+	CALL READCMOS
+	INC A
+	LD HL,NO_CMOS
+	JR Z,1F	
+	CP #AB
+	RET Z
+	LD HL,OFFCMOS
+1	LD DE,#150C
+	JP PRINT_MSG
+
+MEMSET	LD A,(MEMMODE)
+	AND A
+	JP Z,SET_SYSREG1
+	DEC A
+	JR Z,MEMORY48
+
+ON_BIT128
+	LD A,(SYSREG1)
+	AND #10
+	ADD A,4
+	LD BC,#EFF7
+	OUT (C),A
+	JP PAGE_0
+
+MEMORY48
+	CALL ON_BIT128
+	LD A,#30
+	JP PAGE_A
+
+SYSTEM	LD HL,BAS_VAR
+	LD DE,#5C00
+	LD BC,END_BAS_VAR-BAS_VAR
+	LDIR
+GET_DRV_SYM
+	LD A,(FLAGS)
+	AND 4
+	JR Z,SET_SYSREG1
+	LD H,#10
+	CALL READCMOS
+	AND 3
+	LD (DRV_SYM),A
+	LD (#5D19),A
+	LD (#5CF6),A
+	LD L,A
+	LD H,A
+	LD (#5CF8),HL
+	OR #3C
+	LD (#5D16),A
+SET_SYSREG1	
+	LD BC,#EFF7
+	LD A,(SYSREG1)
+	OUT (C),A
+	RET
+
+SHUT2AY	LD DE,#0E00
+1	DEC D
+	LD H,D
+	LD L,E
+	CALL 2F
+	JR NZ,1B		;для первых никронов
+	LD HL,#073F
+2	LD BC,#FFFD
+	OUT (C),H
+	LD B,#BF
+	OUT (C),L
+	RET
+
+BOOTRpg	CALL GLUDIN
+	LD B,(IX+3)
+	INC B
+	LD A,(SEL_NUM)
+	CP B
+	JP Z,RESTART		;cs1
+	DEC (IX+5)
+BOOTRUN	CALL GLUDIN
+	LD B,(IX+3)
+	INC B
+	LD A,(SEL_NUM)
+	CP B
+	JP Z,RESTART		;cs1
+	LD A,(gBASICS)
+	AND A
+	JP Z,_IKNOW
+	LD A,(FLAGS)
+	AND 8
+	JP NZ,RUN_HOB		;ПЕРЕХОДИМ НА ЗАПУСК ХОБЕТЫ С ФАТА
+	DI
+	CALL SHUT2AY		;БУМКАЛКА В AY
+	CALL MEMSET
+	LD DE,ADR_CAT
+	LD A,(BOOTPG)
+	LD B,A
+	AND A
+	JR Z,1F
+	XOR A
+	ADD A,f20-1
+	DJNZ $-2
+1	ADD A,(IX+5)
+	DEC A
+	LD L,A
+	LD H,B
+	ADD HL,HL
+	ADD HL,HL
+	ADD HL,HL
+	ADD HL,DE
+	LD DE,RUNNAM
+	LD C,8
+	LDIR
+	EX DE,HL
+	DEC HL
+	RES 7,(HL)
+	LD HL,#3E08+#A7
+	LD DE,#FFFF
+	LD C,#A8		;21 символ UDG
+	LDDR
+	LD HL,BUFSTR
+	LD DE,#5D3B
+	LD BC,ENDSTR-BUFSTR
+	LDIR			;ПЕРЕНОС БЕЙСИК ПРОГИ ДЛЯ ЗАПУСКА
+	LD IY,#5C3A
+	LD (IY),#FF
+	SET 7,(IY+1)
+	RES 4,(IY+1)
+	LD HL,#2758
+	EXX
+	LD A,#C9
+	LD (#5CC2),A
+	LD HL,1
+	LD (#5C42),HL
+	XOR A
+	LD (#5C44),A
+	LD BC,#5FFF
+	CALL #1EB7		;УСТАНОВКА СТЕКА СРЕДСТВАМИ БЕЙСИКА
+	LD HL,#1303
+	PUSH HL
+	LD (#5C3D),SP
+	EI
+	JP #1B7D		;ЗАПУСК ПЕРЕНЕСЕННОЙ БЕЙСИК ПРОГИ
+	
+LDIR98FF
+	LD BC,len98
+LDIRFF	LDIR
+	LD A,#FF
+	LD (DE),A
+	RET
+
+CLS	LD A,7
+CLSA	LD HL,#4000
+	LD DE,HL
+	LD BC,#1800
+	LD (HL),L
+	INC E
+	LDIR
+	LD BC,#02FF
+	LD (HL),A
+	LDIR
+	RET
+
+GLUKEY	RES 5,(IY+1)
+	LD BC,#FADF
+	IN D,(C)
+_6a1e	CALL PRINTTIME
+	BIT 5,(IY+1)
+	JR NZ,gkOK
+	LD A,(FLAGS)
+	AND 2
+	JR Z,_6a1e
+	LD A,#FA
+	IN A,(#DF)
+	CP D
+	JR Z,_6a1e
+gkMOU	EXA
+	CALL TIMElp
+	EXA
+	RRA
+	RET
+
+gkOK	LD A,(IY-#32)
+	CP #0D
+	RET Z
+	SCF
+	RET
+
+
+;СОХРАНЕНИЕ КУСКА ЭКРАНА
+SAVE2X2	LD HL,(REST2X2+1)
+	LD DE,MOUSE_BUFF
+	LD B,8
+1	LD A,(HL)
+	LD (DE),A
+	INC DE
+	INC L
+	LD A,(HL)
+	LD (DE),A
+	INC DE
+	DEC L
+	CALL INC_H
+	DJNZ 1B
+	RET
+
+;ВОССТАНОВЛЕНИЕ КУСКА ЭКРАНА
+REST2X2	LD HL,0
+	LD DE,MOUSE_BUFF
+	LD B,8
+1	LD A,(DE)
+	LD (HL),A
+	INC DE
+	INC L
+	LD A,(DE)
+	LD (HL),A
+	INC DE
+	DEC L
+	CALL INC_H
+	DJNZ 1B
+	RET
+
+DETECTMOUSE
+	LD HL,FLAGS
+	LD BC,#FBDF
+	IN D,(C)		;1.стабильность X
+1	IN A,(C)
+	CP D
+	JR NZ,2F
+	DEC E
+	JR NZ,1B		;2.keys<>X
+	DEC B
+	IN A,(C)
+	CP D
+	JR Z,2F			;3.keys&7=7(Lion17)
+	CPL
+	AND 7
+	SET 1,(HL)
+	RET Z
+2	RES 1,(HL)
+	SCF
+	RET
+
+MOUSE	LD HL,(arXY)
+	LD DE,0			;D=Y КООДИНАТА, E=X КООРДИНАТА
+mouPOS	EQU $-2
+	LD BC,#FBDF
+	IN A,(C)		;ЧТЕНИЕ КООРДИНАТЫ X
+	LD (mouPOS),A		
+	SUB E
+	JR Z,MOUnX
+	JP P,MOUpX
+	ADD A,L
+	JR C,$+3
+	XOR A
+	LD L,A
+	JR MOUnX
+
+MOUpX	ADD A,L
+	JR C,$+6
+	CP #F9
+	JR C,$+4
+	LD A,#F9
+	LD L,A
+MOUnX	LD BC,#FFDF		;ЧТЕНИЕ КООРДИНАТЫ Y
+	IN A,(C)
+	LD (mouPOS+1),A
+	SUB D
+	JR Z,MOUnY
+	NEG
+	JP P,MOUpY
+	ADD A,H
+	JR C,$+3
+	XOR A
+	LD H,A
+	JR MOUnY
+
+MOUpY	ADD A,H
+	JR C,$+6
+	CP #B8
+	JR C,$+4
+	LD A,#B8
+	LD H,A
+MOUnY	LD (arXY),HL
+	RET
+
+MOUOPT	LD H,(IX+1)
+	LD L,(IX) 	;атрибутный адрес угла
+	LD A,L
+	AND #1F
+	ADD HL,HL
+	ADD HL,HL
+	ADD HL,HL
+	LD L,A
+	LD A,H
+	AND #1F
+	LD H,A
+	LD DE,(arXY)
+	LD B,3
+	SRL D
+	SRL E
+	DJNZ $-4
+	INC D
+	INC D
+MOUOPT0	INC H
+	LD A,H
+	CP D
+	JR Z,_a9f3	;Y=ok
+	INC A
+	CP D
+	JR NZ,_aa0e
+_a9f3	LD A,E
+	CP L
+	JR C,_aa0e
+	LD A,(IX+2)	;wid
+	ADD A,L
+	CP E
+	JR Z,_aa0e
+	JR C,_aa0e
+	LD A,B
+	INC A
+	PUSH AF
+	CALL COL_CURSOR
+	POP AF
+        RET	
+
+;мышь не на опции
+_aa0e	INC B
+	LD A,B
+	CP (IX+3)	;hgt
+	JR NC,_aa22
+	JR MOUOPT0	;проверяем след.опцию
+
+_aa22	CALL COL_CURSOR
+	SCF
+	SBC A,A
+	RET
+
+COL_CURSOR
+	LD DE,0
+	LD HL,COLBUF
+	LD C,(IX+2)
+	LD B,0
+	LDIR
+SET_ADR	LD A,(POS_CUR)
+	LD B,A
+	LD L,(IX)
+	LD H,(IX+1)
+	LD DE,#20
+	ADD HL,DE
+	DJNZ $-1
+	SBC HL,DE
+	LD (COL_CURSOR+1),HL	;ПОЛОЖИЛИ АДРЕС ДЛЯ ВОССТАНОВЛЕНИЯ ЦВЕТА
+	LD DE,COLBUF
+	LD B,(IX+2)
+	LD C,(IX+4)
+	LD A,(HL)
+	LD (DE),A
+	LD (HL),C
+	INC L
+	INC E
+	DJNZ $-5
+	RET
+
+TIMElp	CALL PRINTTIME
+	LD A,#FA
+	IN A,(#DF)	;кнопки мыши
+	CPL
+	AND 7
+	JR NZ,TIMElp	;пока не отпустят
+	RET
+
+	include "menu_data.a80"
+	include "menu_execute.a80"
+        INCLUDE	"window.a80"
+	include "call_cmos.a80"
+	include "call_trdos.a80"
+
+	INCLUDE "fat\ports_ngs.a80"
+	INCLUDE "fat\sdcomand.a80"
+	
+DRV_VAR	EQU #A700	;АДРЕС НАЧАЛА ПЕРЕМЕННЫХ ФАТА
+	
+COM_DEV	equ $+6
+TO_DRV	INCLUDE "fat\dev_drv.a80"
+COMSDZ	INCLUDE "fat\z_sd_drv.a80"
+COMHDDN	INCLUDE "fat\nemo_drv.a80"
+COMSDG	INCLUDE "fat\ngs_sd_drv.a80"
+
+COM_FAT	INCLUDE "fat\read_fat.a80"
+	include "fat\fat_boot.a80"
+
+MICROBOOT	
+	INCBIN "micro_boot_fat.rom"
+END_MICROBOOT
+
+BAS_VAR	incbin "bas_var.bin"
+END_BAS_VAR
