@@ -1,0 +1,103 @@
+
+HDDBINI	CALL PAGE_0
+	LD HL,HDDREAD
+	LD DE,#E800	;#5B60
+	LD B,8		;BC,HDDRDLN
+	LDIR
+	RET
+
+HDDBOOT	DI
+	CALL HDDBINI
+INIT0	LD A,#A0	;MASTER+CHS АДРЕСАЦИЯ
+	LD (devnum),A
+	CALL SELDEVICE
+	LD A,#0C
+	LD BC,hddupr
+	PUSH BC
+	CALL OUT_A	;начинаем сброс
+	LD B,0
+	DJNZ $
+	LD A,8
+	POP BC
+	CALL OUT_A	;сбросили!
+	CALL NO_BSY
+	LD A,#10	;Команда RECALIBRATE
+	CALL HDSC	;Запись COMMAND
+INIT2	IN A,(LOW hddstat)	;Чтение STATUS REGISTER (0111)
+	BIT 7,A		;Проверка бита BSY занятость HDD
+	JR NZ,INIT2	;Переход если накопитель занят
+	AND #E9
+	CP #40
+	;CP #50		;Проверка битов DSC (уст-ка головок)
+			;и DRDY(готовность HDD)
+	JR NZ,INIT0	;Если установлены - выход
+	JP #E800
+;,**************************************************************
+;ЧТЕНИЕ СЕКТОРОВ
+HDDREAD	DISP #E800
+	CALL NO_BSY	;ЗАПИСАТЬ В РЕГИСТРЫ ЦИЛИНДРА,ГОЛОВКИ,СЕКТОРА
+	LD BC,hddhead	;РЕГИСТР НАКОПИТЕЛЯ/ГОЛОВКИ
+	LD A,#A0	;ГОЛОВКА 0,ВИНТ MASTER #B0-SLAVE
+	CALL OUT_A
+	LD BC,hddcylhi	;РЕГИСТР ЦИЛИНДРА (HI)
+	XOR A
+	CALL OUT_A
+	LD BC,hddcyllo	;РЕГИСТР ЦИЛИНДРА (LOW)
+	CALL OUT_A
+	LD BC,hddsec	;РЕГИСТР НОМЕРА СЕКТОРА
+	LD A,3		;НОМЕР СЕКТОРА
+	CALL OUT_A
+	LD BC,hddcount	;РЕГИСТР СЧЕТЧИКА СЕКТОРА
+	LD A,#30	;СКОЛЬКО СЕКТОРОВ  24K
+	CALL OUT_A
+	LD A,#20
+	CALL HDSC	;КОМАНДА "ЧИТАТЬ"
+	LD HL,#6000
+	PUSH HL
+	LD B,#30
+READ1	PUSH BC
+	CALL WAIT_DRQ
+;ЧИТАЕМ СЕКТОР
+	LD B,0
+READ_1	PUSH BC
+	LD BC,hdddatlo	;МЛАДШИЙ БАЙТ
+	INI
+	LD BC,hdddathi	;СТАРШИЙ БАЙТ
+	INI
+	POP BC
+	DJNZ READ_1
+        POP	    BC
+        DJNZ	   READ1
+        RET	
+
+;ОЖИДАНИЕ ГОТОВНОСТИ ПЕРЕДАЧИ ДАННЫХ
+WAIT_DRQ
+        CALL	IN_HDDSTAT
+        BIT	3,A
+        RET	NZ
+        JR	WAIT_DRQ
+
+;ПОСЛАТЬ КОМАНДЫ НА ВИНТ
+HDSC	PUSH AF
+	CALL SELDEVICE
+	POP AF
+	LD BC,hddcmd
+	CALL OUT_A
+;ОЖИДАНИЕ ОСВОБОЖДЕНИЯ УСТРОЙСТВА
+NO_BSY	CALL IN_HDDSTAT
+	RLCA
+	RET NC
+	JR NO_BSY
+
+IN_HDDSTAT
+	CALL SELDEVICE
+	LD BC,hddstat
+IN_A	IN A,(C)
+	RET	
+
+SELDEVICE
+devnum=$+1
+	LD A,device
+	LD BC,hddhead
+OUT_A	OUT (C),A
+	RET

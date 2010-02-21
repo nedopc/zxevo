@@ -1,0 +1,8 @@
+
+	
+	DEVICE ZXSPECTRUM48
+
+	
+	include "services.a80"
+	
+	SAVEBIN "..\services.rom",0,16384

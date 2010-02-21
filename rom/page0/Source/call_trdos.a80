@@ -1,0 +1,323 @@
+
+GET_1F	DI
+	LD IX,#2FC1	;OUT(1F),D0
+	CALL DOSIX
+	LD A,8
+	LD C,#1F
+	LD IX,#2A53	;OUT(C),A
+	CALL DOSIX
+	LD B,0
+	LD A,#FF
+	LD (#5CD8),A
+	CALL READ_1F
+	PUSH AF
+	LD A,#C9
+	LD (#5CC2),A
+	XOR A
+	LD IX,#1FF3	;OUT(FF),A
+	CALL DOSIX
+	LD IX,#1FEB	;OUT(FF),(5D16)|3C
+	CALL DOSIX
+	LD IX,#2FC1	;OUT(1F),D0
+	CALL DOSIX
+	POP AF
+	EI
+	RET
+
+READ_1F	LD (RD1F_SP+1),SP
+	LD A,#C3
+	LD (#5CC2),A
+	LD HL,RD1F_SP
+	LD (#5CC3),HL
+	LD IX,#2076
+	JP DOSIX
+
+RD1F_SP	LD SP,0
+	XOR A
+	RET
+
+g1Fknow	LD A,(yIKNOW)
+	AND A
+	RET Z
+	PUSH IX
+	CALL GET_1F
+	POP IX
+	LD HL,OLD_1F
+	CP (HL)
+	RET Z
+        POP HL
+_IKNOW	CALL GLUDIN
+	LD A,#C3
+	LD (#5CC2),A
+	LD HL,ONERR
+	LD (#5CC3),HL
+;	CALL S_FACE
+;	LD IX,mIKNOW
+;	CALL DRAWWIN
+;	CALL NAMEROM
+;	CALL PRINTTIME
+;	LD C,#3F
+;	XOR A
+;	LD IX,#2A53
+;	CALL DOSIX
+;	LD A,#5F
+;	CALL DOSIX
+;	LD C,#1F
+;	LD A,#0C
+;	CALL DOSIX
+;	LD IX,#3EF5
+;	CALL DOSIX
+GLUBOOT	LD HL,FLAGS
+	RES 3,(HL)
+	LD DE,0
+	LD HL,ADR_CAT
+	LD BC,#0905
+	CALL #3D13
+	LD A,(ADR_CAT+#8E7)
+	CP #10			;ОПХГМЮЙ TRDOS
+	JP NZ,_STUPID	
+	CALL GET_1F
+	LD (OLD_1F),A
+	LD IX,ADR_CAT
+	LD DE,ADR_CAT
+	LD A,(ADR_CAT+#8E4)
+	LD B,A			;яйнкэйн тюикнб опнялнрперэ
+	XOR A
+	LD (gBASICS),A
+	INC A
+	LD (yIKNOW),A
+	
+;онхяй аюяхй тюикнб мю дхяйе
+FINDBAS	PUSH BC
+	LD A,(IX+8)
+	CP "B"
+	JR NZ,NEXT_FILE
+	LD A,(IX)
+	DEC A
+	JR Z,NEXT_FILE
+	INC A
+	JR Z,END_CAT
+	PUSH IX
+	POP HL
+	LD BC,7
+	LDIR
+	LD A,(HL)
+	OR #80
+	LD (DE),A
+	INC DE
+	LD HL,gBASICS
+	INC (HL)
+NEXT_FILE	
+	LD BC,#10
+	ADD IX,BC
+	POP BC
+	DJNZ FINDBAS
+END_CAT	LD A,#FF
+	LD (DE),A		;ЙНМЕЖ ЙЮРЮКНЦЮ/НЙМЮ
+	LD A,(gBASICS)
+	AND A
+	JR Z,NO_BAS		;мхвецн ме мюидемн
+	CP f20			;опнбепйю мю опебшьемхъ бшянрш нймю
+	JP C,MALOBAS		;мюидемн йнк-бн лемее бшянрш нймю
+
+;еякх тюикнб анкэье бшянрш нймю, бшбндхл ббепус мнлеп нймю
+MNOGOBAS
+	LD HL,tBasNop
+	LD BC,8
+	LDIR
+	LD A,D
+	CP HIGH ADR_CAT+4
+	JR C,MNOGOBAS
+gBcat	LD HL,mBOOTWAS
+	LD DE,mPGBOOT
+	LD BC,mPGBln
+	LDIR
+	LD IX,mPGBOOT
+	LD A,f20
+	LD (aPGfiles),A
+	LD (IX+2),f20+2
+	LD A,(gBASICS)
+	LD (lb057),A
+	LD HL,ADR_CAT		;DE=buf98
+	CALL LDIR98FF
+	XOR A
+	LD (BOOTPG),A
+	ADD A,"0"
+	LD (tBOOTPG),A
+	LD HL,ADR_CAT+len98
+_67a4	LD (gCATBOT),HL
+	LD IX,mPGBOOT
+	CALL DRAWWIN
+	LD HL,(gCATBOT)
+	LD DE,buf98
+	CALL LDIR98FF
+	LD A,(lb057)
+	CP f20-1
+	JR NC,$+6
+	INC A
+	LD (aPGfiles),A
+	LD IX,aPGBOOT
+	JR _NKLILKA2
+
+;мх ндмнцн аюяхй тюикю ме мюидемн
+NO_BAS	LD HL,mBOOTWAS
+	LD DE,mBOOT
+	LD BC,mBOOTln
+	LDIR
+	LD IX,mBOOT
+	LD (IX+2),3
+	LD HL,NOBASIC
+	LD DE,buf98_2
+	LD C,#0C
+	CALL LDIRFF
+	CALL DRAWWIN
+	LD IX,aBOOT
+	LD A,1
+	LD (aBOfiles),A
+_NKLILKA2
+	LD (IX+5),1
+	JP _NKLILKA
+
+NXTPG_CAT		;бшбнд б нйме якедсчыеи вюярх дхп
+	LD A,(lb057)
+	CP f20
+	JP C,gBcat
+	LD HL,BOOTPG
+	INC (HL)
+	LD A,(HL)
+	ADD A,"0"
+	LD (tBOOTPG),A
+	LD HL,lb057
+	LD A,(HL)
+	SUB f20-1
+	LD (HL),A
+	LD HL,(gCATBOT)
+	LD DE,len98
+	ADD HL,DE
+	JP _67a4
+
+;еякх тюикнб лемэье бшянрш нймю бшбндхл яйнкэйн еярэ
+MALOBAS	LD HL,mBOOTWAS
+	LD DE,mBOOT
+	LD BC,mBOOTln
+	LDIR
+	LD HL,ADR_CAT
+	XOR A
+	LD (BOOTPG),A
+	LD IX,mBOOT		;DE=buf98_2
+	CALL LDIR98FF
+	LD A,(gBASICS)
+	LD (aBOfiles),A
+	ADD A,2
+	LD (IX+2),A
+	CALL DRAWWIN
+	LD IX,aBOOT
+	JR _NKLILKA2
+
+SelDrv	LD HL,RESTART
+	PUSH HL
+SELDRVPP			;A=drv
+	LD (DRV_SYM),A
+	LD L,A
+	LD A,(FLAGS)
+	AND 4
+	RET Z
+	LD H,#10
+	CALL READCMOS
+	RET M
+	LD H,#10
+	JP WRITECMOS
+
+;FIX mouse key if no mouse
+ONERNCLS
+	LD A,(FLAGS)
+	AND 2
+	JR Z,1F
+	LD A,#FA
+	IN A,(#DF)
+	RRA
+	JP NC,_STUPID
+1	POP AF
+	EX (SP),HL
+	RET
+
+;оепеубюр дхяйнбни ньхайх дкъ напюанрйх
+ONERR	EX (SP),HL
+	PUSH AF
+	LD A,H
+	CP HIGH #0D6B
+	JR NZ,ONERNCLS
+	LD A,L
+	CP LOW #0D6B
+	JR NZ,ONERNCLS
+	POP HL
+	POP HL
+	POP HL
+	POP HL
+	POP HL
+	EI
+	CALL GLUDIN
+	LD HL,#5CF4
+	LD A,(HL)
+	CALL DIV10
+	LD (tSECnr+1),A
+	LD A,D
+	LD (tSECnr),A
+	INC HL
+	LD A,(HL)
+	SRL A
+	LD E,A
+	ADC A,#B0
+	SUB E
+	LD (tTSspc),A
+	LD A,E
+	CALL DIV10
+	LD (tTRnr+1),A
+	LD A,D
+	LD (tTRnr),A
+	LD IX,mD_ERR
+	CALL DRAWWIN
+	LD IX,aD_ERR
+	JP _RULILKA
+
+resVG	LD C,#FF
+	XOR A
+	LD IX,#2A53		;OUT(C),A
+	CALL DOSIX
+	LD A,(DRV_SYM)
+	OR #3C
+	CALL DOSIX
+	LD A,#68		;ЬЮЦ МЮГЮД
+	LD C,#1F
+DOSIX	PUSH IX
+_3D2F	JP #3D2F
+
+FormTR	SRL A
+	LD (_phystr),A
+	RLA
+	LD C,2			;ОНГХЖХНМХП-Е МЮ КНЦ.tr A
+	CALL #3D13
+	LD A,#FF
+	LD (#5CD8),A
+	LD HL,SeCS
+	LD (#5CE6),HL
+	LD E,0
+_phystr	EQU $-1
+	LD IX,#1FFD		;format track
+	JR DOSIX
+
+DIV10	LD D,"0"-1
+	INC D
+	SUB #0A
+	JR NC,$-3
+	ADD A,#0A+"0"
+	RET
+
+_RETRY	LD A,"R"
+	JR $+4
+
+_IGNORE	LD A,"I"
+	LD HL,#3F7E
+	EX (SP),HL
+	DI
+	JR _3D2F

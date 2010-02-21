@@ -1,0 +1,378 @@
+
+;мю бунде: A-мнлеп бшапюммнцн сярпниярбю
+	DI
+	AND A
+	LD HL,READHDD
+	JR Z,1F
+	DEC A
+	LD HL,READNGS
+	JR Z,1F
+	LD HL,READ_SD
+1	LD (LOADSCS+1),HL	;сярюмнбхкх юдпея гюцпсгвхйю
+	EXA
+	AND A
+	LD A,#E0
+	JR Z,5F
+	LD A,#F0
+5	LD (MAS_SLA),A
+	CALL REALSEC		;опенапюгнбюкх б мнлеп яейрнпю
+	CALL LOADLST		;гюцпсгхкх б астеп
+	EXX
+	LD HL,(BUF_512+9)
+	LD (ASTART),HL		;сярюмнбйю юдпеяю гюцпсгйх
+	LD HL,(BUF_512+#0B)
+	LD (LENGHT),HL		;сярюмнбйю дкхмш тюикю б аюирюу
+	LD DE,#11
+	ADD HL,DE
+	LD A,L
+	AND A
+	JR Z,2F			;еякх лкюдьхи аюир ме 0
+	INC H			;ярюпьхи +1
+2	LD A,H
+	SRL A			;декхл мю 2 хан мю тюре яейрнп 512
+	ADC A,0			;свхршбюел вер/мевер
+	DEC A			;оепбши яейрнп гюцпсфем, цпсгхрэ мю 1 лемэье
+	EXX
+	JP Z,LDIRBUF		;еякх яейрнп 1 оепемня х гюосяй
+	LD LX,A			;гюонлмхкх йнкхвеярбн яейрнпнб-1
+	EXX
+	CALL LD_ONES		;оепемня нярюрйнб оепбнцн яейрнпю
+	PUSH DE			;юдпея йсдю дюкее цпсгхрэ
+	EXX
+	LD HL,1			;ндхм яейрнп сфе гюцпсфем
+	ADD HL,DE		;дюкее цпсгхрэ ян якедсчыецн яейрнпю 
+	EX DE,HL
+	JR NC,4F
+	INC BC			;BCDE=BCDE+1
+4	POP HL			;б HL юдпея дкъ опнднкфемхъ гюцпсгйх
+	LD IY,(BYTSSEC)		;LY=йнк-бн яейрнпнб б йкюярепе
+	LD A,LX
+	CP LY			;яейрнпнб нярюкняэ лемэье вел б йкюярепе
+	JR C,2F			;оепеунд мю днгюцпсгйс нярюрйю яейрнпнб
+	INC LX
+	LD A,LY
+	CP 2
+	JR C,1F
+	DEC A
+	JR 5F
+;	CALL LOADSCS
+;	LD A,LX
+;	SUB LY
+;	LD LX,A
+1	PUSH HL
+	CALL RDFATZP
+	CALL LST_CLS
+	POP HL
+	JR C,RUNLOAD
+	PUSH HL
+	CALL REALSEC
+	POP HL
+	LD A,LX
+	CP LY
+	JR C,2F
+	LD A,LY
+5	CALL LOADSCS
+	LD A,LX
+	SUB LY
+	JR Z,RUNLOAD
+	LD LX,A
+	JR 1B
+
+2	AND A
+	JR Z,3F
+	CALL LOADSCS
+3	PUSH HL
+	LD A,LX
+	DEC A
+	LD L,A
+	LD H,0
+	ADD HL,DE
+	EX DE,HL
+	JR NC,4F
+	INC BC
+4	CALL LOADLST
+	LD BC,0
+LENGHT	EQU $-2
+	EX DE,HL
+	LD HL,#11
+	ADD HL,BC
+	LD B,H
+	LD C,L
+	EX DE,HL
+	POP DE
+	LD A,B
+	AND 1
+	LD B,A
+	LDIR
+;гюосяй гюцпсфеммнцн
+RUNLOAD	LD HL,#2758		
+	EXX
+	LD IY,#5C3A
+	EI
+	JP 0
+ASTART	EQU $-2
+
+LDIRBUF	LD HL,#200-#11
+	LD DE,(BUF_512+#0B)
+	AND A
+	SBC HL,DE
+	JR NC,1F
+	CALL LD_ONES
+	JP RUNLOAD
+
+1F	LD HL,BUF_512+#11
+	LD DE,(BUF_512+9)
+	LD BC,(BUF_512+#0B)
+	LDIR
+	JP RUNLOAD
+
+;оепемня йсяйю хг сфе гюцпсфеммнцн яейрнпю, еякх тюик=501 аюир х лемее 
+LD_ONES	LD HL,BUF_512+#11
+	LD DE,(BUF_512+9)
+	LD BC,#200-#11
+	LDIR
+	RET
+
+;гюцпсгхрэ яейрнпю я бшапюммнцн сярпниярбю
+LOADSCS	JP 0
+
+LST_CLS LD A,(CAL_FAT):AND A
+        JR NZ,LST_CL1:LD HL,#0FF7
+        SBC HL,DE:RET
+
+LST_CL1 DEC A:JR NZ,LST_CL2:LD HL,#FFF7
+        SBC HL,DE:RET
+
+LST_CL2 LD HL,#0FFF:SBC HL,BC:RET NZ
+        LD HL,#FFF7:SBC HL,DE:RET
+
+RDFATZP LD BC,(AFILCLS+2)
+	LD DE,(AFILCLS)
+	LD A,(CAL_FAT):AND A
+        JR Z,RDFATS0:DEC A:JR Z,RDFATS1
+        EX DE,HL:ADD HL,HL:EX DE,HL
+        LD HL,0:ADC HL,BC,HL,BC
+        LD A,E,E,D,D,L,C,H,B,0
+        CALL RDFATS2:INC HL:LD C,(HL)
+        INC HL:LD B,(HL)
+1      	LD (AFILCLS+2),BC
+	LD (AFILCLS),DE
+	RET
+
+RDFATS1 LD BC,0,A,E,E,D,D,C
+RDFATS2 PUSH AF,BC:LD HL,FATSTR
+        CALL BCDEHLP,LOADLST:POP BC,AF
+        LD E,A,D,0:ADD HL,DE,HL,DE
+        LD E,(HL):INC HL:LD D,(HL):JR 1B
+
+RDFATS0 LD HL,DE:ADD HL,HL,HL,DE:SRL H
+        RR L:LD A,E,E,H,D,0,B,D,C,D
+        SRL E:PUSH AF,HL:LD HL,FATSTR
+        CALL BCDEHLP,LOADLST:POP BC
+        LD A,B:AND 1:LD B,A:ADD HL,BC
+        LD B,(HL):INC HL:LD A,H
+        CP HIGH BUF_512+2:JR NZ,RDFATS4
+        PUSH BC:LD BC,0:INC DE
+        CALL LOADLST:POP BC
+RDFATS4 POP AF:LD D,(HL),E,B,BC,0
+        RRA:JR NC,RDFATS3
+        DUP 4
+	SRL D:RR E
+	EDUP
+RDFATS3 LD A,D:AND #0F:LD D,A
+	JR 1B
+
+;бшвхякемхе пеюкэмнцн яейрнпю
+;мю бунде BCDE=мнлеп FAT
+;мю бшунде BCDE=юдпея яейрнпю
+REALSEC LD BC,(AFILCLS+2)
+	LD DE,(AFILCLS)
+	LD A,B:OR C,D,E:JR NZ,REALSE1
+        LD DE,(FATSTR),BC,(FATSTR+2)
+        LD HL,SEC_FAT:PUSH HL
+        CALL BCDEHLP:POP HL:JP BCDEHLP
+REALSE1 LD HL,#FFFE:EX DE,HL:ADD HL,DE
+        EX DE,HL:INC HL:ADC HL,BC
+;мнлеп йкюярепю-2
+        LD A,(BYTSSEC):JR $+10:SLA E
+        RL D,L,H:RRCA:JR NC,$-9
+;слмнфхкх мю пюглеп йкюярепю
+        LD BC,HL,HL,STARTRZ:CALL BCDEHLP
+;опхаюбхкх ялеыемхе нр мювюкю дхяйю
+        LD HL,FRSTDAT:JP BCDEHLP
+;опхаюбхкх ялеыемхе нр мювюкю пюгдекю
+
+BCDE200 LD E,D,D,C,C,B,B,0,A,2:JR BCDE_A
+;BCDE>>A=BCDE
+BCDE_A1 SRL B:RR C,D,E
+BCDE_A  RRCA:JR NC,BCDE_A1:RET
+
+;(ADR)-BCDE=BCDE
+BCDEHLM LD A,(HL):INC HL:SUB E:LD E,A
+        LD A,(HL):INC HL:SBC A,D:LD D,A
+        LD A,(HL):INC HL:SBC A,C:LD C,A
+        LD A,(HL):SBC A,B:LD B,A:RET
+
+;(ADR)+BCDE=BCDE
+BCDEHLP LD A,(HL):INC HL:ADD A,E:LD E,A
+        LD A,(HL):INC HL:ADC A,D:LD D,A
+        LD A,(HL):INC HL:ADC A,C:LD C,A
+        LD A,(HL):ADC A,B:LD B,A:RET
+
+;HLDE+BC=HLDE
+HLDEPBC EX DE,HL:ADD HL,BC:EX DE,HL
+        LD BC,0:ADC HL,BC:RET
+
+;гюцпсфюел яейрнп б астеп
+LOADLST LD HL,BUF_512:PUSH HL
+	LD A,1
+        CALL LOADSCS
+        POP HL:RET
+
+;================гюцпсгвхй я ZC SD йюпрнвйх===================
+READ_SD	PUSH AF:LD A,1:OUT (P_CONF),A
+        POP AF
+	EXA:LD A,CMD_18:CALL SECM200:EXA
+RDMULT1 EXA:CALL IN_OOUT:CP #FE
+        JR NZ,$-5
+        PUSH BC:LD BC,P_DATA:INIR:NOP
+        INIR:NOP:IN A,(C):NOP:IN A,(C)
+        POP BC:EXA:DEC A
+        JR NZ,RDMULT1:LD A,CMD_12
+        CALL OUT_COM,IN_OOUT:INC A
+        JR NZ,$-4
+	PUSH AF:LD A,3:OUT (P_CONF),A
+        XOR A:OUT (P_DATA),A:POP AF:RET
+
+SECM200 PUSH HL,DE,BC,AF,BC
+        LD A,CMD_58,BC,P_DATA
+        CALL OUT_COM,IN_OOUT:IN A,(C)
+        NOP:IN H,(C):NOP:IN H,(C):NOP
+        IN H,(C)
+        BIT 6,A:POP HL:JR NZ,SECN200
+        EX DE,HL:ADD HL,HL:EX DE,HL
+        ADC HL,HL:LD H,L,L,D,D,E,E,0
+SECN200 POP AF:LD BC,P_DATA:OUT (C),A
+        NOP:OUT (C),H:NOP:OUT (C),L:NOP
+        OUT (C),D:NOP:OUT (C),E:LD A,#FF
+        OUT (C),A:POP BC,DE,HL:RET
+
+OUT_COM PUSH BC
+	LD BC,P_DATA:OUT (C),A:XOR A
+        OUT (C),A:NOP:OUT (C),A:NOP
+        OUT (C),A:NOP:OUT (C),A
+        DEC A:OUT (C),A:POP BC:RET
+
+IN_OOUT PUSH DE:LD DE,#20FF
+IN_WAIT IN A,(P_DATA):CP E:JR NZ,IN_EXIT
+IN_NEXT DEC D:JR NZ,IN_WAIT
+IN_EXIT POP DE:RET
+;=========================================================
+
+;===============времхе я SD NEOGS=========================
+;времхе "A" яейрнпнб
+READNGS	EXA:LD A,3
+	CALL COMM2SD:EXA:PUSH DE,BC
+        LD BC,GSDAT
+SDRDSN1 EXA:OUT (GSCOM),A
+        CALL WC_:LD DE,#0200
+SDRDSN2 CALL WN_:INI:DEC DE:LD A,D:OR E
+        JR NZ,SDRDSN2:EXA:DEC A
+        JR NZ,SDRDSN1:CALL WN_
+        IN A,(C):CP #77:JR NZ,$-4
+        POP BC,DE:XOR A:RET
+
+;оепедюрвхй йнлюмд/оюпюлерпнб б дпюибеп мю NeoGS
+COMM2SD OUT (GSDAT),A			;ськю йнлюмдю дпюибепс
+        LD A,#1E:OUT (GSCOM),A:CALL WC_	;ськю йнлюмдю опньхбйе
+        LD A,B:OUT (GSDAT),A:CALL WD_	;ськх ахрш 31-24 оюпюлерпнб
+        LD A,C:OUT (GSDAT),A:CALL WD_	;ськх ахрш 23-16 оюпюлерпнб
+        LD A,D:OUT (GSDAT),A:CALL WD_	;ськх ахрш 15-8 оюпюлерпнб
+        LD A,E:OUT (GSDAT),A:CALL WD_	;ськх ахрш 7-0 оюпюлерпнб
+        EXA:OUT (GSDAT),A:EXA:RET	;ськн йнк-бн яейрнпнб
+
+;нфхдюмхе йнцдю NeoGS аюир гюаепер
+WD_     IN A,(GSCOM):RLA:JR C,$-3:RET
+
+;нфхдюмхе йнцдю NeoGS дюяр аюир
+WN_     IN A,(GSCOM):RLA:JR NC,$-3:RET
+
+;нфхдюмхе йнцдю NeoGS йнлюмдс гюаепер
+WC_     IN A,(GSCOM):RRA:JR C,$-3:RET
+;==========================================================
+
+;=======================времхе я HDD=======================
+P_1F7	EQU #F0
+;пецхярп янярнъмхъ/пецхярп йнлюмд
+P_1F6	EQU #D0
+;CHS-мнлеп цнкнбш х сярп/LBA юдпея 24-27
+P_1F5	EQU #B0
+;CHS-жхкхмдп 8-15/LBA юдпея 16-23
+P_1F4	EQU #90
+;CHS-жхкхмдп 0-7/LBA юдпея 8-15
+P_1F3	EQU #70
+;CHS-мнлеп яейрнпю/LBA юдпея 0-7
+P_1F2	EQU #50
+;явервхй яейрнпнб
+P_1F1	EQU #30
+;онпр ньханй/ябниярб
+P_1F0	EQU #10
+;онпр дюммшу
+P_3F6	EQU #C8
+;пецхярп янярнъмхъ/сопюбкемхъ
+P_HI	EQU #19
+;ярюпьхе 8 ахр
+PRT_RW	EQU P_1F0*256+P_HI
+;онпрш времхъ/гюохях ндмхл якнбнл
+
+READHDD	PUSH BC
+	PUSH DE
+	PUSH DE
+	EXA
+	LD A,B
+	LD E,C
+	LD BC,#FF00+P_1F6
+	OR 0
+MAS_SLA	EQU $-1
+	OUT (C),A
+	LD C,P_1F5
+	OUT (C),E
+	POP DE
+	LD C,P_1F4
+	OUT (C),D
+	LD C,P_1F3
+	OUT (C),E
+	LD C,P_1F2
+	OUT (C),A
+	LD C,P_1F7
+	LD A,#20
+	OUT (C),A
+	LD C,P_1F7
+HDDRD1	IN A,(C)
+	AND #88
+	CP 8
+	JR NZ,HDDRD1
+	EXA
+HDDRD2	EXA
+	LD DE,PRT_RW
+	LD A,#40
+READSC1	DUP 4
+	LD C,D
+	INI
+	LD C,E
+	INI
+	EDUP
+	DEC A
+	JR NZ,READSC1
+	LD C,P_1F7
+HDDRD3	IN A,(C)
+	AND #80
+	JR NZ,HDDRD3
+	EXA
+	DEC A
+	JR NZ,HDDRD2
+	POP DE
+	POP BC
+	XOR A
+	RET
+;=============================================================

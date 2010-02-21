@@ -1,0 +1,248 @@
+
+;НА ВХОДЕ: H-АДРЕС ЯЧЕЙКИ
+;	   H-ПРОЧИТАННОЕ ЗНАЧЕНИЕ
+READCMOS
+	DI
+	PUSH BC
+	LD BC,SYSREG_EFF7
+	LD A,(SYSREG1)
+	OR CMOS_ON
+	OUT (C),A
+	LD B,HIGH SET_ADR_CMOS
+	OUT (C),H
+	LD B,HIGH RD_WR_CMOS
+	IN H,(C)
+	POP BC
+	JR OFF_CMOS
+
+;НА ВХОДЕ: H-АДРЕС ЯЧЕЙКИ
+;	   L-ЧТО ТУДА ЗАПИСАТЬ
+WRITECMOS
+	DI
+	LD BC,SYSREG_EFF7
+	LD A,(SYSREG1)
+	OR CMOS_ON
+	OUT (C),A
+	LD B,HIGH SET_ADR_CMOS
+	OUT (C),H
+	LD A,L
+	LD B,HIGH RD_WR_CMOS
+	OUT (C),A
+OFF_CMOS
+	PUSH BC
+	LD A,(SYSREG1)
+	LD B,HIGH SYSREG_EFF7
+	OUT (C),A
+	POP BC
+	LD A,H
+	AND A
+	EI
+	RET
+
+CMOonof	LD H,0
+	CALL READCMOS
+	INC H
+	JP Z,RESTART
+	LD H,#11
+	CALL READCMOS
+	CPL
+	LD L,A
+	LD H,#11
+	CALL WRITECMOS
+	CALL GLUDIN
+	JP RESTART
+
+RDCMBCD PUSH HL
+	LD H,#0A
+	CALL READCMOS
+	RL H
+	POP HL
+	JR C,_af5e
+	CALL READCMOS
+	LD H,A
+	LD A,0		;0=BCD
+BCDon	EQU $-1
+	AND A
+	JR Z,_af5b	;dec to BCD
+	LD A,H
+	LD C,#FE
+	INC C
+	INC C
+	SUB #0A
+	JR NC,$-4
+	ADD A,#0A
+	RLC C
+	RLC C
+	RLC C
+	OR C
+	RET
+
+_af5b	LD A,H
+	AND A
+	RET
+
+_af5e	CALL OFF_CMOS
+	SCF
+	RET
+
+PRINTTIME
+	LD A,(FLAGS)
+	AND 4
+	RET Z
+	LD H,#0C
+	CALL READCMOS
+	INC H
+	RET Z
+	LD A,H
+	AND #10
+	RET Z
+	LD H,#11
+	CALL READCMOS
+	CP #55
+	RET Z
+	DI
+	EXX
+	CALL 1F
+	EXX
+	EI
+	RET
+	
+1	LD H,#0B
+	CALL RDCMBCD
+	LD DE,#5090
+	BIT 5,A		;разрешение прерыв-я от будильника
+	LD A,#0C	;G
+	CALL NZ,CMOSSYM
+	LD HL,#5AAC
+	LD E,L
+	LD BC,#0806
+	LD (HL),C
+	INC L
+	DJNZ $-2
+	LD L,#CC
+	LD B,8
+	LD (HL),C
+	INC L
+	DJNZ $-2
+	LD H,4
+	CALL TIM99
+	CALL TIMMIG
+	LD H,2
+	CALL TIM99
+	CALL TIMMIG
+	LD H,0
+	CALL TIM99
+	LD H,6
+	CALL RDCMBCD
+	LD HL,#4444
+	LD (#5AEF),HL
+	LD E,#EF
+	JR C,1F
+	LD HL,PnWtSr1	;for BCD
+adrPnWt	EQU $-2
+        ADD A,A
+	ADD A,L
+	LD L,A
+	JR NC,$+3
+	INC H
+	LD A,(HL)
+	INC HL
+	PUSH AF
+	LD A,(HL)
+	CALL CMOSSYM	;дн1
+	POP AF
+	CALL CMOSSYM	;дн2
+1	LD E,#CC
+	LD H,7		;DD
+	CALL TIM99
+	LD A,#0D	;.
+	CALL CMOSSYM
+	LD H,8		;MM
+	CALL TIM99
+	LD A,#0D	;.
+	CALL CMOSSYM
+	LD H,9		;YY
+TIM99	CALL RDCMBCD
+	JR CMOSBCD
+
+TIMMIG	LD H,0
+	CALL RDCMBCD
+	RRCA
+	LD A,#0A	;:
+	JR C,CMOSSYM
+	INC A		;spc
+	JR CMOSSYM
+
+iide	INC DE
+	INC DE
+	RET
+
+CMOSBCD	JR C,iide
+	PUSH AF
+	RRCA
+	RRCA
+	RRCA
+	RRCA
+	AND #0F
+	CALL CMOSSYM
+	POP AF
+	AND #0F
+CMOSSYM	PUSH DE
+	LD DE,CMOSFNT
+	ADD A,A
+	LD L,A
+	ADD A,A
+	ADD A,L
+	LD L,A
+	XOR A
+	LD H,A
+	ADD HL,DE
+	POP DE
+	LD B,6
+	LD C,D
+	LD (DE),A
+	INC D
+	LD A,(HL)
+	LD (DE),A
+	INC HL
+	INC D
+	DJNZ $-4
+	XOR A
+	LD (DE),A
+	LD D,C
+	INC E
+	RET
+	
+CMOSFNT	DB #7F,#63,#63,#63,#63,#7F
+	DB #18,#18,#18,#18,#18,#18
+	DB #7F,#03,#7F,#60,#60,#7F
+	DB #7F,#03,#0F,#03,#03,#7F
+	DB #63,#63,#63,#7F,#03,#03
+	DB #7F,#60,#7F,#03,#03,#7F
+	DB #7F,#60,#7F,#63,#63,#7F
+	DB #7E,#06,#06,#06,#06,#06
+	DB #7F,#63,#7F,#63,#63,#7F
+	DB #7F,#63,#63,#7F,#03,#7F
+	DB #1C,#1C,#00,#00,#1C,#1C	;:;A
+	DB #00,#00,#00,#00,#00,#00	;B
+	DB #7E,#81,#9F,#91,#81,#7E	;G;C
+	DB #00,#00,#00,#1C,#1C,#1C	;.;D
+	DB #00,#00,#7E,#42,#42,#42	;п;E
+	DB #00,#00,#42,#7E,#42,#42	;н;F
+	DB #00,#00,#70,#7E,#42,#7E	;в;10
+	DB #00,#00,#3E,#08,#08,#08	;т;11
+	DB #00,#00,#7E,#40,#40,#7E	;с;12
+	DB #00,#00,#7E,#42,#7E,#40	;р;13
+	DB #00,#3C,#40,#7C,#42,#7C	;б;14
+	DB #00,#00,#42,#42,#7E,#02	;ч;15
+
+	DW #1012	;еще один ВС я добавил на всяк.сл.
+PnWtSr0	EQU $-4		;for not BCD
+PnWtSr1	EQU $-2		;for BCD
+	DW #0E0F
+	DW #1011
+	DW #1213
+	DW #1511
+	DW #0E11
+	DW #1214
+	DW #1012
