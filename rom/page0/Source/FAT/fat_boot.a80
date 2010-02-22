@@ -185,10 +185,18 @@ RUN_HOB	DI
 	LD C,A
 	LD B,0
 	ADD HL,BC
-	INC HL
-	LD A,(HL)
+	LD A,(HL)	;бгъкх рхо пюгдекю
+	SUB 4		;опносяйюел дхяйнбндш
+	LD E,2		;рхо 4-SD йюпрю мю Z-йнмрпнккепе
+	JR Z,1F
+	DEC A		
+	LD E,1		;рхо 5-SD йюпрю мю NEOGS
+	JR Z,1F
+	LD E,0		;рхо 6-бхмвеяреп
+1	INC HL
+	LD A,(HL)	;бгъкх леярнонкнфемхе мняхрекъ
 	EXA
-	LD A,D		;мнлеп рейсыецн сярпниярбю б "A"
+	LD A,E		;мнлеп рейсыецн сярпниярбю б "A"
 	LD HL,#5800
 	LD DE,#5801
 	LD BC,#02FF
