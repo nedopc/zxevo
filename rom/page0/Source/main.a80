@@ -2,7 +2,7 @@
 ;VERSION
 g1		EQU "0"
 g2		EQU "1"
-g3		EQU "1"
+g3		EQU "2"
 
 ;ЯУЕЛЮ Nemo:
 hddstat		EQU #F0
@@ -263,12 +263,12 @@ BOOTRUN	CALL GLUDIN
 	LD A,(gBASICS)
 	AND A
 	JP Z,_IKNOW
+	DI
+	CALL SHUT2AY		;аслйюкйю б AY
+	CALL MEMSET		;бшярюбхкх пефхл йнлою
 	LD A,(FLAGS)
 	AND 8
 	JP NZ,RUN_HOB		;оепеундхл мю гюосяй унаерш я тюрю
-	DI
-	CALL SHUT2AY		;аслйюкйю б AY
-	CALL MEMSET
 	LD DE,ADR_CAT
 	LD A,(BOOTPG)
 	LD B,A
