@@ -2,7 +2,7 @@
 ;VERSION
 g1		EQU "0"
 g2		EQU "1"
-g3		EQU " "
+g3		EQU "1"
 
 ;схема Nemo:
 hddstat		EQU #F0
