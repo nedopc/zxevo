@@ -194,8 +194,8 @@ module top(
 	wire genrst;
 
 	resetter myrst( .clk(fclk),
-					.rst_in_n(~genrst),
-					.rst_out_n(rst_n) );
+	                .rst_in_n(~genrst),
+	                .rst_out_n(rst_n) );
 	defparam myrst.RST_CNT_SIZE = 6;
 
 
@@ -253,13 +253,13 @@ module top(
 
 
 	assign rompg0_n = ~rompg[0];
-	assign dos_n	=  rompg[1];
-	assign rompg2	=  rompg[2];
-	assign rompg3	=  rompg[3];
-	assign rompg4	=  rompg[4];
+	assign dos_n    =  rompg[1];
+	assign rompg2   =  rompg[2];
+	assign rompg3   =  rompg[3];
+	assign rompg4   =  rompg[4];
 
 	zclock z80clk( .fclk(fclk), .rst_n(rst_n), .zclk(zclk), .rfsh_n(rfsh_n), .zclk_out(clkz_out),
-				   .turbo( {1'b0,~(peff7[4]|dos)} ), .pre_cend(pre_cend), .cbeg(cbeg) );
+	               .turbo( {1'b0,~(peff7[4]|dos)} ), .pre_cend(pre_cend), .cbeg(cbeg) );
 
 
 
@@ -280,16 +280,16 @@ module top(
 
 
 	zbus zxbus( .iorq_n(iorq_n), .rd_n(rd_n), .wr_n(wr_n), .m1_n(m1_n),
-				.iorq1_n(iorq1_n), .iorq2_n(iorq2_n), .iorqge1(iorqge1), .iorqge2(iorqge2),
-				.porthit(porthit), .drive_ff(drive_ff) );
+	            .iorq1_n(iorq1_n), .iorq2_n(iorq2_n), .iorqge1(iorqge1), .iorqge2(iorqge2),
+	            .porthit(porthit), .drive_ff(drive_ff) );
 
 
 
 	zmem z80mem( .fclk(fclk), .rst_n(rst_n), .zpos(1'b0), .zneg(1'b0),
-				 .cend(cend), .pre_cend(pre_cend), .za(a), .zd_in(d),
-				 .zd_out(dout_ram), .zd_ena(ena_ram), .m1_n(m1_n),
-				 .rfsh_n(rfsh_n), .iorq_n(iorq_n), .mreq_n(mreq_n),
-				 .rd_n(rd_n), .wr_n(wr_n),
+	             .cend(cend), .pre_cend(pre_cend), .za(a), .zd_in(d),
+	             .zd_out(dout_ram), .zd_ena(ena_ram), .m1_n(m1_n),
+	             .rfsh_n(rfsh_n), .iorq_n(iorq_n), .mreq_n(mreq_n),
+	             .rd_n(rd_n), .wr_n(wr_n),
 
 	.win0_romnram(~peff7[3]), // was 1'b1
 	.win1_romnram(1'b0),
@@ -332,24 +332,24 @@ module top(
 
 
 	dram dramko( .clk(fclk),
-				 .rst_n(rst_n),
+	             .rst_n(rst_n),
 
-				 .addr(daddr),
-				 .req(dreq),
-				 .rnw(drnw),
-				 .cbeg(cbeg),
-				 .rrdy(drrdy),
-				 .rddata(drddata),
-				 .wrdata(dwrdata),
-				 .bsel(dbsel),
+	             .addr(daddr),
+	             .req(dreq),
+	             .rnw(drnw),
+	             .cbeg(cbeg),
+	             .rrdy(drrdy),
+	             .rddata(drddata),
+	             .wrdata(dwrdata),
+	             .bsel(dbsel),
 
-				 .ra(ra),
-				 .rd(rd),
-				 .rwe_n(rwe_n),
-				 .rucas_n(rucas_n),
-				 .rlcas_n(rlcas_n),
-				 .rras0_n(rras0_n),
-				 .rras1_n(rras1_n) );
+	             .ra(ra),
+	             .rd(rd),
+	             .rwe_n(rwe_n),
+	             .rucas_n(rucas_n),
+	             .rlcas_n(rlcas_n),
+	             .rras0_n(rras0_n),
+	             .rras1_n(rras1_n) );
 
 
 	wire [1:0] bw;
@@ -360,135 +360,137 @@ module top(
 	wire video_next;
 
 	arbiter dramarb( .clk(fclk),
-					 .rst_n(rst_n),
+	                 .rst_n(rst_n),
 
-					 .dram_addr(daddr),
-					 .dram_req(dreq),
-					 .dram_rnw(drnw),
-					 .dram_cbeg(cbeg),
-					 .dram_rrdy(drrdy),
-					 .dram_bsel(dbsel),
-					 .dram_rddata(drddata),
-					 .dram_wrdata(dwrdata),
+	                 .dram_addr(daddr),
+	                 .dram_req(dreq),
+	                 .dram_rnw(drnw),
+	                 .dram_cbeg(cbeg),
+	                 .dram_rrdy(drrdy),
+	                 .dram_bsel(dbsel),
+	                 .dram_rddata(drddata),
+	                 .dram_wrdata(dwrdata),
 
-					 .cend(cend),
-					 .pre_cend(pre_cend),
+	                 .cend(cend),
+	                 .pre_cend(pre_cend),
 
-					 .go(go),
-					 .bw(bw),
+	                 .go(go),
+	                 .bw(bw),
 
-					 .video_addr(video_addr),
-					 .video_data(video_data),
-					 .video_strobe(video_strobe),
-					 .video_next(video_next),
+	                 .video_addr(video_addr),
+	                 .video_data(video_data),
+	                 .video_strobe(video_strobe),
+	                 .video_next(video_next),
 
-					 //.cpu_waitcyc(cpu_waitcyc),
-					 //.cpu_stall(cpu_stall),
-					 .cpu_req(cpu_req),
-					 .cpu_rnw(cpu_rnw),
-					 .cpu_addr(cpu_addr),
-					 .cpu_wrbsel(cpu_wrbsel),
-					 .cpu_wrdata(cpu_wrdata),
-					 .cpu_rddata(cpu_rddata),
-					 .cpu_strobe(cpu_strobe) );
+	                 //.cpu_waitcyc(cpu_waitcyc),
+	                 //.cpu_stall(cpu_stall),
+	                 .cpu_req(cpu_req),
+	                 .cpu_rnw(cpu_rnw),
+	                 .cpu_addr(cpu_addr),
+	                 .cpu_wrbsel(cpu_wrbsel),
+	                 .cpu_wrdata(cpu_wrdata),
+	                 .cpu_rddata(cpu_rddata),
+	                 .cpu_strobe(cpu_strobe) );
 
-//----------------------------------------------------------------------------
 
-	wire vpix,line_start,int_start;
+	wire vga_hsync,hsync,hblank,hpix,hsync_start,line_start,hint_start,scanin_start,scanout_start;
+
+	synch horiz_sync( .clk(fclk), .init(1'b0), .cend(cend), .pre_cend(pre_cend),
+	                  .hsync(hsync), .hblank(hblank), .hpix(hpix), .hsync_start(hsync_start),
+	                  .line_start(line_start), .hint_start(hint_start), .scanin_start(scanin_start) );
+
+
+	wire vblank,vsync,int_start,vpix;
+
+	syncv vert_sync( .clk(fclk), .hsync_start(hsync_start), .line_start(line_start),
+	                 .vblank(vblank), .vsync(vsync), .int_start(int_start),
+	                 .vpix(vpix), .hint_start(hint_start) );
+
+	vga_synch vga_synch( .clk(fclk), .hsync_start(hsync_start), .vga_hsync(vga_hsync), .scanout_start(scanout_start) );
+
+
+
 	wire [5:0] pixel;
 
-	video vid	  ( .clk(fclk),
-					.init(1'b0),
-					.cend(cend),
-					.pre_cend(pre_cend),
-
-					.pixel(pixel),
-					.border({ border[1],1'b0,border[2],1'b0,border[0],1'b0 }),
-
-					.vpix(vpix),
-					.line_start(line_start),
-					.int_start(int_start),
-
-					.cfg_vga_on(cfg_vga_on),
-					.cfg_border320x240(1'b0),	// border limit 320x240 (640x480 in VGAmode)
-					.cfg_border_edge(1'b0), 	// frame on border edge
-					.cfg_hsync_polarity(1'b0),	// H.Sync polarity (0==positive)
-					.cfg_vsync_polarity(1'b0),	// V.Sync polarity (0==positive)
-
-					.out_hsync(vhsync),
-					.out_vsync(vvsync),
-					.out_csync(vcsync),
-					.out_video_r(vred),
-					.out_video_g(vgrn),
-					.out_video_b(vblu)
-				  );
-
 	fetch fecher( .clk(fclk), .cend(cend), .line_start(line_start), .vpix(vpix), .int_start(int_start),
-				  .vmode( {peff7[0],peff7[5]} ), .screen(p7ffd[3]), .video_addr(video_addr), .video_data(video_data),
-				  .video_strobe(video_strobe), .video_next(video_next), .go(go), .bw(bw), .pixel(pixel) );
+	              .vmode( {peff7[0],peff7[5]} ), .screen(p7ffd[3]), .video_addr(video_addr), .video_data(video_data),
+	              .video_strobe(video_strobe), .video_next(video_next), .go(go), .bw(bw), .pixel(pixel) );
 
-//----------------------------------------------------------------------------
+
+
+
+	videoout vidia( .clk(fclk), .pixel(pixel), .border({ border[1],1'b0,border[2],1'b0,border[0],1'b0 }),
+	                .hblank(hblank), .vblank(vblank), .hpix(hpix), .vpix(vpix), .hsync(hsync), .vsync(vsync),
+	                .vred(vred), .vgrn(vgrn), .vga_hsync(vga_hsync), .vblu(vblu),
+	                .vhsync(vhsync), .vvsync(vvsync), .vcsync(vcsync), .hsync_start(hsync_start),
+	                .scanin_start(scanin_start), .scanout_start(scanout_start), .cfg_vga_on(cfg_vga_on) );
+
+
+
+
+
+
 
 	slavespi slavespi( .fclk(fclk), .rst_n(rst_n),
-					   .spics_n(spics_n), .spidi(spidi),
-					   .spido(spido), .spick(spick),
-					   .status_in({wait_rnw, waits[6:0]}), .genrst(genrst),
-					   .rstrom(rstrom), .kbd_out(kbd_data),
-					   .kbd_stb(kbd_stb), .mus_out(mus_data),
-					   .mus_xstb(mus_xstb), .mus_ystb(mus_ystb),
-					   .mus_btnstb(mus_btnstb), .kj_stb(kj_stb),
-					   .gluclock_addr(gluclock_addr),
-					   .wait_write(wait_write),
-					   .wait_read(wait_read),
-					   .wait_rnw(wait_rnw),
-					   .wait_end(wait_end),
-					   .config0( { not_used[7:2], set_nmi, cfg_vga_on} )
-					 );
+	                   .spics_n(spics_n), .spidi(spidi),
+	                   .spido(spido), .spick(spick),
+	                   .status_in({wait_rnw, waits[6:0]}), .genrst(genrst),
+	                   .rstrom(rstrom), .kbd_out(kbd_data),
+	                   .kbd_stb(kbd_stb), .mus_out(mus_data),
+	                   .mus_xstb(mus_xstb), .mus_ystb(mus_ystb),
+	                   .mus_btnstb(mus_btnstb), .kj_stb(kj_stb),
+	                   .gluclock_addr(gluclock_addr),
+	                   .wait_write(wait_write),
+	                   .wait_read(wait_read),
+	                   .wait_rnw(wait_rnw),
+	                   .wait_end(wait_end),
+	                   .config0( { not_used[7:2], set_nmi, cfg_vga_on} )
+	                 );
 
 	zkbdmus zkbdmus( .fclk(fclk), .rst_n(rst_n),
-					 .kbd_in(kbd_data), .kbd_stb(kbd_stb),
-					 .mus_in(mus_data), .mus_xstb(mus_xstb),
-					 .mus_ystb(mus_ystb), .mus_btnstb(mus_btnstb),
-					 .kj_stb(kj_stb), .kj_data(kj_port_data),
-					 .zah(a[15:8]), .kbd_data(kbd_port_data),
-					 .mus_data(mus_port_data)
-				   );
+	                 .kbd_in(kbd_data), .kbd_stb(kbd_stb),
+	                 .mus_in(mus_data), .mus_xstb(mus_xstb),
+	                 .mus_ystb(mus_ystb), .mus_btnstb(mus_btnstb),
+	                 .kj_stb(kj_stb), .kj_data(kj_port_data),
+	                 .zah(a[15:8]), .kbd_data(kbd_port_data),
+	                 .mus_data(mus_port_data)
+	               );
 
 
 	zports porty( .clk(zclk), .fclk(fclk), .rst_n(rst_n), .din(d), .dout(dout_ports), .dataout(ena_ports),
-				  .a(a), .iorq_n(iorq_n), .rd_n(rd_n), .wr_n(wr_n), .porthit(porthit),
-				  .ay_bdir(ay_bdir), .ay_bc1(ay_bc1), .border(border), .beep(beep),
-				  .p7ffd(p7ffd), .peff7(peff7), .mreq_n(mreq_n), .m1_n(m1_n), .dos(dos),
-				  .rstrom(rstrom), .vg_intrq(intrq), .vg_drq(drq), .vg_wrFF(vg_wrFF),
-				  .vg_cs_n(vg_cs_n), .sd_start(sd_start), .sd_dataout(sd_dataout),
-				  .sd_datain(sd_datain), .sdcs_n(sdcs_n),
-				  .idein(idein), .ideout(ideout), .idedataout(idedataout),
-				  .ide_a(ide_a), .ide_cs0_n(ide_cs0_n), .ide_cs1_n(ide_cs1_n),
-				  .ide_wr_n(ide_wr_n), .ide_rd_n(ide_rd_n),
+	              .a(a), .iorq_n(iorq_n), .rd_n(rd_n), .wr_n(wr_n), .porthit(porthit),
+	              .ay_bdir(ay_bdir), .ay_bc1(ay_bc1), .border(border), .beep(beep),
+	              .p7ffd(p7ffd), .peff7(peff7), .mreq_n(mreq_n), .m1_n(m1_n), .dos(dos),
+	              .rstrom(rstrom), .vg_intrq(intrq), .vg_drq(drq), .vg_wrFF(vg_wrFF),
+	              .vg_cs_n(vg_cs_n), .sd_start(sd_start), .sd_dataout(sd_dataout),
+	              .sd_datain(sd_datain), .sdcs_n(sdcs_n),
+	              .idein(idein), .ideout(ideout), .idedataout(idedataout),
+	              .ide_a(ide_a), .ide_cs0_n(ide_cs0_n), .ide_cs1_n(ide_cs1_n),
+	              .ide_wr_n(ide_wr_n), .ide_rd_n(ide_rd_n),
 
-				  .keys_in(kbd_port_data),
-				  .mus_in(mus_port_data),
-				  .kj_in(kj_port_data),
+	              .keys_in(kbd_port_data),
+	              .mus_in(mus_port_data),
+	              .kj_in(kj_port_data),
 
-				  .gluclock_addr(gluclock_addr),
-				  .wait_start_gluclock(wait_start_gluclock),
-				  .wait_rnw(wait_rnw),
-				  .wait_write(wait_write),
-				  .wait_read(wait_read)
-				);
+	              .gluclock_addr(gluclock_addr),
+	              .wait_start_gluclock(wait_start_gluclock),
+	              .wait_rnw(wait_rnw),
+	              .wait_write(wait_write),
+	              .wait_read(wait_read)
+	            );
 
 
 	zint preryv( .fclk(fclk), .zclk(zclk), .int_start(int_start), .iorq_n(iorq_n), .m1_n(m1_n),
-				 .int_n(int_n) );
+	             .int_n(int_n) );
 
 
 
 	zwait zwait( .wait_start_gluclock(wait_start_gluclock),
-				 .wait_end(wait_end),
-				 .rst_n(rst_n),
-				 .wait_n(wait_n),
-				 .waits(waits),
-				 .spiint_n(spiint_n) );
+	             .wait_end(wait_end),
+	             .rst_n(rst_n),
+	             .wait_n(wait_n),
+	             .waits(waits),
+	             .spiint_n(spiint_n) );
 
 	assign wait_n = 1'bZ;
 
@@ -500,17 +502,17 @@ module top(
 	assign vg_a[1] = vg_ddrv[1] ? 1'b1 : 1'b0;
 
 	vg93 vgshka( .zclk(zclk), .rst_n(rst_n), .fclk(fclk), .vg_clk(vg_clk),
-				 .vg_res_n(vg_res_n), .din(d), .intrq(intrq), .drq(drq), .vg_wrFF(vg_wrFF),
-				 .vg_hrdy(vg_hrdy), .vg_rclk(vg_rclk), .vg_rawr(vg_rawr), .vg_a(vg_ddrv),
-				 .vg_wrd(vg_wrd), .vg_side(vg_side), .step(step), .vg_sl(vg_sl), .vg_sr(vg_sr),
-				 .vg_tr43(vg_tr43), .rdat_n(rdat_b_n), .vg_wf_de(vg_wf_de), .vg_drq(vg_drq),
-				 .vg_irq(vg_irq), .vg_wd(vg_wd) );
+	             .vg_res_n(vg_res_n), .din(d), .intrq(intrq), .drq(drq), .vg_wrFF(vg_wrFF),
+	             .vg_hrdy(vg_hrdy), .vg_rclk(vg_rclk), .vg_rawr(vg_rawr), .vg_a(vg_ddrv),
+	             .vg_wrd(vg_wrd), .vg_side(vg_side), .step(step), .vg_sl(vg_sl), .vg_sr(vg_sr),
+	             .vg_tr43(vg_tr43), .rdat_n(rdat_b_n), .vg_wf_de(vg_wf_de), .vg_drq(vg_drq),
+	             .vg_irq(vg_irq), .vg_wd(vg_wd) );
 
 
 
 
 	spi2 zspi( .clock(fclk), .sck(sdclk), .sdo(sddo), .sdi(sddi), .start(sd_start),
-			   .speed(2'b00), .din(sd_datain), .dout(sd_dataout) );
+	           .speed(2'b00), .din(sd_datain), .dout(sd_dataout) );
 
 endmodule
 
