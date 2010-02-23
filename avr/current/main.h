@@ -7,6 +7,7 @@
  * @section history Revision history
  *
  * @subsection current Current version.
+ * - Fix mapping gluk (DS12887) nvram to PCF8583.
  * - Fix Update Flag in register C (emulation Gluk clock).
  * - Add modes register and save/restore it to RTC NVRAM.
  * - Add support for zx (mechanical) keyboard.

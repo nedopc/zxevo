@@ -9,7 +9,7 @@
 #include "rtc.h"
 #include "rs232.h"
 
-volatile UBYTE gluk_regs[16];
+volatile UBYTE gluk_regs[14];
 
 //stop transmit
 #define tw_send_stop() {TWCR = (1<<TWINT)|(1<<TWEN)|(1<<TWSTO);}
@@ -303,7 +303,9 @@ UBYTE gluk_get_reg(UBYTE index)
 	else
 	{
 		//other from nvram
-		return rtc_read(index&0x3F);
+		//- on PCF8583 nvram started from #10
+		//- on 512vi1[DS12887] nvram started from #0E
+		return rtc_read( (index&0x3F)+2 );
 	}
 }
 
@@ -348,6 +350,8 @@ void gluk_set_reg(UBYTE index, UBYTE data)
 	else
 	{
 		//write to nvram
-		rtc_write(index&0x3F, data);
+		//- on PCF8583 nvram started from #10
+		//- on 512vi1[DS12887] nvram started from #0E
+		rtc_write( (index&0x3F)+2, data);
 	}
 }
