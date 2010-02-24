@@ -2,19 +2,23 @@
 ;мю бунде: A-мнлеп бшапюммнцн сярпниярбю
 	DI
 	AND A
-	LD HL,READHDD
+	LD HL,READ_SD
 	JR Z,1F
 	DEC A
 	LD HL,READNGS
 	JR Z,1F
-	LD HL,READ_SD
+	DEC A
+	LD HL,RD_HDDN
+	JR Z,1F
+	LD HL,RD_HDDS	
 1	LD (LOADSCS+1),HL	;сярюмнбхкх юдпея гюцпсгвхйю
 	EXA
 	AND A
 	LD A,#E0
 	JR Z,5F
 	LD A,#F0
-5	LD (MAS_SLA),A
+5	LD (MASSLAN),A
+	LD (MASSLAS),A
 	CALL REALSEC		;опенапюгнбюкх б мнлеп яейрнпю
 	CALL LOADLST		;гюцпсгхкх б астеп
 	EXX
@@ -301,7 +305,7 @@ WN_     IN A,(GSCOM):RLA:JR NC,$-3:RET
 WC_     IN A,(GSCOM):RRA:JR C,$-3:RET
 ;==========================================================
 
-;=======================времхе я HDD=======================
+;==================времхе я NEMO HDD=======================
 P_1F7	EQU #F0
 ;пецхярп янярнъмхъ/пецхярп йнлюмд
 P_1F6	EQU #D0
@@ -325,7 +329,7 @@ P_HI	EQU #19
 PRT_RW	EQU P_1F0*256+P_HI
 ;онпрш времхъ/гюохях ндмхл якнбнл
 
-READHDD	PUSH BC
+RD_HDDN	PUSH BC
 	PUSH DE
 	PUSH DE
 	EXA
@@ -333,7 +337,7 @@ READHDD	PUSH BC
 	LD E,C
 	LD BC,#FF00+P_1F6
 	OR 0
-MAS_SLA	EQU $-1
+MASSLAN	EQU $-1
 	OUT (C),A
 	LD C,P_1F5
 	OUT (C),E
@@ -375,4 +379,72 @@ HDDRD3	IN A,(C)
 	POP BC
 	XOR A
 	RET
+;=============================================================
+
+;==================времхе ян ялсй бхмрю=======================
+PS1F7   EQU #FF;#FFBE
+;пецхярп янярнъмхъ/пецхярп йнлюмд
+PS1F6   EQU #FE;#FEBE
+;CHS-мнлеп цнкнбш х сярп/LBA юдпея 24-27
+PS1F5   EQU #FD;#FDBE
+;CHS-жхкхмдп 8-15/LBA юдпея 16-23
+PS1F4   EQU #FC;#FCBE
+;CHS-жхкхмдп 0-7/LBA юдпея 8-15
+PS1F3   EQU #FB;#FBBE
+;CHS-мнлеп яейрнпю/LBA юдпея 0-7
+PS1F2   EQU #FA;#FABE
+;явервхй яейрнпнб
+PS1F1   EQU #F9;#F9BE
+;онпр ньханй/ябниярб
+PS1F0   EQU #F8;#F8BE
+;онпр дюммшу
+PS3F6   EQU #FE;#FEBE
+;пецхярп янярнъмхъ/сопюбкемхъ
+PSHI    EQU #D8;#D8BE
+;ярюпьхе 8 ахр
+PRTSRW  EQU PS1F0*256+PSHI
+;онпрш времхъ/гюохях ндмхл якнбнл
+LOW_PRT EQU #BE
+;лкюдьхи аюир юдпеяю SMUC IDE
+SMUCSYS EQU #FFBA
+;яхярелмши онпр SMUC
+SMUCVER EQU #5FBA
+;онпр бепяхх SMUC
+
+RD_HDDS	PUSH BC,DE:CALL SETSREG:EXA
+        LD B,PS1F7,A,#20:CALL SOUTPRT
+        LD B,PS1F7
+HDSRDM2 CALL SINPRT:AND #88:CP 8
+        JR NZ,HDSRDM2:EXA
+HDSRDM1 PUSH AF
+	LD DE,PRTSRW,A,#40
+RDCSSC1 EXA
+	DUP 4
+        LD B,D:CALL SINPRT:LD (HL),A
+        INC HL:LD B,E:CALL SINPRT
+        LD (HL),A:INC HL
+        EDUP
+        EXA:DEC A:JR NZ,RDCSSC1
+	LD B,PS1F7
+HDSRDM3 CALL SINPRT:AND #80
+        JR NZ,HDSRDM3:POP AF
+        DEC A:JR NZ,HDSRDM1
+        POP DE,BC:RET
+
+SETSREG PUSH DE:LD DE,BC:EXA
+        LD BC,(PS1F6*#0100)+LOW_PRT,A,D
+	OR 0
+MASSLAS	EQU $-1
+        CALL SOUTPRT
+        LD B,PS1F5,A,E:CALL SOUTPRT
+        POP DE:LD B,PS1F4,A,D
+        CALL SOUTPRT:LD B,PS1F3:LD A,E
+        CALL SOUTPRT:LD B,PS1F2:EXA
+
+SOUTPRT PUSH HL:LD HL,#3FF0:EX (SP),HL
+        JP #3D2F
+
+SINPRT  PUSH HL:LD HL,#3FF3:EX (SP),HL
+        JP #3D2F
+
 ;=============================================================

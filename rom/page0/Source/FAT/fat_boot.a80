@@ -35,10 +35,11 @@ FATBOOT	LD HL,FLAGS
 	ADD A,2
 	LD (mBOOT+2),A	;онкнфхкх бшянрс нймю
 	LD DE,6
-WFATC1	LD C,(HL)	;бгъкх рхо пюгдекю
+WFATC1	LD A,(HL)	;бгъкх рхо пюгдекю
 	INC HL
-	LD A,(HL)	;MASTER хкх SLAVE
+	LD C,(HL)	;MASTER хкх SLAVE
 	INC HL
+	ADD A,C
 	ADD A,C
 	EXX
 	SUB 4		;-4 хан дхяйнбндш ме свхршбючряъ
@@ -59,7 +60,7 @@ WFATC1	LD C,(HL)	;бгъкх рхо пюгдекю
 	AND #1F
 	ADD A,#45	;асйбю мюидеммнцн сярпниярбю
 	EXX
-	LD (DE),A	;онкнфхкх асйбс мюидеммн сярпниярбю
+	LD (DE),A	;онкнфхкх асйбс мюидемнцн сярпниярбю
 	INC DE
 	LDIR		;оеперюыхкх онкмне хлъ сярпниярбю
 ;	EXX
@@ -118,10 +119,12 @@ fBOOT	EQU $-2
 
 TXT4MENU_DEVICE;рейяр дкъ нрнапюфемхъ мюидеммшу пюгдекнб, он 16 аюир ярпнйю
 	   ;1234567890123456
-	DC ":ZContr  SDCard "
-	DC ":NeoGS   SDCard "
-	DC ":HDDNemo MASTER "
-	DC ":HDDNemo  SLAVE "
+	DC ":ZContr  SDCard "	;4
+	DC ":NeoGS   SDCard "	;5
+	DC ":HDDNemo MASTER "	;6-MASTER
+	DC ":HDDSmuc MASTER "	;7-SLAVE
+	DC ":HDDNemo  SLAVE "	;6-MASTER
+	DC ":HDDSmuc  SLAVE "	;7-SLAVE
 	
 TXT4MENU_TYPE;рхо пюгдекю
 	DC "FAT12"
@@ -187,16 +190,10 @@ RUN_HOB	DI
 	ADD HL,BC
 	LD A,(HL)	;бгъкх рхо пюгдекю
 	SUB 4		;опносяйюел дхяйнбндш
-	LD E,2		;рхо 4-SD йюпрю мю Z-йнмрпнккепе
-	JR Z,1F
-	DEC A		
-	LD E,1		;рхо 5-SD йюпрю мю NEOGS
-	JR Z,1F
-	LD E,0		;рхо 6-бхмвеяреп
-1	INC HL
-	LD A,(HL)	;бгъкх леярнонкнфемхе мняхрекъ
+	EXA		;мнлеп рейсыецн сярпниярбю б "A"
+	INC HL
+	LD A,(HL)	;бгъкх леярнонкнфемхе мняхрекъ (MASTER/SLAVE)
 	EXA
-	LD A,E		;мнлеп рейсыецн сярпниярбю б "A"
 	LD HL,#5800
 	LD DE,#5801
 	LD BC,#02FF
