@@ -3,7 +3,7 @@
 FATBOOT	LD HL,FLAGS
 	SET 3,(HL)
 	CALL COM_DEV
-	DB Devfind		;яйюмхпнбюмхе сярпниярб
+	DB Devfind	;яйюмхпнбюмхе сярпниярб
 	JP C,_STUPID
 	EXA
 	EXX
@@ -181,7 +181,7 @@ RUN_HOB	DI
 	CALL PAGE_0
 	CALL COM_DEV
 	DB Kol_vol
-	LD A,D
+	LD A,D		;бгъкх мнлеп рейсыецн сярпниярбю
 	ADD A,A
 	ADD A,A
 	ADD A,A
