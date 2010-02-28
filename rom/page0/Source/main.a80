@@ -573,3 +573,5 @@ END_MICROBOOT
 
 BAS_VAR	incbin "bas_var.bin"
 END_BAS_VAR
+
+;	incbin "altstd.bin"

@@ -550,12 +550,12 @@ COMPARF PUSH DE:LD DE,8:ADD HL,DE:POP DE
 FHOBETA	XOR A
 	LD (KOLFIND),A	;намскемхе йнкхвеярбю мюидеммшу тюикнб
 	LD IX,SKLAD
-2	PUSH DE
+FHOB2	PUSH DE
 	CALL GETFZAP	;онксвемхе нохяюрекъ
 	CALL CP_EXT	;опнбепйю он пюяьхпемхч
 	AND A
 	POP DE
-	JR Z,1F
+	JR Z,FHOB1
 	PUSH DE		;еярэ янбоюдемхе я люяйни
 	LD DE,#14	;мюдн опнбепхрэ, ю пеюкэмн кх щрн унаерю?
 	ADD HL,DE
@@ -573,6 +573,9 @@ FHOBETA	XOR A
 	LD (IX+3),B
 	CALL REALSEC	;оепебндхл б пеюкэмши мнлеп яейрнпю
 	CALL LOADLST	;цпсгхл б оюлърэ оепбши яейрнп
+	LD A,(BUF_512+8)
+	CP "C"		;опнбепйю врн щрн йнднбши акнй, ю ме врн-рн дпсцне
+	JR NZ,FHOB1
 	PUSH HL
 	POP BC		;бнгбпюыюеляъ б мювюкн яейрнпю
 	CALL HOB_CRC	;явхрюел CRC HOBETA гюцнкнбйю
@@ -584,21 +587,21 @@ FHOBETA	XOR A
 	AND A		;б "HL" бгърне хг ялеыемхъ +#0F нр мювюкю тюикю
 	SBC HL,DE	;япюбмхбюел 
 	POP DE		;еякх ме янбоюкн рн бнглнфмн щрн ме унаерю
-	JR NZ,1F	;опносяйюел тюик
+	JR NZ,FHOB1	;опносяйюел тюик
 	EXX
 	LD HL,(BUF_512+9)	;бгъкх юдпея гюцпсгйх
 	DEC HL			;дкъ гюцпсгйх люяхлсл 40960 аюир (160 яейрнпнб)
 	LD DE,(BUF_512+#0B)	;бгъкх дкхмс йнднбнцн акнйю
 	ADD HL,DE		;опнбепъел бшунд гю опедекш нгс
 	EXX			;еякх бшкер гю опедек нгс
-	JR C,1F			;опносяйюел тюик
+	JR C,FHOB1			;опносяйюел тюик
 	EXX
 	LD HL,(BUF_512+9)
 	LD DE,#6000	;опнбепъел юдпея гюцпсгйх
 	AND A		;юдпея гюцпсгйх ме днкфем ашрэ мхфе #6000
 	SBC HL,DE
 	EXX		;еякх юдпея гюцпсгйх мхфе #6000
-	JR C,1F		;опносяйюел
+	JR C,FHOB1		;опносяйюел
 	LD HL,BUF_512
 	LD BC,7
 	LDIR		;оепемня б астеп тюикнбшбндхкйх
@@ -610,7 +613,7 @@ FHOBETA	XOR A
 	INC (HL)	;+1 мюидеммшу тюикнб
 	LD BC,4
 	ADD IX,BC
-1	PUSH DE
+FHOB1	PUSH DE
 	LD HL,(TEK_ZAP)
 	PUSH HL
 	CALL NXTLEGZ	;хыел якедсчыхи нохяюрекэ
@@ -619,7 +622,7 @@ FHOBETA	XOR A
 	AND A
 	SBC HL,BC	;опнбепйю мю хглемемхе мнлепю нохяюрекъ
 	POP DE
-	JR NZ,2B	;мнлеп ме хглемхкяъ, бшундхл
+	JP NZ,FHOB2	;мнлеп ме хглемхкяъ, бшундхл
 	LD A,(KOLFIND)	;б "A" йнкхвеярбн мюидемшу тюикнб
 	RET
 
