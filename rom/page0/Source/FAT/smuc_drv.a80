@@ -1,0 +1,147 @@
+
+;LAST UPDATE: 23.02.2010 savelij
+
+;наыюъ рнвйю бундю дкъ пюанрш я HDD SMUC
+        EXA:EX (SP),HL:LD A,(HL):INC HL
+        EX (SP),HL:ADD A,A:PUSH HL
+        LD HL,TBLHDDS:ADD A,L:LD L,A,A,H
+        ADC A,0:LD H,A,A,(HL):INC HL
+        LD H,(HL),L,A:EXA:EX (SP),HL:RET
+
+TBLHDDS DW HDSINIT
+        DW HDSOFF
+        DW HDSRDS;READ SINGLE
+        DW HDSRDM;READ MULTI
+
+;бУНДМШЕ ОЮПЮЛЕРПШ НАЫХЕ:
+;HL-ЮДПЕЯ ГЮЦПСГЙХ Б ОЮЛЪРЭ
+;BCDE-32-У АХРМШИ МНЛЕП ЯЕЙРНПЮ
+;A-ЙНКХВЕЯРБН АКНЙНБ (АКНЙ=512 АЮИР)
+;РНКЭЙН ДКЪ ЛМНЦНАКНВМНИ ГЮОХЯХ/ВРЕМХХ
+
+PS1F7   EQU #FF;#FFBE
+;пецхярп янярнъмхъ/пецхярп йнлюмд
+PS1F6   EQU #FE;#FEBE
+;CHS-мнлеп цнкнбш х сярп/LBA юдпея 24-27
+PS1F5   EQU #FD;#FDBE
+;CHS-жхкхмдп 8-15/LBA юдпея 16-23
+PS1F4   EQU #FC;#FCBE
+;CHS-жхкхмдп 0-7/LBA юдпея 8-15
+PS1F3   EQU #FB;#FBBE
+;CHS-мнлеп яейрнпю/LBA юдпея 0-7
+PS1F2   EQU #FA;#FABE
+;явервхй яейрнпнб
+PS1F1   EQU #F9;#F9BE
+;онпр ньханй/ябниярб
+PS1F0   EQU #F8;#F8BE
+;онпр дюммшу
+PS3F6   EQU #FE;#FEBE
+;пецхярп янярнъмхъ/сопюбкемхъ
+PSHI    EQU #D8;#D8BE
+;ярюпьхе 8 ахр
+PRTSRW  EQU PS1F0*256+PSHI
+;онпрш времхъ/гюохях ндмхл якнбнл
+LOW_PRT EQU #BE
+;лкюдьхи аюир юдпеяю SMUC IDE
+SMUCSYS EQU #FFBA
+;яхярелмши онпр SMUC
+SMUCVER EQU #5FBA
+;онпр бепяхх SMUC
+
+;мю бшунде:
+;H-дкъ MASTER 0-HDD, 1-CDROM, #FF-NONE
+;L-дкъ SLAVE  0-HDD, 1-CDROM, #FF-NONE
+HDSINIT PUSH HL:EX DE,HL:LD HL,#3FF0
+        LD BC,6:CALL LDIRRET:POP HL
+        LD B,6,DE,CPINOUT
+HDSINI1 LD A,(DE):CP (HL):INC DE,HL
+        JR NZ,HDSINI2:DJNZ HDSINI1
+        LD BC,SMUCVER:DEC SP,SP
+        POP HL:CALL SINPRT:INC A
+        JR NZ,HDSINI0
+
+HDSINI2 LD HL,#FFFF:XOR A:RET
+
+HDSINI0 LD BC,SMUCSYS,A,#77:CALL SOUTPRT
+        PUSH HL:LD A,#E0:CALL IDSDEV
+        POP HL:AND A:CALL Z,INITS91
+        LD D,A,A,#F0:PUSH DE,HL
+        CALL IDSDEV:POP HL:AND A
+        CALL Z,IDSDEV:POP HL:LD L,A
+        XOR A
+
+HDSOFF  RET
+
+INITS91 PUSH HL:LD L,49*2+1,A,(HL):AND 2
+        JR Z,INIS912
+        LD BC,(PS1F2*#0100)+LOW_PRT
+        LD L,#0C,A,(HL):CALL SOUTPRT
+        LD L,6,B,PS1F6,A,(HL):DEC A
+        CALL SOUTPRT:LD B,PS1F7,A,#91
+        CALL SOUTPRT,SINPRT:XOR A
+        POP HL:RET
+
+INIS912 LD A,#FF:POP HL:RET
+
+HDSRDS  LD A,1
+HDSRDM  PUSH BC,DE:CALL SETSREG:EXA
+        LD B,PS1F7,A,#20:CALL SOUTPRT
+        LD B,PS1F7
+HDSRDM2 CALL SINPRT:AND #88:CP 8
+        JR NZ,HDSRDM2:EXA
+HDSRDM1 PUSH AF:CALL RDCSSEC:LD B,PS1F7
+HDSRDM3 CALL SINPRT:AND #80
+        JR NZ,HDSRDM3:POP AF
+        DEC A:JR NZ,HDSRDM1
+	POP DE,BC:LD A,B:AND #0F:LD B,A
+        XOR A:RET
+
+RDCSSEC LD DE,PRTSRW,A,#40
+RDCSSC1 EXA
+	DUP 4
+        LD B,D:CALL SINPRT:LD (HL),A
+        INC HL:LD B,E:CALL SINPRT
+        LD (HL),A:INC HL
+        EDUP
+        EXA:DEC A:JR NZ,RDCSSC1:RET
+
+SETSREG PUSH DE:LD DE,BC:EXA
+        LD BC,(PS1F6*#0100)+LOW_PRT,A,D
+        CALL SOUTPRT
+        LD B,PS1F5,A,E:CALL SOUTPRT
+        POP DE:LD B,PS1F4,A,D
+        CALL SOUTPRT:LD B,PS1F3:LD A,E
+        CALL SOUTPRT:LD B,PS1F2:EXA
+
+SOUTPRT PUSH HL:LD HL,#3FF0:EX (SP),HL
+        JP #3D2F
+
+LDIRRET PUSH HL:LD HL,#180D:EX (SP),HL
+        JP #3D2F
+
+CPINOUT OUT (C),A:RET:IN A,(C):RET
+
+SINPRT  PUSH HL:LD HL,#3FF3:EX (SP),HL
+        JP #3D2F
+
+;HL-юдпея астепю яейрнпю хдемрхтхйюжхх
+;A=E0-дкъ MASTER, A=F0-дкъ SLAVE
+IDSDEV  LD BC,(PS1F6*#0100)+LOW_PRT
+        CALL SOUTPRT:LD B,PS1F7,D,26
+IDSDEV2 EI:HALT:DI:DEC D:JR Z,NOSDEV
+        CALL SINPRT:BIT 7,A
+        JR NZ,IDSDEV2:AND A:JR Z,NOSDEV
+        INC A:JR Z,NOSDEV:XOR A
+        LD B,PS1F5:CALL SOUTPRT
+        LD B,PS1F4:CALL SOUTPRT
+        LD A,#EC,B,PS1F7:CALL SOUTPRT
+        LD B,PS1F7
+ISDEV3  CALL SINPRT:AND A:JR Z,NOSDEV
+        INC A:JR Z,NOSDEV:DEC A:RRCA
+        JR C,IDSDEV1:RLCA:AND #88
+        CP 8:JR NZ,ISDEV3
+IDSDEV1 LD B,PS1F4:CALL SINPRT
+        LD E,A,B,PS1F5:CALL SINPRT
+        LD D,A:OR E:JP Z,RDCSSEC
+        LD HL,#EB14,A,1:SBC HL,DE:RET Z
+NOSDEV  LD A,#FF:RET
