@@ -42,7 +42,7 @@ OBJECTS = zx.o interrupts.o main.o ps2.o spi.o depacker_dirty.o rs232.o rtc.o at
 FPGACORE = top.o
 
 ## Build
-all: $(TARGET) core.hex core.eep core.lss size
+all: $(TARGET) core.hex core.eep core.lss size zxevo_fw.bin
 
 ## Compile
 zx.o: ../zx.c ../zx.h
@@ -88,7 +88,6 @@ $(FPGACORE): top.rbf
 
 %.hex: $(TARGET)
 	avr-objcopy -O ihex $(HEX_FLASH_FLAGS)  $< $@
-	..\..\..\tools\make_fw\make_fw.exe $@ version.txt
 
 %.eep: $(TARGET)
 	avr-objcopy $(HEX_EEPROM_FLAGS) -O ihex $< $@ || exit 0
@@ -100,10 +99,13 @@ size: ${TARGET}
 	@echo
 	@avr-size -C --mcu=${MCU} ${TARGET}
 
+zxevo_fw.bin: core.hex core.eep
+	..\..\..\tools\make_fw\make_fw.exe core.hex core.eep version.txt
+
 ## Clean target
 .PHONY: clean
 clean:
-	-rm -rf $(OBJECTS) $(FPGACORE) core.* dep/* top.* zxevo_fw.bin zxevo_fw.zip
+	-rm -rf $(OBJECTS) $(FPGACORE) core.* dep/* top.* zxevo_fw.bin
 
 ## program chip
 pgm: core.hex

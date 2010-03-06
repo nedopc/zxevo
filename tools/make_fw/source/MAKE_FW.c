@@ -80,61 +80,12 @@ BYTE getbyte()
 
 //-----------------------------------------------------------------------------
 
-int main(int argc,char*argv[])
+void readhex(FILE* f, BYTE* buff, LONGWORD buffsize)
 {
- BYTE       h[]="0123456789ABCDEF";
- BYTE       b, m, o, hexlen, datatype;
- WORD       i, ih, crc;
+ BYTE       b, hexlen, datatype;
  LONGWORD   x0, x1, adr, segadr;
- struct tm  stm;
- BYTE       vs[57]; //58-1
- WORD       tabcrc[256];
- BYTE       buff[0x1e000];
- BYTE       header[0x80];
- FILE*      f;
 
- printf("ZX EVO project:  HEX to BIN + CRC + Header\n");
- if (argc<3) { printf("usage: MAKE_FW <HexFileName> <VersionFileName>\n"); return 2; }
-
- header[0]='Z';
- header[1]='X';
- header[2]='E';
- header[3]='V';
- header[4]='O';
- header[5]=0x1a;
- for (ih=0x06; ih<0x80; ih++) header[ih]=0;
- ih=6;
- o=0;
- if (argc==4)
-  {
-   strncpy(s1,argv[3],1);
-   if (s1[0]=='o') o=0x80;
-  }
-
- strncpy(s1,argv[2],255);
- f=fopen(s1,"rt");
- vs[0]=0;
- if (f)
-  {
-   fgets(vs,56,f);
-   fclose(f);
-  }
- i=strlen(vs);
- if ((i) && (vs[i-1]=='\n')) vs[--i]=0;
- if (!i)
-  {
-   strcpy(vs, "No info");
-   o=0;
-  }
-
- strcpy(&header[ih], vs);
- ih=strlen(header);
-
- strncpy(s1,argv[1],255);
- f=fopen(s1,"rt");
- if (!f) { printf("Can't open file %s!\n",s1); return 1; }
-
- for (adr=0;adr<0x1e000;adr++) buff[adr]=0xff;
+ for (adr=0;adr<buffsize;adr++) buff[adr]=0xff;
  err=0;
  segadr=0;
  row=0;
@@ -159,7 +110,7 @@ int main(int argc,char*argv[])
             {
              b=getbyte();
              hexlen--;
-             if (adr<0x1e000) buff[adr]=b;
+             if (adr<buffsize) buff[adr]=b;
              adr++;
             }
             break;
@@ -189,45 +140,16 @@ int main(int argc,char*argv[])
    if (checksum!=0) print_err_r(CHECKSUM);
   }
  }
- fclose(f);
+}
 
- if (err) { printf("Total %d error(s)!\n",err); return 3; }
+//-----------------------------------------------------------------------------
 
+void makebitmap(BYTE* buff, BYTE* dest, LONGWORD buffsize)
+{
+ BYTE       b, m;
+ LONGWORD   adr, i, j;
 
- // comments place
- {
-  time_t tt;
-  tt=time(NULL);
-  memcpy(&stm,localtime(&tt),sizeof(stm));
- }
- i=(WORD)(((stm.tm_year-100)&0x3f)<<9) | (((stm.tm_mon+1)&0x0f)<<5) | (stm.tm_mday&0x1f);
- header[0x003e]=buff[0x1dffc]=(i>>8)&0x7f|o;
- header[0x003f]=buff[0x1dffd]=i&0xff;
-
- strncpy(&buff[0x1dff0], vs, 12);
-
- for (i=0;i<256;i++)
- {
-  crc=i<<8;
-  b=8;
-  do
-  {
-   if (crc&0x8000)
-    crc=(crc<<1)^0x1021;
-   else
-    crc<<=1;
-   b--;
-  }
-  while ((b)&&(crc));
-  tabcrc[i]=crc;
- }
-
- crc=0xffff;
- for (adr=0;adr<0x1dffe;adr++) crc=tabcrc[(crc>>8)^buff[adr]]^(crc<<8);
- buff[0x1dffe]=crc>>8;
- buff[0x1dfff]=crc&0xff;
-
- segadr=0x40;
+ j=0;
  adr=0;
  do
  {
@@ -256,9 +178,122 @@ int main(int argc,char*argv[])
   b=0xff;
   for (i=0;i<256;i++) b&=buff[adr++];
   if (b!=0xff) m|=0x80;
-  header[segadr++]=m;
+  dest[j++]=m;
  }
- while (adr<0x1e000);
+ while (adr<buffsize);
+}
+
+//-----------------------------------------------------------------------------
+
+int main(int argc,char*argv[])
+{
+ BYTE       b, o;
+ WORD       i, ih, crc;
+ struct tm  stm;
+ BYTE       vs[57]; //58-1
+ WORD       tabcrc[256];
+ BYTE       fbuff[0x1e000];
+ BYTE       ebuff[4096];
+ BYTE       header[0x80];
+ LONGWORD   adr;
+ FILE*      f;
+
+ printf("ZX EVO project:  HEX to BIN + CRC + Header\n");
+ if (argc<4) { printf("usage: MAKE_FW <HexFileName> <EepFileName> <VersionFileName>\n"); return 2; }
+
+ header[0]='Z';
+ header[1]='X';
+ header[2]='E';
+ header[3]='V';
+ header[4]='O';
+ header[5]=0x1a;
+ for (ih=0x06; ih<0x80; ih++) header[ih]=0;
+ ih=6;
+ o=0;
+ if (argc==5)
+  {
+   strncpy(s1,argv[4],1);
+   if (s1[0]=='o') o=0x80;
+  }
+
+ strncpy(s1,argv[3],255);
+ f=fopen(s1,"rt");
+ vs[0]=0;
+ if (f)
+  {
+   fgets(vs,56,f);
+   fclose(f);
+  }
+ i=strlen(vs);
+ if ((i) && (vs[i-1]=='\n')) vs[--i]=0;
+ if (!i)
+  {
+   strcpy(vs, "No info");
+   o=0;
+  }
+
+ strcpy(&header[ih], vs);
+ ih=strlen(header);
+
+ strncpy(s1,argv[1],255);
+ printf("Open file %s... ",s1);
+ f=fopen(s1,"rt");
+ if (!f) { printf("Can't open file\n"); return 1; }
+ printf("Read... ");
+ readhex(f,fbuff,0x1e000);
+ fclose(f);
+ printf("Close.\n");
+ if (err) { printf("Total %d error(s)!\n",err); return 3; }
+
+ strncpy(s1,argv[2],255);
+ printf("Open file %s... ",s1);
+ f=fopen(s1,"rt");
+ if (!f)
+   printf("Can't open file\n");
+  else
+  {
+   printf("Read... ");
+   readhex(f,ebuff,4096);
+   fclose(f);
+   printf("Close.\n");
+   if (err) { printf("Total %d error(s)!\n",err); return 3; }
+  }
+
+ // comments place
+ {
+  time_t tt;
+  tt=time(NULL);
+  memcpy(&stm,localtime(&tt),sizeof(stm));
+ }
+ i=(WORD)(((stm.tm_year-100)&0x3f)<<9) | (((stm.tm_mon+1)&0x0f)<<5) | (stm.tm_mday&0x1f);
+ header[0x003e]=fbuff[0x1dffc]=(i>>8)&0x7f|o;
+ header[0x003f]=fbuff[0x1dffd]=i&0xff;
+
+ strncpy(&fbuff[0x1dff0], vs, 12);
+
+ for (i=0;i<256;i++)
+ {
+  crc=i<<8;
+  b=8;
+  do
+  {
+   if (crc&0x8000)
+    crc=(crc<<1)^0x1021;
+   else
+    crc<<=1;
+   b--;
+  }
+  while ((b)&&(crc));
+  tabcrc[i]=crc;
+ }
+
+ crc=0xffff;
+ for (adr=0;adr<0x1dffe;adr++) crc=tabcrc[(crc>>8)^fbuff[adr]]^(crc<<8);
+ fbuff[0x1dffe]=crc>>8;
+ fbuff[0x1dfff]=crc&0xff;
+
+ makebitmap(fbuff,&header[0x40],0x1e000);
+ makebitmap(ebuff,&header[0x7c],4096);
 
  crc=0x0000;
  for (i=0;i<0x7e;i++) crc=tabcrc[(crc>>8)^header[i]]^(crc<<8);
@@ -272,10 +307,18 @@ int main(int argc,char*argv[])
  do
  {
   b=0xff;
-  for (i=0;i<256;i++) b&=buff[adr++];
-  if (b!=0xff) fwrite(&buff[adr-256],256,1,f);
+  for (i=0;i<256;i++) b&=fbuff[adr++];
+  if (b!=0xff) fwrite(&fbuff[adr-256],256,1,f);
  }
  while (adr<0x1e000);
+ adr=0;
+ do
+ {
+  b=0xff;
+  for (i=0;i<256;i++) b&=ebuff[adr++];
+  if (b!=0xff) fwrite(&ebuff[adr-256],256,1,f);
+ }
+ while (adr<4096);
  fclose(f);
  printf("Created file ZXEVO_FW.BIN\n");
  return 0;
