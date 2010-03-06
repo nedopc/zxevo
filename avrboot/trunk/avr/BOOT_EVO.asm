@@ -740,19 +740,18 @@ SDUPD12:LSR     BITS
 ;"пустой" блок
         MOV     FF_FL,FF
         RCALL   BLOCK_FLASH
-        BREQ    SDUPD90
+        BREQ    SDUPD50
 
 SDUPD11:LED_OFF
-        SBRS    ZH,5
+        SBRS    ADR1,5
         LED_ON  ;мигать при обновлении
 
         DEC     COUNT
         BRNE    SDUPD12
         RJMP    SDUPD13
-;-------
-SDUPD_ERR:
-        LDI     DATA,5  ;ошибка в файле (CRC/signature/length)
-        RJMP    SD_ERROR
+;
+SDUPD_ERR:RJMP  SDUPD_ERR1
+;
 ;подготавливаем данные
 ;если необходимо загружаем с SD
 SDUPD20:PUSHX
@@ -770,7 +769,7 @@ SDUPD21:LD      DATA,Y+
         DEC     R20
         BRNE    SDUPD21
         STS     STEP,ONE
-        RJMP    SDUPD80
+        RJMP    SDUPD40
 ;
 SDUPD30:LDIY    BUFSECT+384
         LDIX    BUFFER
@@ -795,16 +794,369 @@ SDUPD32:LD      DATA,Y+
         DEC     R20
         BRNE    SDUPD32
 ;шьём блок
-SDUPD80:POP     COUNT
+SDUPD40:POP     COUNT
         POP     BITS
         POPX
         CLR     FF_FL
         RCALL   BLOCK_FLASH
         BRNE    SDUPD11
 ;
+SDUPD50:
+        CLR     ADR1
+        CLR     ADR2
+SDUPD53:LDI     COUNT,8
+        LD      BITS,X+
+SDUPD52:LSR     BITS
+        BRCS    SDUPD60
+;"пустой" блок
+        RCALL   INCEEADR
+        BREQ    SDUPD90
+SDUPD51:
+        DEC     COUNT
+        BRNE    SDUPD52
+        RJMP    SDUPD53
+;подготавливаем данные
+;если необходимо загружаем с SD
+SDUPD60:PUSHX
+        PUSH    BITS
+        PUSH    COUNT
+        LDS     DATA,STEP
+        TST     DATA
+        BRNE    SDUPD70
+;
+        LDIY    BUFSECT+128
+        LDIX    BUFFER
+        CLR     R20
+SDUPD61:LD      DATA,Y+
+        ST      X+,DATA
+        DEC     R20
+        BRNE    SDUPD61
+        STS     STEP,ONE
+        RJMP    SDUPD80
+
+SDUPD70:LDIY    BUFSECT+384
+        LDIX    BUFFER
+        LDI     R20,128
+SDUPD71:LD      DATA,Y+
+        ST      X+,DATA
+        DEC     R20
+        BRNE    SDUPD71
+
+        LDS     DATA,LASTSECFLAG
+        TST     DATA
+        BREQ    SDUPD_ERR1
+        RCALL   NEXTSEC
+        STS     LASTSECFLAG,DATA
+        STS     STEP,NULL
+
+        LDIY    BUFSECT
+        LDIX    BUFFER+128
+        LDI     R20,128
+SDUPD72:LD      DATA,Y+
+        ST      X+,DATA
+        DEC     R20
+        BRNE    SDUPD72
+;пишем блок EEPROM
+SDUPD80:POP     COUNT
+        POP     BITS
+        POPX
+        RCALL   BLOCK_EEWRITE
+        BRNE    SDUPD51
+
 SDUPD90:RJMP    CHECKIT ;проверка CRC основной программы и если всё Ok её запуск.
 ;
+SDUPD_ERR1:
+        LDI     DATA,5  ;ошибка в файле (CRC/signature/length)
+;
 ;--------------------------------------
+;ошибка при попытке обновления с SD
+SD_ERROR:
+        STS     SDERROR,DATA
+        SDCS_SET
+        LDI     TEMP,LOW(RAMEND)
+        OUT     SPL,TEMP
+        LDI     TEMP,HIGH(RAMEND)
+        OUT     SPH,TEMP
+
+        RCALL   NEWLINE
+        LDIZ    MSG_SDERROR*2
+        RCALL   PRINTSTRZ
+        LDI     DATA,ANSI_RED
+        RCALL   ANSI_COLOR
+        LDS     DATA,SDERROR
+        CPI     DATA,1
+        BRNE    SD_ERR2
+        LDIZ    MSG_CARD*2
+        RCALL   PRINTSTRZ
+        RJMP    SD_NOTFOUND
+SD_ERR2:
+        CPI     DATA,2
+        BRNE    SD_ERR3
+        LDIZ    MSG_READERROR*2
+        RCALL   PRINTSTRZ
+        RJMP    SD_ERR9
+SD_ERR3:
+        CPI     DATA,3
+        BRNE    SD_ERR4
+        LDIZ    MSG_FAT*2
+        RCALL   PRINTSTRZ
+        RJMP    SD_NOTFOUND
+SD_ERR4:
+        CPI     DATA,4
+        BRNE    SD_ERR5
+        LDIZ    MSG_FILE*2
+        RCALL   PRINTSTRZ
+SD_NOTFOUND:
+        LDIZ    MSG_NOTFOUND*2
+        RCALL   PRINTSTRZ
+        RJMP    SD_ERR9
+SD_ERR5:
+        LDIZ    MSG_WRONGFILE*2
+        RCALL   PRINTSTRZ
+SD_ERR9:
+;
+        LDS     ZL,SDERROR
+SD_ERR1:LED_OFF
+        LDI     DATA,5
+        RCALL   BEEP
+        LED_ON
+        LDI     DATA,5
+        RCALL   DELAY
+        DEC     ZL
+        BRNE    SD_ERR1
+;обновление по RS-232
+;UART1 Разрешаем приём/передачу
+        LDI     TEMP,(1<<RXEN)|(1<<TXEN)
+        OUTPORT UCSR1B,TEMP
+;
+        RCALL   NEWLINE
+        LDIZ    MSG_TRYUPDATE*2
+        RCALL   PRINTSTRZ
+        LDIZ    MSG__RS232*2
+        RCALL   PRINTSTRZ
+;инициируем обмен по протоколу XModem-CRC
+        LDI     TEMP,20 ;если в течении ~60 секунд не начнётся обмен - будет перезагрузка бутлоадера (20*timeout=60)
+UUPD00: PUSH    TEMP
+        LDI     DATA,$43
+        LDIY    HEADER
+        RCALL   XMODEM_PACKET_RECEIVER
+        POP     TEMP
+        BRNE    UUPD01
+        DEC     TEMP
+        BRNE    UUPD00
+        RJMP    START8  ;проверка CRC основной программы и если всё Ok её запуск.
+
+UUPD01: OR      CRC_LO,CRC_HI
+        BREQ    UUPD03
+UUPD04:
+        LDI     DATA,CAN
+        RCALL   WRUART
+        RCALL   WRUART
+        RCALL   WRUART
+        RCALL   WRUART
+        RCALL   WRUART
+        RCALL   DELAY_3SEC
+        LDIZ    MSG_CLRCURRLINE*2
+        RCALL   PRINTSTRZ
+        RCALL   NEWLINE
+        LDI     DATA,ANSI_RED
+        RCALL   ANSI_COLOR
+        LDIZ    MSG_WRONGDATA*2
+        RCALL   PRINTSTRZ
+        RCALL   DELAY_3SEC
+        RJMP    START8  ;проверка CRC основной программы и если всё Ok её запуск.
+UUPD03:
+        RCALL   CHECK_SIGNATURE
+        BRNE    UUPD04
+;-------
+        LDI     XL,LOW(HEADER+$40)
+;        LDI     XH,HIGH(HEADER+$40)
+        CLR     ADR1
+        CLR     ADR2
+UUPD13: LDI     COUNT,8
+        LD      BITS,X+
+UUPD12: LSR     BITS
+        BRCS    UUPD14
+;пропускаем "пустой" блок
+        RCALL   INCADR
+        BREQ    UUPD20
+UUPD11: DEC     COUNT
+        BRNE    UUPD12
+        RJMP    UUPD13
+;загружаем блок
+UUPD14: LDIY    BUFFER
+        LDI     DATA,ACK
+UUPD15: RCALL   XMODEM_PACKET_RECEIVER
+        BRNE    UUPD16
+        CPI     DATA,EOT
+        BREQ    UUPD19
+        LDI     DATA,NAK
+        RJMP    UUPD15
+UUPD16: LDI     DATA,ACK
+UUPD17: RCALL   XMODEM_PACKET_RECEIVER
+        BRNE    UUPD18
+        CPI     DATA,EOT
+        BREQ    UUPD19
+        LDI     DATA,NAK
+        RJMP    UUPD17
+
+UUPD19: RJMP    UUPD_F3
+
+;шьём принятый блок (два XModem-ых пакета по 128 байт)
+UUPD18: CLR     FF_FL
+        RCALL   BLOCK_FLASH
+        BRNE    UUPD11
+;-------
+UUPD20:
+        LDI     XL,LOW(HEADER+$40)
+;        LDI     XH,HIGH(HEADER+$40)
+        CLR     ADR1
+        CLR     ADR2
+UUPD23: LDI     COUNT,8
+        LD      BITS,X+
+UUPD22: LSR     BITS
+        BRCC    UUPD24
+;пропускаем блок
+        RCALL   INCADR
+        BREQ    UUPD30
+UUPD21: DEC     COUNT
+        BRNE    UUPD22
+        RJMP    UUPD23
+;стираем "пустой" блок
+UUPD24: MOV     FF_FL,FF
+        RCALL   BLOCK_FLASH
+        BRNE    UUPD21
+;-------
+UUPD30: CLR     ADR1
+        CLR     ADR2
+UUPD33: LDI     COUNT,8
+        LD      BITS,X+
+UUPD32: LSR     BITS
+        BRCS    UUPD34
+;пропускаем "пустой" блок
+        RCALL   INCEEADR
+        BREQ    UUPD_FINISH
+UUPD31: DEC     COUNT
+        BRNE    UUPD32
+        RJMP    UUPD33
+;загружаем блок
+UUPD34: LDIY    BUFFER
+        LDI     DATA,ACK
+UUPD35: RCALL   XMODEM_PACKET_RECEIVER
+        BRNE    UUPD36
+        CPI     DATA,EOT
+        BREQ    UUPD39
+        LDI     DATA,NAK
+        RJMP    UUPD35
+UUPD36: LDI     DATA,ACK
+UUPD37: RCALL   XMODEM_PACKET_RECEIVER
+        BRNE    UUPD38
+        CPI     DATA,EOT
+        BREQ    UUPD39
+        LDI     DATA,NAK
+        RJMP    UUPD37
+
+UUPD39: RJMP    UUPD_F3
+
+;пишем в EEPROM принятый блок (два XModem-ых пакета по 128 байт)
+UUPD38: RCALL   BLOCK_EEWRITE
+        BRNE    UUPD31
+;-------
+UUPD_FINISH:
+        LDI     DATA,ACK
+        RCALL   WRUART
+        RCALL   RDUART
+UUPD_F3:CPI     DATA,EOT ; обязательно должно придти EOT
+        LDI     DATA,ACK
+        BREQ    UUPD_F1
+UUPD_F2:LDI     DATA,CAN
+        RCALL   WRUART
+        RCALL   WRUART
+        RCALL   WRUART
+        RCALL   WRUART
+UUPD_F1:RCALL   WRUART
+        RCALL   DELAY_3SEC
+        LDIZ    MSG_CLRCURRLINE*2
+        RCALL   PRINTSTRZ
+        RJMP    CHECKIT ;проверка CRC основной программы и если всё Ok её запуск.
+;
+;--------------------------------------
+;XMODEM_PACKET_RECEIVER
+;in:    DATA == <C>, <NAK> или <ACK>
+;       Y == указатель на буфер
+;out:   sreg.Z == SET - timeout (Y без изменений)
+;                 CLR - Ok! (Y=+128)
+XMRXERR:SUBI    YL,128
+        SBC     YH,NULL
+        LDI     DATA,NAK
+;
+XMODEM_PACKET_RECEIVER:
+        RCALL   WRUART
+        LDI     TEMP,6 ;таймаут 3 сек.
+
+XMRX3:  LED_OFF
+        SBRC    TEMP,0
+        LED_ON  ;мигать при ожидании
+
+        LDI     R20,$00 ;\
+        LDI     R21,$70 ; > ~0,5 сек
+        LDI     ZL,$05  ;/
+XMRX1:  SUBI    R20,1
+        SBCI    R21,0
+        SBCI    ZL,0
+        BRNE    XMRX2
+        DEC     TEMP
+        BRNE    XMRX3
+        CLR     DATA
+XMRX9:  RET
+
+XMRX2:  RCALL   INUART
+        BREQ    XMRX1
+        CPI     DATA,EOT
+        BREQ    XMRX9
+        CPI     DATA,SOH
+        BRNE    XMRX1
+
+        LED_OFF
+        SBRS    ADR1,1
+        LED_ON
+
+        RCALL   RDUART  ;block num
+        RCALL   RDUART  ;block num (inverted)
+        CLR     CRC_LO
+        CLR     CRC_HI
+        LDI     R20,128
+XMRX4:  RCALL   RDUART
+        ST      Y+,DATA
+        RCALL   CRC_UPDATE
+        DEC     R20
+        BRNE    XMRX4
+
+        RCALL   RDUART
+        MOV     TEMP,DATA
+        RCALL   RDUART
+        CP      DATA,CRC_LO
+        BRNE    XMRXERR
+        CP      TEMP,CRC_HI
+        BRNE    XMRXERR
+        CLZ
+        RET
+;
+;--------------------------------------
+;
+CHECK_SIGNATURE:
+        LDIZ    SIGNATURE*2
+        OUT     RAMPZ,ONE
+        LDIX    HEADER
+CHKSIG1:ELPM    DATA,Z+
+        LD      TEMP,X+
+        CP      DATA,TEMP
+        BRNE    CHKSIG9
+        CPI     DATA,$1A
+        BRNE    CHKSIG1
+CHKSIG9:RET
+;
+;======================================
 ;out:   DATA
 SD_RECEIVE:
         SER     DATA
@@ -1246,249 +1598,6 @@ LSTCLSF:LDSX    TFILCLS+0
         SUB     DATA,TEMP
         RET
 ;
-;--------------------------------------
-;ошибка при попытке обновления с SD
-SD_ERROR:
-        STS     SDERROR,DATA
-        SDCS_SET
-        LDI     TEMP,LOW(RAMEND)
-        OUT     SPL,TEMP
-        LDI     TEMP,HIGH(RAMEND)
-        OUT     SPH,TEMP
-
-        RCALL   NEWLINE
-        LDIZ    MSG_SDERROR*2
-        RCALL   PRINTSTRZ
-        LDI     DATA,ANSI_RED
-        RCALL   ANSI_COLOR
-        LDS     DATA,SDERROR
-        CPI     DATA,1
-        BRNE    SD_ERR2
-        LDIZ    MSG_CARD*2
-        RCALL   PRINTSTRZ
-        RJMP    SD_NOTFOUND
-SD_ERR2:
-        CPI     DATA,2
-        BRNE    SD_ERR3
-        LDIZ    MSG_READERROR*2
-        RCALL   PRINTSTRZ
-        RJMP    SD_ERR9
-SD_ERR3:
-        CPI     DATA,3
-        BRNE    SD_ERR4
-        LDIZ    MSG_FAT*2
-        RCALL   PRINTSTRZ
-        RJMP    SD_NOTFOUND
-SD_ERR4:
-        CPI     DATA,4
-        BRNE    SD_ERR5
-        LDIZ    MSG_FILE*2
-        RCALL   PRINTSTRZ
-SD_NOTFOUND:
-        LDIZ    MSG_NOTFOUND*2
-        RCALL   PRINTSTRZ
-        RJMP    SD_ERR9
-SD_ERR5:
-        LDIZ    MSG_WRONGFILE*2
-        RCALL   PRINTSTRZ
-SD_ERR9:
-;
-        LDS     ZL,SDERROR
-SD_ERR1:LED_OFF
-        LDI     DATA,5
-        RCALL   BEEP
-        LED_ON
-        LDI     DATA,5
-        RCALL   DELAY
-        DEC     ZL
-        BRNE    SD_ERR1
-;обновление по RS-232
-;UART1 Разрешаем приём/передачу
-        LDI     TEMP,(1<<RXEN)|(1<<TXEN)
-        OUTPORT UCSR1B,TEMP
-;
-        RCALL   NEWLINE
-        LDIZ    MSG_TRYUPDATE*2
-        RCALL   PRINTSTRZ
-        LDIZ    MSG__RS232*2
-        RCALL   PRINTSTRZ
-;инициируем обмен по протоколу XModem-CRC
-        LDI     TEMP,20 ;если в течении ~60 секунд не начнётся обмен - будет перезагрузка бутлоадера (20*timeout=60)
-UUPD00: PUSH    TEMP
-        LDI     DATA,$43
-        LDIY    HEADER
-        RCALL   XMODEM_PACKET_RECEIVER
-        POP     TEMP
-        BRNE    UUPD01
-        DEC     TEMP
-        BRNE    UUPD00
-        RJMP    START8  ;проверка CRC основной программы и если всё Ok её запуск.
-
-UUPD01: OR      CRC_LO,CRC_HI
-        BREQ    UUPD03
-UUPD04:
-        LDI     DATA,CAN
-        RCALL   WRUART
-        RCALL   WRUART
-        RCALL   WRUART
-        RCALL   WRUART
-        RCALL   WRUART
-        RCALL   DELAY_3SEC
-        LDIZ    MSG_CLRCURRLINE*2
-        RCALL   PRINTSTRZ
-        RCALL   NEWLINE
-        LDI     DATA,ANSI_RED
-        RCALL   ANSI_COLOR
-        LDIZ    MSG_WRONGDATA*2
-        RCALL   PRINTSTRZ
-        RCALL   DELAY_3SEC
-        RJMP    START8  ;проверка CRC основной программы и если всё Ok её запуск.
-UUPD03:
-        RCALL   CHECK_SIGNATURE
-        BRNE    UUPD04
-;-------
-        LDI     XL,LOW(HEADER+$40)
-;        LDI     XH,HIGH(HEADER+$40)
-        CLR     ADR1
-        CLR     ADR2
-UUPD13: LDI     COUNT,8
-        LD      BITS,X+
-UUPD12: LSR     BITS
-        BRCS    UUPD14
-;пропускаем "пустой" блок
-        RCALL   INCADR
-        BREQ    UUPD20
-UUPD11: DEC     COUNT
-        BRNE    UUPD12
-        RJMP    UUPD13
-;загружаем блок
-UUPD14: LDIY    BUFFER
-        LDI     DATA,ACK
-UUPD15: RCALL   XMODEM_PACKET_RECEIVER
-        BRNE    UUPD16
-        LDI     DATA,NAK
-        RJMP    UUPD15
-UUPD16: LDI     DATA,ACK
-UUPD17: RCALL   XMODEM_PACKET_RECEIVER
-        BRNE    UUPD18
-        LDI     DATA,NAK
-        RJMP    UUPD17
-;шьём принятый блок (два XModem-ых пакета по 128 байт)
-UUPD18: CLR     FF_FL
-        RCALL   BLOCK_FLASH
-        BRNE    UUPD11
-;-------
-UUPD20:
-        LDI     XL,LOW(HEADER+$40)
-;        LDI     XH,HIGH(HEADER+$40)
-        CLR     ADR1
-        CLR     ADR2
-UUPD23: LDI     COUNT,8
-        LD      BITS,X+
-UUPD22: LSR     BITS
-        BRCC    UUPD24
-;пропускаем блок
-        RCALL   INCADR
-        BREQ    UUPD_FINISH
-UUPD21: DEC     COUNT
-        BRNE    UUPD22
-        RJMP    UUPD23
-;стираем "пустой" блок
-UUPD24: MOV     FF_FL,FF
-        RCALL   BLOCK_FLASH
-        BRNE    UUPD21
-;-------
-UUPD_FINISH:
-        LDI     DATA,ACK
-        RCALL   WRUART
-        RCALL   RDUART
-        CPI     DATA,EOT ; обязательно должно придти EOT
-        LDI     DATA,ACK
-        BREQ    UUPD_F1
-UUPD_F2:LDI     DATA,CAN
-        RCALL   WRUART
-        RCALL   WRUART
-        RCALL   WRUART
-        RCALL   WRUART
-UUPD_F1:RCALL   WRUART
-        RCALL   DELAY_3SEC
-        LDIZ    MSG_CLRCURRLINE*2
-        RCALL   PRINTSTRZ
-        RJMP    CHECKIT ;проверка CRC основной программы и если всё Ok её запуск.
-;
-;--------------------------------------
-;
-CHECK_SIGNATURE:
-        LDIZ    SIGNATURE*2
-        OUT     RAMPZ,ONE
-        LDIX    HEADER
-CHKSIG1:ELPM    DATA,Z+
-        LD      TEMP,X+
-        CP      DATA,TEMP
-        BRNE    CHKSIG9
-        CPI     DATA,$1A
-        BRNE    CHKSIG1
-CHKSIG9:RET
-;
-;--------------------------------------
-;XMODEM_PACKET_RECEIVER
-;in:    DATA == <C>, <NAK> или <ACK>
-;       Y == указатель на буфер
-;out:   sreg.Z == SET - timeout (Y без изменений)
-;                 CLR - Ok! (Y=+128)
-XMRXERR:SUBI    YL,128
-        SBC     YH,NULL
-        LDI     DATA,NAK
-;
-XMODEM_PACKET_RECEIVER:
-        RCALL   WRUART
-        LDI     TEMP,6 ;таймаут 3 сек.
-
-XMRX3:  LED_OFF
-        SBRC    TEMP,0
-        LED_ON  ;мигать при ожидании
-
-        LDI     R20,$00 ;\
-        LDI     R21,$70 ; > ~0,5 сек
-        LDI     ZL,$05  ;/
-XMRX1:  SUBI    R20,1
-        SBCI    R21,0
-        SBCI    ZL,0
-        BRNE    XMRX2
-        DEC     TEMP
-        BRNE    XMRX3
-        RET
-
-XMRX2:  RCALL   INUART
-        BREQ    XMRX1
-        CPI     DATA,SOH
-        BRNE    XMRX1
-
-        LED_OFF
-        SBRS    ADR1,1
-        LED_ON
-
-        RCALL   RDUART  ;block num
-        RCALL   RDUART  ;block num (inverted)
-        CLR     CRC_LO
-        CLR     CRC_HI
-        LDI     R20,128
-XMRX4:  RCALL   RDUART
-        ST      Y+,DATA
-        RCALL   CRC_UPDATE
-        DEC     R20
-        BRNE    XMRX4
-
-        RCALL   RDUART
-        MOV     TEMP,DATA
-        RCALL   RDUART
-        CP      DATA,CRC_LO
-        BRNE    XMRXERR
-        CP      TEMP,CRC_HI
-        BRNE    XMRXERR
-        CLZ
-        RET
-;
 ;======================================
 ;
 PRINTVERS:
@@ -1785,6 +1894,48 @@ INCADR:
         MOV     TEMP,ADR1
         CPI     TEMP,LOW(FLASHSIZE)
 INCADR9:RET
+;
+;--------------------------------------
+;in:    [BUFFER] == data
+;       ADR1 == low address
+;       ADR2 == high address
+;out:   sreg.Z == SET - это был последний блок (выше по адресам обновлять запрещено!)
+;       ADR1 == low address
+;       ADR2 == high address
+BLOCK_EEWRITE:
+        LDIY    BUFFER
+        LDI     GUARD,$A5
+
+WEEWE:  SBIC    EECR,EEWE
+        RJMP    WEEWE
+WSPMEN: LDS     TEMP,SPMCSR
+        SBRC    TEMP,SPMEN
+        RJMP    WSPMEN
+        OUT     EEARH,ADR2
+        OUT     EEARL,ADR1
+        LD      DATA,Y+
+        OUT     EEDR,DATA
+        CPI     GUARD,$A5
+        BRNE    CRITICAL_ERROR
+        SBI     EECR,EEMWE
+        SBI     EECR,EEWE
+
+        LED_OFF
+        SBRS    ADR1,4
+        LED_ON  ;мигать при записи EEPROM
+
+        INC     ADR1
+        BRNE    WEEWE
+        LDI     GUARD,$5A
+;
+;--------------------------------------
+;out:   sreg.Z == SET - это был последний блок (выше по адресам обновлять запрещено!)
+;chng:  TEMP
+INCEEADR:
+        ADD     ADR2,ONE
+        MOV     TEMP,ADR2
+        CPI     TEMP,HIGH(4096)
+        RET
 ;
 ;--------------------------------------
 ;
