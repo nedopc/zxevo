@@ -41,13 +41,12 @@ ISR(TIMER2_OVF_vect)
 	}
 
 	// PS/2 keyboard timeout tracking
-	if( (ps2keyboard_count<11) && (ps2keyboard_count!=0) ) // track timeout for PS/2 keyboard
+	if( (ps2keyboard_count<12) && (ps2keyboard_count!=0) )
 	{
 		if( ps2keyboard_timeout ) ps2keyboard_timeout--;
-
-		if( !ps2keyboard_timeout )
+		else
 		{
-			ps2keyboard_count = 11;
+			ps2keyboard_count = 12;
 		}
 	}
 
@@ -118,27 +117,77 @@ ISR(TIMER2_OVF_vect)
 	}
 }
 
-
-ISR(INT4_vect) // receive PS/2 keyboard data. TODO: sending mode...
+// receive/send PS/2 keyboard data
+ISR(INT4_vect)
 {
-	ps2keyboard_shifter >>= 1;
-	if( (PS2KBDAT_PIN&(1<<PS2KBDAT)) ) ps2keyboard_shifter |= 0x8000;
-
-	if( !(--ps2keyboard_count) )
+	if( (flags_register&FLAG_PS2KEYBOARD_DIRECTION) != 0 )
 	{
-		PS2KBCLK_PORT &= ~(1<<PS2KBCLK);
-				PS2KBCLK_DDR  |= (1<<PS2KBCLK);
+		//send mode
+		if( --ps2keyboard_count )
+		{
+			if ( ps2keyboard_shifter&1 ) PS2KBDAT_PORT |= (1<<PS2KBDAT);
+			else PS2KBDAT_PORT &= ~(1<<PS2KBDAT);
 
-				EIFR = (1<<INTF4); // clr any additional int which can happen when we pulldown clock pin
+			ps2keyboard_shifter >>= 1;
+
+			if( ps2keyboard_count == 11 )
+			{
+				//first interrupt is programmed
+				PS2KBDAT_DDR |= (1<<PS2KBDAT);	 //ps2keyboard data pin to output mode
+				_delay_us(200);  //hold ps2keyboard clk pin ~200us
+				PS2KBCLK_PORT |= (1<<PS2KBCLK);  //release ps2keyboard clk pin
+				PS2KBCLK_DDR  &= ~(1<<PS2KBCLK);
+			}
+			else if( ps2keyboard_count == 1)
+			{
+				PS2KBDAT_DDR &= ~(1<<PS2KBDAT); //ps2keyboard data pin to input mode
+			}
+		}
+		else
+		{
+			//ack received
+			PS2KBCLK_PORT &= ~(1<<PS2KBCLK);
+			PS2KBCLK_DDR  |= (1<<PS2KBCLK);
+		}
+	}
+	else
+	{
+		//receive mode
+		ps2keyboard_shifter >>= 1;
+		if( (PS2KBDAT_PIN&(1<<PS2KBDAT)) ) ps2keyboard_shifter |= 0x8000;
+
+		if( (--ps2keyboard_count) == 1 )
+		{
+			PS2KBCLK_PORT &= ~(1<<PS2KBCLK);
+			PS2KBCLK_DDR  |= (1<<PS2KBCLK);
+			ps2keyboard_count = 0;
+		}
 	}
 
+	EIFR = (1<<INTF4);
+
+	//set timeout
 	ps2keyboard_timeout = PS2KEYBOARD_TIMEOUT;
 
-	//
-	EIFR = (1<<INTF4);
+
+//	ps2keyboard_shifter >>= 1;
+//	if( (PS2KBDAT_PIN&(1<<PS2KBDAT)) ) ps2keyboard_shifter |= 0x8000;
+
+//	if( !(--ps2keyboard_count) )
+//	{
+//		PS2KBCLK_PORT &= ~(1<<PS2KBCLK);
+//				PS2KBCLK_DDR  |= (1<<PS2KBCLK);
+
+//				EIFR = (1<<INTF4); // clr any additional int which can happen when we pulldown clock pin
+//	}
+
+//	ps2keyboard_timeout = PS2KEYBOARD_TIMEOUT;
+
+//	//
+//	EIFR = (1<<INTF4);
 }
 
- // receive/send PS/2 mouse data
+// receive/send PS/2 mouse data
 ISR(INT5_vect)
 {
 	if( (flags_register&FLAG_PS2MOUSE_DIRECTION) != 0 )
