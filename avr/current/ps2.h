@@ -34,12 +34,36 @@ UWORD ps2_encode(UBYTE data);
 /** Timeout value for PS/2 keyboard. */
 #define PS2KEYBOARD_TIMEOUT 20
 
+/** Command to reset PS2 keyboard. */
+#define PS2KEYBOARD_CMD_RESET 0xFF
+/** Command to enable PS2 keyboard. */
+#define PS2KEYBOARD_CMD_ENABLE 0xF4
+/** Command to set leds on PS2 keyboard. */
+#define PS2KEYBOARD_CMD_SETLED 0xED
+
+/** "Caps Lock" led bit in set leds command on PS2 keyboard. */
+#define PS2KEYBOARD_LED_CAPSLOCK 0x04
+/** "Num Lock" led bit in set leds command on PS2 keyboard. */
+#define PS2KEYBOARD_LED_NUMLOCK 0x02
+/** "Scroll Lock" led bit in set leds command on PS2 keyboard. */
+#define PS2KEYBOARD_LED_SCROLLOCK 0x01
+
 /** Received PS/2 keyboard data register. */
 extern volatile UWORD ps2keyboard_shifter;
 /** Counter of current PS/2 keyboard data bit. */
 extern volatile UBYTE ps2keyboard_count;
 /** Timeout register for detecting PS/2 keyboard timeouts. */
 extern volatile UBYTE ps2keyboard_timeout;
+/** Counter of stages PS/2 keyboard command. */
+extern volatile UBYTE ps2keyboard_cmd_count;
+/** Current PS/2 keyboard command (0 - none). */
+extern volatile UBYTE ps2keyboard_cmd;
+
+/**
+ * Send command to PS/2 keboard.
+ * @param cmd [in] - command.
+ */
+void ps2keyboard_send_cmd(UBYTE cmd);
 
 /** PS/2 keyboard task. */
 void ps2keyboard_task(void);

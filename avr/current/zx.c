@@ -754,4 +754,7 @@ void zx_vga_switcher(void)
 
 	//save mode register to RTC NVRAM
 	rtc_write(RTC_COMMON_MODE_REG, modes_register);
+
+	//set led on keyboard
+	ps2keyboard_send_cmd(PS2KEYBOARD_CMD_SETLED);
 }

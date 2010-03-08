@@ -7,6 +7,7 @@
  * @section history Revision history
  *
  * @subsection current Current version.
+ * - Add PS2 keyboard led controlling: "Scroll Lock" led equal VGA mode.
  * - Fix mapping gluk (DS12887) nvram to PCF8583.
  * - Fix Update Flag in register C (emulation Gluk clock).
  * - Add modes register and save/restore it to RTC NVRAM.
@@ -33,6 +34,8 @@ extern volatile UBYTE flags_register;
 #define FLAG_PS2MOUSE_ZX_READY  0x04
 /** Spi interrupt detected (0 - not received/1 - received). */
 #define FLAG_SPI_INT            0x08
+/** Direction for ps2 keyboard data (0 - Receive/1 - Send). */
+#define FLAG_PS2KEYBOARD_DIRECTION  0x10
 
 /** Common modes register. */
 extern volatile UBYTE modes_register;

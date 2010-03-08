@@ -110,7 +110,9 @@ start:
 
 
 	//init some counters and registers
-    ps2keyboard_count = 11;
+    ps2keyboard_count = 12;
+	ps2keyboard_cmd_count = 0;
+	ps2keyboard_cmd = 0;
 	ps2mouse_count = 12;
 	ps2mouse_initstep = 0;
 	ps2mouse_resp_count = 0;
