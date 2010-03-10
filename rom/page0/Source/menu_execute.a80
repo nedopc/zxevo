@@ -49,6 +49,7 @@ _STUPID	LD SP,GlukStk
 
 ;оепеундхкйю б аюяхй128
 BAS128	CALL SYSTEM
+	CALL MEMSET
 	DI
 	XOR A
 	CALL PAGE_A
@@ -56,10 +57,12 @@ BAS128	CALL SYSTEM
 
 ;оепеундхкйю б аюяхй48
 BAS48	CALL SYSTEM
+	CALL MEMSET
 	RST 0
 
 ;оепеундхкйю б ршпдня
 DOS128	CALL SYSTEM
+	CALL MEMSET
 	LD IX,0
 	JP DOSIX
 
