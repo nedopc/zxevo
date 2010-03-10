@@ -134,7 +134,7 @@ ISR(INT4_vect)
 			{
 				//first interrupt is programmed
 				PS2KBDAT_DDR |= (1<<PS2KBDAT);	 //ps2keyboard data pin to output mode
-				_delay_us(200);  //hold ps2keyboard clk pin ~200us
+				_delay_us(250);  //hold ps2keyboard clk pin ~250us
 				PS2KBCLK_PORT |= (1<<PS2KBCLK);  //release ps2keyboard clk pin
 				PS2KBCLK_DDR  &= ~(1<<PS2KBCLK);
 			}
@@ -204,7 +204,7 @@ ISR(INT5_vect)
 			{
 				//first interrupt is programmed
 				PS2MSDAT_DDR |= (1<<PS2MSDAT);	 //ps2mouse data pin to output mode
-				_delay_us(200);  //hold ps2mouse clk pin ~200us
+				_delay_us(250);  //hold ps2mouse clk pin ~250us
 				PS2MSCLK_PORT |= (1<<PS2MSCLK);  //release ps2mouse clk pin
 				PS2MSCLK_DDR  &= ~(1<<PS2MSCLK);
 			}

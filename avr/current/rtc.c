@@ -153,8 +153,6 @@ void rtc_init(void)
 	modes_register = rtc_read(RTC_COMMON_MODE_REG);
 	//set modes on fpga
 	zx_spi_send(SPI_VGA_REG, modes_register&MODE_VGA, 0);
-	//set led on keyboard
-	ps2keyboard_send_cmd(PS2KEYBOARD_CMD_SETLED);
 }
 
 void rtc_write(UBYTE addr, UBYTE data)

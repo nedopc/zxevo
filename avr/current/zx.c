@@ -14,14 +14,10 @@
 #include "ps2.h"
 #include "rtc.h"
 
-
-
 //zx mouse registers
 volatile UBYTE zx_mouse_button;
 volatile UBYTE zx_mouse_x;
 volatile UBYTE zx_mouse_y;
-
-
 
 #define ZX_FIFO_SIZE 256 /* do not change this since it must be exactly byte-wise */
 
@@ -29,12 +25,6 @@ UBYTE zx_fifo[ZX_FIFO_SIZE];
 
 UBYTE zx_fifo_in_ptr;
 UBYTE zx_fifo_out_ptr;
-
-
-
-
-
-
 
 UBYTE zx_counters[40]; // filter ZX keystrokes here to assure every is pressed and released only once
 UBYTE zx_map[5]; // keys bitmap. send order: LSbit first, from [4] to [0]
@@ -46,26 +36,6 @@ UBYTE zx_realkbd[11];
 
 
 
-/*
-
-69 - keypad 1
-6B - keypad 4
-6C - keypad 7
-70 - keypad 0
-71 - keypad .
-72 - keypad 2
-73 - keypad 5
-74 - keypad 6
-75 - keypad 8
-79 - keypad +
-7A - keypad 3
-7B - keypad -
-7C - keypad *
-7D - keypad 9
-E0 5A - keypad enter
-E0 4A - keypad /
-
-*/
 
 const UBYTE kmap[] PROGMEM =
 {
@@ -244,12 +214,6 @@ KEY_CS,KEY_3 , // 7D PGUP
 NO_KEY,NO_KEY, // 7E
 NO_KEY,NO_KEY  // 7F
 };
-
-
-//struct zx current;
-//struct zx towrite;
-//volatile UBYTE keys_changed;
-//volatile UBYTE send_state;
 
 
 void zx_init(void)
@@ -438,11 +402,6 @@ void zx_task(UBYTE operation) // zx task, tracks when there is need to send new 
 			{
 				if( reset_type )
 				{
-//					nSPICS_PORT |= (1<<nSPICS);  // set address of SPI register
-//					spi_send(SPI_RST_REG);
-//					nSPICS_PORT &= ~(1<<nSPICS); // send data for that register
-//					spi_send( reset_type );
-//					nSPICS_PORT |= (1<<nSPICS);
 					zx_spi_send(SPI_RST_REG, reset_type, 0x7F);
 #ifdef LOGENABLE
 	char log_reset_type[] = "TR..\r\n";
@@ -454,18 +413,17 @@ void zx_task(UBYTE operation) // zx task, tracks when there is need to send new 
 			}
 			else if( task_state>0 )// task_state==5..1
 			{
-//				nSPICS_PORT |= (1<<nSPICS);  // set address of SPI register
-//				spi_send(SPI_KBD_DAT);
-//				nSPICS_PORT &= ~(1<<nSPICS);
-//				spi_send( zx_map[task_state-1] );
-//				nSPICS_PORT |= (1<<nSPICS);
 				UBYTE key_data;
 				key_data = zx_map[task_state-1] | ~zx_realkbd[task_state-1];
 				zx_spi_send(SPI_KBD_DAT, key_data, 0x7F);
 #ifdef LOGENABLE
-	char log_zxmap_task_state[] = "TK..\r\n";
+	char log_zxmap_task_state[] = "TK.. .. ..\r\n";
 	log_zxmap_task_state[2] = ((key_data >> 4) <= 9 )?'0'+(key_data >> 4):'A'+(key_data >> 4)-10;
 	log_zxmap_task_state[3] = ((key_data & 0x0F) <= 9 )?'0'+(key_data & 0x0F):'A'+(key_data & 0x0F)-10;
+	log_zxmap_task_state[5] = ((zx_map[task_state-1] >> 4) <= 9 )?'0'+(zx_map[task_state-1] >> 4):'A'+(zx_map[task_state-1] >> 4)-10;
+	log_zxmap_task_state[6] = ((zx_map[task_state-1] & 0x0F) <= 9 )?'0'+(zx_map[task_state-1] & 0x0F):'A'+(zx_map[task_state-1] & 0x0F)-10;
+	log_zxmap_task_state[8] = ((zx_realkbd[task_state-1] >> 4) <= 9 )?'0'+(zx_realkbd[task_state-1] >> 4):'A'+(zx_realkbd[task_state-1] >> 4)-10;
+	log_zxmap_task_state[9] = ((zx_realkbd[task_state-1] & 0x0F) <= 9 )?'0'+(zx_realkbd[task_state-1] & 0x0F):'A'+(zx_realkbd[task_state-1] & 0x0F)-10;
 	to_log(log_zxmap_task_state);
 #endif
 			}
@@ -474,11 +432,7 @@ void zx_task(UBYTE operation) // zx task, tracks when there is need to send new 
 				UBYTE status;
 				nSPICS_PORT |= (1<<nSPICS);
 				status = spi_send(SPI_KBD_STB);    // strobe input kbd data to the Z80 port engine
-//				nSPICS_PORT &= ~(1<<nSPICS);
-//				nSPICS_PORT &= ~(1<<nSPICS);
 				nSPICS_PORT &= ~(1<<nSPICS);
-//				nSPICS_PORT |= (1<<nSPICS);
-//				nSPICS_PORT |= (1<<nSPICS);
 				nSPICS_PORT |= (1<<nSPICS);
 				if ( status&0x7F ) zx_wait_task(status);
 #ifdef LOGENABLE
@@ -494,22 +448,20 @@ void zx_clr_kb(void)
 {
 	BYTE i;
 
-	i=4;
-	do
+	for( i=0; i<sizeof(zx_map)/sizeof(zx_map[0]); i++ )
+	{
 		zx_map[i] = 0;
-	while( (--i)>=0 );
+	}
 
-	i=0;
-	do
+	for( i=0; i<sizeof(zx_realkbd)/sizeof(zx_realkbd[0]); i++ )
+	{
 		zx_realkbd[i] = 0xff;
-	while( (++i)<=9 );
-	zx_realkbd[10] = 0;
+	}
 
-
-	i=39;
-	do
+	for( i=0; i<sizeof(zx_counters)/sizeof(zx_counters[0]); i++ )
+	{
 		zx_counters[i] = 0;
-	while( (--i)>=0 );
+	}
 }
 
 
@@ -670,26 +622,10 @@ void zx_mouse_task(void)
 	to_log(log_zxmouse);
 #endif
 		//TODO: пока сделал скопом, потом сделать по одному байту за заход
-
-//		nSPICS_PORT |= (1<<nSPICS);  // set address of SPI register
-//		spi_send(SPI_MOUSE_BTN);
-//		nSPICS_PORT &= ~(1<<nSPICS);
-//		spi_send(zx_mouse_button);
-//		nSPICS_PORT |= (1<<nSPICS);
 		zx_spi_send(SPI_MOUSE_BTN, zx_mouse_button, 0x7F);
 
-//		nSPICS_PORT |= (1<<nSPICS);  // set address of SPI register
-//		spi_send(SPI_MOUSE_X);
-//		nSPICS_PORT &= ~(1<<nSPICS);
-//		spi_send(zx_mouse_x);
-//		nSPICS_PORT |= (1<<nSPICS);
 		zx_spi_send(SPI_MOUSE_X, zx_mouse_x, 0x7F);
 
-//		nSPICS_PORT |= (1<<nSPICS);  // set address of SPI register
-//		spi_send(SPI_MOUSE_Y);
-//		nSPICS_PORT &= ~(1<<nSPICS);
-//		spi_send(zx_mouse_y);
-//		nSPICS_PORT |= (1<<nSPICS);
 		zx_spi_send(SPI_MOUSE_Y, zx_mouse_y, 0x7F);
 
 		//data sended - reset flag

@@ -128,6 +128,13 @@ void ps2keyboard_task(void)
 		to_log("KBerr\r\n");
 #endif
 		//TODO: чета делать
+
+		//reset command
+		ps2keyboard_cmd_count = 0;
+		ps2keyboard_cmd = 0;
+
+		//reset buffer
+		zx_clr_kb();
 	}
 
 	if ( ps2keyboard_count!=0 ) return; // not received anything
@@ -150,7 +157,12 @@ void ps2keyboard_task(void)
 			if ( ((ps2keyboard_cmd == PS2KEYBOARD_CMD_SETLED)&&(ps2keyboard_cmd_count == 3 || ps2keyboard_cmd_count == 1)) ||
 			     ((ps2keyboard_cmd == PS2KEYBOARD_CMD_RESET)&&(ps2keyboard_cmd_count == 2)) )
 			{
-				if( b != 0xFA ) ps2keyboard_cmd_count = 0;
+				if( b != 0xFA )
+				{
+				 	ps2keyboard_cmd_count = 0;
+					//if non FA - may be scan code received
+					if ( b ) ps2keyboard_parse(b);
+				}
 				else ps2keyboard_cmd_count--;
 
 				if ( ps2keyboard_cmd_count == 0 ) ps2keyboard_cmd = 0;
@@ -159,6 +171,11 @@ void ps2keyboard_task(void)
 			//wait for 0xAA on current stage
 			if ( ((ps2keyboard_cmd == PS2KEYBOARD_CMD_RESET)&&(ps2keyboard_cmd_count == 1)) )
 			{
+				if ( b != 0xAA )
+				{
+					//if non AA - may be scan code received
+					if ( b ) ps2keyboard_parse(b);
+				}
 				ps2keyboard_cmd_count = 0;
 				ps2keyboard_cmd = 0;
 			}
@@ -204,6 +221,7 @@ void ps2keyboard_parse(UBYTE recbyte)
 
 #ifdef LOGENABLE
 	char log_ps2keyboard_parse[] = "KB..\r\n";
+	if ( skipshit ) log_ps2keyboard_parse[1] = skipshit + '0';
 	log_ps2keyboard_parse[2] = ((recbyte >> 4) <= 9 )?'0'+(recbyte >> 4):'A'+(recbyte >> 4)-10;
 	log_ps2keyboard_parse[3] = ((recbyte & 0x0F) <= 9 )?'0'+(recbyte & 0x0F):'A'+(recbyte & 0x0F)-10;
 	to_log(log_ps2keyboard_parse);
