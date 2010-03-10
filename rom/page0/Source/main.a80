@@ -2,7 +2,7 @@
 ;VERSION
 g1		EQU "0"
 g2		EQU "1"
-g3		EQU "3"
+g3		EQU "4"
 
 ;схема Nemo:
 hddstat		EQU #F0
@@ -60,7 +60,14 @@ CMOS_OFF	EQU 0
 	JR 1F
 	
 2	SET 2,(HL)
-	LD H,#0B
+	LD H,#11
+	CALL READCMOS
+	CP #55
+	JR Z,4F
+	CP #AA
+	JR Z,4F
+	CALL SET_CMOS_DEFAULT
+4	LD H,#0B
 	CALL READCMOS		;READ CMOS
 	AND 4
 	JR Z,3F
@@ -79,7 +86,7 @@ CMOS_OFF	EQU 0
 	LD A,H
 	AND 3
 	LD (MEMMODE),A
-1	CALL SET_SYSREG1	;OUT#EFF7,0 - видимо,на всяк.сл.
+1	CALL SET_SYSREG1	;OUT #EFF7,0 - видимо,на всяк.сл.
 	LD A,#17
 	CALL PAGE_A
 	LD HL,#4000
