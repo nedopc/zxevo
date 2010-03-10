@@ -134,6 +134,7 @@ start:
 	rtc_init();
 	zx_init();
 
+
 #ifdef LOGENABLE
 	to_log("zx_init OK\r\n");
 #endif
@@ -141,11 +142,14 @@ start:
 
 	sei(); // globally go interrupting
 
+	//set led on keyboard
+	ps2keyboard_send_cmd(PS2KEYBOARD_CMD_SETLED);
+
 	//main loop
 	do
     {
-        ps2keyboard_task();
 		ps2mouse_task();
+        ps2keyboard_task();
         zx_task(ZX_TASK_WORK);
 		zx_mouse_task();
 		joystick_task();

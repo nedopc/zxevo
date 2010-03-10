@@ -143,6 +143,7 @@ void to_zx(UBYTE scancode, UBYTE was_E0, UBYTE was_release);
 
 void update_keys(UBYTE zxcode, UBYTE was_release);
 
+/** Clear zx keyboard buffers. */
 void zx_clr_kb(void);
 
 
