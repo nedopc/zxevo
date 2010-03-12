@@ -103,8 +103,8 @@ module zports(
 	reg port_wr;
 	reg port_rd;
 
-      reg iowr_reg;
-      reg iord_reg;
+	reg iowr_reg;
+	reg iord_reg;
 
 	wire [7:0] loa;
 

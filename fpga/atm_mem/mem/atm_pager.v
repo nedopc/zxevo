@@ -17,6 +17,8 @@ module atm_pager(
 
 	input  wire [ 7:0] zd, // Z80 data bus - for latching port data
 
+	input  wire        iorq_n,mreq_n,rd_n,wr_n,m1_n,rfsh_n; // to track DOS turn on/turn off
+
 
 	input  wire        pager_off, // PEN as in ATM2: turns off memory paging, service ROM is everywhere
 
@@ -49,8 +51,12 @@ module atm_pager(
 	reg [ 1:0] ramnrom; // ram(=1) or rom(=0)
 	reg [ 1:0] dos_7ffd; // =1 7ffd bits (ram) or DOS enter mode (rom) for given page
 
+	reg iorq_n_reg, mreq_n_reg, rd_n_reg, wr_n_reg, m1_n_reg, rfsh_n_reg;
+
+	wire dos_exec_stb, ram_exec_stb;
 
 
+	reg [2:0] stall_count;
 
 
 	// paging function, does not set pages, ramnrom, dos_7ffd
@@ -105,15 +111,108 @@ module atm_pager(
 	always @(posedge fclk, negedge arst_n)
 	if( !arst_n )
 	begin
-		инициализация, чтоб по дефолту был пент1м
+		// default mode must be pent1m
+		case( ADDR )
+
+		2'b00: begin // ROM pages
+			ramnrom[0] = 1'b0;
+			ramnrom[1] = 1'b0;
+
+			dos_7ffd[0] = 1'b1;
+			dos_7ffd[1] = 1'b1;
+
+			pages[0] = 8'hFE; // basic128 page
+			pages[1] = 8'hFC; // basic48 page
+		end
+
+		2'b01: begin // 4000-7fff ram page 5
+			ramnrom[0] = 1'b1;
+			ramnrom[1] = 1'b1;
+
+			dos_7ffd[0] = 1'b0;
+			dos_7ffd[1] = 1'b0;
+
+			pages[0] = 8'h05; // pent1m 5 page
+			pages[1] = 8'h05; // pent1m 5 page
+		end
+
+		2'b10: begin // 8000-bfff ram page 2
+			ramnrom[0] = 1'b1;
+			ramnrom[1] = 1'b1;
+
+			dos_7ffd[0] = 1'b0;
+			dos_7ffd[1] = 1'b0;
+
+			pages[0] = 8'h02; // pent1m 2 page
+			pages[1] = 8'h02; // pent1m 2 page
+		end
+
+		2'b11: begin // c000-ffff
+			ramnrom[0] = 1'b1;
+			ramnrom[1] = 1'b1;
+
+			dos_7ffd[0] = 1'b1;
+			dos_7ffd[1] = 1'b1;
+
+			pages[0] = 8'h00; // pent1m 0 page
+			pages[1] = 8'h00; // pent1m 0 page
+		end
+
+		endcase
 	end
 	else if( atm_xxF7_wr )
 	begin
+		if( za[15:14]==ADDR )
+		begin
+			if( za[11] ) // xff7 ports - 1 meg
+			begin
+				pages   [ pent1m_ROM ] <= ~{ 2'b00, zd[5:0] };
+				ramnrom [ pent1m_ROM ] <= zd[6];
+				dos_7ffd[ pent1m_ROM ] <= zd[7];
+			end
+			else // x7f7 ports - 4 meg ram
+			begin
+				pages   [ pent1m_ROM ] <= ~zd;
+				ramnrom [ pent1m_ROM ] <= 1'b1; // RAM on
+				// dos_7ffd - UNCHANGED!!! (possibility to use 7ffd 1m and 128k addressing in the whole 4m!)
+			end
+		end
+	end
+
+
+	// DOS turn on/turn off
+	//
+
+	always @(posedge fclk) if( zpos )
+	begin
+		m1_n_reg <= m1_n;
+	end
+
+	always @(posedge fclk) if( zneg )
+	begin
+		mreq_n_reg <= mreq_n;
 	end
 
 
 
+	assign dos_exec_stb = zneg &&
+	                      (!m1_n_reg) && (!mreq_n) && mreq_n_reg &&
+	                      (za[13:8]==6'h3D) &&
+	                      dos_7ffd[1'b1] && (!ramnrom[1'b1]) && pent1m_ROM;
 
+	assign ram_exec_stb = zneg &&
+	                      (!m1_n_reg) && (!mreq_n) && mreq_n_reg &&
+	                      ramnrom[1'b1];
+
+	assign dos_turn_on  = dos_exec_stb;
+	assign dos_turn_off = ram_exec_stb;
+
+
+	// stall Z80 for some time when dos turning on to allow ROM chip to supply new data
+	// this can be important at 7 or even 14 mhz
+	always @(posedge fclk)
+	begin
+	end
 
 
 endmodule
