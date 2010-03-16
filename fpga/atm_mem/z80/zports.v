@@ -1,4 +1,8 @@
-`include "../include/tune.v"
+// PentEvo project (c) NedoPC 2008-2010
+//
+// most of pentevo ports are here
+
+include "../include/tune.v"
 
 module zports(
 

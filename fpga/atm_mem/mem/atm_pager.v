@@ -1,8 +1,12 @@
-// ATM-like memory pager (pages specific 16kb region)
+// PentEvo project (c) NedoPC 2008-2010
+
+// ATM-like memory pager (it pages specific 16kb region)
 //  with additions to support 4m addressable memory
 //  and pent1m mode.
 //
 // contain ports 3FF7,7FF7,BFF7,FFF7 as well as 37F7, 77F7, B7F7, F7F7
+
+`include "../include/tune.v"
 
 module atm_pager(
 
@@ -106,10 +110,12 @@ module atm_pager(
 	end
 
 
+
+	
 	// port reading: sets pages, ramnrom, dos_7ffd
 	//
-	always @(posedge fclk, negedge arst_n)
-	if( !arst_n )
+	always @(posedge fclk, negedge rst_n)
+	if( !rst_n )
 	begin
 		// default mode must be pent1m
 		case( ADDR )
@@ -209,10 +215,30 @@ module atm_pager(
 
 
 	// stall Z80 for some time when dos turning on to allow ROM chip to supply new data
-	// this can be important at 7 or even 14 mhz
+	// this can be important at 7 or even 14 mhz. minimum stall time is
+	// 3 clocks @ 28 MHz
 	always @(posedge fclk)
 	begin
+		// переключение в ДОС пзу происходит за полтакта z80 до того, как
+		// z80 считает данные. т.е. у пзу полтакта для выдачи новых данных.
+		// 3.5мгц - 140 нан, 7мгц - 70 нан, 14мгц - 35 нан.
+		// для пзухи 120нс на 14мгц надо еще 3 полтакта добавить, или другими
+		// словами, добавить к любой задержке на любой частоте минимум 3 такта
+		// 28 мгц.
+		if( dos_turn_on )
+		begin
+			stall_count[2] <= 1'b1; // count: 000(stop) -> 101 -> 110 -> 111 -> 000(stop)
+			stall_count[0] <= 1'b1; 
+		end
+		else if( stall_count[2] )
+		begin
+			stall_count[2:0] <= stall_count[2:0] + 3'd1;
+		end
+	
 	end
+
+	assign zclk_stall = dos_turn_on | stall_count[2];
+
 
 
 endmodule
