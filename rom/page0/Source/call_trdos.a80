@@ -74,20 +74,20 @@ GLUBOOT	LD HL,FLAGS
 	LD BC,#0905
 	CALL #3D13
 	LD A,(ADR_CAT+#8E7)
-	CP #10			;ОПХГМЮЙ TRDOS
+	CP #10			;╞Ю╗╖╜═╙ TRDOS
 	JP NZ,_STUPID	
 	CALL GET_1F
 	LD (OLD_1F),A
 	LD IX,ADR_CAT
 	LD DE,ADR_CAT
 	LD A,(ADR_CAT+#8E4)
-	LD B,A			;яйнкэйн тюикнб опнялнрперэ
+	LD B,A			;▒┼▌▀°┼▌ ■─┴▀▌┌ ▐░▌▒▄▌▓░┘▓°
 	XOR A
 	LD (gBASICS),A
 	INC A
 	LD (yIKNOW),A
 	
-;онхяй аюяхй тюикнб мю дхяйе
+;▐▌┬▒┼ │─▒┬┼ ■─┴▀▌┌ █─ └┬▒┼┘
 FINDBAS	PUSH BC
 	LD A,(IX+8)
 	CP "B"
@@ -113,14 +113,14 @@ NEXT_FILE
 	POP BC
 	DJNZ FINDBAS
 END_CAT	LD A,#FF
-	LD (DE),A		;ЙНМЕЖ ЙЮРЮКНЦЮ/НЙМЮ
+	LD (DE),A		;╙╝╜╔Ф ╙═Б═╚╝ё═/╝╙╜═
 	LD A,(gBASICS)
 	AND A
-	JR Z,NO_BAS		;мхвецн ме мюидемн
-	CP f20			;опнбепйю мю опебшьемхъ бшянрш нймю
-	JP C,MALOBAS		;мюидемн йнк-бн лемее бшянрш нймю
+	JR Z,NO_BAS		;█┬≈┘┐▌ █┘ █─┴└┘█▌
+	CP f20			;▐░▌┌┘░┼─ █─ ▐░┘┌⌡≤┘█┬÷ ┌⌡▒▌▓⌡ ▌┼█─
+	JP C,MALOBAS		;█─┴└┘█▌ ┼▌▀-┌▌ ▄┘█┘┘ ┌⌡▒▌▓⌡ ▌┼█─
 
-;еякх тюикнб анкэье бшянрш нймю, бшбндхл ббепус мнлеп нймю
+;┘▒▀┬ ■─┴▀▌┌ │▌▀°≤┘ ┌⌡▒▌▓⌡ ▌┼█─, ┌⌡┌▌└┬▄ ┌┌┘░∙⌠ █▌▄┘░ ▌┼█─
 MNOGOBAS
 	LD HL,tBasNop
 	LD BC,8
@@ -159,7 +159,7 @@ _67a4	LD (gCATBOT),HL
 	LD IX,aPGBOOT
 	JR _NKLILKA2
 
-;мх ндмнцн аюяхй тюикю ме мюидемн
+;█┬ ▌└█▌┐▌ │─▒┬┼ ■─┴▀─ █┘ █─┴└┘█▌
 NO_BAS	LD HL,mBOOTWAS
 	LD DE,mBOOT
 	LD BC,mBOOTln
@@ -178,7 +178,7 @@ _NKLILKA2
 	LD (IX+5),1
 	JP _NKLILKA
 
-NXTPG_CAT		;бшбнд б нйме якедсчыеи вюярх дхп
+NXTPG_CAT		;┌⌡┌▌└ ┌ ▌┼█┘ ▒▀┘└⌠·≥┘┴ ≈─▒▓┬ └┬░
 	LD A,(lb057)
 	CP f20
 	JP C,gBcat
@@ -196,7 +196,7 @@ NXTPG_CAT		;бшбнд б нйме якедсчыеи вюярх дхп
 	ADD HL,DE
 	JP _67a4
 
-;еякх тюикнб лемэье бшянрш нймю бшбндхл яйнкэйн еярэ
+;┘▒▀┬ ■─┴▀▌┌ ▄┘█°≤┘ ┌⌡▒▌▓⌡ ▌┼█─ ┌⌡┌▌└┬▄ ▒┼▌▀°┼▌ ┘▒▓°
 MALOBAS	LD HL,mBOOTWAS
 	LD DE,mBOOT
 	LD BC,mBOOTln
@@ -223,9 +223,6 @@ SELDRVPP			;A=drv
 	AND 4
 	RET Z
 	LD H,#10
-	CALL READCMOS
-	RET M
-	LD H,#10
 	JP WRITECMOS
 
 ;FIX mouse key if no mouse
@@ -241,7 +238,7 @@ ONERNCLS
 	EX (SP),HL
 	RET
 
-;оепеубюр дхяйнбни ньхайх дкъ напюанрйх
+;▐┘░┘∙┌─▓ └┬▒┼▌┌▌┴ ▌≤┬│┼┬ └▀÷ ▌│░─│▌▓┼┬
 ONERR	EX (SP),HL
 	PUSH AF
 	LD A,H
@@ -287,7 +284,7 @@ resVG	LD C,#FF
 	LD A,(DRV_SYM)
 	OR #3C
 	CALL DOSIX
-	LD A,#68		;ЬЮЦ МЮГЮД
+	LD A,#68		;Х═ё ╜═╖═╓
 	LD C,#1F
 DOSIX	PUSH IX
 _3D2F	JP #3D2F
@@ -295,7 +292,7 @@ _3D2F	JP #3D2F
 FormTR	SRL A
 	LD (_phystr),A
 	RLA
-	LD C,2			;ОНГХЖХНМХП-Е МЮ КНЦ.tr A
+	LD C,2			;╞╝╖╗Ф╗╝╜╗Ю-╔ ╜═ ╚╝ё.tr A
 	CALL #3D13
 	LD A,#FF
 	LD (#5CD8),A
