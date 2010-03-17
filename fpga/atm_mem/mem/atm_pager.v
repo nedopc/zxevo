@@ -33,7 +33,7 @@ module atm_pager(
 	input  wire        pent1m_1m_on,  // 1 meg addressing of pent1m mode on
 
 
-	input  wire        atm_xxF7_wr, // write strobe for the xxF7 ATM port
+	input  wire        atmF7_wr, // write strobe for the xxF7 ATM port
 
 
 	input  wire        dos, // indicates state of computer: also determines ROM mapping
@@ -111,7 +111,7 @@ module atm_pager(
 
 
 
-	
+
 	// port reading: sets pages, ramnrom, dos_7ffd
 	//
 	always @(posedge fclk, negedge rst_n)
@@ -166,7 +166,7 @@ module atm_pager(
 
 		endcase
 	end
-	else if( atm_xxF7_wr )
+	else if( atmF7_wr )
 	begin
 		if( za[15:14]==ADDR )
 		begin
@@ -228,13 +228,13 @@ module atm_pager(
 		if( dos_turn_on )
 		begin
 			stall_count[2] <= 1'b1; // count: 000(stop) -> 101 -> 110 -> 111 -> 000(stop)
-			stall_count[0] <= 1'b1; 
+			stall_count[0] <= 1'b1;
 		end
 		else if( stall_count[2] )
 		begin
 			stall_count[2:0] <= stall_count[2:0] + 3'd1;
 		end
-	
+
 	end
 
 	assign zclk_stall = dos_turn_on | stall_count[2];
