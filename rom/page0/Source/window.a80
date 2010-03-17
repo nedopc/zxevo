@@ -20,12 +20,12 @@ DRAWWIN	LD HL,JPNZkey
 	INC HL
 	INC HL
 	INC HL
-	LD B,(HL)	;ШИРИНА-1
+	LD B,(HL)	;€ђ€ЌЂ-1
 	INC HL
 	DEC B
 	LD A,(HL)
 	INC HL
-	LD (COL_SYM),A	;ЦВЕТ ОКНА
+	LD (COL_SYM),A	;–‚…’ ЋЉЌЂ
 	PUSH DE
 	LD C,B
 	CALL PR32
@@ -37,12 +37,12 @@ DRAWWIN	LD HL,JPNZkey
 	CALL NXCOLLN	;C=0
 	CALL PRTX
 	INC HL
-	LD (KNOPKI),HL	;ПОЛОЖИТЬ АДРЕС СПИСКА КНОПОК ТЕКУЩЕГО МЕНЮ
+	LD (KNOPKI),HL	;ЏЋ‹Ћ†€’њ Ђ„ђ…‘ ‘Џ€‘ЉЂ ЉЌЋЏЋЉ ’…Љ“™…ѓЋ Њ…Ќћ
 	PUSH BC
 	CALL PR32
 	DJNZ $-3
 	POP BC
-	LD A,C		;напечатано строк
+	LD A,C		;­ ЇҐз в ­® бва®Є
 	ADD A,A
 	ADD A,A
 	ADD A,A
@@ -166,7 +166,7 @@ PR32Q	POP BC
 	ADD A,#4F
 	LD D,A
 	LD A,7
-COL_SYM	EQU $-1		;ЦВЕТ СИМВОЛА
+COL_SYM	EQU $-1		;–‚…’ ‘€Њ‚Ћ‹Ђ
 	LD (DE),A
 	POP DE
 	INC E
@@ -218,8 +218,8 @@ INC_H	INC H
 
 NAMEROM	LD A,6
 	LD (COL_SYM),A
-	LD DE,#100	;С 0 ПОЗИЦИИ 1 СТРОКИ
-	LD HL,NAME_ROM	;ИМЯ ПРОШИВКИ
+	LD DE,#100	;‘ 0 ЏЋ‡€–€€ 1 ‘’ђЋЉ€
+	LD HL,NAME_ROM	;€Њџ ЏђЋ€‚Љ€
 
 PRINT_MSG
 	PUSH HL
@@ -255,19 +255,19 @@ mKEYPR	HALT
 	CPL
 	AND 7
 	JR NZ,mKEYPR
-_rulNMO	CALL SAVE2X2	;если меню напечатали поверх стрелки
-	CALL SET_ADR	;УСТАНОВКА НОВОГО АДРЕСА ДЛЯ ЦВЕТНОЙ ПОЛОСКИ
+_rulNMO	CALL SAVE2X2	;Ґб«Ё ¬Ґ­о ­ ЇҐз в «Ё Ї®ўҐае бваҐ«ЄЁ
+	CALL SET_ADR	;“‘’ЂЌЋ‚ЉЂ ЌЋ‚ЋѓЋ Ђ„ђ…‘Ђ „‹џ –‚…’ЌЋ‰ ЏЋ‹Ћ‘Љ€
 	RES 5,(IY+1)
 	JR MAINLOP
 
-;НАЖАТА СТРЕЛКА ВНИЗ
+;ЌЂ†Ђ’Ђ ‘’ђ…‹ЉЂ ‚Ќ€‡
 UP	LD A,(POS_CUR)
 	DEC A
 	JR NZ,SET_POS
 RIGHT	LD A,(IX+3)
 	JR SET_POS
 
-;если на ABCD/Mem и если FIRE,то генерировать кнопку
+;Ґб«Ё ­  ABCD/Mem Ё Ґб«Ё FIRE,в® ЈҐ­ҐаЁа®ў вм Є­®ЇЄг
 Yabcd	LD A,L
 	SUB 13*8
 	RRCA
@@ -276,10 +276,10 @@ Yabcd	LD A,L
 	RRCA
 	AND 3
 	ADD A,"1"
-YabcdU	LD (#5C08),A	;фальш.кнопка CY=0
-	JR NO_SELECT	;разрешить fire
+YabcdU	LD (#5C08),A	;д «ми.Є­®ЇЄ  CY=0
+	JR NO_SELECT	;а §аҐиЁвм fire
 
-;НАЖАТА СТРЕЛКА ВНИЗ
+;ЌЂ†Ђ’Ђ ‘’ђ…‹ЉЂ ‚Ќ€‡
 DOWN	LD A,(POS_CUR)
 	INC A
 	LD C,(IX+3)
@@ -296,14 +296,14 @@ GLUNOKY	CALL g1Fknow
 	AND 2
 	JR Z,MAINnMO
 	LD A,#FF
-	LD (#5C08),A	;выкл.фальш.кнопку
+	LD (#5C08),A	;ўлЄ«.д «ми.Є­®ЇЄг
 	HALT
 	LD HL,(arXY)
 	PUSH HL
 	CALL MOUSE
 	POP BC
-			;проверить: видно ли ABCD и Mem?
-			;если видно, мышь на них?
+			;Їа®ўҐаЁвм: ўЁ¤­® «Ё ABCD Ё Mem?
+			;Ґб«Ё ўЁ¤­®, ¬лим ­  ­Ёе?
 	LD A,L
 	SUB 13*8
 	CP 7*8
@@ -321,13 +321,13 @@ NOabcd	OR A
 	JR NZ,Moved
 	CALL MOUOPT
 	CP 1
-POS_CUR	EQU $-1		;ПОЗИЦИЯ КУРСОРА
-	JR Z,NO_SELECT	;разрешить fire
+POS_CUR	EQU $-1		;ЏЋ‡€–€џ Љ“ђ‘ЋђЂ
+	JR Z,NO_SELECT	;а §аҐиЁвм fire
 	SCF
-	JR NO_SELECT	;запретить
+	JR NO_SELECT	;§ ЇаҐвЁвм
 
-;БЫЛО ДВИЖЕНИЕ МЫШИ
-Moved	CALL MOUOPT	;CY=1:мышь не на опции
+;Ѓ›‹Ћ „‚€†…Ќ€… Њ›€
+Moved	CALL MOUOPT	;CY=1:¬лим ­Ґ ­  ®ЇжЁЁ
 	JR C,NO_SELECT
 	LD (POS_CUR),A
 NO_SELECT
@@ -350,64 +350,64 @@ MAINnMO	CALL PRINTTIME
 	HALT
 MAINqMO	BIT 5,(IY+1)
 	JR Z,GLUNOKY
-	CALL #1F54	;ПРОВЕРКА НА BREAK
+	CALL #1F54	;ЏђЋ‚…ђЉЂ ЌЂ BREAK
 	JR NC,EDIT
 GLUYEKY LD A,(IY-#32)
 	LD L,A
 	CP "q"
-	JP Z,UP		;НАЖАТО ВВЕРХ
+	JP Z,UP		;ЌЂ†Ђ’Ћ ‚‚…ђ•
 	CP "a"
-	JP Z,DOWN	;НАЖАТО ВНИЗ
+	JP Z,DOWN	;ЌЂ†Ђ’Ћ ‚Ќ€‡
 	SUB 7
-	JR Z,EDIT	;НАЖАТ EDIT (CS+1)
+	JR Z,EDIT	;ЌЂ†Ђ’ EDIT (CS+1)
 	DEC A
-	JP Z,LEFT	;НАЖАТО ВЛЕВО
+	JP Z,LEFT	;ЌЂ†Ђ’Ћ ‚‹…‚Ћ
 	DEC A		
-	JP Z,RIGHT	;НАЖАТО ВПРАВО
+	JP Z,RIGHT	;ЌЂ†Ђ’Ћ ‚ЏђЂ‚Ћ
 	DEC A
-	JP Z,DOWN	;НАЖАТО ВНИЗ
+	JP Z,DOWN	;ЌЂ†Ђ’Ћ ‚Ќ€‡
 	DEC A
-	JP Z,UP		;НАЖАТО ВВЕРХ
+	JP Z,UP		;ЌЂ†Ђ’Ћ ‚‚…ђ•
 	CP 2
-	JR Z,ENTER	;НАЖАТ ENTER
+	JR Z,ENTER	;ЌЂ†Ђ’ ENTER
 	CP #15
-	JR Z,ENTER	;НАЖАЛИ SPACE
+	JR Z,ENTER	;ЌЂ†Ђ‹€ SPACE
  	CP #62
-	JR Z,CHNGMODE	;НАЖАТА "M"
+	JR Z,CHNGMODE	;ЌЂ†Ђ’Ђ "M"
 	CP #6C
-	JP Z,CHNGTURBO	;НАЖАТА "W"
+	JP Z,CHNGTURBO	;ЌЂ†Ђ’Ђ "W"
 	SUB #26
 	CP 4
-	JP C,SelDrv	;НАЖАТ ВЫБОР ДИСКОВОДОВ "A-D"
+	JP C,SelDrv	;ЌЂ†Ђ’ ‚›ЃЋђ „€‘ЉЋ‚Ћ„Ћ‚ "A-D"
 	SUB 7
-	JR Z,MOUonof	;НАЖАТА "8" ВКЛЮЧЕНИЕ/ВЫКЛЮЧЕНИ МЫШИ
+	JR Z,MOUonof	;ЌЂ†Ђ’Ђ "8" ‚Љ‹ћ—…Ќ€…/‚›Љ‹ћ—…Ќ€ Њ›€
 	DEC A
-	JP Z,CMOonof	;НАЖАТА "9" ВКЛЮЧЕНИЕ/ВЫКЛЮЧЕНИЕ ЧАСОВ
+	JP Z,CMOonof	;ЌЂ†Ђ’Ђ "9" ‚Љ‹ћ—…Ќ€…/‚›Љ‹ћ—…Ќ€… —Ђ‘Ћ‚
 	LD A,L
 	OR #20		;6.6R
 	LD HL,0
 KNOPKI	EQU $-2
 	LD C,(IX+3)
 	LD B,0
-	CPIR		;СКАНИРОВАНИЕ СПИСКА ЗАДАННЫХ КЛАВИШ
-JPNZkey	JP NZ,MAINLOP	;НЕТ В СПИСКЕ 
+	CPIR		;‘ЉЂЌ€ђЋ‚ЂЌ€… ‘Џ€‘ЉЂ ‡Ђ„ЂЌЌ›• Љ‹Ђ‚€
+JPNZkey	JP NZ,MAINLOP	;Ќ…’ ‚ ‘Џ€‘Љ… 
 	LD A,(IX+3)
 	SUB C
-	LD (POS_CUR),A	;НОМЕР НАЖАТОЙ КЛАВИШИ ПО УКАЗАННОМУ СПИСКУ
+	LD (POS_CUR),A	;ЌЋЊ…ђ ЌЂ†Ђ’Ћ‰ Љ‹Ђ‚€€ ЏЋ “ЉЂ‡ЂЌЌЋЊ“ ‘Џ€‘Љ“
 	JR ENTERU
 
-;ВКЛЮЧЕНИЕ/ВЫКЛЮЧЕНИЕ КУРСОРА МЫШИ
+;‚Љ‹ћ—…Ќ€…/‚›Љ‹ћ—…Ќ€… Љ“ђ‘ЋђЂ Њ›€
 MOUonof	LD HL,FLAGS
 	LD A,(HL)
-	XOR 2		;ИНВЕРСИЯ ОТОБРАЖЕНИЯ МЫШИ
+	XOR 2		;€Ќ‚…ђ‘€џ Ћ’ЋЃђЂ†…Ќ€џ Њ›€
 	LD (HL),A
 	AND 2
-	CALL NZ,DETECTMOUSE	;ЕСЛИ ВКЛЮЧИЛИ, ПРОВЕРЯЕМ НАЛИЧИЕ
-	CALL NC,REST2X2	;ЕСЛИ МЫШЬ НЕ НАЙДЕНА, ТО ВЫКЛЮЧАЕМ ОТОБРАЖЕНИЕ
+	CALL NZ,DETECTMOUSE	;…‘‹€ ‚Љ‹ћ—€‹€, ЏђЋ‚…ђџ…Њ ЌЂ‹€—€…
+	CALL NC,REST2X2	;…‘‹€ Њ›њ Ќ… ЌЂ‰„…ЌЂ, ’Ћ ‚›Љ‹ћ—Ђ…Њ Ћ’ЋЃђЂ†…Ќ€…
 	JP MAINLOP
 
 EDIT	LD A,(IX+3)
-	INC A		;+2*(hgt+1)=адрес выхода
+	INC A		;+2*(hgt+1)= ¤аҐб ўле®¤ 
 	JR ENTERU
 
 MAINabcd
@@ -415,7 +415,7 @@ MAINabcd
 	INC A
 	JR NZ,GLUYEKY	;JR JENT
 ENTER	LD A,(POS_CUR)
-ENTERU	LD (SEL_NUM),A	;надо для detect BOOTPGclick
+ENTERU	LD (SEL_NUM),A	;­ ¤® ¤«п detect BOOTPGclick
 	LD A,(POS_CUR)
 	LD (IX+5),A
 	LD A,(FLAGS)
@@ -425,7 +425,7 @@ ENTERU	LD (SEL_NUM),A	;надо для detect BOOTPGclick
 	CALL GLUDIN
 	PUSH IX
 	POP HL
-	LD A,0		;ВЫБРАННЫЙ НОМЕР
+	LD A,0		;‚›ЃђЂЌЌ›‰ ЌЋЊ…ђ
 SEL_NUM	EQU $-1
 	ADD A,A		;*2
 	ADD A,4		;+4

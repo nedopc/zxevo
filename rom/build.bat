@@ -1,1 +1,1 @@
-copy /B /Y page0\*.rom+page1\*.rom+page2\*.rom+page3\*.rom zxevo.rom
+copy /B /Y page0\services.rom+page1\*.rom+page2\*.rom+page3\*.rom zxevo.rom
