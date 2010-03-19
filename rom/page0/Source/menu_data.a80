@@ -190,7 +190,7 @@ T_48	DB "48",#FF	;1
 T_FAST	DB "Fast"
 T_SLOW	DB "Slow"
 
-DRV_SYM	DB #80	;хлъ рейсыецн дхяйнбндю
+DRV_SYM	DB 0	;хлъ рейсыецн дхяйнбндю
 gBASICS	DB 0
 BOOTPG	DB 0	;мнлеп ярпюмхжш бшбедеммнцн йюрюкнцю
 gCATBOT	DW 0
