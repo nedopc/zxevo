@@ -78,7 +78,18 @@ module zports(
 
 
 	output reg  [ 2:0] atm_scr_mode, // RG0..RG2 in docs
-	output reg         atm_turbo     // turbo mode ON
+	output reg         atm_turbo,    // turbo mode ON
+	output reg         atm_pen,      // pager_off in atm_pager.v, NOT inverted!!!
+	output reg         atm_cpm_n,    // permanent dos on
+	output reg         atm_pen2,     // PEN2 - fucking palette mode, NOT inverted!!!
+
+	output wire        romrw_en, // from port BF
+
+
+	output wire        pent1m_ram0_0, // d3.eff7
+	output wire        pent1m_1m_on,  // d2.eff7
+	output wire [ 5:0] pent1m_page,   // full 1 meg page number
+	output wire        pent1m_ROM     // d4.7ffd
 
 );
 
@@ -400,18 +411,15 @@ module zports(
 			p7ffd_rom_int <= din[4];
 	end
 
-
 	assign block7ffd=p7ffd_int[5] & block1m;
+
 
 	// EFF7 port
 	always @(posedge zclk, negedge rst_n)
 	begin
 		if( !rst_n )
 			peff7_int <= 8'h00;
-//		lvd's style
-//		else if( (a[15:8]==8'hEF) && portf7_wr && (!block1m) )
-//		koe's style
-		else if( /*(a[15:8]==8'hEF)*/ !a[12] && portf7_wr )
+		else if( !a[12] && portf7_wr )
 			peff7_int <= din; // 4 - turbooff, 0 - p16c on, 2 - block1meg
 	end
 	assign block1m = peff7_int[2];
@@ -419,6 +427,14 @@ module zports(
 	assign p7ffd = { (block1m ? 3'b0 : p7ffd_int[7:5]),p7ffd_rom_int,p7ffd_int[3:0]};
 
 	assign peff7 = block1m ? { peff7_int[7], 1'b0, peff7_int[5], peff7_int[4], 3'b000, peff7_int[0] } : peff7_int;
+
+
+	assign pent1m_ROM       = p7ffd_int[4];
+	assign pent1m_page[5:0] = { p7ffd_int[7:5], p7ffd_int[2:0] };
+	assign pent1m_1m_on     = ~peff7_int[2];
+	assign pent1m_ram0_0    = peff7_int[3];
+
+
 
 
 	// gluclock ports (bit7:eff7 is above)
@@ -580,16 +596,27 @@ module zports(
 		romrw_en_reg  <= din[1];
 	end
 
+	assign romrw_en = romrw_en_reg;
+
+
 
 	// port xx77 write
 	always @(posedge fclk, negedge rst_n)
 	if( !rst_n )
 	begin
 		atm_scr_mode = 3'b011;
-		atm_turbo = 1'b1;
+		atm_turbo    = 1'b1;
+		atm_pen      = 1'b0; // UNLIKE ATM - reset with normal ROMs! (TEMPORARY???)
+		atm_cpm_n    = 1'b1; // no permanent dos
+		atm_pen2     = 1'b0;
 	end
 	else if( atm77_wr_fclk )
 	begin
+		atm_scr_mode <= din[2:0];
+		atm_turbo    <= din[3];
+		atm_pen      <= ~a[8];
+		atm_cpm_n    <=  a[9];
+		atm_pen2     <= ~a[14];
 	end
 
 

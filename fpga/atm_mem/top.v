@@ -284,6 +284,19 @@ module top(
 	            .porthit(porthit), .drive_ff(drive_ff) );
 
 
+	atm_pager atm_pager( .rst_n(rst_n),
+	                     .fclk(fclk),
+	                     .zpos(zpos),
+	                     .zneg(zneg),
+
+	                     .za(a),
+	                     .zd(d),
+	                     .iorq_n(iorq_n),
+	                     .mreq_n(mreq_n),
+	                     .wr_n(wr_n),
+	                     .rd_n(rd_n),
+
+
 
 	zmem z80mem( .fclk(fclk), .rst_n(rst_n), .zpos(1'b0), .zneg(1'b0),
 	             .cend(cend), .pre_cend(pre_cend), .za(a), .zd_in(d),
@@ -492,7 +505,7 @@ module top(
 	             .waits(waits),
 	             .spiint_n(spiint_n) );
 
-	assign wait_n = 1'bZ;
+	assign wait_n = 1'bZ; // WTF??? FIXME,FIXME,FIXME,FIXME,FIXME,FIXME,FIXME,FIXME,FIXME,FIXME,FIXME,FIXME,FIXME
 
 
 
