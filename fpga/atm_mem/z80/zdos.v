@@ -2,7 +2,7 @@
 //
 // just DOS signal control
 
-include "../include/tune.v"
+`include "../include/tune.v"
 
 
 module zdos(

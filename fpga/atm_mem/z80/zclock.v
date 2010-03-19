@@ -38,7 +38,7 @@ module zclock(
 	output reg zneg,
 
 
-	input  wire zclk_stall;
+	input  wire zclk_stall,
 
 
 
