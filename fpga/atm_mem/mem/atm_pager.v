@@ -21,7 +21,7 @@ module atm_pager(
 
 	input  wire [ 7:0] zd, // Z80 data bus - for latching port data
 
-	input  wire        iorq_n,mreq_n,rd_n,wr_n,m1_n,rfsh_n; // to track DOS turn on/turn off
+	input  wire        mreq_n,rd_n,m1_n, // to track DOS turn on/turn off
 
 
 	input  wire        pager_off, // PEN as in ATM2: turns off memory paging, service ROM is everywhere
@@ -55,7 +55,7 @@ module atm_pager(
 	reg [ 1:0] ramnrom; // ram(=1) or rom(=0)
 	reg [ 1:0] dos_7ffd; // =1 7ffd bits (ram) or DOS enter mode (rom) for given page
 
-	reg iorq_n_reg, mreq_n_reg, rd_n_reg, wr_n_reg, m1_n_reg, rfsh_n_reg;
+	reg mreq_n_reg, rd_n_reg, m1_n_reg;
 
 	wire dos_exec_stb, ram_exec_stb;
 
