@@ -7,6 +7,12 @@
  * @section history Revision history
  *
  * @subsection current Current version.
+ *
+ * - "Print Screen" PS2 keyboard key set NMI on ZX.
+ * - Soft reset (Z80 only) to service (0) page if pressed "softreset" key <5 seconds.
+ *
+ * @subsection ver_2010_03_10 Version 10.03.2010
+ *
  * - Add PS2 keyboard led controlling: "Scroll Lock" led equal VGA mode.
  * - Fix mapping gluk (DS12887) nvram to PCF8583.
  * - Fix Update Flag in register C (emulation Gluk clock).
@@ -14,7 +20,7 @@
  * - Add support for zx (mechanical) keyboard.
  * - Add support for Kempston joystick.
  *
- * @subsection ver_1_00 Version 1.00 - base version.
+ * @subsection ver_2010_02_04 Version 04.02.2010 - base version (1.00 in SVN).
  *
  */
 

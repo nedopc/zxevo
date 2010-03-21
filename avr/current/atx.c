@@ -6,6 +6,7 @@
 
 #include "atx.h"
 #include "rs232.h"
+#include "zx.h"
 
 volatile UWORD atx_counter;
 
@@ -48,6 +49,7 @@ void wait_for_atx_power(void)
 
 UBYTE atx_power_task(void)
 {
+	static UWORD last_count = 0;
 	UBYTE j = 50;
 
 	if ( atx_counter > 1700 )
@@ -58,6 +60,13 @@ UBYTE atx_power_task(void)
 		ATXPWRON_PORT &= ~(1<<ATXPWRON);
 	}
 
+	if ( ( last_count > 0 ) && ( atx_counter == 0 ) )
+	{
+		//soft reset (reset Z80 only)
+		zx_spi_send(SPI_RST_REG, 0, 0x7F);
+	}
+	last_count = atx_counter;
+
 	if ( ( nCONFIG_PIN & (1<<nCONFIG) ) == 0 )
 	{
 		//power down
@@ -67,6 +76,9 @@ UBYTE atx_power_task(void)
 
 		//1 sec delay
 		do _delay_ms(20); while(--j);
+
+		last_count = 0;
 	}
+
 	return j;
 }
