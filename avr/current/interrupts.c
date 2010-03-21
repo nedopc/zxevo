@@ -68,7 +68,7 @@ ISR(TIMER2_OVF_vect)
 	if ( SOFTRES_PIN & (1<<SOFTRES) )
 	{
 		//not pressed
-		atx_counter = 0;
+		atx_counter >>= 1;
 	}
 	else
 	{

@@ -152,7 +152,7 @@ void rtc_init(void)
 	//restore mode register from NVRAM
 	modes_register = rtc_read(RTC_COMMON_MODE_REG);
 	//set modes on fpga
-	zx_spi_send(SPI_VGA_REG, modes_register&MODE_VGA, 0);
+	zx_spi_send(SPI_CONFIG_REG, modes_register&MODE_VGA, 0);
 }
 
 void rtc_write(UBYTE addr, UBYTE data)

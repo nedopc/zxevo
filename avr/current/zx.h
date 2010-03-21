@@ -97,8 +97,10 @@
 /** ZX reset register. */
 #define SPI_RST_REG   0x30
 
-/** ZX VGA MODE register. */
-#define SPI_VGA_REG   0x50
+/** ZX configuration register. */
+#define SPI_CONFIG_REG   0x50
+/** ZX NMI bit flag of configuration register. */
+#define SPI_CONFIG_NMI_FLAG 0x02
 
 /** ZX Gluk address register. */
 #define SPI_GLUK_ADDR 0x41
@@ -192,6 +194,13 @@ void zx_wait_task(UBYTE status);
 
 /** Switch vga mode on ZX */
 void zx_vga_switcher(void);
+
+/**
+ * Set configuration register on zx.
+ * @param flags [in] - bit 0: not used (depend from MODE_VGA on modes_register)
+ *		               bit 1: NMI
+ */
+void zx_set_config(UBYTE flags);
 
 #endif
 

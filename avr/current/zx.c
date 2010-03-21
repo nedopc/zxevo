@@ -209,7 +209,7 @@ NO_KEY,NO_KEY, // 78
 NO_KEY,NO_KEY, // 79
 KEY_CS,KEY_4 , // 7A PGDN
 NO_KEY,NO_KEY, // 7B
-NO_KEY,NO_KEY, // 7C
+NO_KEY,NO_KEY, // 7C Print Screen
 KEY_CS,KEY_3 , // 7D PGUP
 NO_KEY,NO_KEY, // 7E
 NO_KEY,NO_KEY  // 7F
@@ -492,6 +492,12 @@ void to_zx(UBYTE scancode, UBYTE was_E0, UBYTE was_release)
 			tbl1 = pgm_read_byte_far( tblptr++ );
 			tbl2 = pgm_read_byte_far( tblptr );
 		}
+
+		if ( scancode == 0x7C ) //Print Screen
+		{
+			//set/reset NMI
+			zx_set_config( (was_release==0)? SPI_CONFIG_NMI_FLAG : 0 );
+		}
 	}
 	else
 	{
@@ -685,12 +691,18 @@ void zx_vga_switcher(void)
 	//invert VGA mode
 	modes_register ^= MODE_VGA;
 
-	//send mode to FPGA
-	zx_spi_send(SPI_VGA_REG, modes_register&MODE_VGA, 0x7F);
+	//send configuration to FPGA
+	zx_spi_send(SPI_CONFIG_REG, modes_register&MODE_VGA, 0x7F);
 
 	//save mode register to RTC NVRAM
 	rtc_write(RTC_COMMON_MODE_REG, modes_register);
 
 	//set led on keyboard
 	ps2keyboard_send_cmd(PS2KEYBOARD_CMD_SETLED);
+}
+
+void zx_set_config(UBYTE flags)
+{
+	//send configuration to FPGA
+	zx_spi_send(SPI_CONFIG_REG, (modes_register&MODE_VGA) | (flags & ~MODE_VGA), 0x7F);
 }
