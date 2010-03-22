@@ -77,7 +77,7 @@ int main( int argc, char* argv[] )
 
 
 	// how many address bits to use
-	temp=inlen;
+	temp=inlen-1;
 	abits=1;
 	while( temp>>=1 ) abits++;
 
