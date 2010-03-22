@@ -42,7 +42,7 @@ int main( int argc, char* argv[] )
 		}
 	}
 
-	if( (!error)
+	if( !error )
 	{
 		if( fseek(infile,0,SEEK_END) )
 		{
@@ -53,9 +53,9 @@ int main( int argc, char* argv[] )
 
 	if( !error )
 	{
-		inlen=(ULONG)ftell(infile);
+		inlen=(int)ftell(infile);
 
-		if( inlen==(ULONG)(-1L) )
+		if( inlen==(-1L) )
 		{
 			printf("Cannot ftell() length of infile!\n");
 			inlen=0;
@@ -82,11 +82,11 @@ int main( int argc, char* argv[] )
 	while( temp>>=1 ) abits++;
 
 
-	if( !error ) error+=emit_header(infile, abits);
+	if( !error ) error+=emit_header(outfile, abits);
 
 	if( !error ) error+=emit_body(infile, outfile, inlen, abits);
 
-	if( !error ) error+=emit_footer(infile);
+	if( !error ) error+=emit_footer(outfile);
 
 
 
@@ -126,7 +126,7 @@ int emit_header(FILE * file, int abits)
 
 	fprintf(file,"module bin2v(\n\n");
 
-	fprintf(file,"\tinput  wire [%2d:0] in_addr,\n\n");
+	fprintf(file,"\tinput  wire [%2d:0] in_addr,\n\n",abits-1);
 
 	fprintf(file,"\toutput reg  [ 7:0] out_word\n\n");
 
