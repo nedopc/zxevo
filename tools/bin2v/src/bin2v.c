@@ -63,10 +63,13 @@ int main( int argc, char* argv[] )
 		}
 	}
 
-	if( !error && !inlen )
+	if( !error )
 	{
-		printf("Infile is zero length!\n");
-		error++;
+		if( !inlen )
+		{
+			printf("Infile is zero length!\n");
+			error++;
+		}
 	}
 
 	if( !error && fseek(infile,0,SEEK_SET) )
@@ -76,10 +79,13 @@ int main( int argc, char* argv[] )
 	}
 
 
-	// how many address bits to use
-	temp=inlen-1;
-	abits=1;
-	while( temp>>=1 ) abits++;
+	if( !error )
+	{
+		// how many address bits to use
+		temp=inlen-1;
+		abits=1;
+		while( temp>>=1 ) abits++;
+	}
 
 
 	if( !error ) error+=emit_header(outfile, abits);
