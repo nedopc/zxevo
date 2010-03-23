@@ -13,10 +13,10 @@ module drammem(
 	parameter _add_to_addr_ = 0;
 	parameter _filter_out_ = 32'h91;
 
-	reg [15:0] array [0:32767]; // 9..0 RAS addr and 14:10=>4:0 CAS addr, total 65536 bytes, or 2 modules - 131072 bytes
+	reg [15:0] array [0:1048575];
 	reg [15:0] dout;
 
-	reg [14:0] addr;
+	reg [19:0] addr;
 
 	wire cas_n;
 
@@ -36,7 +36,7 @@ module drammem(
 	assign cas_n = ucas_n & lcas_n;
 	always @(negedge cas_n)
 	begin
-		addr[14:10] <= ma[4:0];
+		addr[19:10] <= ma[9:0];
 	end
 
 	always @(posedge cas_n, negedge cas_n)

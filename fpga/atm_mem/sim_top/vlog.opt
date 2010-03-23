@@ -4,6 +4,7 @@ tb_top.v
 ../common/spi2.v
 ../dram/dram.v
 ../dram/arbiter.v
+../mem/atm_pager.v
 ../slave/slavespi.v
 ../vg93/vg93.v
 ../video/fetch.v
@@ -19,6 +20,8 @@ tb_top.v
 ../z80/zports.v
 ../z80/zkbdmus.v
 ../z80/zwait.v
+../z80/zdos.v
 ../sim_models/drammem.v
 rom_top.v
+zxevo_rom.v
 

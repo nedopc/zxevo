@@ -5,8 +5,8 @@ add wave -noupdate -format Logic /tb/clkz_out
 add wave -noupdate -format Logic /tb/zrst_n
 add wave -noupdate -format Logic /tb/clkz_in
 add wave -noupdate -divider <NULL>
-add wave -noupdate -color Salmon -format Logic /tb/DUT/z80clk/zpos
-add wave -noupdate -color Salmon -format Logic /tb/DUT/z80clk/zneg
+add wave -noupdate -color Salmon -format Logic /tb/DUT/zclock/zpos
+add wave -noupdate -color Salmon -format Logic /tb/DUT/zclock/zneg
 add wave -noupdate -format Logic /tb/z80/busrq_n
 add wave -noupdate -format Logic /tb/z80/busak_n
 add wave -noupdate -format Logic /tb/iorq_n
@@ -34,16 +34,16 @@ add wave -noupdate -format Logic /tb/DUT/rlcas_n
 add wave -noupdate -format Logic /tb/DUT/rras0_n
 add wave -noupdate -format Logic /tb/DUT/rras1_n
 add wave -noupdate -format Literal -radix hexadecimal /tb/DUT/rd
-add wave -noupdate -format Logic /tb/DUT/dramko/cbeg
+add wave -noupdate -format Logic /tb/DUT/dram/cbeg
 add wave -noupdate -format Logic /tb/DUT/dramarb/post_cbeg
 add wave -noupdate -format Logic /tb/DUT/dramarb/pre_cend
 add wave -noupdate -format Logic /tb/DUT/dramarb/cend
-add wave -noupdate -format Logic /tb/DUT/z80clk/precend_cnt
-add wave -noupdate -format Logic /tb/DUT/z80clk/h_precend_1
-add wave -noupdate -format Logic /tb/DUT/z80clk/h_precend_2
-add wave -noupdate -color Salmon -format Logic /tb/DUT/z80clk/zpos
-add wave -noupdate -color Salmon -format Logic /tb/DUT/z80clk/zneg
-add wave -noupdate -format Logic /tb/DUT/z80clk/zclk_out
+add wave -noupdate -format Logic /tb/DUT/zclock/precend_cnt
+add wave -noupdate -format Logic /tb/DUT/zclock/h_precend_1
+add wave -noupdate -format Logic /tb/DUT/zclock/h_precend_2
+add wave -noupdate -color Salmon -format Logic /tb/DUT/zclock/zpos
+add wave -noupdate -color Salmon -format Logic /tb/DUT/zclock/zneg
+add wave -noupdate -format Logic /tb/DUT/zclock/zclk_out
 add wave -noupdate -format Logic /tb/clkz_in
 add wave -noupdate -format Logic /tb/DUT/dramarb/cpu_req
 add wave -noupdate -format Logic /tb/DUT/dramarb/cpu_rnw
@@ -52,10 +52,13 @@ add wave -noupdate -format Logic /tb/DUT/z80mem/ramwr
 add wave -noupdate -format Logic /tb/DUT/z80mem/ramrd
 add wave -noupdate -format Logic /tb/DUT/z80mem/ramrd_reg
 add wave -noupdate -format Logic /tb/DUT/z80mem/ramwr_reg
+add wave -noupdate -divider <NULL>
+add wave -noupdate -format Literal -radix hexadecimal /tb/romko/addr
+add wave -noupdate -format Literal -radix hexadecimal /tb/romko/data
 TreeUpdate [SetDefaultTree]
 WaveRestoreCursors {{Cursor 1} {1324100 ps} 0} {{Cursor 2} {93673100 ps} 0}
-configure wave -namecolwidth 180
-configure wave -valuecolwidth 56
+configure wave -namecolwidth 252
+configure wave -valuecolwidth 40
 configure wave -justifyvalue left
 configure wave -signalnamewidth 0
 configure wave -snapdistance 10
@@ -67,4 +70,4 @@ configure wave -gridperiod 356
 configure wave -griddelta 8
 configure wave -timeline 0
 update
-WaveRestoreZoom {93050600 ps} {95350500 ps}
+WaveRestoreZoom {0 ps} {31830600 ps}
