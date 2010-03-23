@@ -189,6 +189,17 @@ module atm_pager(
 	// DOS turn on/turn off
 	//
 
+`ifdef SIMULATE
+	initial
+	begin
+		m1_n_reg   = 1'b1;
+		mreq_n_reg = 1'b1;
+		rd_n_reg   = 1'b1;
+
+		stall_count = 3'b000;
+	end
+`endif
+
 	always @(posedge fclk) if( zpos )
 	begin
 		m1_n_reg <= m1_n;

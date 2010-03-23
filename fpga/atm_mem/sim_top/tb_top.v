@@ -38,7 +38,7 @@ module tb;
 
 
 	wire csrom, romoe_n, romwe_n;
-
+	wire rompg0_n, dos_n;
 
 	wire [15:0] rd;
 	wire [9:0] ra;
@@ -89,6 +89,8 @@ module tb;
 	         .csrom(csrom),
 	         .romoe_n(romoe_n),
 	         .romwe_n(romwe_n),
+	         .rompg0_n(rompg0_n),
+	         .dos_n(dos_n),
 
 	         // DRAM
 	         .rd(rd),
@@ -189,7 +191,7 @@ module tb;
 
 	// ROM model
 	rom romko(
-	           .addr( {/*dos_n, (~rompg0_n),*/ 2'b00, za[13:0]} ),
+	           .addr( {dos_n, (~rompg0_n), za[13:0]} ),
 	           .data(zd),
 	           .ce_n( romoe_n | (~csrom) )
 	         );
