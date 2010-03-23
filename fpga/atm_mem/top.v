@@ -264,6 +264,8 @@ module top(
 	assign rompg3   =  rompg[3];
 	assign rompg4   =  rompg[4];
 
+	wire [3:0] zclk_stall;
+
 	zclock zclock( .fclk(fclk), .rst_n(rst_n), .zclk(zclk), .rfsh_n(rfsh_n), .zclk_out(clkz_out),
 	               .zpos(zpos), .zneg(zneg),
 	               .turbo( {1'b0,~(peff7[4]|dos)} ), .pre_cend(pre_cend), .cbeg(cbeg),
@@ -313,8 +315,6 @@ module top(
 
 	wire [3:0] dos_turn_off,
 	           dos_turn_on;
-
-	wire [3:0] zclk_stall;
 
 	wire [ 7:0] page [0:3];
 	wire [ 3:0] romnram;
