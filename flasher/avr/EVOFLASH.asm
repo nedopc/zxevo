@@ -40,7 +40,8 @@
 .EQU    CMD_17          =$51    ;read_single_block
 .EQU    ACMD_41         =$69    ;sd_send_op_cond
 
-.EQU    SD_DATA         =$57
+.EQU    SD_CS0          =$57
+.EQU    SD_CS1          =$5F
 .EQU    FLASH_LOADDR    =$F0
 .EQU    FLASH_MIDADDR   =$F1
 .EQU    FLASH_HIADDR    =$F2
@@ -49,6 +50,7 @@
 .EQU    SCR_LOADDR      =$40
 .EQU    SCR_HIADDR      =$41
 .EQU    SCR_CHAR        =$44
+.EQU    SCR_MODE        =$4E
 ;
 ;--------------------------------------
 ;
@@ -185,6 +187,7 @@ PACKED_FPGA:
 .NOLIST
 .INCLUDE "FPGA.INC"
 .LIST
+.INCLUDE "_NVRAM.ASM"
 ;
 ;--------------------------------------
 ;
@@ -198,6 +201,8 @@ START:  CLI
         LDI     TEMP,0B00011111
         OUT     WDTCR,TEMP
         OUT     WDTCR,NULL
+
+        OUT     MCUCSR,NULL
 ;
         LDI     TEMP,LOW(RAMEND)
         OUT     SPL,TEMP
@@ -392,6 +397,10 @@ DEMLZEND:
         LDIZ    MSG_OK*2
         RCALL   UART_PRINTSTRZ
 ; - - - - - - - - - - - - - - - - - - -
+        RCALL   NVRAM_READ_MODE
+        LDI     TEMP,SCR_MODE
+        RCALL   FPGA_REG
+; - - - - - - - - - - - - - - - - - - -
         LDI     XL,0
         LDI     XH,0
         RCALL   SET_CURSOR
@@ -458,12 +467,15 @@ PRVERS9:
         RCALL   PRINTSTRZ
 ;
 ;инициализация SD карточки
-        LDI     TEMP,SD_DATA
+        LDI     TEMP,SD_CS1
         SER     DATA
         RCALL   FPGA_REG
-
         LDI     TEMP,32
         RCALL   SD_RD_DUMMY
+
+        LDI     TEMP,SD_CS0
+        SER     DATA
+        RCALL   FPGA_REG
         SER     R24
 SDINIT1:LDIZ    CMD00*2
         RCALL   SD_WR_PGM_6
@@ -484,6 +496,8 @@ SDINIT2:CPI     DATA,$01
 
 SDINIT3:LDIZ    CMD55*2
         RCALL   SD_WR_PGM_6
+        LDI     TEMP,2
+        RCALL   SD_RD_DUMMY
         LDI     DATA,ACMD_41
         RCALL   SD_EXCHANGE
         MOV     DATA,R24
@@ -1020,6 +1034,8 @@ SD_RD_DUMMY:
 ;--------------------------------------
 ;in:    Z
 SD_WR_PGM_6:
+        LDI     TEMP,2
+        RCALL   SD_RD_DUMMY
         LDI     TEMP,6
 SD_WR_PGX:
 SDWRP61:LPM     DATA,Z+
@@ -1056,7 +1072,7 @@ SD_READ_SECTOR:
         MOV     XH,XL
         CLR     XL
 SDRDSE1:
-        LDI     TEMP,3
+        LDI     TEMP,3+2
         RCALL   SD_RD_DUMMY
 
         LDI     DATA,CMD_17
@@ -1089,9 +1105,9 @@ SDRDSE3:RCALL   SD_RECEIVE
 
         LDI     TEMP,2
         RCALL   SD_RD_DUMMY
-SDRDSE4:RCALL   SD_WAIT_NOTFF
-        CPI     DATA,$FF
-        BRNE    SDRDSE4
+;SDRDSE4:RCALL   SD_WAIT_NOTFF
+;        CPI     DATA,$FF
+;        BRNE    SDRDSE4
         RET
 
 SDRDSE8:
@@ -1369,7 +1385,7 @@ RASCHET:RCALL   BCDE200
 ;чтение очередного сектора файла в BUFFER
 ;out:   DATA == 0 - считан последний сектор файла
 NEXTSEC:
-        LDI     TEMP,SD_DATA
+        LDI     TEMP,SD_CS0
         SER     DATA
         RCALL   FPGA_REG
 
