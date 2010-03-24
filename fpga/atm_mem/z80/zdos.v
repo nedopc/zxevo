@@ -29,7 +29,7 @@ module zdos(
 	always @(posedge fclk, negedge rst_n)
 	if( !rst_n )
 	begin
-		dos = 1'b0;
+		dos = 1'b1;
 	end
 	else // posedge fclk
 	begin
