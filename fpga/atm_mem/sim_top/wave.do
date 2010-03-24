@@ -34,13 +34,6 @@ add wave -noupdate -format Logic /tb/DUT/rlcas_n
 add wave -noupdate -format Logic /tb/DUT/rras0_n
 add wave -noupdate -format Logic /tb/DUT/rras1_n
 add wave -noupdate -format Literal -radix hexadecimal /tb/DUT/rd
-add wave -noupdate -format Logic /tb/DUT/dram/cbeg
-add wave -noupdate -format Logic /tb/DUT/dramarb/post_cbeg
-add wave -noupdate -format Logic /tb/DUT/dramarb/pre_cend
-add wave -noupdate -format Logic /tb/DUT/dramarb/cend
-add wave -noupdate -format Logic /tb/DUT/zclock/precend_cnt
-add wave -noupdate -format Logic /tb/DUT/zclock/h_precend_1
-add wave -noupdate -format Logic /tb/DUT/zclock/h_precend_2
 add wave -noupdate -color Salmon -format Logic /tb/DUT/zclock/zpos
 add wave -noupdate -color Salmon -format Logic /tb/DUT/zclock/zneg
 add wave -noupdate -format Logic /tb/DUT/zclock/zclk_out
@@ -55,9 +48,27 @@ add wave -noupdate -format Logic /tb/DUT/z80mem/ramwr_reg
 add wave -noupdate -divider <NULL>
 add wave -noupdate -format Literal -radix hexadecimal /tb/romko/addr
 add wave -noupdate -format Literal -radix hexadecimal /tb/romko/data
+add wave -noupdate -format Logic {/tb/DUT/instantiate_atm_pagers[0]/atm_pager/dos}
+add wave -noupdate -format Literal {/tb/DUT/instantiate_atm_pagers[0]/atm_pager/page}
+add wave -noupdate -format Logic {/tb/DUT/instantiate_atm_pagers[0]/atm_pager/pent1m_ROM}
+add wave -noupdate -format Literal {/tb/DUT/instantiate_atm_pagers[0]/atm_pager/pent1m_page}
+add wave -noupdate -format Literal /tb/DUT/z80mem/win0_page
+add wave -noupdate -format Logic /tb/DUT/z80mem/win0_romnram
+add wave -noupdate -format Literal /tb/DUT/z80mem/win3_page
+add wave -noupdate -format Logic /tb/DUT/z80mem/win3_romnram
+add wave -noupdate -format Literal /tb/DUT/z80mem/rompg
+add wave -noupdate -format Literal /tb/DUT/adr_fix
+add wave -noupdate -format Logic /tb/DUT/rompg0_n
+add wave -noupdate -format Logic /tb/DUT/dos_n
+add wave -noupdate -format Logic /tb/DUT/zclock/zclk_stall
+add wave -noupdate -format Logic /tb/DUT/zdos/cpm_n
+add wave -noupdate -format Logic /tb/DUT/zdos/dos_turn_off
+add wave -noupdate -format Logic /tb/DUT/zdos/dos_turn_on
+add wave -noupdate -format Literal /tb/DUT/dos_turn_off
+add wave -noupdate -format Literal /tb/DUT/dos_turn_on
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {1324100 ps} 0} {{Cursor 2} {93673100 ps} 0}
-configure wave -namecolwidth 252
+WaveRestoreCursors {{Cursor 1} {3221800 ps} 0} {{Cursor 2} {93673100 ps} 0}
+configure wave -namecolwidth 340
 configure wave -valuecolwidth 40
 configure wave -justifyvalue left
 configure wave -signalnamewidth 0
@@ -70,4 +81,4 @@ configure wave -gridperiod 356
 configure wave -griddelta 8
 configure wave -timeline 0
 update
-WaveRestoreZoom {0 ps} {31830600 ps}
+WaveRestoreZoom {0 ps} {7331800 ps}

@@ -2,6 +2,8 @@
 //
 // MUXes mouse and kbd data in two single databusses for zports
 
+`include "../include/tune.v"
+
 module zkbdmus(
 
 	input  wire        fclk,
@@ -32,6 +34,15 @@ module zkbdmus(
 
 	reg [4:0] kout; // wire AND
 
+
+`ifdef SIMULATE
+	initial
+	begin
+		force kbd_data = 5'b11111;
+		force mus_data = 8'hFF;
+		force kj_data  = 5'b00000;
+	end
+`endif
 
 
 	// store data from slavespi

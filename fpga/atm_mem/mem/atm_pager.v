@@ -212,14 +212,14 @@ module atm_pager(
 
 
 
-	assign dos_exec_stb = zneg &&
+	assign dos_exec_stb = zneg && (za[15:14]==ADDR) &&
 	                      (!m1_n_reg) && (!mreq_n) && mreq_n_reg &&
 	                      (za[13:8]==6'h3D) &&
 	                      dos_7ffd[1'b1] && (!ramnrom[1'b1]) && pent1m_ROM;
 
-	assign ram_exec_stb = zneg &&
+	assign ram_exec_stb = zneg && (za[15:14]==ADDR) &&
 	                      (!m1_n_reg) && (!mreq_n) && mreq_n_reg &&
-	                      ramnrom[1'b1];
+	                      ramnrom[pent1m_ROM];
 
 	assign dos_turn_on  = dos_exec_stb;
 	assign dos_turn_off = ram_exec_stb;
