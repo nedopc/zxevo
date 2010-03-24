@@ -8,6 +8,7 @@
  *
  * @subsection current Current version.
  *
+ * - Fix Power Led behavior (it off while atx power off).
  * - "Print Screen" PS2 keyboard key set NMI on ZX.
  * - Soft reset (Z80 only) to service (0) page if pressed "softreset" key <5 seconds.
  *

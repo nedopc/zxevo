@@ -98,8 +98,8 @@ start:
 	indata = (ULONG)GET_FAR_ADDRESS(fpga); // prepare for data fetching
 	depacker_dirty();
 
-	//LED off
-	PORTB |= (1<<LED);
+	//power led OFF
+	LED_PORT |= 1<<LED;
 
 	// start timer (led dimming and timeouts for ps/2)
 	TCCR2 = 0b01110011; // FOC2=0, {WGM21,WGM20}=01, {COM21,COM20}=11, {CS22,CS21,CS20}=011
