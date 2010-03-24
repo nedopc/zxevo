@@ -145,7 +145,8 @@ START8: RCALL   CRCMAIN
         BRNE    UPDATE_ME        ;если некорректная CRC
 ;
 ;запуск watchdog-а (по срабатыванию переход на осн.программу)
-START9: LDI     TEMP,0B00011000
+START9: CBI     PORTE,6
+        LDI     TEMP,0B00011000
         OUT     WDTCR,TEMP
 GAVGAV: RJMP    GAVGAV
 ;
@@ -345,6 +346,7 @@ DEMLZEND:
 ;SPI reinit
         LDI     TEMP,(1<<SPE)|(0<<DORD)|(1<<MSTR)|(0<<CPOL)|(0<<CPHA)
         OUT     SPCR,TEMP
+        SBI     PORTE,6
         LED_OFF
         RCALL   NEWLINE
         LDIZ    MSG_TRYUPDATE*2
@@ -354,9 +356,10 @@ DEMLZEND:
 ;
 ;--------------------------------------
 ;инициализация SD карточки
-        SDCS_CLR
+        SDCS_SET
         LDI     TEMP,32
         RCALL   SD_RD_DUMMY
+        SDCS_CLR
         SER     R24
 SDINIT1:LDIZ    CMD00*2
         RCALL   SD_WR_PGM_6
@@ -377,6 +380,8 @@ SDINIT2:CPI     DATA,$01
 
 SDINIT3:LDIZ    CMD55*2
         RCALL   SD_WR_PGM_6
+        LDI     TEMP,2
+        RCALL   SD_RD_DUMMY
         LDI     DATA,ACMD_41
         RCALL   SD_EXCHANGE
         MOV     DATA,R24
@@ -1182,6 +1187,8 @@ SD_RD_DUMMY:
 ;--------------------------------------
 ;in:    Z
 SD_WR_PGM_6:
+        LDI     TEMP,2
+        RCALL   SD_RD_DUMMY
         LDI     TEMP,6
 SD_WR_PGX:
         OUT     RAMPZ,ONE
@@ -1221,7 +1228,7 @@ SD_READ_SECTOR:
         MOV     XH,XL
         CLR     XL
 SDRDSE1:
-        LDI     TEMP,3
+        LDI     TEMP,3+2
         RCALL   SD_RD_DUMMY
 
         LDI     DATA,CMD_17
@@ -1252,11 +1259,11 @@ SDRDSE3:RCALL   SD_RECEIVE
         SBIW    R24,1
         BRNE    SDRDSE3
 
-        LDI     TEMP,2
+        LDI     TEMP,2+2
         RCALL   SD_RD_DUMMY
-SDRDSE4:RCALL   SD_WAIT_NOTFF
-        CPI     DATA,$FF
-        BRNE    SDRDSE4
+;SDRDSE4:RCALL   SD_WAIT_NOTFF
+;        CPI     DATA,$FF
+;        BRNE    SDRDSE4
 
         SDCS_SET
         RET
@@ -1747,9 +1754,11 @@ INU9:   RET
 ;in:    DATA == продолжительность *0.1 сек
 BEEP:   OUT     SPCR,NULL       ;SPI off
 BEE2:   LDI     TEMP,100;100 периодов 1кГц
-BEE1:   SBI     PORTB,1
+BEE1:   SBI     DDRE,6
+        CBI     PORTE,6
         RCALL   BEEPDLY
-        CBI     PORTB,1
+        CBI     DDRE,6
+        SBI     PORTE,6
         RCALL   BEEPDLY
         DEC     TEMP
         BRNE    BEE1

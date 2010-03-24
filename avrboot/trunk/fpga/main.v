@@ -110,7 +110,7 @@ module main(
     input spick,
     input spido,
     output spidi,
-    output spiint_n
+    input spiint_n
 );
 
 //--Dummy----------------------------------------------------------------------
@@ -139,8 +139,6 @@ module main(
     assign ide_rd_n = 1'b1;
     assign ide_wr_n = 1'b1;
 
-    assign spiint_n=1'b1;
-
     assign clkz_out = 1'b0;
 
     assign csrom = 1'b0;
@@ -149,10 +147,10 @@ module main(
 
 //--Main wires-----------------------------------------------------------------
 
-    assign sdclk  = spick & ~spics_n;
+    assign sdclk  = spick;
     assign sddo   = spido;
     assign spidi  = sddi;
     assign sdcs_n = spics_n;
-    assign beep = ~(spick & spics_n);
+    assign beep   = spiint_n;
 
 endmodule
