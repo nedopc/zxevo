@@ -71,6 +71,9 @@ UBYTE atx_power_task(void)
 	{
 		//power down
 
+		//power led off (timer output disconnect from led pin)
+		TCCR2 &= ~((1<<COM20)|(1<<COM21));
+
 		//wait for button released
 		while (  ( SOFTRES_PIN & (1<<SOFTRES) ) == 0 );
 
