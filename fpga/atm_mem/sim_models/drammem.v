@@ -28,6 +28,16 @@ module drammem(
 
 
 
+	initial
+	begin : clear_mem
+		integer i;
+
+		for(i=0;i<1048576;i=i+1)
+			array[i] = 16'hDEAD;
+	end
+
+
+
 
 
 	always @(negedge ras_n)
