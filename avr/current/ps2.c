@@ -65,7 +65,7 @@ static void ps2keyboard_release_clk(void)
 	if( flags_register & FLAG_PS2KEYBOARD_DIRECTION )
 	{
 		PS2KBDAT_DDR &= ~(1<<PS2KBDAT); //ps2 keyboard data pin to input mode
-		flags_register &= ~(FLAG_PS2KEYBOARD_DIRECTION); //clear direction
+		flags_register &= ~(FLAG_PS2KEYBOARD_DIRECTION); //set to receive mode
 	}
 
 	//release ps2 receiver (disabled by now)
@@ -324,7 +324,7 @@ static void ps2mouse_release_clk(void)
 	if( flags_register & FLAG_PS2MOUSE_DIRECTION )
 	{
 		PS2MSDAT_DDR &= ~(1<<PS2MSDAT); //ps2 mouse data pin to input mode
-		flags_register &= ~(FLAG_PS2MOUSE_DIRECTION); //clear direction
+		flags_register &= ~(FLAG_PS2MOUSE_DIRECTION); //set to receive mode
 	}
 
 	//release ps2 receiver (disabled by now)

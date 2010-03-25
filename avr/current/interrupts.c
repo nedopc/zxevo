@@ -44,10 +44,6 @@ ISR(TIMER2_OVF_vect)
 	if( (ps2keyboard_count<12) && (ps2keyboard_count!=0) )
 	{
 		if( ps2keyboard_timeout ) ps2keyboard_timeout--;
-		else
-		{
-			ps2keyboard_count = 12;
-		}
 	}
 
 	// pause for keyboard CS|SS
@@ -58,10 +54,6 @@ ISR(TIMER2_OVF_vect)
 	if( (ps2mouse_count<12) && (ps2mouse_count!=0) )
 	{
 		if( ps2mouse_timeout ) ps2mouse_timeout--;
-		else
-		{
-			ps2mouse_count = 12;
-		}
 	}
 
 	//check soft reset
