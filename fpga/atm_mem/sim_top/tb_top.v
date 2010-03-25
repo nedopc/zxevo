@@ -219,6 +219,46 @@ module tb;
 
 
 
+
+	// trace rom page
+	wire rma14,rma15;
+
+	assign rma14 = DUT.page[0][0];
+	assign rma15 = DUT.page[0][1];
+
+
+	always @(rma14 or rma15)
+	begin
+		$display("at time %t us",$time/10000);
+
+		case( {~rma14, ~rma15} )
+
+		2'b00: $display("GLUKROM");
+		2'b01: $display("TR-DOS");
+		2'b10: $display("BASIC 128");
+		2'b11: $display("BASIC 48");
+		default: $display("unknown");
+
+		endcase
+
+		$display("");
+	end
+
+
+	// time ticks
+	always
+	begin : timemark
+
+		integer ms;
+
+		ms = ($time/1000000);
+
+		$display("timemark %d ms",ms);
+
+		#1000000.0; // 1 ms
+	end
+
+
 endmodule
 
 
