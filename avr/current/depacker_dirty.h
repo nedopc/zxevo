@@ -15,7 +15,7 @@
 #define DBMASK 2047
 
 /** Get next byte. */
-#define NEXT_BYTE (pgm_read_byte_far(indata++))
+#define NEXT_BYTE (pgm_read_byte_far(curFpga++))
 
 /** Actual depacker, 8bit-oriented and without any checks. */
 void  depacker_dirty(void);

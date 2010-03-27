@@ -3,7 +3,6 @@
 #include <avr/pgmspace.h>
 #include <util/delay.h>
 
-
 #include "mytypes.h"
 #include "zx.h"
 #include "pins.h"
@@ -13,6 +12,9 @@
 #include "rs232.h"
 #include "ps2.h"
 #include "rtc.h"
+
+//if want Log than comment next string
+#undef LOGENABLE
 
 //zx mouse registers
 volatile UBYTE zx_mouse_button;

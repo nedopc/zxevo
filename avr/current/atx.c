@@ -8,6 +8,9 @@
 #include "rs232.h"
 #include "zx.h"
 
+//if want Log than comment next string
+#undef LOGENABLE
+
 volatile UWORD atx_counter;
 
 void wait_for_atx_power(void)
