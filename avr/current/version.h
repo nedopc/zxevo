@@ -14,15 +14,15 @@
  * - 0x0E..0x0F [2 bytes]: CRC value of bootloader or base configuration code.
  *
  * Revision date and officiality bit format:
- * - 7 bit of 0x0C: officiality bit (0 - test version, 1 - official release);
- * - 6..1 bits of 0x0C: year (value 0..63 means 2000..2063 year);
- * - 0 bit of 0x0C and 7..5 bits of 0x0D: month (value 1..12);
- * - 4..0 bits of 0x0D: day (value 1..31).
+ * - 7 bit of 0x0D: officiality bit (0 - test version, 1 - official release);
+ * - 6..1 bits of 0x0D: year (value 0..63 means 2000..2063 year);
+ * - 0 bit of 0x0D and 7..5 bits of 0x0C: month (value 1..12);
+ * - 4..0 bits of 0x0C: day (value 1..31).
  *
  * Example:
- * 50 65 6E 74 31 6D 00 00 00 00 00 00 14 7B 3C B1
+ * 50 65 6E 74 31 6D 00 00 00 00 00 00 7B 14 3C B1
  * 50 65 6E 74 31 6D 00 00 00 00 00 00 = name string: "Pent1m";
- * 14 7B = non official, 10 year, 03 month, 27 day: release date "27.03.2010";
+ * 7B 14 = non official, 10 year, 03 month, 27 day: release date "27.03.2010";
  * 3C B1 = CRC.
  *
  * Recommend type next strings on display:
