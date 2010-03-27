@@ -18,14 +18,6 @@ BYTE      s[256], s1[256];
 
 //-----------------------------------------------------------------------------
 
-BYTE toupper(BYTE b)
-{
- if ( (b>0x61) && (b<0x7b) )  b&=0xdf;
- return b;
-}
-
-//-----------------------------------------------------------------------------
-
 void print_err_rc()
 {
  printf("Error! (Row %d, Col %d)\n",row,col+1);
@@ -266,8 +258,8 @@ int main(int argc,char*argv[])
   memcpy(&stm,localtime(&tt),sizeof(stm));
  }
  i=(WORD)(((stm.tm_year-100)&0x3f)<<9) | (((stm.tm_mon+1)&0x0f)<<5) | (stm.tm_mday&0x1f);
- header[0x003e]=fbuff[0x1dffc]=(i>>8)&0x7f|o;
- header[0x003f]=fbuff[0x1dffd]=i&0xff;
+ header[0x003f]=fbuff[0x1dffd]=(i>>8)&0x7f|o;
+ header[0x003e]=fbuff[0x1dffc]=i&0xff;
 
  strncpy(&fbuff[0x1dff0], vs, 12);
 

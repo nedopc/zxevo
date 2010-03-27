@@ -94,8 +94,8 @@ start:
 	 	dbuf[i]=0;
 	 	to_log((char*)dbuf);
 	 	to_log(" ");
-	 	UBYTE b2 = pgm_read_byte_far(version+12);
-	 	UBYTE b1 = pgm_read_byte_far(version+13);
+	 	UBYTE b1 = pgm_read_byte_far(version+12);
+	 	UBYTE b2 = pgm_read_byte_far(version+13);
 	 	UBYTE day = b1&0x1F;
 	 	UBYTE mon = ((b2<<3)+(b1>>5))&0x0F;
 	 	UBYTE year = (b2>>1)&0x3F;
