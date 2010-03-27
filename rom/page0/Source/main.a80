@@ -2,7 +2,7 @@
 ;VERSION
 g1		EQU "0"
 g2		EQU "1"
-g3		EQU "5"
+g3		EQU "6"
 
 ;схема Nemo:
 hddstat		EQU #F0
@@ -18,20 +18,20 @@ hdddathi	EQU #11
 hddupr		EQU #C8
 hdduprON	EQU 0
 
-ADR_CAT		EQU #9C00	;,#900
-MOUSE_BUFF	EQU #A500	;БУФЕР ДЛЯ СОХРАНЕНИЯ ПОД МЫШЬЮ
+ADR_CAT		EQU #9C00		;,#900
+MOUSE_BUFF	EQU #A500		;БУФЕР ДЛЯ СОХРАНЕНИЯ ПОД МЫШЬЮ
 COLBUF		EQU MOUSE_BUFF+#10	;БУФЕР СОХРАНЕНИЯ ЦВЕТА
 
-f20		EQU #14		;окно BOOT
+f20		EQU #14			;окно BOOT
 len98		EQU (f20-1)*8
 GlukStk		EQU #5FE4
 
-hldebcaf	EQU ADR_CAT-8	;push AF,BC,DE,HL,IY,IX,SP
-SPKEEP		EQU hldebcaf-14	;старый стек
-OLDSTSZ		EQU 11		;в т.ч (SP-2)
+hldebcaf	EQU ADR_CAT-8		;push AF,BC,DE,HL,IY,IX,SP
+SPKEEP		EQU hldebcaf-14		;старый стек
+OLDSTSZ		EQU 11			;в т.ч (SP-2)
 OLDSTAK		EQU SPKEEP-(2*OLDSTSZ)
 
-wide		EQU 1		;два пробела с боков
+wide		EQU 1			;два пробела с боков
 
 SYSREG_EFF7	EQU #EFF7
 SET_ADR_CMOS	EQU #DFF7
@@ -53,7 +53,7 @@ CMOS_OFF	EQU 0
 	LD (TEK_SP),SP
 	LD H,0
 	CALL READCMOS
-	INC H
+	INC L
 	LD HL,FLAGS
 	JR NZ,2F
 	RES 2,(HL)
@@ -77,13 +77,12 @@ CMOS_OFF	EQU 0
 	LD (adrPnWt),HL
 3	LD H,#0E
 	CALL READCMOS
-	LD A,H
 	AND #80
 	RRCA
 	RRCA
 	RRCA
 	LD (SYSREG1),A
-	LD A,H
+	LD A,L
 	AND 3
 	LD (MEMMODE),A
 1	CALL SET_SYSREG1	;OUT #EFF7,0 - видимо,на всяк.сл.
@@ -192,10 +191,11 @@ S_FACE	LD A,4
 	LD HL,NO_CMOS
 	JR Z,1F	
 	CP #AB
-	RET Z
+	JP Z,GET_VERS_EVO
 	LD HL,OFFCMOS
 1	LD DE,#150C
-	JP PRINT_MSG
+	CALL PRINT_MSG
+	JP GET_VERS_EVO
 
 MEMSET	LD A,(MEMMODE)
 	AND A

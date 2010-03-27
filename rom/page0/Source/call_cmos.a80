@@ -1,6 +1,6 @@
 
 ;мю бунде: H-юдпея ъвеийх
-;	   H-опнвхрюммне гмювемхе
+;	   L-опнвхрюммне гмювемхе
 READCMOS
 	DI
 	PUSH BC
@@ -11,7 +11,7 @@ READCMOS
 	LD B,HIGH SET_ADR_CMOS
 	OUT (C),H
 	LD B,HIGH RD_WR_CMOS
-	IN H,(C)
+	IN L,(C)
 	JR OFF_CMOS
 
 ;мю бунде: H-юдпея ъвеийх
@@ -25,17 +25,128 @@ WRITECMOS
 	OUT (C),A
 	LD B,HIGH SET_ADR_CMOS
 	OUT (C),H
-	LD A,L
 	LD B,HIGH RD_WR_CMOS
-	OUT (C),A
+	OUT (C),L
 OFF_CMOS
 	LD A,(SYSREG1)
 	LD B,HIGH SYSREG_EFF7
 	OUT (C),A
 	POP BC
-	LD A,H
+	LD A,L
 	AND A
 	EI
+	RET
+
+GET_VERS_EVO
+	LD H,#11
+	CALL READCMOS
+	LD H,#F0
+	CP #AA
+	LD L,0
+	JR Z,6F
+	LD L,1
+6	LD C,L
+	CALL WRITECMOS
+	CALL READCMOS
+	CP C
+	RET Z
+	INC A
+	RET Z
+	DEC A
+	EXA
+	LD A,6
+	LD (COL_SYM),A
+	LD DE,#5B00
+	EXA
+	LD (DE),A
+	INC E
+	LD B,#0F
+1	INC H
+	CALL READCMOS
+	LD (DE),A
+	INC E
+	DJNZ 1B
+	LD E,0
+	LD B,#0C
+2	LD A,(DE)
+	AND A
+	JR Z,3F
+	INC E
+	DJNZ 2B
+3	LD BC,(#5B0C)
+	LD A," "
+	LD (DE),A
+	INC E
+	EX DE,HL
+
+;пюяоюйнбыхй дюрш
+UNVERS	LD A,C
+	AND #1F
+	CALL A2TXT	;йнмбепяхъ х сйкюдйю дюрш
+	SRL B
+	RR C
+	LD A,C
+	RRCA
+	RRCA
+	RRCA
+	RRCA
+	AND #0F
+	LD (HL),"."	;пюгдекхрекэмюъ рнвйю
+	INC HL
+	CALL A2TXT	;йнмбепяхъ х сйкюдйю леяъжю
+	LD (HL),"."	;пюгдекхрекэмюъ рнвйю
+	INC HL
+	LD (HL),"2"
+	INC HL
+	LD (HL),"0"
+	INC HL
+	LD A,B
+	AND #3F
+	CALL A2TXT	
+	BIT 6,B
+	JR NZ,4F
+	EX DE,HL
+	LD HL,TXT_BETA
+	LD BC,5
+	LDIR
+	EX DE,HL
+4	LD (HL),#FF
+	LD DE,#50E0
+	LD L,0
+	LD C,L
+5	LD A,(HL)
+	INC L
+	INC C
+	INC A
+	JR NZ,5B
+	LD L,0
+	LD A,#20
+	SUB C
+	SRL A
+	ADD A,E
+	LD E,A
+	JP PRTXT
+
+;оепебнд "A" б деяърхвйс х б рейяр
+A2TXT	PUSH HL
+	LD L,A
+	LD H,0
+	LD DE,10
+	XOR A
+	DEC A
+	INC A
+	SBC HL,DE
+	JR NC,$-3
+	ADD HL,DE
+	ADD A,"0"
+	LD D,A
+	LD A,L
+	ADD A,"0"
+	POP HL
+	LD (HL),D
+	INC HL
+	LD (HL),A
+	INC HL
 	RET
 
 SET_CMOS_DEFAULT
@@ -53,7 +164,7 @@ SET_CMOS_DEFAULT
 
 CMOonof	LD H,0
 	CALL READCMOS
-	INC H
+	INC L
 	JP Z,RESTART
 	LD H,#11
 	CALL READCMOS
@@ -67,7 +178,7 @@ CMOonof	LD H,0
 RDCMBCD PUSH HL
 	LD H,#0A
 	CALL READCMOS
-	RL H
+	RL L
 	POP HL
 	JR C,_af5e
 	CALL READCMOS
@@ -103,7 +214,6 @@ PRINTTIME
 	RET Z
 	LD H,#0C
 	CALL READCMOS
-	LD A,H
 	AND #10
 	RET Z
 	LD H,#11
@@ -119,17 +229,17 @@ PRINTTIME
 	
 1	LD H,#0B
 	CALL RDCMBCD
-	LD DE,#5090
+	LD DE,#5070
 	BIT 5,A		;ПЮГПЕЬЕМХЕ ОПЕПШБ-Ъ НР АСДХКЭМХЙЮ
 	LD A,#0C	;G
 	CALL NZ,CMOSSYM
-	LD HL,#5AAC
+	LD HL,#5A8C
 	LD E,L
 	LD BC,#0806
 	LD (HL),C
 	INC L
 	DJNZ $-2
-	LD L,#CC
+	LD L,#AC
 	LD B,8
 	LD (HL),C
 	INC L
@@ -145,8 +255,8 @@ PRINTTIME
 	LD H,6
 	CALL RDCMBCD
 	LD HL,#4444
-	LD (#5AEF),HL
-	LD E,#EF
+	LD (#5ACF),HL
+	LD E,#CF
 	JR C,1F
 	LD HL,PnWtSr1	;for BCD
 adrPnWt	EQU $-2
@@ -162,7 +272,7 @@ adrPnWt	EQU $-2
 	CALL CMOSSYM	;ДМ1
 	POP AF
 	CALL CMOSSYM	;ДМ2
-1	LD E,#CC
+1	LD E,#AC
 	LD H,7		;DD
 	CALL TIM99
 	LD A,#0D	;.
