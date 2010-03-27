@@ -1,5 +1,4 @@
 
-
 ;нохяюрекэ нймю бшбндхлнцн мю щйпюм
 ;+0=X
 ;+1=Y
@@ -178,8 +177,8 @@ mSTUPID	DB 3,8,3,26,#EA
 	DC "GO SLEEP,STUPID USER!!!"
 	DB #FF
 
-;mIKNOW	DB 3,8,3,14,#71
-;	DC "I KNOW ALL!",#FF
+TXT_BETA
+	DB " beta"
 
 NAME_ROM   ;12345678901234567890123456789012
 	DB "HE GLUK, ONLY RESET SERVICE ",g1,".",g2,g3," ",#FF
