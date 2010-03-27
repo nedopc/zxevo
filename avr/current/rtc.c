@@ -8,7 +8,11 @@
 #include "zx.h"
 #include "rtc.h"
 #include "ps2.h"
+#include "version.h"
 #include "rs232.h"
+
+//if want Log than comment next string
+#undef LOGENABLE
 
 volatile UBYTE gluk_regs[14];
 
@@ -303,6 +307,12 @@ UBYTE gluk_get_reg(UBYTE index)
 	}
 	else
 	{
+		if ( index >= 0xF0 )
+		{
+			//read version
+			return GetVersionByte( index&0x0F );
+		}
+
 		//other from nvram
 		//- on PCF8583 nvram started from #10
 		//- on 512vi1[DS12887] nvram started from #0E
@@ -350,9 +360,17 @@ void gluk_set_reg(UBYTE index, UBYTE data)
 	}
 	else
 	{
-		//write to nvram
-		//- on PCF8583 nvram started from #10
-		//- on 512vi1[DS12887] nvram started from #0E
-		rtc_write( (index&0x3F)+2, data);
+		if ( index >= 0xF0 )
+		{
+			//set version data type
+			SetVersionType( data );
+		}
+		else
+		{
+			//write to nvram
+			//- on PCF8583 nvram started from #10
+			//- on 512vi1[DS12887] nvram started from #0E
+			rtc_write( (index&0x3F)+2, data);
+		}
 	}
 }

@@ -7,6 +7,9 @@
 #include "zx.h"
 #include "joystick.h"
 
+//if want Log than comment next string
+#undef LOGENABLE
+
 void joystick_task(void)
 {
 	static UBYTE joy_state = 0;

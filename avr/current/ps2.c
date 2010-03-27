@@ -11,6 +11,9 @@
 #include "spi.h"
 #include "rs232.h"
 
+//if want Log than comment next string
+#undef LOGENABLE
+
 UBYTE ps2_decode(UBYTE count, UWORD shifter)
 {
 	UBYTE t,byte;

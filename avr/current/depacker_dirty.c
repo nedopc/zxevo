@@ -11,9 +11,6 @@ UWORD dbpos; // current position in buffer (wrappable)
 UBYTE bitstream;
 UBYTE bitcount;
 
-
-
-
 void depacker_dirty(void)
 {
 	UBYTE j;

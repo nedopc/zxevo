@@ -17,17 +17,14 @@
 #include "atx.h"
 #include "joystick.h"
 
-/** FPGA compressed data (linker symbol). */
-extern const char fpga[] PROGMEM;
+/** Pointer to current byte in FPGA. */
+ULONG curFpga;
 
 //Common flag register.
 volatile UBYTE flags_register;
 
 // Common modes register.
 volatile UBYTE modes_register;
-
-
-ULONG indata;
 
 //buffer for depacking FPGA configuration
 //you can USED for other purposed after setup FPGA
@@ -85,6 +82,45 @@ start:
 
 #ifdef LOGENABLE
 	rs232_init();
+	to_log("VER:");
+	{
+	 	UBYTE b,i;
+		ULONG version = 0x1DFF0;
+	 	char VER[]="..";
+	 	for( i=0; i<12; i++)
+	 	{
+			dbuf[i] = pgm_read_byte_far(version+i);
+	 	}
+	 	dbuf[i]=0;
+	 	to_log((char*)dbuf);
+	 	to_log(" ");
+	 	UBYTE b2 = pgm_read_byte_far(version+12);
+	 	UBYTE b1 = pgm_read_byte_far(version+13);
+	 	UBYTE day = b1&0x1F;
+	 	UBYTE mon = ((b2<<3)+(b1>>5))&0x0F;
+	 	UBYTE year = (b2>>1)&0x3F;
+	 	VER[0] = '0'+(day/10);
+	 	VER[1] = '0'+(day%10);
+     	to_log(VER);
+     	to_log(".");
+	 	VER[0] = '0'+(mon/10);
+	 	VER[1] = '0'+(mon%10);
+     	to_log(VER);
+     	to_log(".");
+	 	VER[0] = '0'+(year/10);
+	 	VER[1] = '0'+(year%10);
+     	to_log(VER);
+     	to_log("\r\n");
+	 	//
+	 	for( i=0; i<16; i++)
+	 	{
+	 		b = pgm_read_byte_far(version+i);
+	 		VER[0] = ((b >> 4) <= 9 )?'0'+(b >> 4):'A'+(b >> 4)-10;
+	 		VER[1] = ((b & 0x0F) <= 9 )?'0'+(b & 0x0F):'A'+(b & 0x0F)-10;
+	 		to_log(VER);
+	 	}
+	 	to_log("\r\n");
+	}
 #endif
 
 	wait_for_atx_power();
@@ -95,7 +131,7 @@ start:
 	_delay_us(40);
 	DDRF &= ~(1<<nCONFIG);
 	while( !(PINF & (1<<nSTATUS)) ); // wait ready
-	indata = (ULONG)GET_FAR_ADDRESS(fpga); // prepare for data fetching
+	curFpga = fpga; // prepare for data fetching
 	depacker_dirty();
 
 	//power led OFF

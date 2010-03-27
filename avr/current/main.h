@@ -8,6 +8,8 @@
  *
  * @subsection current Current version.
  *
+ * - Add support for get version info (via Gluk cmos extra registers 0xF0..0xFF).
+ * - Optimize sources, some correction (log, fpga load).
  * - Fix PS/2 timeout error handler.
  *
  * @subsection ver_2010_03_24 Version 24.03.2010
@@ -47,6 +49,8 @@ extern volatile UBYTE flags_register;
 #define FLAG_SPI_INT            0x08
 /** Direction for ps2 keyboard data (0 - Receive/1 - Send). */
 #define FLAG_PS2KEYBOARD_DIRECTION  0x10
+/** Version type (0 - BaseConf /1 - BootLoader). */
+#define FLAG_VERSION_TYPE       0x20
 
 /** Common modes register. */
 extern volatile UBYTE modes_register;
@@ -56,8 +60,11 @@ extern volatile UBYTE modes_register;
 /** Data buffer. */
 extern UBYTE dbuf[];
 
-/** Input data */
-extern ULONG indata;
+/** FPGA data index. */
+ULONG curFpga;
+
+/** FPGA data pointer [far address] (linker symbol). */
+extern const ULONG fpga;
 
 /**
  * Writes specified length of buffer to SPI.
