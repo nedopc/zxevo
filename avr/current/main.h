@@ -8,6 +8,7 @@
  *
  * @subsection current Current version.
  *
+ * - Fix PS/2 mouse error handler (analize error and reinit mouse if need it).
  * - Add support for get version info (via Gluk cmos extra registers 0xF0..0xFF).
  * - Optimize sources, some correction (log, fpga load).
  * - Fix PS/2 timeout error handler.
