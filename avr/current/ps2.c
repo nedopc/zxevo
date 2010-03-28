@@ -353,7 +353,7 @@ void ps2mouse_task(void)
 		 ( ps2mouse_init_sequence[ps2mouse_initstep] != 0 ) )
 	{
 		//delay need for pause between release and hold clk pin
-		_delay_us(100);
+		_delay_us(200);
 
 		//initialization not complete
 		//send next command to mouse
@@ -364,16 +364,35 @@ void ps2mouse_task(void)
 	if ( ( ps2mouse_count<12 ) &&
 		 ( ps2mouse_timeout==0 ) )
 	{
-		//error due send/receive
-		ps2mouse_release_clk();
 #ifdef LOGENABLE
-		to_log("MSerr\r\n");
+		char log_ps2mouse_err[] = "MS.err.\r\n";
+		if( flags_register&FLAG_PS2MOUSE_DIRECTION ) log_ps2mouse_err[2]='S';	else log_ps2mouse_err[2]='R';
+		if( ps2mouse_count<10 ) log_ps2mouse_err[6]='0'+ps2mouse_count;  else log_ps2mouse_err[6]='A'+ps2mouse_count-10;
+		to_log(log_ps2mouse_err);
 #endif
-		//disable mouse
-		zx_mouse_reset(0);
+		//error due exchange data with PS/2 mouse
 
-		//TODO: чета делать чтобы плуг анд плай был
-		//типа если маус уже проинициализирован то инитить заново
+		//get direction
+		b = flags_register&FLAG_PS2MOUSE_DIRECTION;
+
+		//reset pins and states
+		ps2mouse_release_clk();
+
+		//analizing error
+		if( b && (ps2mouse_initstep==0) )
+		{
+			//error due send first init byte - mouse not connected to PS/2
+
+			//disable mouse
+			zx_mouse_reset(0);
+		}
+		else
+		{
+			//error due receive or send non first byte - mouse connected to PS/2
+
+			//re-init mouse
+			ps2mouse_initstep = 0;
+		}
 	}
 
 	if ( ps2mouse_count!=0 ) return; // not received anything
@@ -495,17 +514,17 @@ void ps2mouse_task(void)
 			  	break;
 		}
 	}
-#ifdef LOGENABLE
-	else
-	{
-		//send complete
-		char log_ps2mouse_parse[] = "MS>..\r\n";
-		b = ps2mouse_init_sequence[ps2mouse_initstep];
-		log_ps2mouse_parse[3] = ((b >> 4) <= 9 )?'0'+(b >> 4):'A'+(b >> 4)-10;
-		log_ps2mouse_parse[4] = ((b & 0x0F) <= 9 )?'0'+(b & 0x0F):'A'+(b & 0x0F)-10;
-		to_log(log_ps2mouse_parse);
-	}
-#endif
+//#ifdef LOGENABLE
+//	else
+//	{
+//		//send complete
+//		char log_ps2mouse_parse[] = "MS>..\r\n";
+//		b = ps2mouse_init_sequence[ps2mouse_initstep];
+//		log_ps2mouse_parse[3] = ((b >> 4) <= 9 )?'0'+(b >> 4):'A'+(b >> 4)-10;
+//		log_ps2mouse_parse[4] = ((b & 0x0F) <= 9 )?'0'+(b & 0x0F):'A'+(b & 0x0F)-10;
+//		to_log(log_ps2mouse_parse);
+//	}
+//#endif
 
 	ps2mouse_release_clk();
 }
