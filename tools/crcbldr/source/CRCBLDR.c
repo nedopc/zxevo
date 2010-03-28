@@ -18,14 +18,6 @@ BYTE      s[256], s1[256];
 
 //-----------------------------------------------------------------------------
 
-BYTE toupper(BYTE b)
-{
- if ( (b>0x61) && (b<0x7b) )  b&=0xdf;
- return b;
-}
-
-//-----------------------------------------------------------------------------
-
 void print_err_rc()
 {
  printf("Error! (Row %d, Col %d)\n",row,col+1);
@@ -208,8 +200,8 @@ int main(int argc,char*argv[])
   memcpy(&stm,localtime(&tt),sizeof(stm));
  }
  i=(WORD)( (((stm.tm_year-100)&0x3f)<<9) | (((stm.tm_mon+1)&0x0f)<<5) | (stm.tm_mday&0x1f) );
- buff[0x1ffc]=(i>>8)&0x7f|o;
- buff[0x1ffd]=i&0xff;
+ buff[0x1ffd]=(i>>8)&0x7f|o;
+ buff[0x1ffc]=i&0xff;
 
  crc=0xffff;
  for (adr=0;adr<0x1ffe;adr++) crc=tabcrc[(crc>>8)^buff[adr]]^(crc<<8);
@@ -295,7 +287,7 @@ int main(int argc,char*argv[])
  vs[i++]=h[b/10];
  vs[i++]=h[b%10];
  vs[i]=0;
- if (o) strcpy(&vs[i]," by NedoPC");
+ if (!o) strcpy(&vs[i]," beta");
 
  strncpy(&E2Phead[0x3a],vs,85);
  E2Phead[0x90]=0x02;

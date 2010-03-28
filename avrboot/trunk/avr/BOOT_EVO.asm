@@ -58,7 +58,7 @@
 .EQU    ANSI_YELLOW     =$33
 .EQU    ANSI_WHITE      =$37
 
-.EQU    FLASHSIZE=480   ;размер обновляемой области в блоках по 256 байт
+.EQU    FLASHSIZE=480   ;размер обновляемой области FLASH в блоках по 256 байт
 .EQU    MAIN_VERS=$EFF8 ;указатель на описатель версии осн.прошивки
 ;
 ;--------------------------------------
@@ -1621,8 +1621,8 @@ PRVERS2:ELPM    DATA,Z+
 PRVERS1:LDI     DATA,$20
         RCALL   WRUART
         LDI     ZL,$FC
-        ELPM    XH,Z+
         ELPM    XL,Z+
+        ELPM    XH,Z+
         MOV     DATA,XL
         ANDI    DATA,$1F
         BREQ    PRVERS9
@@ -1653,12 +1653,12 @@ PRVERS1:LDI     DATA,$20
         RCALL   HEXBYTE
         MOV     DATA,COUNT
         RCALL   DECBYTE
-        SBRS    XH,7
+        SBRC    XH,7
 PRVERS9:RET
 ;
 ;--------------------------------------
 ;
-NEDOPC: LDIZ    MSG_BY_NEDOPC*2
+BETA:   LDIZ    MSG_BETA*2
         RJMP    PRINTSTRZ
 ;
 ;--------------------------------------
@@ -1997,8 +1997,8 @@ MSG_BADCRC:
         .DB     $1B,"[31mBad CRC!",0
 MSG_BOOT:
         .DB     "boot: ",0,0
-MSG_BY_NEDOPC:
-        .DB     " by NedoPC",0,0
+MSG_BETA:
+        .DB     " beta",0
 MSG_MAIN:
         .DB     "main: ",0,0
 MSG_SDERROR:
