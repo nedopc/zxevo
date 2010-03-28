@@ -409,8 +409,8 @@ DEMLZEND:
 
         LDIZ    LARGEBOOTSTART*2-4
 ;        OUT     RAMPZ,ONE
-        ELPM    XH,Z+
-        ELPM    XL,Z
+        ELPM    XL,Z+
+        ELPM    XH,Z
         MOV     DATA,XL
         ANDI    DATA,$1F
         BREQ    PRVERS9
