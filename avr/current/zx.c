@@ -220,27 +220,23 @@ NO_KEY,NO_KEY  // 7F
 
 void zx_init(void)
 {
-	BYTE i;
-
-	i=39;
-	do /*zx_counters[i] =*/ zx_counters[i] = 0x00; while( (--i)>=0 );
-
 	zx_fifo_in_ptr=zx_fifo_out_ptr=0;
 
 	zx_task(ZX_TASK_INIT);
 
+//	nSPICS_DDR	|= (1<<nSPICS);
+//	nSPICS_PORT &= ~(1<<nSPICS);
+//	_delay_us(10);
+//	nSPICS_PORT |= (1<<nSPICS);
+//	_delay_us(10);
+//	spi_send(0xE2); // send specific reset
+//	_delay_us(10);
+//	nSPICS_PORT &= ~(1<<nSPICS);
+//	_delay_us(10);
+//	nSPICS_PORT |= (1<<nSPICS);
 
-	nSPICS_DDR	|= (1<<nSPICS);
-	nSPICS_PORT &= ~(1<<nSPICS);
-	_delay_us(10);
-	nSPICS_PORT |= (1<<nSPICS);
-	_delay_us(10);
-	spi_send(0xE2); // send specific reset
-	_delay_us(10);
-	nSPICS_PORT &= ~(1<<nSPICS);
-	_delay_us(10);
-	nSPICS_PORT |= (1<<nSPICS);
-
+	//на всякий случай сбрасываем комп
+	zx_spi_send(SPI_RST_REG, 0, 0);
 }
 
 UBYTE zx_spi_send(UBYTE addr, UBYTE data, UBYTE mask)
