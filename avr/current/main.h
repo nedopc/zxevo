@@ -8,6 +8,10 @@
  *
  * @subsection current Current version.
  *
+ * - Fix fpga load and ZX part init (optimize).
+ *
+ * @subsection ver_2010_03_28 Version 28.03.2010
+ *
  * - Fix PS/2 mouse error handler (analize error and reinit mouse if need it).
  * - Add support for get version info (via Gluk cmos extra registers 0xF0..0xFF).
  * - Optimize sources, some correction (log, fpga load).
@@ -62,16 +66,12 @@ extern volatile UBYTE modes_register;
 extern UBYTE dbuf[];
 
 /** FPGA data index. */
-ULONG curFpga;
-
-/** FPGA data pointer [far address] (linker symbol). */
-extern const ULONG fpga;
+extern volatile ULONG curFpga;
 
 /**
  * Writes specified length of buffer to SPI.
  * @param size [in] - size of buffer.
  */
 void put_buffer(UWORD size);
-
 
 #endif //__MAIN_H__

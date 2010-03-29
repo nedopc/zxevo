@@ -17,17 +17,20 @@
 #include "atx.h"
 #include "joystick.h"
 
-/** Pointer to current byte in FPGA. */
-ULONG curFpga;
+/** FPGA data pointer [far address] (linker symbol). */
+extern ULONG fpga PROGMEM;
 
-//Common flag register.
+// FPGA data index..
+volatile ULONG curFpga;
+
+// Common flag register.
 volatile UBYTE flags_register;
 
 // Common modes register.
 volatile UBYTE modes_register;
 
-//buffer for depacking FPGA configuration
-//you can USED for other purposed after setup FPGA
+// Buffer for depacking FPGA configuration.
+// You can USED for other purposed after setup FPGA.
 UBYTE dbuf[DBSIZE];
 
 void put_buffer(UWORD size)
@@ -131,7 +134,26 @@ start:
 	_delay_us(40);
 	DDRF &= ~(1<<nCONFIG);
 	while( !(PINF & (1<<nSTATUS)) ); // wait ready
-	curFpga = fpga; // prepare for data fetching
+
+	curFpga = GET_FAR_ADDRESS(fpga); // prepare for data fetching
+#ifdef LOGENABLE
+	{
+	char log_fpga[]="F........\r\n";
+	UBYTE b = (UBYTE)((curFpga>>24)&0xFF);
+	log_fpga[1] = ((b >> 4) <= 9 )?'0'+(b >> 4):'A'+(b >> 4)-10;
+	log_fpga[2] = ((b & 0x0F) <= 9 )?'0'+(b & 0x0F):'A'+(b & 0x0F)-10;
+	b = (UBYTE)((curFpga>>16)&0xFF);
+	log_fpga[3] = ((b >> 4) <= 9 )?'0'+(b >> 4):'A'+(b >> 4)-10;
+	log_fpga[4] = ((b & 0x0F) <= 9 )?'0'+(b & 0x0F):'A'+(b & 0x0F)-10;
+	b = (UBYTE)((curFpga>>8)&0xFF);
+	log_fpga[5] = ((b >> 4) <= 9 )?'0'+(b >> 4):'A'+(b >> 4)-10;
+	log_fpga[6] = ((b & 0x0F) <= 9 )?'0'+(b & 0x0F):'A'+(b & 0x0F)-10;
+	b = (UBYTE)(curFpga&0xFF);
+	log_fpga[7] = ((b >> 4) <= 9 )?'0'+(b >> 4):'A'+(b >> 4)-10;
+	log_fpga[8] = ((b & 0x0F) <= 9 )?'0'+(b & 0x0F):'A'+(b & 0x0F)-10;
+ 	to_log(log_fpga);
+	}
+#endif
 	depacker_dirty();
 
 	//power led OFF
@@ -167,8 +189,8 @@ start:
 	EIFR = (1<<INTF4)|(1<<INTF5)|(1<<INTF6)|(1<<INTF7); // clear spurious ints there
 	EIMSK |= (1<<INT4)|(1<<INT5)|(1<<INT6)|(1<<INT7); // enable
 
-	rtc_init();
 	zx_init();
+	rtc_init();
 
 
 #ifdef LOGENABLE
