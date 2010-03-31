@@ -58,7 +58,7 @@ module tb;
 	end
 
 
-	assign #`ZCLK_DELAY clkz_in = ~clkz_out; // 9.4ns
+	assign #`ZCLK_DELAY clkz_in = ~clkz_out;
 
 
 
@@ -245,6 +245,22 @@ module tb;
 	end
 
 
+	// trace ram page
+	wire [5:0] rpag;
+
+	assign rpag=DUT.page[3][5:0];
+
+	always @(rpag)
+	begin
+		$display("at time %t us",$time/10000);
+
+		$display("RAM page is %d",rpag);
+
+		$display("");
+	end
+
+
+
 	// time ticks
 	always
 	begin : timemark
@@ -255,8 +271,34 @@ module tb;
 
 		$display("timemark %d ms",ms);
 
-		#1000000.0; // 1 ms
+		#10000000.0; // 1 ms
 	end
+
+
+
+
+	// emulate key presses
+	initial
+	begin
+		tb.DUT.zkbdmus.kbd = 40'd0;
+		
+		#600000000;
+
+		@(negedge int_n);
+
+		tb.DUT.zkbdmus.kbd[13] = 1'b1;
+
+		@(negedge int_n);
+		@(negedge int_n);
+
+		tb.DUT.zkbdmus.kbd[13] = 1'b0;
+		
+//		$stop;
+	end
+
+
+
+
 
 
 endmodule
