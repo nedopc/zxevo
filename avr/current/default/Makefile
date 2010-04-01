@@ -1,12 +1,12 @@
 ###############################################################################
-# Makefile for the project test_keysend_rst
+# Makefile for the project pentevo
 ###############################################################################
 
 ## General Flags
 PROJECT = core
 MCU = atmega128
 TARGET = core.elf
-CC = avr-gcc.exe
+CC = avr-gcc
 
 ## Options common to compile, link and assembly rules
 COMMON = -mmcu=$(MCU)
@@ -86,7 +86,7 @@ top.rbf: ../../../fpga/current/quartus/top.rbf
 	cp ../../../fpga/current/quartus/top.rbf top.rbf
 
 $(FPGACORE): top.rbf
-	mhmt -maxwin2048 top.rbf top.mlz
+	../../../tools/mhmt/mhmt -maxwin2048 top.rbf top.mlz
 	avr-objcopy -I binary -O elf32-avr --rename-section .data=.progmem.data,contents,alloc,load,readonly,data --redefine-sym _binary_top_mlz_start=fpga --redefine-sym _binary_top_mlz_end=fpga_end top.mlz top.o
 
 %.hex: $(TARGET)
@@ -103,7 +103,7 @@ size: ${TARGET}
 	@avr-size -C --mcu=${MCU} ${TARGET}
 
 zxevo_fw.bin: core.hex core.eep
-	..\..\..\tools\make_fw\make_fw.exe core.hex core.eep version.txt
+	../../../tools/make_fw/make_fw core.hex core.eep version.txt
 
 ## Clean target
 .PHONY: clean
