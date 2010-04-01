@@ -108,7 +108,7 @@ zxevo_fw.bin: core.hex core.eep
 ## Clean target
 .PHONY: clean
 clean:
-	-rm -rf $(OBJECTS) $(FPGACORE) core.* dep/* top.* zxevo_fw.bin
+	-rm -rf $(OBJECTS) $(FPGACORE) core.* dep/* top.* ZXEVO_FW.BIN
 
 ## program chip
 pgm: core.hex
