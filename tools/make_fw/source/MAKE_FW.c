@@ -216,8 +216,13 @@ int main(int argc,char*argv[])
    fgets(vs,56,f);
    fclose(f);
   }
+ for (i=0; i<57; i++)
+  if ( (vs[i]<0x20) || (vs[i]>=0x80) )
+   {
+    vs[i]=0;
+    break;
+   }
  i=strlen(vs);
- if ((i) && (vs[i-1]=='\n')) vs[--i]=0;
  if (!i)
   {
    strcpy(vs, "No info");
