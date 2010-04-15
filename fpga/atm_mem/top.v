@@ -265,9 +265,9 @@ module top(
 	assign rompg0_n = ~adr_fix[0];
 	assign dos_n    =  adr_fix[1];
 
-	assign rompg2   =  rompg[2];
-	assign rompg3   =  rompg[3];
-	assign rompg4   =  rompg[4];
+	assign rompg2   =  1'b0;//rompg[2];
+	assign rompg3   =  1'b0;//rompg[3];
+	assign rompg4   =  1'b0;//rompg[4];
 
 	wire [3:0] zclk_stall;
 
