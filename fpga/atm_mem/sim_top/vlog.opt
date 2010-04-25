@@ -23,5 +23,6 @@ tb_top.v
 ../z80/zdos.v
 ../sim_models/drammem.v
 rom_top.v
-zxevo_rom.v
+//zxevo_rom.v
+testrom.v
 
