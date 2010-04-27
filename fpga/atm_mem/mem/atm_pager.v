@@ -172,7 +172,7 @@ module atm_pager(
 		begin
 			if( za[11] ) // xff7 ports - 1 meg
 			begin
-				pages   [ pent1m_ROM ] <= ~{ 2'b00, zd[5:0] };
+				pages   [ pent1m_ROM ] <= ~{ 2'b11, zd[5:0] };
 				ramnrom [ pent1m_ROM ] <= zd[6];
 				dos_7ffd[ pent1m_ROM ] <= zd[7];
 			end
