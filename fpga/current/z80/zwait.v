@@ -2,6 +2,9 @@
 //
 // wait generator for Z80
 
+`include "../include/tune.v"
+
+
 module zwait(
 
 	input  wire rst_n,
@@ -16,6 +19,14 @@ module zwait(
 	output wire wait_n,
 	output wire spiint_n
 );
+
+
+`ifdef SIMULATE
+	initial
+	begin
+		force waits = 7'd0;
+	end
+`endif
 
 
 	wire wait_off_n;

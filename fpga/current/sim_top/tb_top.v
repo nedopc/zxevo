@@ -24,8 +24,10 @@ module tb;
 	reg iorq_n,mreq_n,rd_n,wr_n; // has some delays relative to z*_n (below)
 	reg m1_n,rfsh_n;             //
 
-	wire int_n,nmi_n,wait_n,res;                    //
+	wire int_n,res;                    //
 	tri1 ziorq_n,zmreq_n,zrd_n,zwr_n,zm1_n,zrfsh_n; // connected to Z80
+
+	tri1 wait_n,nmi_n;
 
 	assign nmi_n = 1'b1;
 	assign wait_n = 1'b1;
@@ -36,7 +38,7 @@ module tb;
 
 
 	wire csrom, romoe_n, romwe_n;
-
+	wire rompg0_n, dos_n;
 
 	wire [15:0] rd;
 	wire [9:0] ra;
@@ -56,7 +58,7 @@ module tb;
 	end
 
 
-	assign #`ZCLK_DELAY clkz_in = ~clkz_out; // 9.4ns
+	assign #`ZCLK_DELAY clkz_in = ~clkz_out;
 
 
 
@@ -87,6 +89,8 @@ module tb;
 	         .csrom(csrom),
 	         .romoe_n(romoe_n),
 	         .romwe_n(romwe_n),
+	         .rompg0_n(rompg0_n),
+	         .dos_n(dos_n),
 
 	         // DRAM
 	         .rd(rd),
@@ -187,7 +191,7 @@ module tb;
 
 	// ROM model
 	rom romko(
-	           .addr( {/*dos_n, (~rompg0_n),*/ 2'b00, za[13:0]} ),
+	           .addr( {dos_n, (~rompg0_n), za[13:0]} ),
 	           .data(zd),
 	           .ce_n( romoe_n | (~csrom) )
 	         );
@@ -212,6 +216,88 @@ module tb;
 	               );
 	defparam dramko1._verbose_ = 0;
 	defparam dramko2._verbose_ = 0;
+
+
+
+
+	// trace rom page
+	wire rma14,rma15;
+
+	assign rma14 = DUT.page[0][0];
+	assign rma15 = DUT.page[0][1];
+
+
+	always @(rma14 or rma15)
+	begin
+		$display("at time %t us",$time/10000);
+
+		case( {~rma14, ~rma15} )
+
+		2'b00: $display("GLUKROM");
+		2'b01: $display("TR-DOS");
+		2'b10: $display("BASIC 128");
+		2'b11: $display("BASIC 48");
+		default: $display("unknown");
+
+		endcase
+
+		$display("");
+	end
+
+
+	// trace ram page
+	wire [5:0] rpag;
+
+	assign rpag=DUT.page[3][5:0];
+
+	always @(rpag)
+	begin
+		$display("at time %t us",$time/10000);
+
+		$display("RAM page is %d",rpag);
+
+		$display("");
+	end
+
+
+
+	// time ticks
+	always
+	begin : timemark
+
+		integer ms;
+
+		ms = ($time/1000000);
+
+		$display("timemark %d ms",ms);
+
+		#10000000.0; // 1 ms
+	end
+
+
+
+
+	// emulate key presses
+	initial
+	begin
+		tb.DUT.zkbdmus.kbd = 40'd0;
+		
+		#600000000;
+
+		@(negedge int_n);
+
+		tb.DUT.zkbdmus.kbd[13] = 1'b1;
+
+		@(negedge int_n);
+		@(negedge int_n);
+
+		tb.DUT.zkbdmus.kbd[13] = 1'b0;
+		
+//		$stop;
+	end
+
+
+
 
 
 
