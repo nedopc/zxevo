@@ -42,6 +42,14 @@ module slavespi(
 	output wire [1:0] rstrom  // number of ROM page to reset to
 );
 
+`ifdef SIMULATE
+	initial
+	begin
+		force wait_read = 8'hFF;
+	end
+`endif
+
+
 	// re-synchronize SPI
 	//
 	reg [2:0] spics_n_sync;
@@ -98,8 +106,8 @@ module slavespi(
 `ifdef SIMULATE
 	initial
 	begin
-		rstrom = 2'b00;
-		genrst = 1'b0;
+		rst_reg[5:4] = 2'b00;
+		cfg0_reg_out[7:0] = 8'd0;
 	end
 `endif
 
