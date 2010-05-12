@@ -1,20 +1,20 @@
 
-;янгдюмхе пюл дхяйю мю 512 йхк
+;▒▌┤└─█┬┘ ░─▄ └┬▒┼─ █─ 512 ┼┬▀
 RAM_508
 	LD HL,508*4
 	JR KILRAMd
 
-;янгдюмхе пюл дхяйю мю 640 йхк
+;▒▌┤└─█┬┘ ░─▄ └┬▒┼─ █─ 640 ┼┬▀
 RAM_640
 	LD HL,636*4
 	JR KILRAMd
 
-;янгдюмхе пюл дхяйю мю 768 йхк
+;▒▌┤└─█┬┘ ░─▄ └┬▒┼─ █─ 768 ┼┬▀
 RAM_764
 	LD HL,764*4
 	JR KILRAMd
 
-;янгдюмхе пюл дхяйю мю 896 йхк
+;▒▌┤└─█┬┘ ░─▄ └┬▒┼─ █─ 896 ┼┬▀
 RAM_892	LD HL,892*4
 KILRAMd	LD (SECFREE),HL
 	LD A,#F7
@@ -47,7 +47,7 @@ _STUPID	LD SP,GlukStk
 	LD (gFenv),A
 	JP RESTART
 
-;оепеундхкйю б аюяхй128
+;▐┘░┘∙▌└┬▀┼─ ┌ │─▒┬┼128
 BAS128	CALL SYSTEM
 	CALL MEMSET
 	DI
@@ -55,35 +55,35 @@ BAS128	CALL SYSTEM
 	CALL PAGE_A
 	RST 0
 
-;оепеундхкйю б аюяхй48
+;▐┘░┘∙▌└┬▀┼─ ┌ │─▒┬┼48
 BAS48	CALL SYSTEM
 	CALL MEMSET
 	RST 0
 
-;оепеундхкйю б ршпдня
+;▐┘░┘∙▌└┬▀┼─ ┌ ▓⌡░└▌▒
 DOS128	CALL SYSTEM
 	CALL MEMSET
 	LD IX,0
 	JP DOSIX
 
-;лемчую гювхярйх ярпюмхж, тнплюрхпнбюмхъ пюлдхяйю х дхяйермши йнохп
+;▄┘█·∙─ ┤─≈┬▒▓┼┬ ▒▓░─█┬√, ■▌░▄─▓┬░▌┌─█┬÷ ░─▄└┬▒┼─ ┬ └┬▒┼┘▓█⌡┴ ┼▌▐┬░
 _KILLS	LD IX,mKILLS
 	CALL DRAWWIN
 	LD IX,aKILLS
 	JP _RULILKA
 
-;гюмскемхе бяе оюлърх
-KIALPGS	LD A,#D7	;ОПЮБШЕ 512K
+;┤─█⌠▀┘█┬┘ ┌▒┘ ▐─▄÷▓┬
+KIALPGS	LD A,#D7	;╞Ю═╒К╔ 512K
 	CALL KIPGSU
-	LD A,#F7	;КЕБШЕ 512K
+	LD A,#F7	;╚╔╒К╔ 512K
 	JR 3F
 
-;гюмскемхе 128й оюлърх
+;┤─█⌠▀┘█┬┘ 128┼ ▐─▄÷▓┬
 KIPGS	LD A,#17
 3	CALL KIPGSU
 	JP RESTART
 
-;янаярбеммн гюмскърнп
+;▒▌│▒▓┌┘██▌ ┤─█⌠▀÷▓▌░
 KIPGSU	DI
 	LD DE,0
 	LD HL,0

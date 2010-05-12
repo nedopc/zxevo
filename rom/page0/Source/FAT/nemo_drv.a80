@@ -1,118 +1,228 @@
 
 ;LAST UPDATE: 09.02.2010 savelij
 
-Hddinit EQU 0
-Hddoff  EQU 1
-Hddrds  EQU 2
-Hddrdm  EQU 3
+Hddinit		EQU 0
+Hddoff		EQU 1
+Hddrds		EQU 2
+Hddrdm		EQU 3
 
-;ОБЩАЯ ТОЧКА ВХОДА ДЛЯ РАБОТЫ С HDD NEMO
-        EXA:EX (SP),HL:LD A,(HL):INC HL
-        EX (SP),HL:ADD A,A:PUSH HL
-        LD HL,TBLHDDN:ADD A,L:LD L,A,A,H
-        ADC A,0:LD H,A,A,(HL):INC HL
-        LD H,(HL),L,A:EXA:EX (SP),HL:RET
+;ЋЃ™Ђџ ’Ћ—ЉЂ ‚•Ћ„Ђ „‹џ ђЂЃЋ’› ‘ HDD NEMO
+		EXA
+		EX (SP),HL
+		LD A,(HL)
+		INC HL
+		EX (SP),HL
+		ADD A,A
+		PUSH HL
+		LD HL,TBLHDDN
+		ADD A,L
+		LD L,A
+		LD A,H
+		ADC A,0
+		LD H,A
+		LD A,(HL)
+		INC HL
+		LD H,(HL)
+		LD L,A
+		EXA
+		EX (SP),HL
+		RET
 
-TBLHDDN DW HDDINIT
-        DW HDDOFF
-        DW HDDRDS;READ SINGLE
-        DW HDDRDM;READ MULTI
+TBLHDDN		DW HDDINIT
+		DW HDDOFF
+		DW HDDRDS			;READ SINGLE
+		DW HDDRDM			;READ MULTI
 
-;Входные параметры общие:
-;HL-адрес загрузки в память
-;BCDE-32-х битный номер сектора
-;A-количество блоков (блок=512 байт)
-;только для многоблочной записи/чтении
+;‚е®¤­лҐ Ї а ¬Ґвал ®ЎйЁҐ:
+;HL- ¤аҐб § Јаг§ЄЁ ў Ї ¬пвм
+;BCDE-32-е ЎЁв­л© ­®¬Ґа бҐЄв®а 
+;A-Є®«ЁзҐбвў® Ў«®Є®ў (Ў«®Є=512 Ў ©в)
+;в®«мЄ® ¤«п ¬­®Ј®Ў«®з­®© § ЇЁбЁ/звҐ­ЁЁ
 
-P_1F7   EQU #F0
-;РЕГИСТР СОСТОЯНИЯ/РЕГИСТР КОМАНД
-P_1F6   EQU #D0
-;CHS-НОМЕР ГОЛОВЫ И УСТР/LBA АДРЕС 24-27
-P_1F5   EQU #B0
-;CHS-ЦИЛИНДР 8-15/LBA АДРЕС 16-23
-P_1F4   EQU #90
-;CHS-ЦИЛИНДР 0-7/LBA АДРЕС 8-15
-P_1F3   EQU #70
-;CHS-НОМЕР СЕКТОРА/LBA АДРЕС 0-7
-P_1F2   EQU #50
-;СЧЕТЧИК СЕКТОРОВ
-P_1F1   EQU #30
-;ПОРТ ОШИБОК/СВОЙСТВ
-P_1F0   EQU #10
-;ПОРТ ДАННЫХ
-P_3F6   EQU #C8
-;РЕГИСТР СОСТОЯНИЯ/УПРАВЛЕНИЯ
-P_HI    EQU #19
-;СТАРШИЕ 8 БИТ
-PRT_RW  EQU P_1F0*256+P_HI
-;ПОРТЫ ЧТЕНИЯ/ЗАПИСИ ОДНИМ СЛОВОМ
+P_1F7		EQU #F0			;ђ…ѓ€‘’ђ ‘Ћ‘’ЋџЌ€џ/ђ…ѓ€‘’ђ ЉЋЊЂЌ„
+P_1F6		EQU #D0			;CHS-ЌЋЊ…ђ ѓЋ‹Ћ‚› € “‘’ђ/LBA Ђ„ђ…‘ 24-27
+P_1F5		EQU #B0			;CHS-–€‹€Ќ„ђ 8-15/LBA Ђ„ђ…‘ 16-23
+P_1F4		EQU #90			;CHS-–€‹€Ќ„ђ 0-7/LBA Ђ„ђ…‘ 8-15
+P_1F3		EQU #70			;CHS-ЌЋЊ…ђ ‘…Љ’ЋђЂ/LBA Ђ„ђ…‘ 0-7
+P_1F2		EQU #50			;‘—…’—€Љ ‘…Љ’ЋђЋ‚
+P_1F1		EQU #30			;ЏЋђ’ Ћ€ЃЋЉ/‘‚Ћ‰‘’‚
+P_1F0		EQU #10			;ЏЋђ’ „ЂЌЌ›•
+P_3F6		EQU #C8			;ђ…ѓ€‘’ђ ‘Ћ‘’ЋџЌ€џ/“ЏђЂ‚‹…Ќ€џ
+P_HI		EQU #19			;‘’Ђђ€… 8 Ѓ€’
+PRT_RW		EQU P_1F0*256+P_HI	;ЏЋђ’› —’…Ќ€џ/‡ЂЏ€‘€ Ћ„Ќ€Њ ‘‹Ћ‚ЋЊ
 
-;НА ВЫХОДЕ:
-;H-ДЛЯ MASTER 0-HDD, 1-CDROM, #FF-NONE
-;L-ДЛЯ SLAVE  0-HDD, 1-CDROM, #FF-NONE
-HDDINIT LD A,#E0:PUSH HL:CALL ID_DEV
-        POP HL:AND A:CALL Z,INIT_91
-        LD D,A,A,#F0:PUSH DE,HL
-        CALL ID_DEV:POP HL
-        AND A:CALL Z,INIT_91
-        POP HL:LD L,A:XOR A
+;ЌЂ ‚›•Ћ„…:
+;H-„‹џ MASTER 0-HDD, 1-CDROM, #FF-NONE
+;L-„‹џ SLAVE  0-HDD, 1-CDROM, #FF-NONE
+HDDINIT		LD A,#E0
+		PUSH HL
+		CALL ID_DEV
+		POP HL
+		AND A
+		CALL Z,INIT_91
+		LD D,A
+		LD A,#F0
+		PUSH DE
+		PUSH HL
+		CALL ID_DEV
+		POP HL
+		AND A
+		CALL Z,INIT_91
+		POP HL
+		LD L,A
+		XOR A
 
-HDDOFF  RET
+HDDOFF		RET
 
-INIT_91 PUSH HL:LD L,49*2+1,A,(HL):AND 2
-        JR Z,INI_912
-        LD BC,#FF00+P_1F2,L,#0C,A,(HL)
-        OUT (C),A:LD L,6,C,P_1F6,A,(HL)
-        DEC A:OUT (C),A:LD C,P_1F7,A,#91
-        OUT (C),A:LD DE,#1000
-INI_911 DEC DE:LD A,D:OR E:JR Z,INI_912
-        IN A,(C):AND #80:JR NZ,INI_911
-        POP HL:RET
+INIT_91		PUSH HL
+		LD L,49*2+1
+		LD A,(HL)
+		AND 2
+		JR Z,INI_912
+		LD BC,#FF00+P_1F2
+		LD L,#0C
+		LD A,(HL)
+ 		OUT (C),A
+ 		LD L,6
+ 		LD C,P_1F6
+ 		LD A,(HL)
+		DEC A
+		OUT (C),A
+		LD C,P_1F7
+		LD A,#91
+		OUT (C),A
+		LD DE,#1000
+INI_911		DEC DE
+		LD A,D
+		OR E
+		JR Z,INI_912
+		IN A,(C)
+		AND #80
+		JR NZ,INI_911
+		POP HL
+		RET
 
-INI_912 LD A,#FF:POP HL:RET
+INI_912		LD A,#FF
+		POP HL
+		RET
 
 
-HDDRDS  LD A,1
-HDDRDM  PUSH BC,DE:CALL SETHREG:EXA
-        LD C,P_1F7,A,#20:OUT (C),A
-        LD C,P_1F7
-HDDRD1  IN A,(C):AND #88:CP 8
-        JR NZ,HDDRD1:EXA
-HDDRD2  EXA:CALL READSEC:LD C,P_1F7
-HDDRD3  IN A,(C):AND #80:JR NZ,HDDRD3
-        EXA:DEC A:JR NZ,HDDRD2
-	POP DE,BC
-        LD A,B:AND #0F:LD B,A:XOR A:RET
+HDDRDS		LD A,1
+HDDRDM		PUSH BC
+		PUSH DE
+		CALL SETHREG
+		EXA
+		LD C,P_1F7
+		LD A,#20
+		OUT (C),A
+		LD C,P_1F7
+HDDRD1		IN A,(C)
+		AND #88
+		CP 8
+		JR NZ,HDDRD1
+		EXA
+HDDRD2		EXA
+		CALL READSEC
+		LD C,P_1F7
+HDDRD3		IN A,(C)
+		AND #80
+		JR NZ,HDDRD3
+		EXA
+		DEC A
+		JR NZ,HDDRD2
+		POP DE
+		POP BC
+		LD A,B
+		AND #0F
+		LD B,A
+		XOR A
+		RET
 
-READSEC LD DE,PRT_RW,A,#40
-READSC1 LD C,D:INI:LD C,E:INI
-        LD C,D:INI:LD C,E:INI
-        LD C,D:INI:LD C,E:INI
-        LD C,D:INI:LD C,E:INI
-        DEC A:JR NZ,READSC1:RET
+READSEC		LD DE,PRT_RW
+		LD A,#40
+READSC1		LD C,D
+		INI
+		LD C,E
+		INI
+		LD C,D
+		INI
+		LD C,E
+		INI
+		LD C,D
+		INI
+		LD C,E
+		INI
+		LD C,D
+		INI
+		LD C,E
+		INI
+		DEC A
+		JR NZ,READSC1
+		RET
 
-SETHREG PUSH DE:LD DE,BC,BC,#FF00+P_1F6
-        OUT (C),D:EXA:LD C,P_1F7
-SETHRE1 IN A,(C):AND #80
-        JR NZ,SETHRE1:LD C,P_1F5
-        OUT (C),E:POP DE:LD C,P_1F4
-        OUT (C),D:LD C,P_1F3:OUT (C),E
-        LD C,P_1F2:EXA:OUT (C),A:RET
+SETHREG		PUSH DE
+		LD D,B
+		LD E,C
+		LD BC,#FF00+P_1F6
+		OUT (C),D
+		EXA
+		LD C,P_1F7
+SETHRE1		IN A,(C)
+		AND #80
+		JR NZ,SETHRE1
+		LD C,P_1F5
+		OUT (C),E
+		POP DE
+		LD C,P_1F4
+		OUT (C),D
+		LD C,P_1F3
+		OUT (C),E
+		LD C,P_1F2
+		EXA
+		OUT (C),A
+		RET
 
-;HL-АДРЕС БУФЕРА СЕКТОРА ИДЕНТИФИКАЦИИ
-;A=E0-ДЛЯ MASTER, A=F0-ДЛЯ SLAVE
-ID_DEV  LD BC,#FF00+P_1F6:OUT (C),A
-        LD C,P_1F7:IN A,(C):AND A
-        JR Z,NO_DEV:INC A:JR Z,NO_DEV
-        XOR A:LD C,P_1F5:OUT (C),A
-        LD C,P_1F4:OUT (C),A:LD A,#EC
-        LD C,P_1F7:OUT (C),A:LD C,P_1F7
-ID_DEV1 IN A,(C):AND A:JR Z,NO_DEV
-        INC A:JR Z,NO_DEV:DEC A
-        RRCA:JR C,ID_DEV2:RLCA:AND #88
-        CP 8:JR NZ,ID_DEV1
-ID_DEV2 LD C,P_1F4:IN E,(C):LD C,P_1F5
-        IN D,(C):LD A,D:OR E
-        JP Z,READSEC:LD HL,#EB14
-        SBC HL,DE:LD A,1:RET Z
-NO_DEV  LD A,#FF:RET
+;HL-Ђ„ђ…‘ Ѓ“”…ђЂ ‘…Љ’ЋђЂ €„…Ќ’€”€ЉЂ–€€
+;A=E0-„‹џ MASTER, A=F0-„‹џ SLAVE
+ID_DEV		LD BC,#FF00+P_1F6
+		OUT (C),A
+		LD C,P_1F7
+		IN A,(C)
+		AND A
+		JR Z,NO_DEV
+		INC A
+		JR Z,NO_DEV
+		XOR A
+		LD C,P_1F5
+		OUT (C),A
+		LD C,P_1F4
+		OUT (C),A
+		LD A,#EC
+		LD C,P_1F7
+		OUT (C),A
+		LD C,P_1F7
+ID_DEV1		IN A,(C)
+		AND A
+		JR Z,NO_DEV
+		INC A
+		JR Z,NO_DEV
+		DEC A
+		RRCA
+		JR C,ID_DEV2
+		RLCA
+		AND #88
+		CP 8
+		JR NZ,ID_DEV1
+ID_DEV2		LD C,P_1F4
+		IN E,(C)
+		LD C,P_1F5
+		IN D,(C)
+		LD A,D
+		OR E
+		JP Z,READSEC
+		LD HL,#EB14
+		SBC HL,DE
+		LD A,1
+		RET Z
+NO_DEV		LD A,#FF
+		RET

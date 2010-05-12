@@ -1,33 +1,33 @@
 
 ;LAST UPDATE: 09.02.2010 savelij
 
-;┬їюфэ√х ярЁрьхЄЁ√ юс∙шх:
-;HL-рфЁхё чруЁєчъш т ярь Є№
-;BCDE-32-ї сшЄэ√щ эюьхЁ ёхъЄюЁр
-;A-ъюышўхёЄтю сыюъют (сыюъ=512 срщЄ)
-;Єюы№ъю фы  ьэюуюсыюўэющ чряшёш/ўЄхэшш
+;Входные параметры общие:
+;HL-адрес загрузки в память
+;BCDE-32-х битный номер сектора
+;A-количество блоков (блок=512 байт)
+;только для многоблочной записи/чтении
 
-;╬°шсъш т√фртрхь√х эр т√їюфх:
-;A=0-шэшЎшрышчрЎш  яЁю°ыр єёях°эю
-;A=1-ърЁЄр эх эрщфхэр шыш эх юЄтхЄшыр
+;Ошибки выдаваемые на выходе:
+;A=0-инициализация прошла успешно
+;A=1-карта не найдена или не ответила
 
 Sd_init EQU 0
 Sd__off EQU 1
 Rdsingl EQU 2
 Rdmulti EQU 3
 
-;╬┴┘└▀ ╥╬╫╩└ ┬╒╬─└ ─╦▀ ╨└┴╬╥█ ╤ SD
+;ОБЩАЯ ТОЧКА ВХОДА ДЛЯ РАБОТЫ С SD
         EXA:EX (SP),HL:LD A,(HL):INC HL
         EX (SP),HL:ADD A,A:PUSH HL
         LD HL,TABLSDZ:ADD A,L:LD L,A,A,H
         ADC A,0:LD H,A,A,(HL):INC HL
         LD H,(HL),L,A:EXA:EX (SP),HL:RET
 
-TABLSDZ DW SD_INIT	;0 ярЁрьхЄЁют эх ЄЁхсєхЄ, эр т√їюфх A
-			;ёьюЄЁш т√°х яхЁт√х 2 чэрўхэш 
-        DW SD__OFF	;1 яЁюёЄю т√ЁєсрхЄ яшЄрэшх ърЁЄ√
-        DW RDSINGL	;2 ўЄхэшх юфэюую ёхъЄюЁр
-        DW RDMULTI	;3 ўЄхэшх ёхъЄюЁют, ъюы-тю т "A"
+TABLSDZ DW SD_INIT	;0 параметров не требует, на выходе A
+			;смотри выше первые 2 значения
+        DW SD__OFF	;1 просто вырубает питание карты
+        DW RDSINGL	;2 чтение одного сектора
+        DW RDMULTI	;3 чтение секторов, кол-во в "A"
 
 SD_INIT CALL CS_HIGH:LD BC,P_DATA
         LD DE,#10FF:OUT (C),E:DEC D
@@ -75,13 +75,13 @@ OUT_COM PUSH BC:CALL CS__LOW
 SECM200 PUSH HL,DE,BC,AF,BC
 
 ;----
-;╟└╧└╤═╬╔ ┬└╨╚└═╥ ╤ CMD09
+;ЗАПАСНОЙ ВАРИАНТ С CMD09
 ;LD A,CMD_09:CALL OUT_COM,IN_OOUT
 ;CP #FE:JR NZ,$-5:LD BC,P_DATA
 ;IN A,(C):LD L,#12:IN H,(C):DEC L
 ;JR NZ,$-3
 
-;╬╤═╬┬═╬╔ ┬└╨╚└═╥ ╤ CMD58
+;ОСНОВНОЙ ВАРИАНТ С CMD58
         LD A,CMD_58,BC,P_DATA
         CALL OUT_COM,IN_OOUT:IN A,(C)
         NOP:IN H,(C):NOP:IN H,(C):NOP

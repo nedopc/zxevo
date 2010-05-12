@@ -1,0 +1,10 @@
+	
+		DEVICE ZXSPECTRUM48
+
+		ORG #0000
+		incbin "TR5_04T.rom"		
+
+		include "main.a80"
+	
+		SAVEBIN "neo_dos.rom",0,#4000
+	

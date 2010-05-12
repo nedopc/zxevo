@@ -1,6 +1,6 @@
 @ECHO OFF
 
-rem ЄхёЄютр  ёсюЁър ЇрЄр ш фЁрщтхЁют
+rem тестовая сборка фата и драйверов
 
 ..\..\..\tools\sjasmplus\sjasmplus --sym=sym.log --lst=dump.log -isrc make_read_fat.a80
 

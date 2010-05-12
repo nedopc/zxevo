@@ -8,61 +8,61 @@ HDDBINI	CALL PAGE_0
 
 HDDBOOT	DI
 	CALL HDDBINI
-INIT0	LD A,#A0	;MASTER+CHS АДРЕСАЦИЯ
+INIT0	LD A,#A0	;MASTER+CHS Ђ„ђ…‘Ђ–€џ
 	LD (devnum),A
 	CALL SELDEVICE
 	LD A,#0C
 	LD BC,hddupr
 	PUSH BC
-	CALL OUT_A	;начинаем сброс
+	CALL OUT_A	;­ зЁ­ Ґ¬ бЎа®б
 	LD B,0
 	DJNZ $
 	LD A,8
 	POP BC
-	CALL OUT_A	;сбросили!
+	CALL OUT_A	;бЎа®бЁ«Ё!
 	CALL NO_BSY
-	LD A,#10	;Команда RECALIBRATE
-	CALL HDSC	;Запись COMMAND
-INIT2	IN A,(LOW hddstat)	;Чтение STATUS REGISTER (0111)
-	BIT 7,A		;Проверка бита BSY занятость HDD
-	JR NZ,INIT2	;Переход если накопитель занят
+	LD A,#10	;Љ®¬ ­¤  RECALIBRATE
+	CALL HDSC	;‡ ЇЁбм COMMAND
+INIT2	IN A,(LOW hddstat)	;—вҐ­ЁҐ STATUS REGISTER (0111)
+	BIT 7,A		;Џа®ўҐаЄ  ЎЁв  BSY § ­пв®бвм HDD
+	JR NZ,INIT2	;ЏҐаҐе®¤ Ґб«Ё ­ Є®ЇЁвҐ«м § ­пв
 	AND #E9
 	CP #40
-	;CP #50		;Проверка битов DSC (уст-ка головок)
-			;и DRDY(готовность HDD)
-	JR NZ,INIT0	;Если установлены - выход
+	;CP #50		;Џа®ўҐаЄ  ЎЁв®ў DSC (гбв-Є  Ј®«®ў®Є)
+			;Ё DRDY(Ј®в®ў­®бвм HDD)
+	JR NZ,INIT0	;…б«Ё гбв ­®ў«Ґ­л - ўле®¤
 	JP #E800
 ;,**************************************************************
-;ЧТЕНИЕ СЕКТОРОВ
+;—’…Ќ€… ‘…Љ’ЋђЋ‚
 HDDREAD	DISP #E800
-	CALL NO_BSY	;ЗАПИСАТЬ В РЕГИСТРЫ ЦИЛИНДРА,ГОЛОВКИ,СЕКТОРА
-	LD BC,hddhead	;РЕГИСТР НАКОПИТЕЛЯ/ГОЛОВКИ
-	LD A,#A0	;ГОЛОВКА 0,ВИНТ MASTER #B0-SLAVE
+	CALL NO_BSY	;‡ЂЏ€‘Ђ’њ ‚ ђ…ѓ€‘’ђ› –€‹€Ќ„ђЂ,ѓЋ‹Ћ‚Љ€,‘…Љ’ЋђЂ
+	LD BC,hddhead	;ђ…ѓ€‘’ђ ЌЂЉЋЏ€’…‹џ/ѓЋ‹Ћ‚Љ€
+	LD A,#A0	;ѓЋ‹Ћ‚ЉЂ 0,‚€Ќ’ MASTER #B0-SLAVE
 	CALL OUT_A
-	LD BC,hddcylhi	;РЕГИСТР ЦИЛИНДРА (HI)
+	LD BC,hddcylhi	;ђ…ѓ€‘’ђ –€‹€Ќ„ђЂ (HI)
 	XOR A
 	CALL OUT_A
-	LD BC,hddcyllo	;РЕГИСТР ЦИЛИНДРА (LOW)
+	LD BC,hddcyllo	;ђ…ѓ€‘’ђ –€‹€Ќ„ђЂ (LOW)
 	CALL OUT_A
-	LD BC,hddsec	;РЕГИСТР НОМЕРА СЕКТОРА
-	LD A,3		;НОМЕР СЕКТОРА
+	LD BC,hddsec	;ђ…ѓ€‘’ђ ЌЋЊ…ђЂ ‘…Љ’ЋђЂ
+	LD A,3		;ЌЋЊ…ђ ‘…Љ’ЋђЂ
 	CALL OUT_A
-	LD BC,hddcount	;РЕГИСТР СЧЕТЧИКА СЕКТОРА
-	LD A,#30	;СКОЛЬКО СЕКТОРОВ  24K
+	LD BC,hddcount	;ђ…ѓ€‘’ђ ‘—…’—€ЉЂ ‘…Љ’ЋђЂ
+	LD A,#30	;‘ЉЋ‹њЉЋ ‘…Љ’ЋђЋ‚  24K
 	CALL OUT_A
 	LD A,#20
-	CALL HDSC	;КОМАНДА "ЧИТАТЬ"
+	CALL HDSC	;ЉЋЊЂЌ„Ђ "—€’Ђ’њ"
 	LD HL,#6000
 	PUSH HL
 	LD B,#30
 READ1	PUSH BC
 	CALL WAIT_DRQ
-;ЧИТАЕМ СЕКТОР
+;—€’Ђ…Њ ‘…Љ’Ћђ
 	LD B,0
 READ_1	PUSH BC
-	LD BC,hdddatlo	;МЛАДШИЙ БАЙТ
+	LD BC,hdddatlo	;Њ‹Ђ„€‰ ЃЂ‰’
 	INI
-	LD BC,hdddathi	;СТАРШИЙ БАЙТ
+	LD BC,hdddathi	;‘’Ђђ€‰ ЃЂ‰’
 	INI
 	POP BC
 	DJNZ READ_1
@@ -70,20 +70,20 @@ READ_1	PUSH BC
         DJNZ	   READ1
         RET	
 
-;ОЖИДАНИЕ ГОТОВНОСТИ ПЕРЕДАЧИ ДАННЫХ
+;Ћ†€„ЂЌ€… ѓЋ’Ћ‚ЌЋ‘’€ Џ…ђ…„Ђ—€ „ЂЌЌ›•
 WAIT_DRQ
         CALL	IN_HDDSTAT
         BIT	3,A
         RET	NZ
         JR	WAIT_DRQ
 
-;ПОСЛАТЬ КОМАНДЫ НА ВИНТ
+;ЏЋ‘‹Ђ’њ ЉЋЊЂЌ„› ЌЂ ‚€Ќ’
 HDSC	PUSH AF
 	CALL SELDEVICE
 	POP AF
 	LD BC,hddcmd
 	CALL OUT_A
-;ОЖИДАНИЕ ОСВОБОЖДЕНИЯ УСТРОЙСТВА
+;Ћ†€„ЂЌ€… Ћ‘‚ЋЃЋ†„…Ќ€џ “‘’ђЋ‰‘’‚Ђ
 NO_BSY	CALL IN_HDDSTAT
 	RLCA
 	RET NC

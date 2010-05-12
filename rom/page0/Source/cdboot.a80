@@ -1,16 +1,16 @@
-;чруЁєчўшъ Їрщыр "AUTORUN.ZX" ё CD яю рфЁхёє #6000
+;загрузчик файла "AUTORUN.ZX" с CD по адресу #6000
 ;SP=#6000, DI
-;яхЁхфрхЄ хьє т ЁхушёЄЁрї:
-;A=#A0 (master) шыш #B0 (slave)
-;B=Єшя ъюья№■ЄхЁр:
+;передает ему в регистрах:
+;A=#A0 (master) или #B0 (slave)
+;B=тип компьютера:
  ;0=PENTAGON, 1=ATM, 2=SCORPION, 3=PROFI, 4=SPRINTER
-;C=Єшя ъюэЄЁюыыхЁр IDE:
+;C=тип контроллера IDE:
  ;0=NEMO, 1=ATM, 2=SMUC, 3=PROFI, 4=SPRINTER
-;D= ч√ъ:
- ;0=ENGLISH, 1=╨╙╤╤╩╚╔
-;E=рфЁхё COVOX:
- ;#FB=ATM/PENTAGON, #FF=юЄёєЄёЄтєхЄ
-;HL=фюёЄєяэ√х тшфхюЁхцшь√ (эръырф√тр■Єё  яю OR)
+;D=язык:
+ ;0=ENGLISH, 1=РУССКИЙ
+;E=адрес COVOX:
+ ;#FB=ATM/PENTAGON, #FF=отсутствует
+;HL=доступные видеорежимы (накладываются по OR)
  ;1=512x192 BW VMG
  ;2=384x304 ZX AC
  ;4=256x192 15 AC
@@ -22,7 +22,7 @@ language=1
 COVPORT=#FB
 videomodes=4;8
 
-;===============эшцх яюффхЁцрэ√ Єюы№ъю NEMO,SMUC,ATM============
+;===============ниже поддержаны только NEMO,SMUC,ATM============
 ;        IF	comptype-1
 ;atm=1
 ;        ELSE	
@@ -35,7 +35,7 @@ videomodes=4;8
 ;        ENDIF	
 ;       IFN	smuc
 ;      IFN	atm
-;ёїхьр ATM:
+;схема ATM:
 ;hddstat=#FEEF
 ;hddcmd=#FEEF
 ;hddhead=#FECF
@@ -46,12 +46,12 @@ videomodes=4;8
 ;hdderr=#FE2F
 ;hdddatlo=#FE0F
 ;hdddathi=#FF0F
-;hddupr=#FEBE ;яЁш єёЄрэютыхээюь b7 FFBA
+;hddupr=#FEBE ;при установленном b7 FFBA
 ;hdduprON=#FFBA
 ;hddupr1=#F7
 ;hddupr0=#77
 ;      ELSE	
-;ёїхьр SMUC:
+;схема SMUC:
 ;hddstat=#FFBE
 ;hddcmd=#FFBE
 ;hddhead=#FEBE
@@ -62,13 +62,13 @@ videomodes=4;8
 ;hdderr=#F9BE
 ;hdddatlo=#F8BE
 ;hdddathi=#D8BE
-;hddupr=#FEBE ;яЁш єёЄрэютыхээюь b7 FFBA
+;hddupr=#FEBE ;при установленном b7 FFBA
 ;hdduprON=#FFBA
 ;hddupr1=#F7
 ;hddupr0=#77
 ;      ENDIF	
 ;       ELSE	
-;ёїхьр Nemo:
+;схема Nemo:
 ;hddstat=#F0
 ;hddcmd=#F0
 ;hddhead=#D0
@@ -101,33 +101,33 @@ begin
 ;        LDIR	
 
 ;       IFN	atm
-;        CALL	#3D46   ;т√чют "яЁютхЁюўэющ" Єюўъш т (v)TR-DOS
-;        OR	A         ;хёыш эх 0,vTR-DOS эхЄ ш ╧╟╙ эх яюфьхэ хь
-;        CALL	Z,#3C98 ;т√чют ЄЁшуухЁр яюфьхэ√ ╧╟╙ TRD/vTRD
+;        CALL	#3D46   ;вызов "проверочной" точки в (v)TR-DOS
+;        OR	A         ;если не 0,vTR-DOS нет и ПЗУ не подменяем
+;        CALL	Z,#3C98 ;вызов триггера подмены ПЗУ TRD/vTRD
 ;       ENDIF	
 
-;шэшЎшрышчрЎш 
+;инициализация
 iniini
       ; LD A,device ;#B0=slave
       ; LD BC,hddhead
-      ; CALL OUT_A ;хёЄ№ тэєЄЁш NO_BSY
+      ; CALL OUT_A ;есть внутри NO_BSY
         CALL	NO_BSY
     ;LD A,#FE
     ;IN A,(-2)
     ;RRA
     ;JNC SKIPINI
       ;LD A,#10        ;
-      ;CALL HDSC       ;ZET9 фы  HDD
+      ;CALL HDSC       ;ZET9 для HDD
         LD	A,#08        ;
-        CALL	HDSC       ;SMT фы  CD (ёсЁюё фы  ATAPI)
+        CALL	HDSC       ;SMT для CD (сброс для ATAPI)
       ;RET C ;ATAPI only
       ; LD A,device ;#B0=slave   ;
       ; LD BC,hddhead            ;BUDDER
-      ; CALL OUT_A ;хёЄ№ т HDSC  ;шэрўх яЁш эхЁрёъЁєўхээюь CD
-                                 ;эх т√фрёЄ EB14!!!
+      ; CALL OUT_A ;есть в HDSC  ;иначе при нераскрученном CD
+                                 ;не выдаст EB14!!!
         LD	A,#EC ;identify
         CALL	HDSC
-      ;RET C ;фы  CD т√фрёЄ ю°шсъє (VEGA)
+      ;RET C ;для CD выдаст ошибку (VEGA)
 
         LD	B,30
         HALT	
@@ -155,8 +155,8 @@ SKIPINI
        ;LD A,2
        ;OUT (-2),A
 
-      ;ёхщўрё эюьхЁ ёхъЄюЁр=0,0,0,0
-        CALL	READCDSECBUF ;шэрўх эх ЁрсюЄрхЄ READTOC
+      ;сейчас номер сектора=0,0,0,0
+        CALL	READCDSECBUF ;иначе не работает READTOC
         LD	HL,AP_READTOC
         CALL	SEND_ATAPI
       ;RET C
@@ -173,19 +173,19 @@ SKIPINI
        ;LD A,3
        ;OUT (-2),A
 
-     ;схЁхь яюёы ёхёёш■ (яЁхфяюёы чряшё№)
+     ;берем посл сессию (предпосл запись)
         LD	HL,SECBUF+1
         LD	A,(HL)
         ADD	A,-10
         LD	L,A
         LD	D,#87
        ;CY=1
-        CALL	LOADER ;уЁєчшь эрўрыю ёхёёшш (#8800 срщЄ)
+        CALL	LOADER ;грузим начало сессии (#8800 байт)
 
         LD	BC,#80A2
         ADD	HL,BC
        ;CY=0
-        CALL	LOADER ;уЁєчшь ъюЁэхтющ ърЄрыюу
+        CALL	LOADER ;грузим корневой каталог
        ;HL=SECBUF
 
        ;LD A,4
@@ -210,7 +210,7 @@ FNDID0  LD	A,(DE)
        ;LD A,5
        ;OUT (-2),A
 
-        CALL	LOADER ;уЁєчшь autorun.zx
+        CALL	LOADER ;грузим autorun.zx
        PUSH	HL
         LD	A,device ;#B0=slave
         LD	BC,comptype*256+idetype ;1=ATM,1=ATM
@@ -236,10 +236,10 @@ NOPADDING
         RST	0
 
 LOADER
-;уЁєчшь Їрщы
-;HL єърч√трхЄ эр яюых ъююЁфшэрЄ Їрщыр т motorola яюЁ фъх
-;CY=1: ЁрчьхЁ т DE
-;CY=0: ЁрчьхЁ т (HL+4)
+;грузим файл
+;HL указывает на поле координат файла в motorola порядке
+;CY=1: размер в DE
+;CY=0: размер в (HL+4)
        PUSH	DE
         LD	DE,SECTOR
         LD	BC,4
@@ -324,7 +324,7 @@ LOADER0 PUSH	BC
 ;        RET	
 ;       ENDIF	
 
-;╧╬╤╦└╥▄ ╩╬╠└═─╙ ═└ ┬╚═╥
+;ПОСЛАТЬ КОМАНДУ НА ВИНТ
 ;HDSC
 ;      PUSH	AF
 ;      LD	A,device
@@ -333,20 +333,20 @@ LOADER0 PUSH	BC
 ;      POP	AF
 ;        LD	BC,hddcmd
 ;        CALL	OUT_A
-;╬╞╚─└═╚┼ ╬╤┬╬┴╬╞─┼═╚▀ ╙╤╥╨╬╔╤╥┬└
+;ОЖИДАНИЕ ОСВОБОЖДЕНИЯ УСТРОЙСТВА
 ;NO_BSY
 ;        CALL	IN_HDDSTAT
 ;        RLCA	
 ;       RET	NC
 ;        JR	NO_BSY
-;╬╞╚─└═╚┼ ├╬╥╬┬═╬╤╥╚ ╧┼╨┼─└╫╚ ─└══█╒
+;ОЖИДАНИЕ ГОТОВНОСТИ ПЕРЕДАЧИ ДАННЫХ
 ;WAIT_DRQ
 ;        CALL	IN_HDDSTAT
 ;        BIT	3,A
 ;       RET	NZ
 ;        JR	WAIT_DRQ
 
-;╫╥┼═╚E ╫╚╤╦└ ╚╟ ╨┼├╚╤╥╨└ ╓╚╦╚═─╨└
+;ЧТЕНИE ЧИСЛА ИЗ РЕГИСТРА ЦИЛИНДРА
 LEN_TO_HL
         LD	BC,hddcyllo
         CALL	IN_A
@@ -356,8 +356,8 @@ LEN_TO_HL
         LD	H,A
         RET	
 
-;IN:HL-└─╨┼╤ ╧╨╚┼╠└ ─└══█╒
-;   BC-╩╬╦-┬╬ ┴└╔╥
+;IN:HL-АДРЕС ПРИЕМА ДАННЫХ
+;   BC-КОЛ-ВО БАЙТ
 TRANS_IN
         PUSH	BC
         CALL	NO_BSY
@@ -383,7 +383,7 @@ TR_IN0  PUSH	BC
         JP	PE,TR_IN0
         RET	
 
-;╧┼╨┼─└╫└ ATAPI-╧└╩┼╥└
+;ПЕРЕДАЧА ATAPI-ПАКЕТА
 SEND_ATAPI
       ;LD A,device ;#B0=slave
       ;LD BC,hddhead
@@ -414,23 +414,23 @@ TR_OUT0 PUSH	BC
 READCDSECBUF
         LD	HL,SECBUF
 READCD
-;╫╥┼═╚┼ ╤┼╩╥╬╨└
+;ЧТЕНИЕ СЕКТОРА
 lOAD_SECTOR
        PUSH	HL
         LD	HL,AP_READ
         CALL	SEND_ATAPI
        POP	HL
       ;RET C
-;с√трхЄ ёшЄєрЎш ,ўЄю CHECK CONDITION (D0 ёЄрЄєёр)=0,
-;р яЁш ¤Єюь DRQ эх т√фрхЄё !
+;бывает ситуация,что CHECK CONDITION (D0 статуса)=0,
+;а при этом DRQ не выдается!
        ;CALL IN_HDDSTAT
        ;RRA
       ;RET C
-        CALL	NO_BSY ;шэрўх тшёэхЄ яЁш шэшЎ-Ўшш CD
+        CALL	NO_BSY ;иначе виснет при иниц-ции CD
       ;RET C
-       ;CALL WAIT_DRQ ;чфхё№ тшёэхЄ, хёыш шэшЄшЄ№ ёыш°ъюь Ёрэю
-      ;RET C     ;яюёых т√їюфр Ёрчуюэ хЄё , цфхЄ ъэюяъє ш ўшЄрхЄ
-     ;юцшфрэшх DRQ яю ЁхЎхяЄє Budder'р
+       ;CALL WAIT_DRQ ;здесь виснет, если инитить слишком рано
+      ;RET C     ;после выхода разгоняется, ждет кнопку и читает
+     ;ожидание DRQ по рецепту Budder'а
         LD	DE,0
 RDCDDRQ CALL	IN_HDDSTAT
         BIT	3,A
@@ -452,41 +452,41 @@ autorunname
         DB	"AUTORUN.ZX"
 autorunnamesz=$-autorunname
 
-;ATAPI-╧└╩┼╥ "╧╙╤╥█╪╩└"
+;ATAPI-ПАКЕТ "ПУСТЫШКА"
 AP_00
         DW	0
         DS	10
 
-;ATAPI-╧└╩┼╥ "SPEED 1x"
+;ATAPI-ПАКЕТ "SPEED 1x"
 AP_1x
         DW	#BB
         DB	0
         DB	176 ;1x=176k/s
         DS	8
 
-;ATAPI-╧└╩┼╥ "╫╥┼═╚┼"
+;ATAPI-ПАКЕТ "ЧТЕНИЕ"
 AP_READ
 ;       IFN	0
 ;        DW	#BE   ;"READ CD"
 ;SECTOR  DB	0,0,0,0
 ;        DB	0
-;        DB	0,1   ;=1 ёхъЄюЁ
-;        DB	#10   ;ўшЄрхь Єюы№ъю фрээ√х
+;        DB	0,1   ;=1 сектор
+;        DB	#10   ;читаем только данные
 ;        DB	0,0
 ;       ELSE	
         DW	#28   ;"READ(10)"
 SECTOR  DB	0,0,0,0
         DB	0
-        DB	0,1   ;=1 ёхъЄюЁ
+        DB	0,1   ;=1 сектор
         DB	0
         DB	0,0
 ;       ENDIF	
 AP_READTOC
-        DW	#43   ;SCMSF=0,Є.х.ёхъЄюЁ√,р эх MSF
-        DB	0     ;FORMAT=0:тёх ёхёёшш
+        DW	#43   ;SCMSF=0,т.е.секторы,а не MSF
+        DB	0     ;FORMAT=0:все сессии
         DS	3
-        DB	0     ;ё 1-щ ёхёёшш
-        DB	HIGH 2048 ;фышэр Єрсы
+        DB	0     ;с 1-й сессии
+        DB	HIGH 2048 ;длина табл
         DB	LOW 2048
         DB	#00   ;FUNC
         DS	2

@@ -1,6 +1,6 @@
 @ECHO OFF
 
-rem тестовая сборка настройщика CMOS
+rem вҐбв®ў п бЎ®аЄ  ­ бва®©йЁЄ  CMOS
 
 ..\..\..\tools\sjasmplus\sjasmplus --sym=sym.log --lst=dump.log -isrc make_cmosset.a80
 

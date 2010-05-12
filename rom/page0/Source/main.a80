@@ -4,7 +4,7 @@ g1		EQU "0"
 g2		EQU "1"
 g3		EQU "6"
 
-;схема Nemo:
+;беҐ¬  Nemo:
 hddstat		EQU #F0
 hddcmd		EQU #F0
 hddhead		EQU #D0
@@ -19,19 +19,19 @@ hddupr		EQU #C8
 hdduprON	EQU 0
 
 ADR_CAT		EQU #9C00		;,#900
-MOUSE_BUFF	EQU #A500		;БУФЕР ДЛЯ СОХРАНЕНИЯ ПОД МЫШЬЮ
-COLBUF		EQU MOUSE_BUFF+#10	;БУФЕР СОХРАНЕНИЯ ЦВЕТА
+MOUSE_BUFF	EQU #A500		;Ѓ“”…ђ „‹џ ‘Ћ•ђЂЌ…Ќ€џ ЏЋ„ Њ›њћ
+COLBUF		EQU MOUSE_BUFF+#10	;Ѓ“”…ђ ‘Ћ•ђЂЌ…Ќ€џ –‚…’Ђ
 
-f20		EQU #14			;окно BOOT
+f20		EQU #14			;®Є­® BOOT
 len98		EQU (f20-1)*8
 GlukStk		EQU #5FE4
 
 hldebcaf	EQU ADR_CAT-8		;push AF,BC,DE,HL,IY,IX,SP
-SPKEEP		EQU hldebcaf-14		;старый стек
-OLDSTSZ		EQU 11			;в т.ч (SP-2)
+SPKEEP		EQU hldebcaf-14		;бв ал© бвҐЄ
+OLDSTSZ		EQU 11			;ў в.з (SP-2)
 OLDSTAK		EQU SPKEEP-(2*OLDSTSZ)
 
-wide		EQU 1			;два пробела с боков
+wide		EQU 1			;¤ў  Їа®ЎҐ«  б Ў®Є®ў
 
 SYSREG_EFF7	EQU #EFF7
 SET_ADR_CMOS	EQU #DFF7
@@ -85,13 +85,13 @@ CMOS_OFF	EQU 0
 	LD A,L
 	AND 3
 	LD (MEMMODE),A
-1	CALL SET_SYSREG1	;OUT #EFF7,0 - видимо,на всяк.сл.
+1	CALL SET_SYSREG1	;OUT #EFF7,0 - ўЁ¤Ё¬®,­  ўбпЄ.б«.
 	LD A,#17
 	CALL PAGE_A
 	LD HL,#4000
 	LD DE,#E000
 	LD BC,#1B00
-	LDIR			;СОХРАНЕНИЕ ОСНОВНОГО ЭКРАНА В 7 СТРАНИЦУ
+	LDIR			;‘Ћ•ђЂЌ…Ќ€… Ћ‘ЌЋ‚ЌЋѓЋ ќЉђЂЌЂ ‚ 7 ‘’ђЂЌ€–“
 	CALL PAGE_0
 	CALL DETECTMOUSE
 	CALL GLUDIN
@@ -134,7 +134,7 @@ TEK_SP	EQU $-2
 	CALL S_FACE
 	LD IX,mMAIN
 	CALL DRAWWIN
-				;подсветка опций ЗДЕСЬ БЫЛА
+				;Ї®¤бўҐвЄ  ®ЇжЁ© ‡„…‘њ Ѓ›‹Ђ
 	CALL NAMEROM
 	LD IX,aMAIN
 	JP _RULILKA
@@ -221,7 +221,7 @@ SYSTEM	LD HL,BAS_VAR
 	LD BC,END_BAS_VAR-BAS_VAR
 	LDIR
 GET_DRV_SYM
-	LD A,(FLAGS)	;ПРОВЕРЯЕМ НАЛИЧИЕ КМОСА
+	LD A,(FLAGS)	;ЏђЋ‚…ђџ…Њ ЌЂ‹€—€… ЉЊЋ‘Ђ
 	AND 4
 	JR Z,SYSTEM1
 	LD H,#10
@@ -247,7 +247,7 @@ SHUT2AY	LD DE,#0E00
 	LD H,D
 	LD L,E
 	CALL 2F
-	JR NZ,1B		;для первых никронов
+	JR NZ,1B		;¤«п ЇҐаўле ­ЁЄа®­®ў
 	LD HL,#073F
 2	LD BC,#FFFD
 	OUT (C),H
@@ -272,11 +272,11 @@ BOOTRUN	CALL GLUDIN
 	AND A
 	JP Z,_IKNOW
 	DI
-	CALL SHUT2AY		;БУМКАЛКА В AY
-	CALL MEMSET		;ВЫСТАВИЛИ РЕЖИМ КОМПА
+	CALL SHUT2AY		;Ѓ“ЊЉЂ‹ЉЂ ‚ AY
+	CALL MEMSET		;‚›‘’Ђ‚€‹€ ђ…†€Њ ЉЋЊЏЂ
 	LD A,(FLAGS)
 	AND 8
-	JP NZ,RUN_HOB		;ПЕРЕХОДИМ НА ЗАПУСК ХОБЕТЫ С ФАТА
+	JP NZ,RUN_HOB		;Џ…ђ…•Ћ„€Њ ЌЂ ‡ЂЏ“‘Љ •ЋЃ…’› ‘ ”Ђ’Ђ
 	LD DE,ADR_CAT
 	LD A,(BOOTPG)
 	LD B,A
@@ -301,12 +301,12 @@ BOOTRUN	CALL GLUDIN
 	RES 7,(HL)
 	LD HL,#3E08+#A7
 	LD DE,#FFFF
-	LD C,#A8		;21 символ UDG
+	LD C,#A8		;21 бЁ¬ў®« UDG
 	LDDR
 	LD HL,BUFSTR
 	LD DE,#5D3B
 	LD BC,ENDSTR-BUFSTR
-	LDIR			;ПЕРЕНОС БЕЙСИК ПРОГИ ДЛЯ ЗАПУСКА
+	LDIR			;Џ…ђ…ЌЋ‘ Ѓ…‰‘€Љ ЏђЋѓ€ „‹џ ‡ЂЏ“‘ЉЂ
 	LD IY,#5C3A
 	LD (IY),#FF
 	SET 7,(IY+1)
@@ -320,12 +320,12 @@ BOOTRUN	CALL GLUDIN
 	XOR A
 	LD (#5C44),A
 	LD BC,#5FFF
-	CALL #1EB7		;УСТАНОВКА СТЕКА СРЕДСТВАМИ БЕЙСИКА
+	CALL #1EB7		;“‘’ЂЌЋ‚ЉЂ ‘’…ЉЂ ‘ђ…„‘’‚ЂЊ€ Ѓ…‰‘€ЉЂ
 	LD HL,#1303
 	PUSH HL
 	LD (#5C3D),SP
 	EI
-	JP #1B7D		;ЗАПУСК ПЕРЕНЕСЕННОЙ БЕЙСИК ПРОГИ
+	JP #1B7D		;‡ЂЏ“‘Љ Џ…ђ…Ќ…‘…ЌЌЋ‰ Ѓ…‰‘€Љ ЏђЋѓ€
 	
 LDIR98FF
 	LD BC,len98
@@ -372,7 +372,7 @@ gkOK	LD A,(IY-#32)
 	RET
 
 
-;СОХРАНЕНИЕ КУСКА ЭКРАНА
+;‘Ћ•ђЂЌ…Ќ€… Љ“‘ЉЂ ќЉђЂЌЂ
 SAVE2X2	LD HL,(REST2X2+1)
 	LD DE,MOUSE_BUFF
 	LD B,8
@@ -388,7 +388,7 @@ SAVE2X2	LD HL,(REST2X2+1)
 	DJNZ 1B
 	RET
 
-;ВОССТАНОВЛЕНИЕ КУСКА ЭКРАНА
+;‚Ћ‘‘’ЂЌЋ‚‹…Ќ€… Љ“‘ЉЂ ќЉђЂЌЂ
 REST2X2	LD HL,0
 	LD DE,MOUSE_BUFF
 	LD B,8
@@ -407,7 +407,7 @@ REST2X2	LD HL,0
 DETECTMOUSE
 	LD HL,FLAGS
 	LD BC,#FBDF
-	IN D,(C)		;1.стабильность X
+	IN D,(C)		;1.бв ЎЁ«м­®бвм X
 1	IN A,(C)
 	CP D
 	JR NZ,2F
@@ -426,10 +426,10 @@ DETECTMOUSE
 	RET
 
 MOUSE	LD HL,(arXY)
-	LD DE,0			;D=Y КООДИНАТА, E=X КООРДИНАТА
+	LD DE,0			;D=Y ЉЋЋ„€ЌЂ’Ђ, E=X ЉЋЋђ„€ЌЂ’Ђ
 mouPOS	EQU $-2
 	LD BC,#FBDF
-	IN A,(C)		;ЧТЕНИЕ КООРДИНАТЫ X
+	IN A,(C)		;—’…Ќ€… ЉЋЋђ„€ЌЂ’› X
 	LD (mouPOS),A		
 	SUB E
 	JR Z,MOUnX
@@ -446,7 +446,7 @@ MOUpX	ADD A,L
 	JR C,$+4
 	LD A,#F9
 	LD L,A
-MOUnX	LD BC,#FFDF		;ЧТЕНИЕ КООРДИНАТЫ Y
+MOUnX	LD BC,#FFDF		;—’…Ќ€… ЉЋЋђ„€ЌЂ’› Y
 	IN A,(C)
 	LD (mouPOS+1),A
 	SUB D
@@ -469,7 +469,7 @@ MOUnY	LD (arXY),HL
 	RET
 
 MOUOPT	LD H,(IX+1)
-	LD L,(IX) 	;атрибутный адрес угла
+	LD L,(IX) 	; ваЁЎгв­л©  ¤аҐб гЈ« 
 	LD A,L
 	AND #1F
 	ADD HL,HL
@@ -508,12 +508,12 @@ _a9f3	LD A,E
 	POP AF
         RET	
 
-;мышь не на опции
+;¬лим ­Ґ ­  ®ЇжЁЁ
 _aa0e	INC B
 	LD A,B
 	CP (IX+3)	;hgt
 	JR NC,_aa22
-	JR MOUOPT0	;проверяем след.опцию
+	JR MOUOPT0	;Їа®ўҐапҐ¬ б«Ґ¤.®ЇжЁо
 
 _aa22	CALL COL_CURSOR
 	SCF
@@ -534,7 +534,7 @@ SET_ADR	LD A,(POS_CUR)
 	ADD HL,DE
 	DJNZ $-1
 	SBC HL,DE
-	LD (COL_CURSOR+1),HL	;ПОЛОЖИЛИ АДРЕС ДЛЯ ВОССТАНОВЛЕНИЯ ЦВЕТА
+	LD (COL_CURSOR+1),HL	;ЏЋ‹Ћ†€‹€ Ђ„ђ…‘ „‹џ ‚Ћ‘‘’ЂЌЋ‚‹…Ќ€џ –‚…’Ђ
 	LD DE,COLBUF
 	LD B,(IX+2)
 	LD C,(IX+4)
@@ -548,10 +548,10 @@ SET_ADR	LD A,(POS_CUR)
 
 TIMElp	CALL PRINTTIME
 	LD A,#FA
-	IN A,(#DF)	;кнопки мыши
+	IN A,(#DF)	;Є­®ЇЄЁ ¬лиЁ
 	CPL
 	AND 7
-	JR NZ,TIMElp	;пока не отпустят
+	JR NZ,TIMElp	;Ї®Є  ­Ґ ®вЇгбвпв
 	RET
 
 	include "menu_data.a80"
@@ -563,7 +563,7 @@ TIMElp	CALL PRINTTIME
 	INCLUDE "fat\ports_ngs.a80"
 	INCLUDE "fat\sdcomand.a80"
 	
-DRV_VAR	EQU #A700	;АДРЕС НАЧАЛА ПЕРЕМЕННЫХ ФАТА
+DRV_VAR	EQU #A700	;Ђ„ђ…‘ ЌЂ—Ђ‹Ђ Џ…ђ…Њ…ЌЌ›• ”Ђ’Ђ
 	
 COM_DEV	equ $+6
 TO_DRV	INCLUDE "fat\dev_drv.a80"

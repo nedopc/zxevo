@@ -1,6 +1,6 @@
-─ы  ъюьяшы Ўшш яЁю°штъш чряєёърЄ№ Їрщы make_all_services.bat
+Для компиляции прошивки запускать файл make_all_services.bat
 
-╘рщы√ make_cmosset.bat, make_micro_boot_fat.bat, make_main.bat,
-make_cmosset.bat эєцэ√ Єюы№ъю фы  ЄхёЄютющ ёсюЁъш ўрёЄхщ яЁю°штъш.
-┬ёх Їрщы√ яЁшЎхяы хь√х ъюьрэфющ рёьр INCBIN шьх■Є Ёрё°шЁхэшх *.BIN
-┬ёх Їрщы√ ёючфрээ√х ъюьяшы Ўшхщ шьх■Є Ёрё°шЁхэшх *.ROM
+Файлы make_cmosset.bat, make_micro_boot_fat.bat, make_main.bat,
+make_cmosset.bat нужны только для тестовой сборки частей прошивки.
+Все файлы прицепляемые командой асма INCBIN имеют расширение *.BIN
+Все файлы созданные компиляцией имеют расширение *.ROM
