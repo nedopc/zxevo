@@ -1,23 +1,23 @@
-;├╦└┬═└▀ ёюсшЁрыър/чряєёърыър ├ы■ър шч ъєёюўъют
+;ГЛАВНАЯ собиралка/запускалка Глюка из кусочков
 
-;т ROM4 #3D2F=NOP:RET, #60=OUT(C),A:POP BC,AF:INC SP,SP
-;ыєў°х тю тёхї,фы  ёютьхёЄшьюёЄш
+;в ROM4 #3D2F=NOP:RET, #60=OUT(C),A:POP BC,AF:INC SP,SP
+;лучше во всех,для совместимости
 
 STACK2	EQU #9C00	;push af,bc,de,hl
 hldebcaf EQU STACK2-8	;push AF,BC,DE,HL,IY,IX,SP
-SPKEEP	EQU hldebcaf-14	;ёЄрЁ√щ ёЄхъ
-OLDSTSZ	EQU 11		;т Є.ў (SP-2)
+SPKEEP	EQU hldebcaf-14	;старый стек
+OLDSTSZ	EQU 11		;в т.ч (SP-2)
 DEPKADR	EQU #6000	;#5FE4	;depack to
 
         ORG	#0000
 RSTROM
        
-;т 1-щ ёЄхъ (фы  STS) ъырфхЄё  AF,BC,юёЄрты хЄё  SP-2
-;юёЄры№эюх т ёЄхъх STACK2
-;Є.ъ.1-щ ёЄхъ эхшчтхёЄэю уфх,р Єю ш т ╧╟╙.
-;яЁш фЁхсхчух ёсЁюё фтєъЁрЄэ√щ!!! ёЁрсюЄрхЄ шьхээю 2-щ
-;╧╨╚ ╬─═╬╩╨└╥═╬╠ ╤┴╨╬╤┼ ╤╬╒╨└═╚╥╤▀ ┬╤┼,ўЄю эх юсэєышы Z80
-;яЁш фтєъЁрЄэюь - ъЁюьх AF
+;в 1-й стек (для STS) кладется AF,BC,оставляется SP-2
+;остальное в стеке STACK2
+;т.к.1-й стек неизвестно где,а то и в ПЗУ.
+;при дребезге сброс двукратный!!! сработает именно 2-й
+;ПРИ ОДНОКРАТНОМ СБРОСЕ СОХРАНИТСЯ ВСЕ,что не обнулил Z80
+;при двукратном - кроме AF
 GLUMAGIC
 	DI
 	DEC SP
@@ -44,7 +44,7 @@ RSTGO	DEC SP
 	DS #66-$,#FF
 	JR GLUMAGIC
 
-;яЁютхЁър эрцрЄш  фтєї ъыртш° (яюЁЄшь Єюы№ъю AF,BC)
+;проверка нажатия двух клавиш (портим только AF,BC)
 RSTKEYS	LD BC,#FEFF
 TST2K	LD A,B
 	IN A,(#FE)
@@ -54,8 +54,8 @@ TST2K	LD A,B
 	INC C
 	EDUP
 	RLC B
-	JR C,TST2K		;C=ўшёыю ъэюяюъ ьшэєё 1
-	DEC C			;ьшэєё 2
+	JR C,TST2K		;C=число кнопок минус 1
+	DEC C			;минус 2
 	JP P,GTSTKEY
 ;"H"=cache
 ;"D"=demo
@@ -70,13 +70,13 @@ iNSTS57	LD A,#7F
 	IN A,(#FE)
 	RRA
 	LD A,#10
-	JR NC,iGROM0		;╤┴╨╬╤ ┬ ╥█╨─╬╤
+	JR NC,iGROM0		;СБРОС В ТЫРДОС
 				;SS=ROM4:#62 (PUSH #62:#3D2F)
 	LD A,#EF
 	IN A,(#FE)
 	RRA			;"0"
 	JR C,iNOROM0		;0=ROM0:#00 (XOR A:iGROM0)
-	XOR A			;╤┴╨╬╤ ┬ ┴└╤╚╩128
+	XOR A			;СБРОС В БАСИК128
 iGROM0	LD HL,#5C07
 	LD (HL),#C9		;for iG128
 iGRAMOU	DEC HL
@@ -137,7 +137,7 @@ L3E00	POP BC
 	PUSH IY
 	PUSH IX
 	LD HL,(SPKEEP)
-	PUSH HL			;ёюсёЄтхээю,юэ Єрь ш ыхцры
+	PUSH HL			;собственно,он там и лежал
 	LD DE,OLDSTSZ*2-2	;6.61
 	ADD HL,DE
 	LD B,OLDSTSZ
@@ -153,11 +153,11 @@ iCOPST	DEC HL
 	IN A,(#FE)
 	PUSH AF
 	EX DE,HL
-	LD HL,LOADADR		;╨└╤╧└╩╬┬╩└ ├╦▐╩└
+	LD HL,LOADADR		;РАСПАКОВКА ГЛЮКА
 	CALL DEC40		;DEHR1
 	LD IY,#5C3A
 	LD (IY+1),#CC
-	IM 1			;ЄєЄ с√ыр ярышЄЁр фю 6.61
+	IM 1			;тут была палитра до 6.61
 	LD A,#FD
 	IN A,(#FE)
 	AND 4			;"D"
@@ -165,11 +165,11 @@ iCOPST	DEC HL
 	POP AF			;in a,(#00fe)
 	CPL
 	AND #1F
-J6000	JP Z,#6000		;╟└╧╙╤╩ ├╦▐╩└
-				;ЎшЇЁ√, U,H,SS,CS,X эх т√ч√тр■Є HELP!
+J6000	JP Z,#6000		;ЗАПУСК ГЛЮКА
+				;цифры, U,H,SS,CS,X не вызывают HELP!
 
 CMOSHELP			;CMOS setup & HELP
-	LD HL,BONUADR		;╨└╤╧└╩╬┬╩└ ╚ ╟└╧╙╤╩ CMOS SETUP
+	LD HL,BONUADR		;РАСПАКОВКА И ЗАПУСК CMOS SETUP
 	LD DE,#6000
 	PUSH DE
 	PUSH AF

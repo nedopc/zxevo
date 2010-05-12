@@ -10,20 +10,20 @@ DRV_A   EQU 0		;DRIVE A
 DRV_B   EQU 1		;DRIVE B
 DRV_C   EQU 2		;DRIVE C
 DRV_D   EQU 3		;DRIVE D
-SDZ     EQU 4		;SD йюпрю мю ZC
-SDG     EQU 5		;SD йюпрю мю NeoGS
-HDDN    EQU 6		;HDD мю NEMO
-HDDS    EQU 7		;HDD мю SMUC
+SDZ     EQU 4		;SD ┼─░▓─ █─ ZC
+SDG     EQU 5		;SD ┼─░▓─ █─ NeoGS
+HDDN    EQU 6		;HDD █─ NEMO
+HDDS    EQU 7		;HDD █─ SMUC
 
-ADRTVOL EQU DRV_VAR-#0100	;юдпея рюакхжш мюидеммшу пюгдекнб
-				;ял тнплюр рюакхжш мюидеммшу пюгдекнб
-				;#F0 8 аюир мю пюгдек*#1E йнк пюгдекнб
-GO_DEV  EQU ADRTVOL+#F0		;2 юдпея бшгнбю дпюибепю сярпниярбю
-KOLDVOL EQU GO_DEV+2		;1 йнкхвеярбн мюидеммшу пюгдекнб
-SETDVOL EQU KOLDVOL+1		;1 мнлеп бшапюммнцн пюгдекю
-ADRTEKV EQU SETDVOL+1		;2 юдпея нохяюрекъ рейсыецн пюгдекю
+ADRTVOL EQU DRV_VAR-#0100	;─└░┘▒ ▓─│▀┬√⌡ █─┴└┘██⌡∙ ░─┤└┘▀▌┌
+				;▒▄ ■▌░▄─▓ ▓─│▀┬√⌡ █─┴└┘██⌡∙ ░─┤└┘▀▌┌
+				;#F0 8 │─┴▓ █─ ░─┤└┘▀*#1E ┼▌▀ ░─┤└┘▀▌┌
+GO_DEV  EQU ADRTVOL+#F0		;2 ─└░┘▒ ┌⌡┤▌┌─ └░─┴┌┘░─ ⌠▒▓░▌┴▒▓┌─
+KOLDVOL EQU GO_DEV+2		;1 ┼▌▀┬≈┘▒▓┌▌ █─┴└┘██⌡∙ ░─┤└┘▀▌┌
+SETDVOL EQU KOLDVOL+1		;1 █▌▄┘░ ┌⌡│░─██▌┐▌ ░─┤└┘▀─
+ADRTEKV EQU SETDVOL+1		;2 ─└░┘▒ ▌▐┬▒─▓┘▀÷ ▓┘┼⌠≥┘┐▌ ░─┤└┘▀─
 			;GO_DRV  EQU ADRTEKV+2
-			;2 юдпея бшгшбюелнцн дпюибепю
+			;2 ─└░┘▒ ┌⌡┤⌡┌─┘▄▌┐▌ └░─┴┌┘░─
 
         PUSH HL:LD HL,(GO_DEV)
         EX (SP),HL:RET
@@ -44,33 +44,33 @@ Devfind EQU 0
 Set_vol EQU 1
 Kol_vol EQU 2
 
-TABLDEV DW DEVFIND;00 онхяй сярпниярб
-        DW SET_VOL;01 бшанп пюгдекю
-        DW KOL_VOL;02 гюопня мюидемнцн
+TABLDEV DW DEVFIND;00 ▐▌┬▒┼ ⌠▒▓░▌┴▒▓┌
+        DW SET_VOL;01 ┌⌡│▌░ ░─┤└┘▀─
+        DW KOL_VOL;02 ┤─▐░▌▒ █─┴└┘█▌┐▌
 
-;тнплюр рюакхжш мюидеммшу пюгдекнб
+;■▌░▄─▓ ▓─│▀┬√⌡ █─┴└┘██⌡∙ ░─┤└┘▀▌┌
 ;+0(1)-0-DRIVE A
 ;      1-DRIVE B
 ;      2-DRIVE C
 ;      3-DRIVE D
-;      4-SD йюпрю ZC
-;      5-SD йюпрю NEOGS
+;      4-SD ┼─░▓─ ZC
+;      5-SD ┼─░▓─ NEOGS
 ;      6-HDD NEMO
 ;      7-HDD SMUC
-;+1(1)-дкъ SD-рсон 0
-;      хмюве HDD/CD 0-MASTER, 1-SLAVE
-;+2(1)-рхо пюгдекю, б рюакхже рнкэйн
-;пюгдекш:
+;+1(1)-└▀÷ SD-▓⌠▐▌ 0
+;      ┬█─≈┘ HDD/CD 0-MASTER, 1-SLAVE
+;+2(1)-▓┬▐ ░─┤└┘▀─, ┌ ▓─│▀┬√┘ ▓▌▀°┼▌
+;░─┤└┘▀⌡:
 ;00=01-FAT12
 ;01=06,0E-FAT16
 ;02=0B,0C-FAT32
-;+3(4)-ярюпрнбши яейрнп
-;+7(1)-пегепб
+;+3(4)-▒▓─░▓▌┌⌡┴ ▒┘┼▓▌░
+;+7(1)-░┘┤┘░┌
 
-;рнвйю бундю дкъ онхяйю пюгдекнб
-;HL-юдпея йсдю онйкюярэ рюакхжс пюгдекнб
-;мю бшунде:
-;A-йнк-бн пюгдекнб
+;▓▌≈┼─ ┌∙▌└─ └▀÷ ▐▌┬▒┼─ ░─┤└┘▀▌┌
+;HL-─└░┘▒ ┼⌠└─ ▐▌┼▀─▒▓° ▓─│▀┬√⌠ ░─┤└┘▀▌┌
+;█─ ┌⌡∙▌└┘:
+;A-┼▌▀-┌▌ ░─┤└┘▀▌┌
 DEVFIND XOR A:LD (KOLDVOL),A
         LD IX,ADRTVOL
 
@@ -156,9 +156,9 @@ RD0HDD2 LD DE,#10:ADD IY,DE:DJNZ RD0HDD0
         CALL COM_FAT:DB Wc_fat
         LD (IX-6),A:RET
 
-;мю бунде:
+;█─ ┌∙▌└┘:
 ;A-BIT 7-0/1-MASTER/SLAVE
-;BITS 6-0-рхо мняхрекъ
+;BITS 6-0-▓┬▐ █▌▒┬▓┘▀÷
 SCANMBR POP AF:LD DE,#01BE:ADD HL,DE:EXX
         BIT 7,A:LD B,0:JR Z,$+3:INC B
         AND #7F:LD C,A:EXX:LD B,0,A,4
@@ -180,7 +180,7 @@ SET_VOL LD HL,KOLDVOL:CP (HL):CCF:RET C
         LD (SETDVOL),A,L,A,H,0:ADD HL,HL
         ADD HL,HL,HL,HL:LD DE,ADRTVOL
         ADD HL,DE:LD (ADRTEKV),HL
-        LD A,(HL):CP 4;LD HL,DISKETA	;еые ме няхкхк
+        LD A,(HL):CP 4;LD HL,DISKETA	;┘≥┘ █┘ ▌▒┬▀┬▀
         JR C,SET_DRV:SUB 4:LD HL,COMSDZ
         JR Z,SET_DRV:DEC A:LD HL,COMSDG
         JR Z,SET_DRV:DEC A:LD HL,GO2HDDN

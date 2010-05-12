@@ -1,9 +1,9 @@
 
-;бшанп сярпниярбю дкъ гюцпсгйх
+;┌⌡│▌░ ⌠▒▓░▌┴▒▓┌─ └▀÷ ┤─┐░⌠┤┼┬
 FATBOOT	LD HL,FLAGS
 	SET 3,(HL)
 	CALL COM_DEV
-	DB Devfind	;яйюмхпнбюмхе сярпниярб
+	DB Devfind	;▒┼─█┬░▌┌─█┬┘ ⌠▒▓░▌┴▒▓┌
 	JP C,_STUPID
 	EXA
 	EXX
@@ -12,59 +12,59 @@ FATBOOT	LD HL,FLAGS
 	LD A,(BC)
 	INC A
 	INC BC
-	LD (DE),A	;оепелеярхкх X+1
+	LD (DE),A	;▐┘░┘▄┘▒▓┬▀┬ X+1
 	INC DE
 	LD A,(BC)
 	INC A
 	INC BC
-	LD (DE),A	;оепелеярхкх Y+1
+	LD (DE),A	;▐┘░┘▄┘▒▓┬▀┬ Y+1
 	INC DE
 	EX DE,HL
-	INC HL		;опносярхкх онйю бшянрс, онкнфхл онгфе
-	LD (HL),#14	;онкнфхкх ьхпхмс нймю
+	INC HL		;▐░▌▐⌠▒▓┬▀┬ ▐▌┼─ ┌⌡▒▌▓⌠, ▐▌▀▌├┬▄ ▐▌┤├┘
+	LD (HL),#14	;▐▌▀▌├┬▀┬ ≤┬░┬█⌠ ▌┼█─
 	INC HL
-	LD (HL),#0F	;онкнфхкх жбер нймю
+	LD (HL),#0F	;▐▌▀▌├┬▀┬ √┌┘▓ ▌┼█─
 	INC HL
 	EX DE,HL
 	EXX
 	EXA
-	LD B,E		;б "B" йнкхвеярбн мюидеммшу пюгдекнб
+	LD B,E		;┌ "B" ┼▌▀┬≈┘▒▓┌▌ █─┴└┘██⌡∙ ░─┤└┘▀▌┌
 	LD C,0
 	LD A,E
 	PUSH AF
 	ADD A,2
-	LD (mBOOT+2),A	;онкнфхкх бшянрс нймю
+	LD (mBOOT+2),A	;▐▌▀▌├┬▀┬ ┌⌡▒▌▓⌠ ▌┼█─
 	LD DE,6
-WFATC1	LD A,(HL)	;бгъкх рхо пюгдекю
+WFATC1	LD A,(HL)	;┌┤÷▀┬ ▓┬▐ ░─┤└┘▀─
 	INC HL
-	LD C,(HL)	;MASTER хкх SLAVE
+	LD C,(HL)	;MASTER ┬▀┬ SLAVE
 	INC HL
 	ADD A,C
 	ADD A,C
 	EXX
-	SUB 4		;-4 хан дхяйнбндш ме свхршбючряъ
+	SUB 4		;-4 ┬│▌ └┬▒┼▌┌▌└⌡ █┘ ⌠≈┬▓⌡┌─·▓▒÷
 	ADD A,A
 	ADD A,A
 	ADD A,A
-	ADD A,A		;слмнфхкх мю #10
+	ADD A,A		;⌠▄█▌├┬▀┬ █─ #10
 	LD HL,TXT4MENU_DEVICE
 	LD C,A
 	LD B,0
-	ADD HL,BC	;онксвхкх юдпея нрйсдю рейяр бгърэ
-	LD BC,#10	;дкхмю оепемняю 16 аюир
+	ADD HL,BC	;▐▌▀⌠≈┬▀┬ ─└░┘▒ ▌▓┼⌠└─ ▓┘┼▒▓ ┌┤÷▓°
+	LD BC,#10	;└▀┬█─ ▐┘░┘█▌▒─ 16 │─┴▓
 	EXX
 	LD A,L
 	RRCA
 	RRCA
 	RRCA
 	AND #1F
-	ADD A,#45	;асйбю мюидеммнцн сярпниярбю
+	ADD A,#45	;│⌠┼┌─ █─┴└┘██▌┐▌ ⌠▒▓░▌┴▒▓┌─
 	EXX
-	LD (DE),A	;онкнфхкх асйбс мюидемнцн сярпниярбю
+	LD (DE),A	;▐▌▀▌├┬▀┬ │⌠┼┌⌠ █─┴└┘█▌┐▌ ⌠▒▓░▌┴▒▓┌─
 	INC DE
-	LDIR		;оеперюыхкх онкмне хлъ сярпниярбю
+	LDIR		;▐┘░┘▓─≥┬▀┬ ▐▌▀█▌┘ ┬▄÷ ⌠▒▓░▌┴▒▓┌─
 ;	EXX
-;	LD A,(HL)	;бгъкх рхо пюгдекю
+;	LD A,(HL)	;┌┤÷▀┬ ▓┬▐ ░─┤└┘▀─
 ;	EXX
 ;	LD C,A
 ;	ADD A,A
@@ -73,15 +73,15 @@ WFATC1	LD A,(HL)	;бгъкх рхо пюгдекю
 ;	LD C,A
 ;	LD B,0
 ;	LD HL,TXT4MENU_TYPE
-;	ADD HL,BC	;онксвхкх юдпея рейяр бгърэ
+;	ADD HL,BC	;▐▌▀⌠≈┬▀┬ ─└░┘▒ ▓┘┼▒▓ ┌┤÷▓°
 ;	LD C,5
-;	LDIR		;оепемня 5 аюир
+;	LDIR		;▐┘░┘█▌▒ 5 │─┴▓
 	EXX
 	ADD HL,DE
-	DJNZ WFATC1	;пюгдекш йнмвхкхяэ
+	DJNZ WFATC1	;░─┤└┘▀⌡ ┼▌█≈┬▀┬▒°
 	EXX
 	LD A,#FF
-	LD (DE),A	;йнмеж рейярю б лемч
+	LD (DE),A	;┼▌█┘√ ▓┘┼▒▓─ ┌ ▄┘█·
 	INC DE
 	LD (fBOOT),DE
 	EX DE,HL
@@ -117,7 +117,7 @@ WFATC1	LD A,(HL)	;бгъкх рхо пюгдекю
 fBOOT	EQU $-2
 	JP _NKLILKA2
 
-TXT4MENU_DEVICE;рейяр дкъ нрнапюфемхъ мюидеммшу пюгдекнб, он 16 аюир ярпнйю
+TXT4MENU_DEVICE;▓┘┼▒▓ └▀÷ ▌▓▌│░─├┘█┬÷ █─┴└┘██⌡∙ ░─┤└┘▀▌┌, ▐▌ 16 │─┴▓ ▒▓░▌┼─
 	   ;1234567890123456
 	DC ":ZContr  SDCard "	;4
 	DC ":NeoGS   SDCard "	;5
@@ -126,23 +126,23 @@ TXT4MENU_DEVICE;рейяр дкъ нрнапюфемхъ мюидеммшу пюгдекнб, он 16 аюир ярпнйю
 	DC ":HDDNemo  SLAVE "	;6-MASTER
 	DC ":HDDSmuc  SLAVE "	;7-SLAVE
 	
-TXT4MENU_TYPE;рхо пюгдекю
+TXT4MENU_TYPE;▓┬▐ ░─┤└┘▀─
 	DC "FAT12"
 	DC "FAT16"
 	DC "FAT32"
 
-;оепейкчвемхе мю сярпниярбю х бшбнд мюидеммнцн мю мел
+;▐┘░┘┼▀·≈┘█┬┘ █─ ⌠▒▓░▌┴▒▓┌─ ┬ ┌⌡┌▌└ █─┴└┘██▌┐▌ █─ █┘▄
 SEL_FAT	LD HL,0
 ADR_SEL EQU $-2
-	LD A,(HL)	;онксвхкх мнлеп осмйрю лемч
-	DEC A		;-1=мнлеп сярпниярбю
+	LD A,(HL)	;▐▌▀⌠≈┬▀┬ █▌▄┘░ ▐⌠█┼▓─ ▄┘█·
+	DEC A		;-1=█▌▄┘░ ⌠▒▓░▌┴▒▓┌─
 	CALL COM_DEV
-	DB Set_vol	;бшапюкх сярпниярбн он мнлепс
+	DB Set_vol	;┌⌡│░─▀┬ ⌠▒▓░▌┴▒▓┌▌ ▐▌ █▌▄┘░⌠
 	CALL COM_FAT
-	DB Wc_fat	;хмхжхюкхгюжхъ тюр дпюибепю дкъ бшапюммнцн сярпниярбю
+	DB Wc_fat	;┬█┬√┬─▀┬┤─√┬÷ ■─▓ └░─┴┌┘░─ └▀÷ ┌⌡│░─██▌┐▌ ⌠▒▓░▌┴▒▓┌─
 	LD DE,ADR_CAT
 	CALL COM_FAT
-	DB Fhobeta	;онхяй унаерю тюикнб "$C " C опнбепйюлх
+	DB Fhobeta	;▐▌┬▒┼ ∙▌│┘▓─ ■─┴▀▌┌ "$C " C ▐░▌┌┘░┼─▄┬
 	AND A
 	JP Z,_STUPID
 	LD (gBASICS),A
@@ -165,52 +165,52 @@ ADR_SEL EQU $-2
 	LD IX,aBOOT
 	JP _NKLILKA2
 
-;гюосяй бшапюммнцн тюикю
+;┤─▐⌠▒┼ ┌⌡│░─██▌┐▌ ■─┴▀─
 RUN_HOB	DI
-	LD A,(POS_CUR)	;бгъкх мнлеп осмйрю лемч
-	DEC A		;явер ме я 0, -1
+	LD A,(POS_CUR)	;┌┤÷▀┬ █▌▄┘░ ▐⌠█┼▓─ ▄┘█·
+	DEC A		;▒≈┘▓ █┘ ▒ 0, -1
 	LD L,A
 	LD H,0
 	ADD HL,HL
 	ADD HL,HL
 	LD DE,SKLAD
-	ADD HL,DE	;бшвхякхкх нрйсдю бгърэ мнлеп йкюярепю тюикю
+	ADD HL,DE	;┌⌡≈┬▒▀┬▀┬ ▌▓┼⌠└─ ┌┤÷▓° █▌▄┘░ ┼▀─▒▓┘░─ ■─┴▀─
 	LD DE,AFILCLS
 	LD BC,4
-	LDIR		;оепемеякх б оепелеммше тюр дпюибепю
+	LDIR		;▐┘░┘█┘▒▀┬ ┌ ▐┘░┘▄┘██⌡┘ ■─▓ └░─┴┌┘░─
 	CALL PAGE_0
 	CALL COM_DEV
 	DB Kol_vol
-	LD A,D		;бгъкх мнлеп рейсыецн сярпниярбю
+	LD A,D		;┌┤÷▀┬ █▌▄┘░ ▓┘┼⌠≥┘┐▌ ⌠▒▓░▌┴▒▓┌─
 	ADD A,A
 	ADD A,A
 	ADD A,A
 	LD C,A
 	LD B,0
 	ADD HL,BC
-	LD A,(HL)	;бгъкх рхо пюгдекю
-	SUB 4		;опносяйюел дхяйнбндш
-	EXA		;мнлеп рейсыецн сярпниярбю б "A"
+	LD A,(HL)	;┌┤÷▀┬ ▓┬▐ ░─┤└┘▀─
+	SUB 4		;▐░▌▐⌠▒┼─┘▄ └┬▒┼▌┌▌└⌡
+	EXA		;█▌▄┘░ ▓┘┼⌠≥┘┐▌ ⌠▒▓░▌┴▒▓┌─ ┌ "A"
 	INC HL
-	LD A,(HL)	;бгъкх леярнонкнфемхе мняхрекъ (MASTER/SLAVE)
+	LD A,(HL)	;┌┤÷▀┬ ▄┘▒▓▌▐▌▀▌├┘█┬┘ █▌▒┬▓┘▀÷ (MASTER/SLAVE)
 	EXA
 	LD HL,#5800
 	LD DE,#5801
 	LD BC,#02FF
 	LD (HL),0
-	LDIR		;гювепмхкх щйпюм дкъ люяйхпнбйх гюосяйюкйх
+	LDIR		;┤─≈┘░█┬▀┬ ²┼░─█ └▀÷ ▄─▒┼┬░▌┌┼┬ ┤─▐⌠▒┼─▀┼┬
 	LD HL,ERORDRV
 	LD DE,#4200
 	LD BC,#100
-	LDIR		;оепемня оепелеммшу тюрю дкъ рейсыецн сярпниярбю
-	PUSH DE		;ячдю оепемня йндю х гюосяй
+	LDIR		;▐┘░┘█▌▒ ▐┘░┘▄┘██⌡∙ ■─▓─ └▀÷ ▓┘┼⌠≥┘┐▌ ⌠▒▓░▌┴▒▓┌─
+	PUSH DE		;▒·└─ ▐┘░┘█▌▒ ┼▌└─ ┬ ┤─▐⌠▒┼
 	LD HL,MICROBOOT
 	LD BC,END_MICROBOOT-MICROBOOT
-	LDIR		;оепемеякх гюосяйюкйс
-	RET		;гюосяй гюосяйюкйх :)
+	LDIR		;▐┘░┘█┘▒▀┬ ┤─▐⌠▒┼─▀┼⌠
+	RET		;┤─▐⌠▒┼ ┤─▐⌠▒┼─▀┼┬ :)
 
-;цпсгхкйю MOD б оюлърэ NEOGS
-LOADFIL LD IY,(BYTSSEC)			;LY=йнк-бн яейрнпнб б йкюярепе
+;┐░⌠┤┬▀┼─ MOD ┌ ▐─▄÷▓° NEOGS
+LOADFIL LD IY,(BYTSSEC)			;LY=┼▌▀-┌▌ ▒┘┼▓▌░▌┌ ┌ ┼▀─▒▓┘░┘
         LD A,LY
         CP #20
         JR C,LDMF5

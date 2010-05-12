@@ -1,6 +1,6 @@
 @ECHO OFF
 
-rem яюыэр  ёсюЁър ╧╟╙ шч тёхї ъєёъют
+rem полная сборка ПЗУ из всех кусков
 
 ..\..\..\tools\sjasmplus\sjasmplus -isrc make_micro_boot_fat.a80
 ..\..\..\tools\sjasmplus\sjasmplus -isrc make_main.a80

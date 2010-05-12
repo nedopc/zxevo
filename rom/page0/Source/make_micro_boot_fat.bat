@@ -1,6 +1,6 @@
 @ECHO OFF
 
-rem ЄхёЄютр  ёсюЁър ьшъЁю сєЄр ё ЇрЄр
+rem тестовая сборка микро бута с фата
 
 ..\..\..\tools\sjasmplus\sjasmplus --sym=sym.log --lst=dump.log -isrc make_micro_boot_fat.a80
 

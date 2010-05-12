@@ -1,7 +1,7 @@
 
 ;LAST UPDATE: 23.02.2010 savelij
 
-;наыюъ рнвйю бундю дкъ пюанрш я HDD SMUC
+;▌│≥─÷ ▓▌≈┼─ ┌∙▌└─ └▀÷ ░─│▌▓⌡ ▒ HDD SMUC
         EXA:EX (SP),HL:LD A,(HL):INC HL
         EX (SP),HL:ADD A,A:PUSH HL
         LD HL,TBLHDDS:ADD A,L:LD L,A,A,H
@@ -13,44 +13,44 @@ TBLHDDS DW HDSINIT
         DW HDSRDS;READ SINGLE
         DW HDSRDM;READ MULTI
 
-;бУНДМШЕ ОЮПЮЛЕРПШ НАЫХЕ:
-;HL-ЮДПЕЯ ГЮЦПСГЙХ Б ОЮЛЪРЭ
-;BCDE-32-У АХРМШИ МНЛЕП ЯЕЙРНПЮ
-;A-ЙНКХВЕЯРБН АКНЙНБ (АКНЙ=512 АЮИР)
-;РНКЭЙН ДКЪ ЛМНЦНАКНВМНИ ГЮОХЯХ/ВРЕМХХ
+;┌Е╝╓╜К╔ ╞═Ю═╛╔БЮК ╝║И╗╔:
+;HL-═╓Ю╔А ╖═ёЮЦ╖╙╗ ╒ ╞═╛ОБЛ
+;BCDE-32-Е ║╗Б╜К╘ ╜╝╛╔Ю А╔╙Б╝Ю═
+;A-╙╝╚╗Г╔АБ╒╝ ║╚╝╙╝╒ (║╚╝╙=512 ║═╘Б)
+;Б╝╚Л╙╝ ╓╚О ╛╜╝ё╝║╚╝Г╜╝╘ ╖═╞╗А╗/ГБ╔╜╗╗
 
 PS1F7   EQU #FF;#FFBE
-;пецхярп янярнъмхъ/пецхярп йнлюмд
+;░┘┐┬▒▓░ ▒▌▒▓▌÷█┬÷/░┘┐┬▒▓░ ┼▌▄─█└
 PS1F6   EQU #FE;#FEBE
-;CHS-мнлеп цнкнбш х сярп/LBA юдпея 24-27
+;CHS-█▌▄┘░ ┐▌▀▌┌⌡ ┬ ⌠▒▓░/LBA ─└░┘▒ 24-27
 PS1F5   EQU #FD;#FDBE
-;CHS-жхкхмдп 8-15/LBA юдпея 16-23
+;CHS-√┬▀┬█└░ 8-15/LBA ─└░┘▒ 16-23
 PS1F4   EQU #FC;#FCBE
-;CHS-жхкхмдп 0-7/LBA юдпея 8-15
+;CHS-√┬▀┬█└░ 0-7/LBA ─└░┘▒ 8-15
 PS1F3   EQU #FB;#FBBE
-;CHS-мнлеп яейрнпю/LBA юдпея 0-7
+;CHS-█▌▄┘░ ▒┘┼▓▌░─/LBA ─└░┘▒ 0-7
 PS1F2   EQU #FA;#FABE
-;явервхй яейрнпнб
+;▒≈┘▓≈┬┼ ▒┘┼▓▌░▌┌
 PS1F1   EQU #F9;#F9BE
-;онпр ньханй/ябниярб
+;▐▌░▓ ▌≤┬│▌┼/▒┌▌┴▒▓┌
 PS1F0   EQU #F8;#F8BE
-;онпр дюммшу
+;▐▌░▓ └─██⌡∙
 PS3F6   EQU #FE;#FEBE
-;пецхярп янярнъмхъ/сопюбкемхъ
+;░┘┐┬▒▓░ ▒▌▒▓▌÷█┬÷/⌠▐░─┌▀┘█┬÷
 PSHI    EQU #D8;#D8BE
-;ярюпьхе 8 ахр
+;▒▓─░≤┬┘ 8 │┬▓
 PRTSRW  EQU PS1F0*256+PSHI
-;онпрш времхъ/гюохях ндмхл якнбнл
+;▐▌░▓⌡ ≈▓┘█┬÷/┤─▐┬▒┬ ▌└█┬▄ ▒▀▌┌▌▄
 LOW_PRT EQU #BE
-;лкюдьхи аюир юдпеяю SMUC IDE
+;▄▀─└≤┬┴ │─┴▓ ─└░┘▒─ SMUC IDE
 SMUCSYS EQU #FFBA
-;яхярелмши онпр SMUC
+;▒┬▒▓┘▄█⌡┴ ▐▌░▓ SMUC
 SMUCVER EQU #5FBA
-;онпр бепяхх SMUC
+;▐▌░▓ ┌┘░▒┬┬ SMUC
 
-;мю бшунде:
-;H-дкъ MASTER 0-HDD, 1-CDROM, #FF-NONE
-;L-дкъ SLAVE  0-HDD, 1-CDROM, #FF-NONE
+;█─ ┌⌡∙▌└┘:
+;H-└▀÷ MASTER 0-HDD, 1-CDROM, #FF-NONE
+;L-└▀÷ SLAVE  0-HDD, 1-CDROM, #FF-NONE
 HDSINIT PUSH HL:EX DE,HL:LD HL,#3FF0
         LD BC,6:CALL LDIRRET:POP HL
         LD B,6,DE,CPINOUT
@@ -126,8 +126,8 @@ CPINOUT OUT (C),A:RET:IN A,(C):RET
 SINPRT  PUSH HL:LD HL,#3FF3:EX (SP),HL
         JP #3D2F
 
-;HL-юдпея астепю яейрнпю хдемрхтхйюжхх
-;A=E0-дкъ MASTER, A=F0-дкъ SLAVE
+;HL-─└░┘▒ │⌠■┘░─ ▒┘┼▓▌░─ ┬└┘█▓┬■┬┼─√┬┬
+;A=E0-└▀÷ MASTER, A=F0-└▀÷ SLAVE
 IDSDEV  LD BC,(PS1F6*#0100)+LOW_PRT
         CALL SOUTPRT:LD B,PS1F7,D,26
 IDSDEV2 EI:HALT:DI:DEC D:JR Z,NOSDEV
