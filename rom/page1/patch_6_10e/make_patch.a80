@@ -2,7 +2,7 @@
 		DEVICE ZXSPECTRUM48
 
 		ORG #0000
-		incbin "../DOS6_10E.ROM"		
+		incbin "../dos6_10e.rom"
 
 		include "patch.a80"
 	

@@ -9,3 +9,6 @@
 		RET NZ
 		DEC HL
 		JP #235
+		
+		ORG #3D39
+		DS 2
