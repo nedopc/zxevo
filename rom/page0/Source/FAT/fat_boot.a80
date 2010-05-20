@@ -1,257 +1,279 @@
 
 ;‚›Ž “‘’Ž‰‘’‚€ „‹Ÿ ‡€ƒ“‡Šˆ
-FATBOOT	LD HL,FLAGS
-	SET 3,(HL)
-	CALL COM_DEV
-	DB Devfind	;‘Š€ˆŽ‚€ˆ… “‘’Ž‰‘’‚
-	JP C,_STUPID
-	EXA
-	EXX
-	LD BC,mMAIN
-	LD DE,mBOOT
-	LD A,(BC)
-	INC A
-	INC BC
-	LD (DE),A	;……Œ…‘’ˆ‹ˆ X+1
-	INC DE
-	LD A,(BC)
-	INC A
-	INC BC
-	LD (DE),A	;……Œ…‘’ˆ‹ˆ Y+1
-	INC DE
-	EX DE,HL
-	INC HL		;Ž“‘’ˆ‹ˆ ŽŠ€ ‚›‘Ž’“, Ž‹Ž†ˆŒ Ž‡†…
-	LD (HL),#14	;Ž‹Ž†ˆ‹ˆ ˜ˆˆ“ ŽŠ€
-	INC HL
-	LD (HL),#0F	;Ž‹Ž†ˆ‹ˆ –‚…’ ŽŠ€
-	INC HL
-	EX DE,HL
-	EXX
-	EXA
-	LD B,E		;‚ "B" ŠŽ‹ˆ—…‘’‚Ž €‰„…›• €‡„…‹Ž‚
-	LD C,0
-	LD A,E
-	PUSH AF
-	ADD A,2
-	LD (mBOOT+2),A	;Ž‹Ž†ˆ‹ˆ ‚›‘Ž’“ ŽŠ€
-	LD DE,6
-WFATC1	LD A,(HL)	;‚‡Ÿ‹ˆ ’ˆ €‡„…‹€
-	INC HL
-	LD C,(HL)	;MASTER ˆ‹ˆ SLAVE
-	INC HL
-	ADD A,C
-	ADD A,C
-	EXX
-	SUB 4		;-4 ˆŽ „ˆ‘ŠŽ‚Ž„› … “—ˆ’›‚€ž’‘Ÿ
-	ADD A,A
-	ADD A,A
-	ADD A,A
-	ADD A,A		;“ŒŽ†ˆ‹ˆ € #10
-	LD HL,TXT4MENU_DEVICE
-	LD C,A
-	LD B,0
-	ADD HL,BC	;Ž‹“—ˆ‹ˆ €„…‘ Ž’Š“„€ ’…Š‘’ ‚‡Ÿ’œ
-	LD BC,#10	;„‹ˆ€ ……Ž‘€ 16 €‰’
-	EXX
-	LD A,L
-	RRCA
-	RRCA
-	RRCA
-	AND #1F
-	ADD A,#45	;“Š‚€ €‰„…ŽƒŽ “‘’Ž‰‘’‚€
-	EXX
-	LD (DE),A	;Ž‹Ž†ˆ‹ˆ “Š‚“ €‰„…ŽƒŽ “‘’Ž‰‘’‚€
-	INC DE
-	LDIR		;……’€™ˆ‹ˆ Ž‹Ž… ˆŒŸ “‘’Ž‰‘’‚€
-;	EXX
-;	LD A,(HL)	;‚‡Ÿ‹ˆ ’ˆ €‡„…‹€
-;	EXX
-;	LD C,A
-;	ADD A,A
-;	ADD A,A
-;	ADD A,C		
-;	LD C,A
-;	LD B,0
-;	LD HL,TXT4MENU_TYPE
-;	ADD HL,BC	;Ž‹“—ˆ‹ˆ €„…‘ ’…Š‘’ ‚‡Ÿ’œ
-;	LD C,5
-;	LDIR		;……Ž‘ 5 €‰’
-	EXX
-	ADD HL,DE
-	DJNZ WFATC1	;€‡„…‹› ŠŽ—ˆ‹ˆ‘œ
-	EXX
-	LD A,#FF
-	LD (DE),A	;ŠŽ…– ’…Š‘’€ ‚ Œ…ž
-	INC DE
-	LD (fBOOT),DE
-	EX DE,HL
-	LD (HL),LOW (5*#20+#0C-wide+#5800)
-	INC HL
-	LD (HL),HIGH (5*#20+#0C-wide+#5800)
-	INC HL
-	LD (HL),#15
-	INC HL
-	POP AF
-	LD (HL),A
-	INC HL
-	LD (HL),#1F
-	INC HL
-	LD (ADR_SEL),HL
-	INC HL
-	LD B,A
-1	LD (HL),LOW SEL_FAT
-	INC HL
-	LD (HL),HIGH SEL_FAT
-	INC HL
-	DJNZ 1B
-	LD (HL),LOW RESTART
-	INC HL
-	LD (HL),HIGH RESTART
-	LD HL,#2758
-	EXX
-	LD A,(gBASICS)
-	LD (aBOfiles),A
-	LD IX,mBOOT
-	CALL DRAWWIN
-	LD IX,0
-fBOOT	EQU $-2
-	JP _NKLILKA2
+FATBOOT		LD HL,FLAGS
+		SET 3,(HL)
+		CALL COM_DEV
+		DB Devfind			;‘Š€ˆŽ‚€ˆ… “‘’Ž‰‘’‚
+		JP C,_STUPID
+		EXA
+		EXX
+		LD BC,mMAIN
+		LD DE,mBOOT
+		LD A,(BC)
+		INC A
+		INC BC
+		LD (DE),A			;……Œ…‘’ˆ‹ˆ X+1
+		INC DE
+		LD A,(BC)
+		INC A
+		INC BC
+		LD (DE),A			;……Œ…‘’ˆ‹ˆ Y+1
+		INC DE
+		EX DE,HL
+		INC HL				;Ž“‘’ˆ‹ˆ ŽŠ€ ‚›‘Ž’“, Ž‹Ž†ˆŒ Ž‡†…
+		LD (HL),#14			;Ž‹Ž†ˆ‹ˆ ˜ˆˆ“ ŽŠ€
+		INC HL
+		LD (HL),#0F			;Ž‹Ž†ˆ‹ˆ –‚…’ ŽŠ€
+		INC HL
+		EX DE,HL
+		EXX
+		EXA
+		LD B,E				;‚ "B" ŠŽ‹ˆ—…‘’‚Ž €‰„…›• €‡„…‹Ž‚
+		LD C,0
+		LD A,E
+		PUSH AF
+		ADD A,2
+		LD (mBOOT+2),A			;Ž‹Ž†ˆ‹ˆ ‚›‘Ž’“ ŽŠ€
+		LD DE,6
+WFATC1		LD A,(HL)			;‚‡Ÿ‹ˆ ’ˆ €‡„…‹€
+		INC HL
+		LD C,(HL)			;MASTER ˆ‹ˆ SLAVE
+		INC HL
+		ADD A,C
+		ADD A,C
+		EXX
+		SUB 4				;-4 ˆŽ „ˆ‘ŠŽ‚Ž„› … “—ˆ’›‚€ž’‘Ÿ
+		ADD A,A
+		ADD A,A
+		ADD A,A
+		ADD A,A				;“ŒŽ†ˆ‹ˆ € #10
+		LD HL,TXT4MENU_DEVICE
+		LD C,A
+		LD B,0
+		ADD HL,BC			;Ž‹“—ˆ‹ˆ €„…‘ Ž’Š“„€ ’…Š‘’ ‚‡Ÿ’œ
+		LD BC,#10			;„‹ˆ€ ……Ž‘€ 16 €‰’
+		EXX
+		LD A,L
+		RRCA
+		RRCA
+		RRCA
+		AND #1F
+		ADD A,#45			;“Š‚€ €‰„…ŽƒŽ “‘’Ž‰‘’‚€
+		EXX
+		LD (DE),A			;Ž‹Ž†ˆ‹ˆ “Š‚“ €‰„…ŽƒŽ “‘’Ž‰‘’‚€
+		INC DE
+		LDIR				;……’€™ˆ‹ˆ Ž‹Ž… ˆŒŸ “‘’Ž‰‘’‚€
+;		EXX
+;		LD A,(HL)			;‚‡Ÿ‹ˆ ’ˆ €‡„…‹€
+;		EXX
+;		LD C,A
+;		ADD A,A
+;		ADD A,A
+;		ADD A,C		
+;		LD C,A
+;		LD B,0
+;		LD HL,TXT4MENU_TYPE
+;		ADD HL,BC			;Ž‹“—ˆ‹ˆ €„…‘ ’…Š‘’ ‚‡Ÿ’œ
+;		LD C,5
+;		LDIR				;……Ž‘ 5 €‰’
+		EXX
+		ADD HL,DE
+		DJNZ WFATC1			;€‡„…‹› ŠŽ—ˆ‹ˆ‘œ
+		EXX
+		LD A,#FF
+		LD (DE),A			;ŠŽ…– ’…Š‘’€ ‚ Œ…ž
+		INC DE
+		LD (fBOOT),DE
+		EX DE,HL
+		LD (HL),LOW (5*#20+#0C-wide+#5800)
+		INC HL
+		LD (HL),HIGH (5*#20+#0C-wide+#5800)
+		INC HL
+		LD (HL),#15
+		INC HL
+		POP AF
+		LD (HL),A
+		INC HL
+		LD (HL),#1F
+		INC HL
+		LD (ADR_SEL),HL
+		INC HL
+		LD B,A
+1		LD (HL),LOW SEL_FAT
+		INC HL
+		LD (HL),HIGH SEL_FAT
+		INC HL
+		DJNZ 1B
+		LD (HL),LOW RESTART
+		INC HL
+		LD (HL),HIGH RESTART
+		LD HL,#2758
+		EXX
+		LD A,(gBASICS)
+		LD (aBOfiles),A
+		LD IX,mBOOT
+		CALL DRAWWIN
+		LD IX,0
+fBOOT		EQU $-2
+		JP _NKLILKA2
 
-TXT4MENU_DEVICE;’…Š‘’ „‹Ÿ Ž’Ž€†…ˆŸ €‰„…›• €‡„…‹Ž‚, Ž 16 €‰’ ‘’ŽŠ€
-	   ;1234567890123456
-	DC ":ZContr  SDCard "	;4
-	DC ":NeoGS   SDCard "	;5
-	DC ":HDDNemo MASTER "	;6-MASTER
-	DC ":HDDSmuc MASTER "	;7-SLAVE
-	DC ":HDDNemo  SLAVE "	;6-MASTER
-	DC ":HDDSmuc  SLAVE "	;7-SLAVE
-	
-TXT4MENU_TYPE;’ˆ €‡„…‹€
-	DC "FAT12"
-	DC "FAT16"
-	DC "FAT32"
+;’…Š‘’ „‹Ÿ Ž’Ž€†…ˆŸ €‰„…›• €‡„…‹Ž‚, Ž 16 €‰’ ‘’ŽŠ€
+TXT4MENU_DEVICE	   ;1234567890123456
+		DC ":ZContr  SDCard "	;4
+		DC ":NeoGS   SDCard "	;5
+		DC ":HDDNemo MASTER "	;6-MASTER
+		DC ":HDDSmuc MASTER "	;7-SLAVE
+		DC ":HDDNemo  SLAVE "	;6-MASTER
+		DC ":HDDSmuc  SLAVE "	;7-SLAVE
+
+;’ˆ €‡„…‹€
+TXT4MENU_TYPE	DC "FAT12"
+		DC "FAT16"
+		DC "FAT32"
 
 ;……Š‹ž—…ˆ… € “‘’Ž‰‘’‚€ ˆ ‚›‚Ž„ €‰„…ŽƒŽ € …Œ
-SEL_FAT	LD HL,0
-ADR_SEL EQU $-2
-	LD A,(HL)	;Ž‹“—ˆ‹ˆ ŽŒ… “Š’€ Œ…ž
-	DEC A		;-1=ŽŒ… “‘’Ž‰‘’‚€
-	CALL COM_DEV
-	DB Set_vol	;‚›€‹ˆ “‘’Ž‰‘’‚Ž Ž ŽŒ…“
-	CALL COM_FAT
-	DB Wc_fat	;ˆˆ–ˆ€‹ˆ‡€–ˆŸ ”€’ „€‰‚…€ „‹Ÿ ‚›€ŽƒŽ “‘’Ž‰‘’‚€
-	LD DE,ADR_CAT
-	CALL COM_FAT
-	DB Fhobeta	;Žˆ‘Š •Ž…’€ ”€‰‹Ž‚ "$C " C Ž‚…Š€Œˆ
-	AND A
-	JP Z,_STUPID
-	LD (gBASICS),A
-	LD A,#FF
-	LD (DE),A
-	LD HL,mBOOTWAS
-	LD DE,mBOOT
-	LD BC,mBOOTln
-	LDIR
-	LD HL,ADR_CAT
-	XOR A
-	LD (BOOTPG),A
-	LD IX,mBOOT		;DE=buf98_2
-	CALL LDIR98FF
-	LD A,(gBASICS)
-	LD (aBOfiles),A
-	ADD A,2
-	LD (IX+2),A
-	CALL DRAWWIN
-	LD IX,aBOOT
-	JP _NKLILKA2
+SEL_FAT		LD HL,0
+ADR_SEL		EQU $-2
+		LD A,(HL)			;Ž‹“—ˆ‹ˆ ŽŒ… “Š’€ Œ…ž
+		DEC A				;-1=ŽŒ… “‘’Ž‰‘’‚€
+		CALL COM_DEV
+		DB Set_vol			;‚›€‹ˆ “‘’Ž‰‘’‚Ž Ž ŽŒ…“
+		CALL COM_FAT
+		DB Wc_fat			;ˆˆ–ˆ€‹ˆ‡€–ˆŸ ”€’ „€‰‚…€ „‹Ÿ ‚›€ŽƒŽ “‘’Ž‰‘’‚€
+		LD DE,ADR_CAT
+		CALL COM_FAT
+		DB Fhobeta			;Žˆ‘Š •Ž…’€ ”€‰‹Ž‚ "$C " C Ž‚…Š€Œˆ
+		AND A
+		JP Z,_STUPID
+		LD (gBASICS),A
+		LD A,#FF
+		LD (DE),A
+		LD HL,mBOOTWAS
+		LD DE,mBOOT
+		LD BC,mBOOTln
+		LDIR
+		LD HL,ADR_CAT
+		XOR A
+		LD (BOOTPG),A
+		LD IX,mBOOT			;DE=buf98_2
+		CALL LDIR98FF
+		LD A,(gBASICS)
+		LD (aBOfiles),A
+		ADD A,2
+		LD (IX+2),A
+		CALL DRAWWIN
+		LD IX,aBOOT
+		JP _NKLILKA2
 
 ;‡€“‘Š ‚›€ŽƒŽ ”€‰‹€
-RUN_HOB	DI
-	LD A,(POS_CUR)	;‚‡Ÿ‹ˆ ŽŒ… “Š’€ Œ…ž
-	DEC A		;‘—…’ … ‘ 0, -1
-	LD L,A
-	LD H,0
-	ADD HL,HL
-	ADD HL,HL
-	LD DE,SKLAD
-	ADD HL,DE	;‚›—ˆ‘‹ˆ‹ˆ Ž’Š“„€ ‚‡Ÿ’œ ŽŒ… Š‹€‘’…€ ”€‰‹€
-	LD DE,AFILCLS
-	LD BC,4
-	LDIR		;………‘‹ˆ ‚ ……Œ…›… ”€’ „€‰‚…€
-	CALL PAGE_0
-	CALL COM_DEV
-	DB Kol_vol
-	LD A,D		;‚‡Ÿ‹ˆ ŽŒ… ’…Š“™…ƒŽ “‘’Ž‰‘’‚€
-	ADD A,A
-	ADD A,A
-	ADD A,A
-	LD C,A
-	LD B,0
-	ADD HL,BC
-	LD A,(HL)	;‚‡Ÿ‹ˆ ’ˆ €‡„…‹€
-	SUB 4		;Ž“‘Š€…Œ „ˆ‘ŠŽ‚Ž„›
-	EXA		;ŽŒ… ’…Š“™…ƒŽ “‘’Ž‰‘’‚€ ‚ "A"
-	INC HL
-	LD A,(HL)	;‚‡Ÿ‹ˆ Œ…‘’ŽŽ‹Ž†…ˆ… Ž‘ˆ’…‹Ÿ (MASTER/SLAVE)
-	EXA
-	LD HL,#5800
-	LD DE,#5801
-	LD BC,#02FF
-	LD (HL),0
-	LDIR		;‡€—…ˆ‹ˆ Š€ „‹Ÿ Œ€‘ŠˆŽ‚Šˆ ‡€“‘Š€‹Šˆ
-	LD HL,ERORDRV
-	LD DE,#4200
-	LD BC,#100
-	LDIR		;……Ž‘ ……Œ…›• ”€’€ „‹Ÿ ’…Š“™…ƒŽ “‘’Ž‰‘’‚€
-	PUSH DE		;‘ž„€ ……Ž‘ ŠŽ„€ ˆ ‡€“‘Š
-	LD HL,MICROBOOT
-	LD BC,END_MICROBOOT-MICROBOOT
-	LDIR		;………‘‹ˆ ‡€“‘Š€‹Š“
-	RET		;‡€“‘Š ‡€“‘Š€‹Šˆ :)
+RUN_HOB		DI
+		LD A,(POS_CUR)			;‚‡Ÿ‹ˆ ŽŒ… “Š’€ Œ…ž
+		DEC A				;‘—…’ … ‘ 0, -1
+		LD L,A
+		LD H,0
+		ADD HL,HL
+		ADD HL,HL
+		LD DE,SKLAD
+		ADD HL,DE			;‚›—ˆ‘‹ˆ‹ˆ Ž’Š“„€ ‚‡Ÿ’œ ŽŒ… Š‹€‘’…€ ”€‰‹€
+		LD DE,AFILCLS
+		LD BC,4
+		LDIR				;………‘‹ˆ ‚ ……Œ…›… ”€’ „€‰‚…€
+		CALL PAGE_0
+		CALL COM_DEV
+		DB Kol_vol
+		LD A,D				;‚‡Ÿ‹ˆ ŽŒ… ’…Š“™…ƒŽ “‘’Ž‰‘’‚€
+		ADD A,A
+		ADD A,A
+		ADD A,A
+		LD C,A
+		LD B,0
+		ADD HL,BC
+		LD A,(HL)			;‚‡Ÿ‹ˆ ’ˆ €‡„…‹€
+		SUB 4				;Ž“‘Š€…Œ „ˆ‘ŠŽ‚Ž„›
+		EXA				;ŽŒ… ’…Š“™…ƒŽ “‘’Ž‰‘’‚€ ‚ "A"
+		INC HL
+		LD A,(HL)			;‚‡Ÿ‹ˆ Œ…‘’ŽŽ‹Ž†…ˆ… Ž‘ˆ’…‹Ÿ (MASTER/SLAVE)
+		EXA
+		LD HL,#5800
+		LD DE,#5801
+		LD BC,#02FF
+		LD (HL),0
+		LDIR				;‡€—…ˆ‹ˆ Š€ „‹Ÿ Œ€‘ŠˆŽ‚Šˆ ‡€“‘Š€‹Šˆ
+		LD HL,ERORDRV
+		LD DE,#4200
+		LD BC,#100
+		LDIR				;……Ž‘ ……Œ…›• ”€’€ „‹Ÿ ’…Š“™…ƒŽ “‘’Ž‰‘’‚€
+		PUSH DE				;‘ž„€ ……Ž‘ ŠŽ„€ ˆ ‡€“‘Š
+		LD HL,MICROBOOT
+		LD BC,END_MICROBOOT-MICROBOOT
+		LDIR				;………‘‹ˆ ‡€“‘Š€‹Š“
+		RET				;‡€“‘Š ‡€“‘Š€‹Šˆ :)
 
 ;ƒ“‡ˆ‹Š€ MOD ‚ €ŒŸ’œ NEOGS
-LOADFIL LD IY,(BYTSSEC)			;LY=ŠŽ‹-‚Ž ‘…Š’ŽŽ‚ ‚ Š‹€‘’……
-        LD A,LY
-        CP #20
-        JR C,LDMF5
+LOADFIL		LD IY,(BYTSSEC)			;LY=ŠŽ‹-‚Ž ‘…Š’ŽŽ‚ ‚ Š‹€‘’……
+		LD A,LY
+		CP #20
+		JR C,LDMF5
         
-LD_F5   LD DE,(AFILCLS),BC,(AFILCLS+2)
-        CALL REALSEC
-        LD A,HY
-        AND A
-        JR NZ,LD_F9
-        LD A,LY:AND #E0
-        RLCA:RLCA:RLCA
-	LD HY,A
-LD_F9   LD A,#20
-        LD HL,#C000
-        CALL TO_DRV
-        DB Rdmulti
-        AND A:JP NZ,ERR_DRV
-;        LD HL,#20:ADD HL,DE:EX DE,HL
-;        LD HL,0:ADC HL,BC:LD BC,HL
-;        DEC HY:JR NZ,LD_F9
-	DEC HY
-        LD DE,(AFILCLS),BC,(AFILCLS+2)
-        CALL RDFATZP,LST_CLS
-        LD (AFILCLS+2),BC
-        LD (AFILCLS),DE
-        RET
-;        LD A,H
-;        AND A
-;        JR NZ,LD_F5
-;        RET
+LD_F5		LD DE,(AFILCLS)
+		LD BC,(AFILCLS+2)
+		CALL REALSEC
+		LD A,HY
+		AND A
+		JR NZ,LD_F9
+		LD A,LY
+		AND #E0
+		RLCA
+		RLCA
+		RLCA
+		LD HY,A
+LD_F9		LD A,#20
+		LD HL,#C000
+		CALL TO_DRV
+		DB Rdmulti
+		AND A
+		JP NZ,ERR_DRV
+;		LD HL,#20
+;		ADD HL,DE
+;		EX DE,HL
+;		JR NC,$+3
+;		INC BC
+;		DEC HY
+;		JR NZ,LD_F9
+		DEC HY
+		LD DE,(AFILCLS)
+		LD BC,(AFILCLS+2)
+		CALL RDFATZP
+		CALL LST_CLS
+		LD (AFILCLS+2),BC
+		LD (AFILCLS),DE
+		RET
 
-LDMF5   LD HL,#C000
-LDMF2   LD DE,(AFILCLS),BC,(AFILCLS+2)
-        PUSH HL:CALL REALSEC:POP HL
-LDMF3   LD A,LY
-	CALL TO_DRV
-	DB Rdmulti
-        AND A:JP NZ,ERR_DRV:PUSH HL
-        LD BC,(AFILCLS+2),DE,(AFILCLS)
-        CALL RDFATZP,LST_CLS:POP HL
-        LD (AFILCLS+2),BC
-        LD (AFILCLS),DE,A,H
-        AND A:JR NZ,LDMF2
-        RET
+;		LD A,H
+;		AND A
+;		JR NZ,LD_F5
+;		RET
+
+LDMF5		LD HL,#C000
+LDMF2		LD DE,(AFILCLS)
+		LD BC,(AFILCLS+2)
+		PUSH HL
+		CALL REALSEC
+		POP HL
+LDMF3		LD A,LY
+		CALL TO_DRV
+		DB Rdmulti
+		AND A
+		JP NZ,ERR_DRV
+		PUSH HL
+		LD BC,(AFILCLS+2)
+		LD DE,(AFILCLS)
+		CALL RDFATZP
+		CALL LST_CLS
+		POP HL
+		LD (AFILCLS+2),BC
+		LD (AFILCLS),DE
+		LD A,H
+		AND A
+		JR NZ,LDMF2
+		RET

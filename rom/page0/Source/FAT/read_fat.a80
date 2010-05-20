@@ -1,73 +1,94 @@
 
 ;LAST UPDATE: 12.02.2010 savelij
 
-SKLAD	EQU #C000	;юдпея йсдю яйкюдхпнбюрэ мнлепю мюидеммнцн
+SKLAD		EQU #C000	;юдпея йсдю яйкюдхпнбюрэ мнлепю мюидеммнцн
 
-Wc_fat  EQU #00
-Getfzap EQU #01
-Ent_dir EQU #02
-Openfil EQU #03
-Readfil EQU #04
-Getlong EQU #05
-Positf  EQU #06
-Prvlegz EQU #07
-Nxtlegz EQU #08
-Fhobeta	EQU #09
+Wc_fat		EQU #00
+Getfzap		EQU #01
+Ent_dir		EQU #02
+Openfil		EQU #03
+Readfil		EQU #04
+Getlong		EQU #05
+Positf		EQU #06
+Prvlegz		EQU #07
+Nxtlegz		EQU #08
+Fhobeta		EQU #09
 ;Findfil	EQU #0A
 
 ;наыюъ рнвйю бундю дкъ пюанрш я FAT
-        EXA:EX (SP),HL:LD A,(HL):INC HL
-        EX (SP),HL:ADD A,A:PUSH IX,IY
-        LD (ERORDRV),SP:PUSH HL
-        LD HL,EXITDRV:EX (SP),HL:PUSH HL
-        LD HL,TABLFAT:ADD A,L:LD L,A,A,H
-        ADC A,0:LD H,A,A,(HL):INC HL
-        LD H,(HL),L,A:EXA:EX (SP),HL:RET
+		EXA
+		EX (SP),HL
+		LD A,(HL)
+		INC HL
+		EX (SP),HL
+		ADD A,A
+		PUSH IX
+		PUSH IY
+		LD (ERORDRV),SP
+		PUSH HL
+		LD HL,EXITDRV
+		EX (SP),HL
+		PUSH HL
+		LD HL,TABLFAT
+		ADD A,L
+		LD L,A
+		LD A,H
+		ADC A,0
+		LD H,A
+		LD A,(HL)
+		INC HL
+		LD H,(HL)
+		LD L,A
+		EXA
+		EX (SP),HL
+		RET
 
-ERR_DRV LD SP,(ERORDRV)
-EXITDRV POP IY,IX:RET
+ERR_DRV		LD SP,(ERORDRV)
+EXITDRV		POP IY
+		POP IX
+		RET
 
-TABLFAT DW WC_FAT	;00 INIT FAT&SD/HDD
-        DW GETFZAP	;01 HL=FILE OPISATEL
-        DW ENT_DIR	;02 ENTER DIR
-        DW OPENFIL	;03 OPENFILE
-        DW READFIL	;04 READ FILE
-        DW GETLONG	;05 GET LONGNAME
-        DW POSITF	;06 WORK FOR TEK POSIT
-        DW PRVLEGZ	;07 PREV LEGAL OPISAT
-        DW NXTLEGZ	;08 NEXT LEGAL OPISAT
-	DW FHOBETA	;09 онхяй тюикнб он пюяьхпемхч
-;	DW FINDFIL	;0A онхяй тюикю он мнлепс
+TABLFAT		DW WC_FAT		;00 INIT FAT&SD/HDD
+		DW GETFZAP		;01 HL=FILE OPISATEL
+		DW ENT_DIR		;02 ENTER DIR
+		DW OPENFIL		;03 OPENFILE
+		DW READFIL		;04 READ FILE
+		DW GETLONG		;05 GET LONGNAME
+		DW POSITF		;06 WORK FOR TEK POSIT
+		DW PRVLEGZ		;07 PREV LEGAL OPISAT
+		DW NXTLEGZ		;08 NEXT LEGAL OPISAT
+		DW FHOBETA		;09 онхяй тюикнб он пюяьхпемхч
+;		DW FINDFIL		;0A онхяй тюикю он мнлепс
 
-BUF_512 EQU DRV_VAR		;#200 астеп яейрнпю
-TFILCLS EQU BUF_512+#0200	;#400 рюакхжю йкюярепнб тюикю
-TDIRCLS EQU TFILCLS+#0400	;#400 рюакхжю йкюярепнб DIR
-DIR_CEP EQU TDIRCLS+#0400	;#100 жеонвйю йкюярепнб онддхпейрнпхи
-ERORDRV EQU DIR_CEP+#0100	;2 бнгбпюр я ньхайни б A
-CAL_FAT EQU ERORDRV+2		;1 йюкхап FAT
-MANYFAT EQU CAL_FAT+1		;1 йнкхвеярбн FAT-рюакхж
-BYTSSEC EQU MANYFAT+1		;1 йнкхвеярбн яейрнпнб б йкюярепе
-ROOTCLS EQU BYTSSEC+1		;4 яейрнп мювюкю ROOT дхпейрнпхх
-ROOTZAP EQU ROOTCLS+4		;2 йнк-бн гюохяеи б ROOT дхпейрнпхх
-SEC_FAT EQU ROOTZAP+2		;4 йнкхвеярбн яейрнпнб ндмни тюр
-RSVDSEC EQU SEC_FAT+4		;2 пюглеп пегепбмни накюярх
-STARTRZ EQU RSVDSEC+2		;4 мювюкн дхяйю/пюгдекю
-FRSTDAT EQU STARTRZ+4		;4 юдпея оепбнцн яейрнпю дюммшу нр BPB
-SEC_DSC EQU FRSTDAT+4		;4 йнкхвеярбн яейрнпнб мю дхяйе/пюгдеке
-CLS_DSC EQU SEC_DSC+4		;4 йнкхвеярбн йкюярепнб мю дхяйе/пюгдеке
-FATSTR  EQU CLS_DSC+4		;4 мювюкн оепбни FAT рюакхжш
-FILE_SZ EQU FATSTR+4		;4 пюглеп тюикю б аюирюу
-KOLWCLS EQU FILE_SZ+4		;4 йнкхвеярбн ябнандмшу йкюярепнб
-LST0ZAP EQU KOLWCLS+4		;4 оепбши ябнандмши йкюяреп
-LSTLOAD EQU LST0ZAP+4		;4 мнлеп яейрнпю гюцпсфеммнцн б астеп
-TEK_DIR EQU LSTLOAD+4		;4 йкюяреп рейсыеи DIR
-TEK_ZAP EQU TEK_DIR+4		;2 рейсыюъ гюохяэ б DIR
-SAVEZAP EQU TEK_ZAP+2		;2 янупюмеммюъ рейсыюъ онгхжхъ
-TEK_LVL EQU SAVEZAP+2		;1 рейсыхи спнбемэ йюрюкнцю
-TEK_LEV EQU TEK_LVL+1		;1 цксахмю мюунфдемхъ б дхпейрнпхъу
-FREECLS EQU TEK_LEV+1		;8 янупюмемше оепелеммше дкъ нрйюрю
-KOLFIND	EQU FREECLS+8		;1 йнкхвеярбн мюидеммшу он люяйе тюикнб
-AFILCLS	EQU KOLFIND+1		;4 мнлеп рейсыецн йкюярепю
+BUF_512		EQU DRV_VAR		;#200 астеп яейрнпю
+TFILCLS		EQU BUF_512+#0200	;#400 рюакхжю йкюярепнб тюикю
+TDIRCLS		EQU TFILCLS+#0400	;#400 рюакхжю йкюярепнб DIR
+DIR_CEP		EQU TDIRCLS+#0400	;#100 жеонвйю йкюярепнб онддхпейрнпхи
+ERORDRV		EQU DIR_CEP+#0100	;2 бнгбпюр я ньхайни б A
+CAL_FAT		EQU ERORDRV+2		;1 йюкхап FAT
+MANYFAT		EQU CAL_FAT+1		;1 йнкхвеярбн FAT-рюакхж
+BYTSSEC		EQU MANYFAT+1		;1 йнкхвеярбн яейрнпнб б йкюярепе
+ROOTCLS		EQU BYTSSEC+1		;4 яейрнп мювюкю ROOT дхпейрнпхх
+ROOTZAP		EQU ROOTCLS+4		;2 йнк-бн гюохяеи б ROOT дхпейрнпхх
+SEC_FAT		EQU ROOTZAP+2		;4 йнкхвеярбн яейрнпнб ндмни тюр
+RSVDSEC		EQU SEC_FAT+4		;2 пюглеп пегепбмни накюярх
+STARTRZ		EQU RSVDSEC+2		;4 мювюкн дхяйю/пюгдекю
+FRSTDAT		EQU STARTRZ+4		;4 юдпея оепбнцн яейрнпю дюммшу нр BPB
+SEC_DSC		EQU FRSTDAT+4		;4 йнкхвеярбн яейрнпнб мю дхяйе/пюгдеке
+CLS_DSC		EQU SEC_DSC+4		;4 йнкхвеярбн йкюярепнб мю дхяйе/пюгдеке
+FATSTR		EQU CLS_DSC+4		;4 мювюкн оепбни FAT рюакхжш
+FILE_SZ		EQU FATSTR+4		;4 пюглеп тюикю б аюирюу
+KOLWCLS		EQU FILE_SZ+4		;4 йнкхвеярбн ябнандмшу йкюярепнб
+LST0ZAP		EQU KOLWCLS+4		;4 оепбши ябнандмши йкюяреп
+LSTLOAD		EQU LST0ZAP+4		;4 мнлеп яейрнпю гюцпсфеммнцн б астеп
+TEK_DIR		EQU LSTLOAD+4		;4 йкюяреп рейсыеи DIR
+TEK_ZAP		EQU TEK_DIR+4		;2 рейсыюъ гюохяэ б DIR
+SAVEZAP		EQU TEK_ZAP+2		;2 янупюмеммюъ рейсыюъ онгхжхъ
+TEK_LVL		EQU SAVEZAP+2		;1 рейсыхи спнбемэ йюрюкнцю
+TEK_LEV		EQU TEK_LVL+1		;1 цксахмю мюунфдемхъ б дхпейрнпхъу
+FREECLS		EQU TEK_LEV+1		;8 янупюмемше оепелеммше дкъ нрйюрю
+KOLFIND		EQU FREECLS+8		;1 йнкхвеярбн мюидеммшу он люяйе тюикнб
+AFILCLS		EQU KOLFIND+1		;4 мнлеп рейсыецн йкюярепю
 
 ;времхе/гюохяэ я тюик я рнвмнярэч
 ;дн яейрнпю (512 аюир)

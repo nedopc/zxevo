@@ -1,0 +1,91 @@
+
+RSTRAM		LD DE,#1002
+RSRAMp0		LD BC,#0077
+		OUT (C),E
+		LD HL,TRSTRAM
+RSRAMp1		LD BC,#7FFD
+		OUT (C),D
+		LD BC,#0FF7
+RSRAMp2		LD A,(HL)
+		OUT (C),A
+		INC HL
+		LD A,B
+		ADD A,#40
+		LD B,A
+		JR NC,RSRAMp2
+		LD A,D
+		XOR #10
+		LD D,A
+		JR Z,RSRAMp1
+		LD A,E
+		XOR 4
+		LD E,A
+		CP 2
+		JR NZ,RSRAMp0			;зачем 2 раза?
+		LD A,#AB			;ZX scr, turbo
+		LD BC,#4177			;выкл.PAL
+		OUT (C),A			;вкл RAM (PEN)
+;ФАПЧ
+		LD A,#06
+		LD BC,#0177
+		OUT (C),A
+		LD HL,TFAPC
+		LD DE,#0610
+		LD C,#77
+		LD A,#08
+		OUT (#FF),A
+FAPC0		LD A,(HL)
+		INC HL
+		OUT (#FF),A
+		LD B,#41
+		OUT (C),D
+		OR #08
+		OUT (#FF),A
+		LD B,#01
+		OUT (C),D
+		DEC E
+		JR NZ,FAPC0
+		LD BC,#4177
+		LD A,#26		;#06 выключит INT
+		OUT (C),A
+		LD A,#FF
+		OUT (#FF),A
+;~ФАПЧ
+;палитра
+;		LD H,E
+;		LD L,E			;=0
+;		ADD HL,SP
+;		LD SP,ATMRSTSTK+2
+;		IM 1
+;		EI
+;		HALT			;там RET
+;ATMRSTSTKQ	LD SP,HL
+		LD HL,TRSTPAL		;+15
+		LD DE,#AB0F
+		LD BC,#0177
+		OUT (C),D		;вкл.PAL
+RSTPAL0		LD A,E
+		BIT 3,E
+		OUT (#FE),A
+		JR Z,$+4
+		OUT (#F6),A
+		LD A,(HL)
+		INC HL
+		OUT (#FF),A
+		DEC E
+		JP P,RSTPAL0
+		LD BC,#4177
+		OUT (C),D		;выкл.PAL
+		JR 1F
+;~палитра
+;		JP RSTGO
+
+TRSTRAM		DB #83,#7A,#7D,#FF,#00,#7A,#7D,#FF
+
+TFAPC		DB #F1,#E1,#D1,#C1,#C1,#B1,#A1,#91
+		DB #41,#21,#31,#11,#01,#01,#F1,#E1
+
+TRSTPAL		DB #00,#21,#42,#63,#90,#B1,#D2,#F3
+		DB #E0,#E1,#E2,#E3,#F0,#F1,#F2,#F3
+
+1
