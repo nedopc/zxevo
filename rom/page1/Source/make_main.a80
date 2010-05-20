@@ -6,5 +6,5 @@
 
 		include "main.a80"
 	
-		SAVEBIN "../neo_dos.rom",0,#4000
+		SAVEBIN "evo_dos.rom",0,#4000
 	

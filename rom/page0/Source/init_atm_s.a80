@@ -1,0 +1,116 @@
+
+		MACRO OUTI_PAGES
+		LD HL,PAGES
+		LD DE,#41		;была #40, стало #41 потомучто чтобы декремент в оути учесть
+2		LD BC,#40F7		;потомучто оути сначала декремент Б а потом в порт
+1		OUTI
+		LD A,B
+		ADD A,E
+		LD B,A
+		cp #40
+		JR NZ,1B		;патамучта чтоб правильно из цыкела выползало 
+		LD BC,#7FFD
+		LD A,D
+		XOR #10
+		LD D,A
+		OUT (C),A
+		JR NZ,2B
+		ENDM
+
+		LD BC,#77
+		LD A,2
+		OUT (C),A
+
+		OUTI_PAGES
+
+		LD BC,#77
+		LD A,6
+		OUT (C),A
+
+		OUTI_PAGES
+
+		LD A,#10
+		OUT (C),A
+		LD A,6
+		LD BC,#177
+		OUT (C),A
+		LD HL,FAPCH		;16 БАЙТ ДЛЯ ФАПЧ
+		LD DE,#610
+		LD C,#77
+		LD A,8
+		OUT (#FF),A
+1		LD A,(HL)
+		INC HL
+		OUT (#FF),A
+		LD B,#41
+		OUT (C),D
+		OR 8
+		OUT (#FF),A
+		LD B,1
+		OUT (C),D
+		DEC E
+		JR NZ,1B
+		LD BC,#4177
+		LD A,6
+		OUT (C),A
+		LD A,#FF
+		OUT (#FF),A
+		LD A,#A6
+		LD BC,#BD77
+		OUT (C),A
+		XOR A
+		AND #F8
+		LD HL,POLLITRA
+		LD C,#FF
+		LD D,8
+		EXX
+		LD C,#FE
+		EXX
+1		EXX
+		OUT (C),A
+		EXX
+		OUTI
+		INC A
+		DEC D
+		JR NZ,1B
+		EXX
+		LD C,#F6
+		EXX
+		XOR A
+		LD D,8
+2		EXX
+		OUT (C),A
+		EXX
+		OUTI
+		INC A
+		DEC D
+		JR NZ,2B
+		XOR A
+		LD BC,#ADFE
+		OUT (C),A
+
+		LD BC,#4177
+		LD A,#AB
+		OUT (C),A
+;		RET
+
+;		LD A,#7F
+;		LD BC,#3FF7
+;		OUT (C),A
+;		LD B,#7F
+;		OUT (C),A
+;		LD B,#BF
+;		OUT (C),A
+;		LD B,#FF
+;		OUT (C),A
+;		JP Start_Code+4
+;END_FRS
+
+;PAGES		DB #7F,#7B,#7D,#7C,#00,#7A,#7D,#60
+
+FAPCH		DB #F1,#E1,#D1,#C1,#C1,#B1,#A1,#91
+		DB #41,#21,#31,#11,#01,#01,#F1,#E1
+
+;16 байт стартовой палитры
+POLLITRA	DB #FF,#FE,#FD,#FC,#EF,#EE,#ED,#EC
+		DB #FF,#DE,#BD,#9C,#6F,#4E,#2D,#0C
