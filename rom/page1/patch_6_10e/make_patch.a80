@@ -6,5 +6,5 @@
 
 		include "patch.a80"
 	
-		SAVEBIN "../dos6_10e_patch.rom",0,#4000
+		SAVEBIN "../dos6_12e_patch.rom",0,#4000
 	

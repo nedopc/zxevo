@@ -138,24 +138,18 @@ HDDRD3		IN A,(C)
 		XOR A
 		RET
 
-READSEC		LD DE,PRT_RW
-		LD A,#40
-READSC1		LD C,D
-		INI
-		LD C,E
-		INI
-		LD C,D
-		INI
-		LD C,E
-		INI
-		LD C,D
-		INI
-		LD C,E
-		INI
-		LD C,D
-		INI
-		LD C,E
-		INI
+READSEC		LD A,#40
+		LD C,P_1F0
+READSC1		DUP 4
+		IN E,(C)
+		INC C
+		IN D,(C)
+		DEC C
+		LD (HL),E
+		INC HL
+		LD (HL),D
+		INC HL
+		EDUP
 		DEC A
 		JR NZ,READSC1
 		RET

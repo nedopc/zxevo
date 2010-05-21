@@ -9,7 +9,7 @@ rem полная сборка ПЗУ из всех кусков
 ..\..\..\tools\mhmt\mhmt -mlz main.rom main_pack.rom
 ..\..\..\tools\mhmt\mhmt -mlz cmosset.rom cmosset_pack.rom
 
-..\..\..\tools\sjasmplus\sjasmplus -isrc make_all_services.a80
+..\..\..\tools\sjasmplus\sjasmplus --lst=dump.log -isrc make_all_services.a80
 
 pause
 
