@@ -23,11 +23,11 @@
 
 		OUTI_PAGES
 
-		LD BC,#77
-		LD A,6
-		OUT (C),A
+;		LD BC,#77
+;		LD A,6
+;		OUT (C),A
 
-		OUTI_PAGES
+;		OUTI_PAGES
 
 		LD A,#10
 		OUT (C),A
@@ -36,7 +36,7 @@
 		OUT (C),A
 		LD HL,FAPCH		;16 €‰’ „‹ ”€—
 		LD DE,#610
-		LD C,#77
+;		LD C,#77
 		LD A,8
 		OUT (#FF),A
 1		LD A,(HL)
@@ -59,7 +59,7 @@
 		LD BC,#BD77
 		OUT (C),A
 		XOR A
-		AND #F8
+;		AND #F8
 		LD HL,POLLITRA
 		LD C,#FF
 		LD D,8
@@ -85,13 +85,14 @@
 		INC A
 		DEC D
 		JR NZ,2B
-		XOR A
+;		XOR A
 		LD BC,#ADFE
-		OUT (C),A
+		OUT (C),D
 
 		LD BC,#4177
 		LD A,#AB
 		OUT (C),A
+		JR 1F
 ;		RET
 
 ;		LD A,#7F
@@ -106,11 +107,13 @@
 ;		JP Start_Code+4
 ;END_FRS
 
-;PAGES		DB #7F,#7B,#7D,#7C,#00,#7A,#7D,#60
+PAGES		DB #7F,#7B,#7D,#7C,#00,#7A,#7D,#60
 
+;”€—
 FAPCH		DB #F1,#E1,#D1,#C1,#C1,#B1,#A1,#91
 		DB #41,#21,#31,#11,#01,#01,#F1,#E1
 
 ;16 ΅ ©β αβ ΰβ®Ά®© ― «¨βΰλ
 POLLITRA	DB #FF,#FE,#FD,#FC,#EF,#EE,#ED,#EC
 		DB #FF,#DE,#BD,#9C,#6F,#4E,#2D,#0C
+1

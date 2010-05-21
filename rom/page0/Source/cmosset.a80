@@ -1,8 +1,8 @@
 
 ;CMOS SetUp & HELP для Gluk
-secHDD	EQU #A000	;GLUcat
-secOLD	EQU secHDD+512
-symm	EQU 0		;символьный режим в докторе
+secHDD		EQU #A000	;GLUcat
+secOLD		EQU secHDD+512
+symm		EQU 0		;символьный режим в докторе
 SYSREG_EFF7	EQU #EFF7
 SET_ADR		EQU #DFF7
 RD_WR_DATA	EQU #BFF7
@@ -786,8 +786,9 @@ TCMOSMSGS
 	DW T_G
 
 THELP	   ;12345678901234567890123456789012
-	DB "Reset+key:  CS=TRDOS SS=Basic48 "
-	DB "    CS+SS=Basic128 Space=DOS    "
+	DB "Reset+key:     Space=TRDOS      "
+	DB "         CS=Basic128 SS=Basic48 "
+;	DB "     CS+SS=Basic128 Space=TRDOS "
 	DB "D=Grass!512b(PSB^Halloween CC04)"
 	DB " C=ColorTable+border keys+COVOX "
 	DB "         S=CMOS SetUp           "

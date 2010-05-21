@@ -1,50 +1,35 @@
 
-ATM=0
-
-;ГЛАВНАЯ собиралка/запускалка Глюка из кусочков
-
-;в ROM4 #3D2F=NOP:RET, #60=OUT(C),A:POP BC,AF:INC SP,SP
-;лучше во всех,для совместимости
-
-STACK2		EQU #9C00	;push af,bc,de,hl
-hldebcaf	EQU STACK2-8	;push AF,BC,DE,HL,IY,IX,SP
-SPKEEP		EQU hldebcaf-14	;старый стек
-OLDSTSZ		EQU 11		;в т.ч (SP-2)
-DEPKADR		EQU #6000	;#5FE4	;depack to
+DEPKADR		EQU #6000
 
 		ORG #0000
-RSTROM
-       
-;в 1-й стек (для STS) кладется AF,BC,оставляется SP-2
-;остальное в стеке STACK2
-;т.к.1-й стек неизвестно где,а то и в ПЗУ.
-;при дребезге сброс двукратный!!! сработает именно 2-й
-;ПРИ ОДНОКРАТНОМ СБРОСЕ СОХРАНИТСЯ ВСЕ,что не обнулил Z80
-;при двукратном - кроме AF
-GLUMAGIC	DI
-		DEC SP
-		DEC SP
-		PUSH AF
-		POP AF
-		INC SP
-		INC SP
-		XOR A
-		DEC A
-		JR NZ,$-1
-RSTGO		DEC SP
-		DEC SP
-		DEC SP
-		DEC SP
-		PUSH BC
+
+		DI
+		LD IY,#5C3A
+		LD A,#3F
+		LD I,A
+		IM 1
 		XOR A
 		OUT (#FE),A
-		JP RSTKEYS
+		LD LX,"P"		;ЕСЛИ НЕ ОПРЕДЕЛИТСЯ, ТО БУДЕТ ПРОШИВКА ДЛЯ ПЕНТАГОНА
+		LD HL,4
+		LD D,#40
+		LD E,L
+		LD B,#80
+		LD C,L
+1		LD A,(BC)
+		CP (HL)
+		JP NZ,RSTKEYS
+		EX DE,HL
+		CP (HL)
+		EX DE,HL
+		JP NZ,RSTKEYS
+		DEC L
+		DEC E
+		DEC C
+		JR NZ,1B
+		LD LX,"A"		;ОПРЕДЕЛИЛОСЬ, ПРОШИВКА ДЛЯ АТМ
 
-		DS #38-$,#FF
-        	RET	
-
-		DS #66-$,#FF
-		JR GLUMAGIC
+		INCLUDE "init_atm_a.a80"
 
 ;проверка нажатия двух клавиш (портим только AF,BC)
 RSTKEYS		LD BC,#FEFF
@@ -59,116 +44,40 @@ TST2K		LD A,B
 		JR C,TST2K		;C=число кнопок минус 1
 		DEC C			;минус 2
 		JP P,GTSTKEY
-;"H"=cache
-;"D"=demo
-;SPC=DOS
-;CS=STS#57
-;key "0"     "U"            "SS"       "5"   "7"
-;ROM0#00(ACE) 2#00(B128/ASM) 4#62(STS)  5#62  7#62  if GLUK=6
-                            ;0#62 unusable unusable if GLUK=2
-                        ;unusable unusable unusable if GLUK=0
-
-iNSTS57		LD A,#7F
+		LD DE,0
+		LD BC,#7FFD
+		PUSH DE
+		LD A,#FE
 		IN A,(#FE)
 		RRA
-		LD A,#10
-		JR NC,iGROM0		;СБРОС В ТЫРДОС
-					;SS=ROM4:#62 (PUSH #62:#3D2F)
-		LD A,#EF
+		LD A,0
+		JP NC,START_SELECT
+		LD A,#7F
 		IN A,(#FE)
-		RRA			;"0"
-		JR C,iNOROM0		;0=ROM0:#00 (XOR A:iGROM0)
-		XOR A			;СБРОС В БАСИК128
-iGROM0		LD HL,#5C07
-		LD (HL),#C9		;for iG128
-iGRAMOU		DEC HL
-		LD (HL),#79
-		DEC HL
-		LD (HL),#ED		;OUT(C),A
-		LD SP,HL
-		LD DE,0
-		PUSH DE
+		LD D,A
+		RRA
+		RRA
+		LD A,#10
+		JP NC,START_SELECT
+		LD A,D
+		RRA
+		JR C,1F
+		LD A,#10
 		LD DE,#3D2F
 		PUSH DE
-		JP (HL)
+		JP START_SELECT
 
-iG128		LD HL,#5C07
-		LD (HL),#C7
-		JR iGRAMOU
-
-iNOROM0		IF ATM
-		INCLUDE "init_atm.a80"
-		ENDIF
-		LD A,#3F
-		LD I,A
-		JP L3E00
-
-		INCLUDE "dec40.a80"
-
-LOADADR		INCBIN "main_pack.rom"
-	
-BONUADR		INCBIN "cmosset_pack.rom"
-
-		DS #3D2F-$,#FF
-		NOP
-		RET
-
-DEMO		LD BC,#7FFD
-		LD A,#10
-		OUT (C),A
-		EI
-szdemoini	EQU $-DEMO
-
-		INCBIN "grass.bin"
-
-L3E00		POP BC
-		POP AF
-		INC SP
-		INC SP
-		LD (SPKEEP),SP
-		LD SP,STACK2
-		EXX
-		EXA
-		PUSH AF
-		PUSH BC
-		PUSH DE
-		PUSH HL
-		EXX
-		EXA
-		PUSH AF
-		PUSH BC
-		PUSH DE
-		PUSH HL
-		PUSH IY
-		PUSH IX
-		LD HL,(SPKEEP)
-		PUSH HL			;собственно,он там и лежал
-		LD DE,OLDSTSZ*2-2	;6.61
-		ADD HL,DE
-		LD B,OLDSTSZ
-iCOPST		DEC HL
-		LD D,(HL)
-		DEC HL
-		LD E,(HL)
-		PUSH DE
-		DJNZ iCOPST
+1		LD A,#FD
+		IN A,(#FE)
+		AND 4			;ЗАПУСК ДЕМКИ
+		JP Z,GDEMO
 		LD HL,DEPKADR
 		LD SP,HL
-		XOR A
-		IN A,(#FE)
-		PUSH AF
 		EX DE,HL
 		LD HL,LOADADR		;РАСПАКОВКА ГЛЮКА
 		CALL DEC40		;DEHR1
-		LD IY,#5C3A
-		LD (IY+1),#CC
-		IM 1			;тут была палитра до 6.61
-		LD A,#FD
+		XOR A
 		IN A,(#FE)
-		AND 4			;"D"
-		JR Z,GDEMO
-
-		POP AF			;in a,(#00fe)
 		CPL
 		AND #1F
 		JR NZ,CMOSHELP
@@ -176,20 +85,16 @@ iCOPST		DEC HL
 		PUSH HL
 		JR START_SELECT
 
-;J6000		JP Z,#6000		;ЗАПУСК ГЛЮКА
-					;цифры, U,H,SS,CS,X не вызывают HELP!
-GTSTKEY		;LD SP,#6000
-		SCF
-		;JR CMOSHELP
-
-CMOSHELP				;CMOS setup & HELP
-		LD HL,BONUADR		;РАСПАКОВКА И ЗАПУСК CMOS SETUP
-		LD DE,#6000
+GTSTKEY		SCF
+		LD A,#10
+		
+CMOSHELP	LD HL,BONUADR		;CMOS setup & HELP
+		LD DE,#6000		;РАСПАКОВКА И ЗАПУСК CMOS SETUP
 		PUSH DE
 		PUSH AF
 		CALL DEC40
 		POP AF
-		JR START_SELECT	;RET
+		JR START_SELECT
 
 GDEMO		LD HL,#6000-szdemoini
 		LD SP,HL
@@ -199,20 +104,42 @@ GDEMO		LD HL,#6000-szdemoini
 		LD B,3
 		LDIR
 
-START_SELECT	IF ATM
+START_SELECT	PUSH AF
+		LD D,A
 		LD HL,#5C07
 		LD (HL),#C9
+		DEC HL
+		LD (HL),#F1
 		DEC HL
 		LD (HL),#79
 		DEC HL
 		LD (HL),#ED
-		LD BC,#0FF7
+		LD A,LX
+		CP "A"
+		JR Z,1F
+		LD A,D
+		LD BC,#7FFD
+		JP (HL)
+		
+1		LD BC,#0FF7
 		LD A,#81
 		OUT (C),A
 		LD BC,#FF77
 		LD A,#AB
 		JP (HL)
-		ENDIF
-		RET
+
+DEMO		LD BC,#7FFD
+		LD A,#10
+		OUT (C),A
+		EI
+szdemoini	EQU $-DEMO
+
+		INCBIN "grass.bin"
+
+		INCLUDE "dec40.a80"
+	
+BONUADR		INCBIN "cmosset_pack.rom"
+
+LOADADR		INCBIN "main_pack.rom"
 
 	       	DS #4000-$,#ff
