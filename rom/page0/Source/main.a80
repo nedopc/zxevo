@@ -164,6 +164,43 @@ S_FACE	LD A,4
 	LD HL,Tmode
 	LD DE,#404D
 	CALL PRTXT
+
+		LD HL,KOSHAK
+		LD DE,#5081
+		LD C,3
+2		LD B,8
+
+1		LD A,(HL)
+		LD (DE),A
+		INC HL
+		INC E
+		LD A,(HL)
+		LD (DE),A
+		INC HL
+		INC E
+		LD A,(HL)
+		LD (DE),A
+		INC HL
+		DEC E
+		DEC E
+		INC D
+		DJNZ 1B
+		LD A,#20
+		ADD A,E
+		LD E,A
+		LD A,D
+		SUB 8
+		LD D,A
+		DEC C
+		JR NZ,2B
+		LD HL,#707
+		LD (#5A80),HL
+		LD (#5A82),HL
+		LD (#5AA0),HL
+		LD (#5AA2),HL
+		LD (#5AC0),HL
+		LD (#5AC2),HL
+
 ;	LD A,7
 ;	LD (COL_SYM),A
 ;	LD HL,TREGS
