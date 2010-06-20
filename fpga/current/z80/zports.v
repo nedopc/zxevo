@@ -55,6 +55,8 @@ module zports(
 
 	input  wire [ 1:0] rstrom,
 
+	input  wire        tape_read,
+
 	output wire        vg_cs_n,
 	input  wire        vg_intrq,
 	input  wire        vg_drq, // from vg93 module - drq + irq read
@@ -269,7 +271,7 @@ module zports(
 	begin
 		case( loa )
 		PORTFE:
-			dout = { 1'b1, 1'b0/*tape_in*/, 1'b0, keys_in };
+			dout = { 1'b1, tape_read, 1'b0, keys_in };
 
 
 		NIDE10,NIDE30,NIDE50,NIDE70,NIDE90,NIDEB0,NIDED0,NIDEF0,NIDEC8:
