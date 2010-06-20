@@ -243,6 +243,9 @@ module top(
 	wire [7:0] sd_dataout,sd_datain;
 
 
+	wire tape_read;
+
+
 
 //AY control
 	always @(posedge fclk)
@@ -551,7 +554,7 @@ module top(
 	                   .wait_read(wait_read),
 	                   .wait_rnw(wait_rnw),
 	                   .wait_end(wait_end),
-	                   .config0( { not_used[7:2], set_nmi, cfg_vga_on} )
+	                   .config0( { not_used[7:3], tape_read, set_nmi, cfg_vga_on} )
 	                 );
 
 	zkbdmus zkbdmus( .fclk(fclk), .rst_n(rst_n),
@@ -579,6 +582,8 @@ module top(
 	               .keys_in(kbd_port_data),
 	               .mus_in(mus_port_data),
 	               .kj_in(kj_port_data),
+
+	               .tape_read(tape_read),
 
 	               .gluclock_addr(gluclock_addr),
 	               .wait_start_gluclock(wait_start_gluclock),
