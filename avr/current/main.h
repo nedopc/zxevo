@@ -8,6 +8,11 @@
  *
  * @subsection current Current version.
  *
+ * - Fix PS/2 mouse and keyboard send mode (without 'delay' function).
+ * - Add load from tape input.
+ *
+ * @subsection ver_2010_03_30 Version 30.03.2010
+ *
  * - Fix fpga load and ZX part init (optimize).
  *
  * @subsection ver_2010_03_28 Version 28.03.2010
@@ -56,6 +61,8 @@ extern volatile UBYTE flags_register;
 #define FLAG_PS2KEYBOARD_DIRECTION  0x10
 /** Version type (0 - BaseConf /1 - BootLoader). */
 #define FLAG_VERSION_TYPE       0x20
+/** Last tape in bit value. */
+#define FLAG_LAST_TAPE_VALUE    0x40
 
 /** Common modes register. */
 extern volatile UBYTE modes_register;

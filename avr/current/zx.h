@@ -101,6 +101,8 @@
 #define SPI_CONFIG_REG   0x50
 /** ZX NMI bit flag of configuration register. */
 #define SPI_CONFIG_NMI_FLAG 0x02
+/** ZX $FE.D6 (tape in) bit flag of configuration register. */
+#define SPI_TAPE_FLAG 0x04
 
 /** ZX Gluk address register. */
 #define SPI_GLUK_ADDR 0x41
