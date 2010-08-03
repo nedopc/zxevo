@@ -16,6 +16,7 @@
 #include "rtc.h"
 #include "atx.h"
 #include "joystick.h"
+#include "tape.h"
 
 /** FPGA data pointer [far address] (linker symbol). */
 extern ULONG fpga PROGMEM;
@@ -204,8 +205,9 @@ start:
 	ps2keyboard_send_cmd(PS2KEYBOARD_CMD_SETLED);
 
 	//main loop
-	do
+	while( atx_power_task() )
     {
+	    tape_task();
 		ps2mouse_task();
         ps2keyboard_task();
         zx_task(ZX_TASK_WORK);
@@ -223,7 +225,6 @@ start:
 			zx_wait_task( status );
 		}
     }
-	while( atx_power_task() );
 
 	goto start;
 }

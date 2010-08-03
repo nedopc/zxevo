@@ -528,4 +528,3 @@ void ps2mouse_task(void)
 
 	ps2mouse_release_clk();
 }
-
