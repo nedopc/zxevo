@@ -1,0 +1,93 @@
+
+DRAW_KOSHAK	PUSH AF
+		ADD A,A
+		LD L,A
+		LD E,A
+		LD H,0
+		LD D,H
+		ADD HL,HL
+		ADD HL,HL
+		ADD HL,HL
+		ADD HL,DE
+		ADD HL,HL
+		ADD HL,HL
+		LD DE,KOSHAK
+		ADD HL,DE
+		LD DE,#509C
+		LD C,3
+2		LD B,8
+
+1		LD A,(HL)
+		LD (DE),A
+		INC HL
+		INC E
+		LD A,(HL)
+		LD (DE),A
+		INC HL
+		INC E
+		LD A,(HL)
+		LD (DE),A
+		INC HL
+		DEC E
+		DEC E
+		INC D
+		DJNZ 1B
+		LD A,#20
+		ADD A,E
+		LD E,A
+		LD A,D
+		SUB 8
+		LD D,A
+		DEC C
+		JR NZ,2B
+		LD HL,#707
+		LD (#5A9C),HL
+		LD (#5A9D),HL
+		LD (#5ABC),HL
+		LD (#5ABD),HL
+		LD (#5ADC),HL
+		LD (#5ADD),HL
+		POP AF
+		RET
+
+CP_TIME_KOSHAK	PUSH AF
+		BIT 3,(IY+55)
+		JR Z,2F
+		LD A,(WAITINGL)
+		INC A
+		LD (WAITINGL),A
+		CP #0C			;‘—…’—ˆŠ ‡€„…†Šˆ ……ˆ‘Ž‚Šˆ ŠŽ˜€Š€
+		JR C,1F
+		XOR A
+		LD (WAITINGL),A
+		LD A,(NUMKOSHAK)
+		INC A
+		LD (NUMKOSHAK),A
+		CALL DRAW_KOSHAK
+		CP 9			;Œ€Š‘ˆŒ€‹œ›‰ ŽŒ… ‘€‰’€ ŠŽ˜€Š€
+		JR C,1F
+		XOR A
+		LD (NUMKOSHAK),A
+		CALL DRAW_KOSHAK
+		RES 3,(IY+55)		;‡€…’ €ˆŒ€–ˆˆ ŠŽ˜€Š€
+		JR 4F
+
+2		LD HL,(WAITINGH)
+		INC HL
+		LD (WAITINGH),HL
+		LD A,H
+		AND 2
+		JR Z,1F
+3		SET 3,(IY+55)		;‘—…’—ˆŠ „Ž‘—ˆ’€‹,€‡…˜…ˆ… €ˆŒ€–ˆˆ ŠŽ˜€Š€
+4		LD HL,0
+		LD (WAITINGH),HL
+1		POP AF
+		RET
+
+RESTORE_KOSHAK	RES 3,(IY+55)
+		XOR A
+		LD H,A
+		LD L,A
+		LD (WAITINGH),HL
+		LD (WAITINGL),HL
+		JP DRAW_KOSHAK
