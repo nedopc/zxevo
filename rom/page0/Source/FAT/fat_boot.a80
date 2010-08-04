@@ -85,9 +85,9 @@ WFATC1		LD A,(HL)			;Çáüãà íàè êÄáÑÖãÄ
 		INC DE
 		LD (fBOOT),DE
 		EX DE,HL
-		LD (HL),LOW (5*#20+#0C-wide+#5800)
+		LD (HL),LOW (5*#20+#0C-WIDE+#5800)
 		INC HL
-		LD (HL),HIGH (5*#20+#0C-wide+#5800)
+		LD (HL),HIGH (5*#20+#0C-WIDE+#5800)
 		INC HL
 		LD (HL),#15
 		INC HL
