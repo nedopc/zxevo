@@ -4,6 +4,7 @@
 #include "pins.h"
 #include "mytypes.h"
 
+#include "main.h"
 #include "atx.h"
 #include "rs232.h"
 #include "zx.h"
@@ -50,7 +51,7 @@ void wait_for_atx_power(void)
 	atx_counter = 0;
 }
 
-UBYTE atx_power_task(void)
+void atx_power_task(void)
 {
 	static UWORD last_count = 0;
 	UBYTE j = 50;
@@ -84,7 +85,8 @@ UBYTE atx_power_task(void)
 		do _delay_ms(20); while(--j);
 
 		last_count = 0;
-	}
 
-	return j;
+		//enable hard reset
+		flags_register |= FLAG_HARD_RESET;
+	}
 }

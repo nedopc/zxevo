@@ -68,16 +68,17 @@ ISR(TIMER2_OVF_vect)
 		if( ps2mouse_timeout ) ps2mouse_timeout--;
 	}
 
-	//check soft reset
-	if ( SOFTRES_PIN & (1<<SOFTRES) )
-	{
-		//not pressed
-		atx_counter >>= 1;
-	}
-	else
+	//check soft reset and F12 key
+	if ( !( SOFTRES_PIN & (1<<SOFTRES)) ||
+	     (kb_status & KB_F12_MASK) )
 	{
 		//pressed
 		atx_counter++;
+	}
+	else
+	{
+		//not pressed
+		atx_counter >>= 1;
 	}
 
 	if ( scankbd==0 )
