@@ -33,7 +33,7 @@ DEPKADR		EQU #6000
 
 ;―ΰ®Ά¥ΰª  ­ ¦ β¨ο ¤Άγε ª« Ά¨θ (―®ΰβ¨¬ β®«μª® AF,BC)
 RSTKEYS		LD BC,#FEFF
-TST2K		LD A,B
+1		LD A,B
 		IN A,(#FE)
 		DUP 5
 		RRA
@@ -41,31 +41,31 @@ TST2K		LD A,B
 		INC C
 		EDUP
 		RLC B
-		JR C,TST2K		;C=η¨α«® ª­®―®ª ¬¨­γα 1
-		DEC C			;¬¨­γα 2
-		JP P,GTSTKEY
-		LD DE,0
+		JR C,1B
+		DEC C
+		JP P,GTSTKEY		;€†€’ ‹…… 1 , ……•„  ’…‘’“ ‹€‚€’“›
+		LD DE,0			;1 €†€’€, ‚…… —’ ’
 		LD BC,#7FFD
 		PUSH DE
 		LD A,#FE
-		IN A,(#FE)
+		IN A,(#FE)		;—’…… €†€’‘’  "CS"
 		RRA
 		LD A,0
-		JP NC,START_SELECT
+		JP NC,START_SELECT	; €†€’‰ "CS" ……•„ ‚ …‰‘ 128
 		LD A,#7F
-		IN A,(#FE)
+		IN A,(#FE)		;—’…… €†€’‘’  "SS"
 		LD D,A
 		RRA
 		RRA
 		LD A,#10
-		JP NC,START_SELECT
+		JP NC,START_SELECT	; €†€’‰ "CS" ……•„ ‚ …‰‘ 48
 		LD A,D
-		RRA
-		JR C,1F
+		RRA			;‚…€ €†€’‘’  "SPACE"
+		JR C,1F			;……•„ „€‹…… …‘‹ —…ƒ … €†€’
 		LD A,#10
 		LD DE,#3D2F
 		PUSH DE
-		JP START_SELECT
+		JP START_SELECT		; €†€’‰ "SPACE" ……•„ ‚ TR-DOS
 
 1		LD A,#FD
 		IN A,(#FE)
@@ -74,8 +74,8 @@ TST2K		LD A,B
 		LD HL,DEPKADR
 		LD SP,HL
 		EX DE,HL
-		LD HL,LOADADR		;€‘€‚€ ƒ‹€
-		CALL DEC40		;DEHR1
+		LD HL,LOADADR		;€‘€‚€ … ƒ‹€
+		CALL DEC40
 		XOR A
 		IN A,(#FE)
 		CPL
@@ -116,7 +116,7 @@ START_SELECT	PUSH AF
 		LD (HL),#ED
 		LD A,LX
 		CP "A"
-		JR Z,1F
+		JR Z,1F			;…‘‹ …„…‹‹‘ € €’, ’ € €’  ‡€“‘€…
 		LD A,D
 		LD BC,#7FFD
 		JP (HL)
@@ -142,4 +142,10 @@ BONUADR		INCBIN "cmosset_pack.rom"
 
 LOADADR		INCBIN "main_pack.rom"
 
-	       	DS #4000-$,#ff
+	       	DS #3D2F-$,#FF
+
+		ORG #3D2F
+		NOP
+		RET
+		
+		DS #4000-$,#FF
