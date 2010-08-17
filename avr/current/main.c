@@ -17,6 +17,7 @@
 #include "atx.h"
 #include "joystick.h"
 #include "tape.h"
+#include "kbmap.h"
 
 /** FPGA data pointer [far address] (linker symbol). */
 extern ULONG fpga PROGMEM;
@@ -156,6 +157,9 @@ start:
 	}
 #endif
 	depacker_dirty();
+#ifdef LOGENABLE
+	to_log("depacker_dirty OK\r\n");
+#endif
 
 	//power led OFF
 	LED_PORT |= 1<<LED;
@@ -190,14 +194,13 @@ start:
 	EIFR = (1<<INTF4)|(1<<INTF5)|(1<<INTF6)|(1<<INTF7); // clear spurious ints there
 	EIMSK |= (1<<INT4)|(1<<INT5)|(1<<INT6)|(1<<INT7); // enable
 
+	kbmap_init();
 	zx_init();
 	rtc_init();
-
 
 #ifdef LOGENABLE
 	to_log("zx_init OK\r\n");
 #endif
-
 
 	sei(); // globally go interrupting
 
@@ -205,7 +208,7 @@ start:
 	ps2keyboard_send_cmd(PS2KEYBOARD_CMD_SETLED);
 
 	//main loop
-	while( atx_power_task() )
+	do
     {
 	    tape_task();
 		ps2mouse_task();
@@ -214,7 +217,7 @@ start:
 		zx_mouse_task();
 		joystick_task();
 
-		//
+		//event from SPI
 		if ( flags_register&FLAG_SPI_INT )
 		{
 			//get status byte
@@ -224,7 +227,10 @@ start:
 			status = spi_send(0);
 			zx_wait_task( status );
 		}
+
+		atx_power_task();
     }
+	while( (flags_register&FLAG_HARD_RESET) == 0 );
 
 	goto start;
 }
