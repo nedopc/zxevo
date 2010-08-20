@@ -70,10 +70,10 @@
 ;---------------------------------------
 		ORG #0360		;ƒ‹€‚… ‚›‚…‘Š“ ……ˆ’œ, ‘’€‹œ… ”ˆƒŸ ;)
 		DB #16,#01,#05
-		DB "*TR-DOS Based 5.03*"
+		DB "* EVO-DOS Ver 0.1 *"
 		DB #0D,#0D,#7F
 		;  12345678901234567890123456789012
-		DB " 2010 Patched for PentEvo 4Mb "
+		DB " 2010 Created for PentEvo 4Mb "
 		DB #16,#05,#0B
 		DB "NedoPC"
 		DB #16,#07,#05

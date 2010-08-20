@@ -333,7 +333,7 @@ LOADZP  LD E,(HL):INC HL:LD D,(HL)
 WC_FAT  LD HL,#FFFF,(LSTLOAD),HL
         LD (LSTLOAD+2),HL
         CALL COM_DEV:DB 2
-        LD (CAL_FAT),A,E,D,D,0:EX HL,DE
+        LD (CAL_FAT),A,E,D,D,0:EX DE,HL
         ADD HL,HL,HL,HL,HL,HL
         ADD HL,DE:INC HL,HL,HL
         LD E,(HL):INC HL:LD D,(HL)
