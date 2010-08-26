@@ -62,6 +62,12 @@ void atx_power_task(void)
 
 		//switch off atx power
 		ATXPWRON_PORT &= ~(1<<ATXPWRON);
+
+		if ( ( SOFTRES_PIN & (1<<SOFTRES) ) != 0 )
+		{
+			//enable hard reset
+			flags_register |= FLAG_HARD_RESET;
+		}
 	}
 
 	if ( ( last_count > 0 ) && ( atx_counter == 0 ) )
