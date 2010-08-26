@@ -147,8 +147,10 @@ module top(
 	wire [7:0] wait_read,wait_write;
 	wire wait_rnw;
 	wire wait_start_gluclock;
+	wire wait_start_comport;
 	wire wait_end;
 	wire [7:0] gluclock_addr;
+	wire [2:0] comport_addr;
 	wire [6:0] waits;
 
 
@@ -550,6 +552,7 @@ module top(
 	                   .mus_xstb(mus_xstb), .mus_ystb(mus_ystb),
 	                   .mus_btnstb(mus_btnstb), .kj_stb(kj_stb),
 	                   .gluclock_addr(gluclock_addr),
+			   .comport_addr (comport_addr),
 	                   .wait_write(wait_write),
 	                   .wait_read(wait_read),
 	                   .wait_rnw(wait_rnw),
@@ -586,7 +589,9 @@ module top(
 	               .tape_read(tape_read),
 
 	               .gluclock_addr(gluclock_addr),
+		       .comport_addr (comport_addr),
 	               .wait_start_gluclock(wait_start_gluclock),
+	               .wait_start_comport (wait_start_comport),
 	               .wait_rnw(wait_rnw),
 	               .wait_write(wait_write),
 	               .wait_read(wait_read),
@@ -615,13 +620,14 @@ module top(
 
 
 	zwait zwait( .wait_start_gluclock(wait_start_gluclock),
+	             .wait_start_comport (wait_start_comport),
 	             .wait_end(wait_end),
 	             .rst_n(rst_n),
 	             .wait_n(wait_n),
 	             .waits(waits),
 	             .spiint_n(spiint_n) );
 
-	assign wait_n = 1'bZ; // WTF??? FIXME,FIXME,FIXME,FIXME,FIXME,FIXME,FIXME,FIXME,FIXME,FIXME,FIXME,FIXME,FIXME
+//	assign wait_n = 1'bZ; // WTF??? FIXME,FIXME,FIXME,FIXME,FIXME,FIXME,FIXME,FIXME,FIXME,FIXME,FIXME,FIXME,FIXME
 
 
 

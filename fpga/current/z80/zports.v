@@ -67,10 +67,15 @@ module zports(
 	output wire [ 7:0] sd_datain,
 	input  wire [ 7:0] sd_dataout,
 
-
+	// WAIT-ports related
+	//
 	output reg  [ 7:0] gluclock_addr,
-
+	//
+	output reg  [ 2:0] comport_addr,
+	//
 	output wire        wait_start_gluclock, // begin wait from some ports
+	output wire        wait_start_comport,  //
+	//
 	output reg         wait_rnw,   // whether it was read(=1) or write(=0)
 	output reg  [ 7:0] wait_write,
 	input  wire [ 7:0] wait_read,
@@ -131,6 +136,9 @@ module zports(
 	localparam ATM77  = 8'h77;
 
 	localparam ZXEVBF = 8'hBF; // xxBF config port
+
+	localparam COMPORT = 8'hEF; // F8EF..FFEF - rs232 ports
+
 
 	reg external_port;
 
@@ -194,11 +202,11 @@ module zports(
 		    ( (loa==VGCOM)&&shadow ) || ( (loa==VGTRK)&&shadow ) || ( (loa==VGSEC)&&shadow ) || ( (loa==VGDAT)&&shadow ) ||
 		    ( (loa==VGSYS)&&shadow ) || ( (loa==KJOY)&&(!shadow) ) ||
 
-		    ( (loa==PORTF7)&&(!shadow) ) || ( (loa==SDCFG)&&(!shadow) ) || ( (loa==SDDAT)&&(!shadow) ) ||
+		    ( (loa==PORTF7)&&(!shadow) ) || ( (loa==SDCFG)&&(!shadow) ) || ( (loa==SDDAT) ) ||
 
 		    ( (loa==ATMF7)&&shadow ) || ( (loa==ATM77)&&shadow ) ||
 
-		    ( loa==ZXEVBF )
+		    ( loa==ZXEVBF ) || ( loa==COMPORT )
 		  )
 
 
@@ -291,7 +299,7 @@ module zports(
 			dout = mus_in;
 
 		SDCFG:
-			dout = 8'h00; // always SD inserted, SD is in R/W mode // FIXME!FIXME!FIXME!FIXME!FIXME!
+			dout = 8'h00; // always SD inserted, SD is in R/W mode
 		SDDAT:
 			dout = sd_dataout;
 
@@ -302,6 +310,11 @@ module zports(
 			else // any other $xxF7 port
 				dout = 8'hFF;
 		end
+
+		COMPORT: begin
+			dout = wait_read; // $F8EF..$FFEF
+		end
+
 
 
 		default:
@@ -316,10 +329,11 @@ module zports(
 	assign portf7_wr    = ( (loa==PORTF7) && port_wr && (!shadow) );
 	assign portf7_rd    = ( (loa==PORTF7) && port_rd && (!shadow) );
 
-	assign ideout_hi_wr = ( (loa==NIDE11) && port_wr);
-	assign idein_lo_rd  = ( (loa==NIDE10) && port_rd);
-
 	assign vg_wrFF = ( ( (loa==VGSYS)&&shadow ) && port_wr);
+
+	assign comport_wr   = ( (loa==COMPORT) && port_wr);
+	assign comport_rd   = ( (loa==COMPORT) && port_rd);
+
 
 
 	//port FE beep/border bit
@@ -334,6 +348,12 @@ module zports(
 
 
 	// IDE ports
+
+	// TODO for nemo-divide: read bit and write bit, toggling as needed,
+	// redir of #10 port appropriately
+
+	assign ideout_hi_wr = ( (loa==NIDE11) && port_wr);
+	assign idein_lo_rd  = ( (loa==NIDE10) && port_rd);
 
 	always @*
 		ideout[7:0] = din;
@@ -455,7 +475,13 @@ module zports(
 	end
 
 
-
+	// comports
+	
+	always @(posedge zclk)
+	begin
+		if( comport_wr || comport_rd )
+			comport_addr <= a[10:8 ];
+	end
 
 
 
@@ -465,6 +491,9 @@ module zports(
 		// gluclocks
 		if( gluclock_on && portf7_wr && !a[14] ) // $BFF7 - data reg
 			wait_write <= din;
+		// com ports
+		else if( comport_wr ) // $F8EF..$FFEF - comports
+			wait_write <= din;
 	end
 
 	// wait from wait registers
@@ -472,7 +501,10 @@ module zports(
 	// ACHTUNG!!!! here portxx_wr are ON Z80 CLOCK! logic must change when moving to fclk strobes
 	//
 	assign wait_start_gluclock = ( (!shadow) && gluclock_on && !a[14] && (portf7_rd || portf7_wr) ); // $BFF7 - gluclock r/w
-
+	//
+	assign wait_start_comport = ( comport_rd || comport_wr );
+	//
+	//
 	always @(posedge zclk) // wait rnw - only meanful during wait
 	begin
 		if( port_wr )
@@ -491,27 +523,7 @@ module zports(
 
 
 
-/*  DOS moved to zdos.v !
-`ifdef SIMULATE
-	initial
-	begin
-		dos <= 1'b0;
-	end
-`endif
 
-	always @(posedge zclk)
-	begin
-		if( rstsync2 )
-			dos <= ~rstrom[1];
-		else if( (!mreq_n) && (!m1_n) )
-		begin
-			if( (a[15:8]==8'h3D) && p7ffd[4] )
-				dos <= 1'b1;
-			else if( a[15:14]!=2'b00 )
-				dos <= 1'b0;
-		end
-	end
-*/
 
 // reset rom selection
 
@@ -528,9 +540,13 @@ module zports(
 
 	wire sdcfg_wr,sddat_wr,sddat_rd;
 
-	assign sdcfg_wr = ( (loa==SDCFG) && port_wr && (!shadow) );
-	assign sddat_wr = ( (loa==SDDAT) && port_wr && (!shadow) );
-	assign sddat_rd = ( (loa==SDDAT) && port_rd && (!shadow) );
+	assign sdcfg_wr = ( (loa==SDCFG) && port_wr && (!shadow) )                  ||
+	                  ( (loa==SDDAT) && port_wr &&   shadow  && (a[15]==1'b1) ) ;
+
+	assign sddat_wr = ( (loa==SDDAT) && port_wr && (!shadow) )                  ||
+	                  ( (loa==SDDAT) && port_wr &&   shadow  && (a[15]==1'b0) ) ;
+
+	assign sddat_rd = ( (loa==SDDAT) && port_rd              );
 
 	// SDCFG write - sdcs_n control
 	always @(posedge zclk, negedge rst_n)
