@@ -27,7 +27,7 @@ module zports(
 
 	output reg         porthit, // when internal port hit occurs, this is 1, else 0; used for iorq1_n iorq2_n on zxbus
 
-	output reg  [15:0] ideout,
+	output wire [15:0] ideout,
 	input  wire [15:0] idein,
 	output wire        idedataout, // IDE must IN data from IDE device when idedataout=0, else it OUTs
 	output wire [ 2:0] ide_a,
@@ -160,10 +160,29 @@ module zports(
 
 	wire portfe_wr;
 
+
+
 	wire ideout_hi_wr;
 	wire idein_lo_rd;
-	reg [7:0] idehiin;
+	reg [7:0] idehiin; // IDE high part read register: low part is read directly to Z80 bus,
+	                   // while high part is remembered here
 	reg ide_ports; // ide ports selected
+
+	reg ide_rd_trig; // nemo-divide read trigger
+	reg ide_rd_latch; // to save state of trigger during read cycle
+
+	reg ide_wrlo_trig,  ide_wrhi_trig;  // nemo-divide write triggers
+	reg ide_wrlo_latch, ide_wrhi_latch; // save state during write cycles
+
+
+
+	reg  [15:0] idewrreg; // write register, either low or high part is pre-written here,
+	                      // while other part is out directly from Z80 bus
+
+	wire [ 7:0] iderdeven; // to control read data from "even" ide ports (all except #11)
+	wire [ 7:0] iderdodd;  // read data from "odd" port (#11)
+
+
 
 	reg pre_bc1,pre_bdir;
 
@@ -283,9 +302,9 @@ module zports(
 
 
 		NIDE10,NIDE30,NIDE50,NIDE70,NIDE90,NIDEB0,NIDED0,NIDEF0,NIDEC8:
-			dout = idein[7:0];
+			dout = iderdeven;
 		NIDE11:
-			dout = idehiin;
+			dout = iderdodd;
 
 
 		//PORTFD:
@@ -341,31 +360,66 @@ module zports(
 	begin
 		if( portfe_wr )
 		begin
-			beep <= din[4];
+			beep <= din[4]^din[3]; // beeper and tapeout in the same bit
 			border <= din[2:0];
 		end
 	end
 
+
+
+
+	
 
 	// IDE ports
 
 	// TODO for nemo-divide: read bit and write bit, toggling as needed,
 	// redir of #10 port appropriately
 
-	assign ideout_hi_wr = ( (loa==NIDE11) && port_wr);
-	assign idein_lo_rd  = ( (loa==NIDE10) && port_rd);
+	assign idein_lo_rd  = port_rd && (loa==NIDE10) && !ide_rd_trig;
 
-	always @*
-		ideout[7:0] = din;
+	// control read & write triggers, which allow nemo-divide mod to work.
+	always @(posedge zclk)
+	if( (port_rd || port_wr) && ide_ports )
+	begin
+		if( (loa==NIDE10) && port_rd && !ide_rd_trig )
+			ide_rd_trig <= 1'b1;
+		else
+			ide_rd_trig <= 1'b0;
+
+		// two triggers for write sequence...
+		if( loa==NIDE11 )
+			ide_wrhi_trig <= 1'b1;
+		else
+			ide_wrhi_trig <= 1'b0;
+		//
+		if( (loa==NIDE10) && !ide_wrhi_trig && !ide_wrlo_trig )
+			ide_wrlo_trig <= 1'b1;
+		else
+			ide_wrlo_trig <= 1'b0;
+	end
+
+	// normal read: #10(low), #11(high)
+	// divide read: #10(low), #10(high)
+	//
+	// normal write: #11(high), #10(low)
+	// divide write: #10(low),  #10(high)
+	
 
 	always @(posedge zclk)
 	begin
-		if( ideout_hi_wr )
-			ideout[15:8] <= din;
+		if( port_wr && (loa==NIDE11) )
+			idewrreg[15:8] <= din;
 
-		if( idein_lo_rd )
-			idehiin <= idein[15:8];
+		if( port_wr && (loa==NIDE10) )
+			idewrreg[ 7:0] <= din;
 	end
+
+
+
+
+	always @(posedge zclk)
+	if( idein_lo_rd )
+			idehiin <= idein[15:8];
 
 	always @*
 		case( loa )
@@ -374,15 +428,56 @@ module zports(
 		endcase
 
 	assign ide_a = a[7:5];
+
+
+	// This is unknown shit... Probably need more testing with old WD
+	// drives WITHOUT this commented fix.
+	// 
 	// trying to fix old WD drives...
-//	assign ide_cs0_n = iorq_n | (rd_n&wr_n) | (~ide_ports) | (~(loa!=NIDEC8));
-//	assign ide_cs1_n = iorq_n | (rd_n&wr_n) | (~ide_ports) | (~(loa==NIDEC8));
+	//assign ide_cs0_n = iorq_n | (rd_n&wr_n) | (~ide_ports) | (~(loa!=NIDEC8));
+	//assign ide_cs1_n = iorq_n | (rd_n&wr_n) | (~ide_ports) | (~(loa==NIDEC8));
+	// fix ends...
+
+
 	assign ide_cs0_n = (~ide_ports) | (~(loa!=NIDEC8));
 	assign ide_cs1_n = (~ide_ports) | (~(loa==NIDEC8));
-	// fix ends...
-	assign ide_rd_n = iorq_n | rd_n | (~ide_ports);
-	assign ide_wr_n = iorq_n | wr_n | (~ide_ports);
+
+
+	// generate read cycles for IDE as usual, except for reading #10
+	// instead of #11 for high byte (nemo-divide). I use additional latch
+	// since 'ide_rd_trig' clears during second Z80 IO read cycle to #10
+	always @* if( rd_n ) ide_rd_latch <= ide_rd_trig;
+	//
+	assign ide_rd_n = iorq_n | rd_n | (~ide_ports) | (ide_rd_latch && (loa==NIDE10)); 
+
+	always @* if( wr_n ) ide_wrlo_latch <= ide_wrlo_trig; // same for write triggers
+	always @* if( wr_n ) ide_wrhi_latch <= ide_wrhi_trig; //
+	//
+	assign ide_wr_n = iorq_n | wr_n | (~ide_ports) | ( (loa==NIDE10) && !ide_wrlo_latch && !ide_wrhi_latch );
+	                                          // do NOT generate IDE write, if neither of ide_wrhi|lo latches
+	                                          // set and writing to NIDE10
+
+
+
 	assign idedataout = ide_rd_n;
+
+
+
+	// data read by Z80 from IDE
+	//
+	assign iderdodd[ 7:0] = idehiin[ 7:0];
+	//
+	assign iderdeven[ 7:0] = (ide_rd_latch && (loa==NIDE10)) ? idehiin[ 7:0] : idein[ 7:0];
+
+	// data written to IDE from Z80
+	//
+	assign ideout[15:8] = ide_wrhi_latch ? idewrreg[15:8] : dout[ 7:0];
+	assign ideout[ 7:0] = ide_wrlo_latch ? idewrreg[ 7:0] : dout[ 7:0];
+
+
+
+
+
 
 
 	// AY control
