@@ -372,9 +372,6 @@ module zports(
 
 	// IDE ports
 
-	// TODO for nemo-divide: read bit and write bit, toggling as needed,
-	// redir of #10 port appropriately
-
 	assign idein_lo_rd  = port_rd && (loa==NIDE10) && !ide_rd_trig;
 
 	// control read & write triggers, which allow nemo-divide mod to work.
@@ -387,12 +384,12 @@ module zports(
 			ide_rd_trig <= 1'b0;
 
 		// two triggers for write sequence...
-		if( loa==NIDE11 )
+		if( (loa==NIDE11) && port_wr )
 			ide_wrhi_trig <= 1'b1;
 		else
 			ide_wrhi_trig <= 1'b0;
 		//
-		if( (loa==NIDE10) && !ide_wrhi_trig && !ide_wrlo_trig )
+		if( (loa==NIDE10) && port_wr && !ide_wrhi_trig && !ide_wrlo_trig )
 			ide_wrlo_trig <= 1'b1;
 		else
 			ide_wrlo_trig <= 1'b0;
