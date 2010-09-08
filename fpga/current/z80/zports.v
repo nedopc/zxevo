@@ -468,8 +468,8 @@ module zports(
 
 	// data written to IDE from Z80
 	//
-	assign ideout[15:8] = ide_wrhi_latch ? idewrreg[15:8] : dout[ 7:0];
-	assign ideout[ 7:0] = ide_wrlo_latch ? idewrreg[ 7:0] : dout[ 7:0];
+	assign ideout[15:8] = ide_wrhi_latch ? idewrreg[15:8] : din[ 7:0];
+	assign ideout[ 7:0] = ide_wrlo_latch ? idewrreg[ 7:0] : din[ 7:0];
 
 
 
