@@ -368,7 +368,7 @@ module zports(
 
 
 
-	
+
 
 	// IDE ports
 
@@ -378,20 +378,20 @@ module zports(
 	always @(posedge zclk)
 	if( (port_rd || port_wr) && ide_ports )
 	begin
-		if( (loa==NIDE10) && port_rd && !ide_rd_trig )
-			ide_rd_trig <= 1'b1;
-		else
+//		if( (loa==NIDE10) && port_rd && !ide_rd_trig )
+//			ide_rd_trig <= 1'b1;
+//		else
 			ide_rd_trig <= 1'b0;
 
 		// two triggers for write sequence...
-		if( (loa==NIDE11) && port_wr )
+//		if( (loa==NIDE11) && port_wr )
 			ide_wrhi_trig <= 1'b1;
-		else
-			ide_wrhi_trig <= 1'b0;
+//		else
+//			ide_wrhi_trig <= 1'b0;
 		//
-		if( (loa==NIDE10) && port_wr && !ide_wrhi_trig && !ide_wrlo_trig )
-			ide_wrlo_trig <= 1'b1;
-		else
+//		if( (loa==NIDE10) && port_wr && !ide_wrhi_trig && !ide_wrlo_trig )
+//			ide_wrlo_trig <= 1'b1;
+//		else
 			ide_wrlo_trig <= 1'b0;
 	end
 
@@ -400,7 +400,7 @@ module zports(
 	//
 	// normal write: #11(high), #10(low)
 	// divide write: #10(low),  #10(high)
-	
+
 
 	always @(posedge zclk)
 	begin
@@ -429,7 +429,7 @@ module zports(
 
 	// This is unknown shit... Probably need more testing with old WD
 	// drives WITHOUT this commented fix.
-	// 
+	//
 	// trying to fix old WD drives...
 	//assign ide_cs0_n = iorq_n | (rd_n&wr_n) | (~ide_ports) | (~(loa!=NIDEC8));
 	//assign ide_cs1_n = iorq_n | (rd_n&wr_n) | (~ide_ports) | (~(loa==NIDEC8));
@@ -445,7 +445,7 @@ module zports(
 	// since 'ide_rd_trig' clears during second Z80 IO read cycle to #10
 	always @* if( rd_n ) ide_rd_latch <= ide_rd_trig;
 	//
-	assign ide_rd_n = iorq_n | rd_n | (~ide_ports) | (ide_rd_latch && (loa==NIDE10)); 
+	assign ide_rd_n = iorq_n | rd_n | (~ide_ports) | (ide_rd_latch && (loa==NIDE10));
 
 	always @* if( wr_n ) ide_wrlo_latch <= ide_wrlo_trig; // same for write triggers
 	always @* if( wr_n ) ide_wrhi_latch <= ide_wrhi_trig; //
@@ -568,7 +568,7 @@ module zports(
 
 
 	// comports
-	
+
 	always @(posedge zclk)
 	begin
 		if( comport_wr || comport_rd )
