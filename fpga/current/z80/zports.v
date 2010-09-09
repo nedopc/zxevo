@@ -372,16 +372,35 @@ module zports(
 
 	// IDE ports
 
-	assign idein_lo_rd  = port_rd && (loa==NIDE10) && !ide_rd_trig;
+	// IDE physical ports (that go to IDE device)
+	always @(loa)
+		case( loa )
+		NIDE10,NIDE30,NIDE50,NIDE70,NIDE90,NIDEB0,NIDED0,NIDEF0,NIDEC8: ide_ports = 1'b1;
+		default: ide_ports = 1'b0;
+		endcase
+
+
+	assign idein_lo_rd  = port_rd && (loa==NIDE10) && (!ide_rd_trig);
 
 	// control read & write triggers, which allow nemo-divide mod to work.
+	//
+	// read trigger:
+	always @(posedge zclk)
+	begin
+		if( (loa==NIDE10) && port_rd && !ide_rd_trig )
+			ide_rd_trig <= 1'b1;
+		else if( ( ide_ports || (loa==NIDE11) ) && ( port_rd || port_wr ) )
+			ide_rd_trig <= 1'b0;
+	end
+
+
 	always @(posedge zclk)
 	if( (port_rd || port_wr) && ide_ports )
 	begin
-//		if( (loa==NIDE10) && port_rd && !ide_rd_trig )
+//		if( (loa==NIDE10) && port_rd && (!ide_rd_trig) )
 //			ide_rd_trig <= 1'b1;
 //		else
-			ide_rd_trig <= 1'b0;
+//			ide_rd_trig <= 1'b0;
 
 		// two triggers for write sequence...
 //		if( (loa==NIDE11) && port_wr )
@@ -418,11 +437,6 @@ module zports(
 	if( idein_lo_rd )
 			idehiin <= idein[15:8];
 
-	always @*
-		case( loa )
-		NIDE10,NIDE30,NIDE50,NIDE70,NIDE90,NIDEB0,NIDED0,NIDEF0,NIDEC8: ide_ports = 1'b1;
-		default: ide_ports = 1'b0;
-		endcase
 
 	assign ide_a = a[7:5];
 
