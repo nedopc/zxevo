@@ -392,25 +392,19 @@ module zports(
 		else if( ( ide_ports || (loa==NIDE11) ) && ( port_rd || port_wr ) )
 			ide_rd_trig <= 1'b0;
 	end
-
-
+	//
+	// two triggers for write sequence...
 	always @(posedge zclk)
-	if( (port_rd || port_wr) && ide_ports )
+	if( ( ide_ports || (loa==NIDE11) ) && ( port_rd || port_wr ) )
 	begin
-//		if( (loa==NIDE10) && port_rd && (!ide_rd_trig) )
-//			ide_rd_trig <= 1'b1;
-//		else
-//			ide_rd_trig <= 1'b0;
-
-		// two triggers for write sequence...
-//		if( (loa==NIDE11) && port_wr )
+		if( (loa==NIDE11) && port_wr )
 			ide_wrhi_trig <= 1'b1;
-//		else
-//			ide_wrhi_trig <= 1'b0;
+		else
+			ide_wrhi_trig <= 1'b0;
 		//
-//		if( (loa==NIDE10) && port_wr && !ide_wrhi_trig && !ide_wrlo_trig )
-//			ide_wrlo_trig <= 1'b1;
-//		else
+		if( (loa==NIDE10) && port_wr && !ide_wrhi_trig && !ide_wrlo_trig )
+			ide_wrlo_trig <= 1'b1;
+		else
 			ide_wrlo_trig <= 1'b0;
 	end
 
