@@ -42,7 +42,11 @@ OBJECTS = zx.o interrupts.o main.o ps2.o spi.o depacker_dirty.o rs232.o rtc.o at
 FPGACORE = top.o
 
 ## Build
-all: $(TARGET) core.hex core.eep core.lss size zxevo_fw.bin
+all: $(TARGET) core.hex core.eep core.lss size zxevo_test.bin
+	mv zxevo_test.bin zxevo_fw.bin
+
+release: $(TARGET) core.hex core.eep core.lss size zxevo_release.bin
+	mv zxevo_release.bin zxevo_fw.bin
 
 ## Compile
 zx.o: ../zx.c ../zx.h
@@ -108,8 +112,16 @@ size: ${TARGET}
 	@echo
 	@avr-size -C --mcu=${MCU} ${TARGET}
 
-zxevo_fw.bin: core.hex core.eep
+##zxevo_fw.bin: core.hex core.eep
+##	../../../tools/make_fw/make_fw core.hex core.eep version.txt
+
+zxevo_test.bin: core.hex core.eep
 	../../../tools/make_fw/make_fw core.hex core.eep version.txt
+	mv zxevo_fw.bin zxevo_test.bin
+
+zxevo_release.bin: core.hex core.eep
+	../../../tools/make_fw/make_fw core.hex core.eep version.txt o
+	mv zxevo_fw.bin zxevo_release.bin
 
 ## Clean target
 .PHONY: clean
