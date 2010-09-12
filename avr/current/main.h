@@ -9,7 +9,7 @@
  * @subsection current Current version.
  *
  * - "F9","F10","F11" on PS/2 keyboard not used for reset function.
- * - "F12" on PS/2 keyboard worked like soft reset key. Short press (<5sec) - soft reset, long press (5sec) - hard reset and switch off ATX power.
+ * - "F12" on PS/2 keyboard soft/hard reset. Short press (<5sec) - soft reset, long press (5sec) - hard reset.
  * - "Ctrl-Alt-Del" on PS/2 keyboard reset ZX (hard reset). If all keys is mapped to ZX keyboard - function not work.
  * - Create translating map (PS/2 to ZX keyboard) in eeprom (default in progmem).
  * - Fix PS/2 mouse and keyboard send mode (without 'delay' function).

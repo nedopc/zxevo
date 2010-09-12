@@ -58,12 +58,16 @@ void atx_power_task(void)
 
 	if ( atx_counter > 1700 )
 	{
-		//atx power off button pressed (~5 sec)
 
-		//switch off atx power
-		ATXPWRON_PORT &= ~(1<<ATXPWRON);
 
-		if ( ( SOFTRES_PIN & (1<<SOFTRES) ) != 0 )
+		if ( ( SOFTRES_PIN & (1<<SOFTRES) ) == 0 )
+		{
+			//atx power off button pressed (~5 sec)
+
+			//switch off atx power
+			ATXPWRON_PORT &= ~(1<<ATXPWRON);
+		}
+		else
 		{
 			//enable hard reset
 			flags_register |= FLAG_HARD_RESET;
