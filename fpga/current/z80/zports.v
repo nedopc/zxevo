@@ -420,7 +420,7 @@ module zports(
 		if( port_wr && (loa==NIDE11) )
 			idewrreg[15:8] <= din;
 
-		if( port_wr && (loa==NIDE10) )
+		if( port_wr && (loa==NIDE10) && !ide_wrlo_trig )
 			idewrreg[ 7:0] <= din;
 	end
 

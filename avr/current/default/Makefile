@@ -43,10 +43,10 @@ FPGACORE = top.o
 
 ## Build
 all: $(TARGET) core.hex core.eep core.lss size zxevo_test.bin
-	mv zxevo_test.bin zxevo_fw.bin
+	mv zxevo_test.bin ZXEVO_FW.BIN
 
 release: $(TARGET) core.hex core.eep core.lss size zxevo_release.bin
-	mv zxevo_release.bin zxevo_fw.bin
+	mv zxevo_release.bin ZXEVO_FW.BIN
 
 ## Compile
 zx.o: ../zx.c ../zx.h
@@ -117,11 +117,11 @@ size: ${TARGET}
 
 zxevo_test.bin: core.hex core.eep
 	../../../tools/make_fw/make_fw core.hex core.eep version.txt
-	mv zxevo_fw.bin zxevo_test.bin
+	mv ZXEVO_FW.BIN zxevo_test.bin
 
 zxevo_release.bin: core.hex core.eep
 	../../../tools/make_fw/make_fw core.hex core.eep version.txt o
-	mv zxevo_fw.bin zxevo_release.bin
+	mv ZXEVO_FW.BIN zxevo_release.bin
 
 ## Clean target
 .PHONY: clean
