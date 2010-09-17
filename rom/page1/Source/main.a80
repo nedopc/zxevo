@@ -1,271 +1,278 @@
 
-;LAST UPDATE: 16.05.2010 savelij
+;LAST UPDATE: 23.08.2010 SAVELIJ
 
+		include ../../macros.a80
+
+;		ORG 0000H
+
+;		BINCLUDE TR503.ROM
 ;---------------------------------------
-		ORG #0000
+		ORG 0X0000
 		DI
 		LD A,7
-		OUT (#FE),A
-		JR 1F
-		DB #FF
+		OUT (0X0FE),A
+		JR NEXT1
+
+		DB 0X0FF
 
 		JP $			;RST #08-‘‚ŽŽ„…
 
-1		LD A,#3F
-		JR 2F
-		DB #FF
+NEXT1		LD A,0X3F
+		JR NEXT2
 
-		JP #3D82		;RST #10
+		DB 0X0FF
 
-2		LD I,A
-		JR 3F
-		DB #FF
+		JP 0X3D82		;RST #10
 
-		JP #2707		;RST #18
+NEXT2		LD I,A
+		JR NEXT3
+		DB 0X0FF
 
-3		DS 3	;CALL INIT4DOS
-		JR 4F
+		JP 0X2707		;RST #18
 
-		JP #2F72		;RST #20
+NEXT3		DB 3 DUP 0		;CALL INIT4DOS
+		JR NEXT4
 
-4		LD HL,#FFFF
-		JR 5F
+		JP 0X2F72		;RST #20
 
-		JP #2323		;RST #28
+NEXT4		LD HL,0X0FFFF
+		JR NEXT5
 
-5		XOR A
+		JP 0X2323		;RST #28
+
+NEXT5		XOR A
 		LD B,A
 		LD C,A
-		JR 6F
+		JR NEXT6
 
 		JP $			;RST #30-‘‚ŽŽ„…
 
-6		LD SP,HL
-		JR 7F
+NEXT6		LD SP,HL
+		JR NEXT7
 
-		DB #FF,#FF
+		DB 0X0FF,0X0FF
 
 		EI			;RST #38
 		RET
 
-7		DUP 8
+NEXT7		REPT 8
 		PUSH BC
-		EDUP
-		LD HL,#A500
+		ENDM
+		LD HL,0X0A500
 		ADD HL,SP
-		JR C,7B
+		JR C,NEXT7
 ;---------------------------------------
-		ORG #0066
+		ORG 0X0066
 		EI			;MAGIC-ŽŠ€ ‡€ƒ‹“˜Š€
 		RETN
 ;---------------------------------------
-		ORG #007F
-		LD BC,#0540		;›‹Ž LD BC,#1E40
+		ORG 0X007F
+		LD BC,0X0540		;›‹Ž LD BC,#1E40
 ;---------------------------------------
-		ORG #00E1
-		LD HL,#0223		;›‹Ž LD HL,#0523
+		ORG 0X00E1
+		LD HL,0X0223		;›‹Ž LD HL,#0523
 ;---------------------------------------
-		ORG #0322
-		LD A,#14		;ŠŽŒ€„€ GOTO ‚ ŠŽ–… ‘ˆ‘Š€ ˆ … Ž„„…†ˆ‚€…’‘Ÿ
+		ORG 0X0322
+		LD A,0X14		;ŠŽŒ€„€ GOTO ‚ ŠŽ–… ‘ˆ‘Š€ ˆ … Ž„„…†ˆ‚€…’‘Ÿ
 ;---------------------------------------
-		ORG #0360		;ƒ‹€‚Ž… ‚›‚…‘Š“ ……ˆ’œ, Ž‘’€‹œŽ… ”ˆƒŸ ;)
-		DB #16,#01,#05
-		DB "* EVO-DOS Ver 0.1 *"
-		DB #0D,#0D,#7F
+		ORG 0X0360		;ƒ‹€‚Ž… ‚›‚…‘Š“ ……ˆ’œ, Ž‘’€‹œŽ… ”ˆƒŸ ;)
+		DB 0X16,0X01,0X05
+		DB "* EVO-DOS VER 0.1 *"
+		DB 0X0D,0X0D,0X7F
 		;  12345678901234567890123456789012
-		DB " 2010 Created for PentEvo 4Mb "
-		DB #16,#05,#0B
-		DB "NedoPC"
-		DB #16,#07,#05
-		DB "Beta 128",0
+		DB " 2010 CREATED FOR PENTEVO 4MB "
+		DB 0X16,0X05,0X0B
+		DB "NEDOPC"
+		DB 0X16,0X07,0X05
+		DZ "BETA 128"
 ;---------------------------------------
-		ORG #0644		;ˆ ‡€Ž‹…ˆˆ „ˆ› ‚›‚Ž„ˆ’œ €„ˆ‘œ "DIRESTORY FULL"
-		JP Z,#2723		;›‹Ž JP Z,#1C45 "NO SPACE"
+		ORG 0X0644		;ˆ ‡€Ž‹…ˆˆ „ˆ› ‚›‚Ž„ˆ’œ €„ˆ‘œ "DIRESTORY FULL"
+		JP Z,0X2723		;›‹Ž JP Z,#1C45 "NO SPACE"
 ;---------------------------------------
-		ORG #1000		;“„€‹…ˆ… ’…Š‘’€ Ž INTERFACE 1
-		DS #18,#FF
+		ORG 0X1000		;“„€‹…ˆ… ’…Š‘’€ Ž INTERFACE 1
+		DB 0X18 DUP 0X0FF
 ;---------------------------------------
-		ORG #1572
-		JP #040F		;›‹Ž JP #1D1A ‚›„€’œ "DISK ERROR" ‚Œ…‘’Ž "ERROR"
+		ORG 0X1572
+		JP 0X040F		;›‹Ž JP #1D1A ‚›„€’œ "DISK ERROR" ‚Œ…‘’Ž "ERROR"
 ;---------------------------------------
-		ORG #19B3
-		LD (#5D0C),A		;›‹Ž LD (#5D1F),A …‡ ŠŽŒ…’€ˆ…‚, ‘ŒŽ’…’œ ‘Ž–› Ž ”…„ˆ“ ˆ Ž–“ Ž €„…‘“ #2F90 ’€Œ †…
+		ORG 0X19B3
+		LD (0X5D0C),A		;›‹Ž LD (#5D1F),A …‡ ŠŽŒ…’€ˆ…‚, ‘ŒŽ’…’œ ‘Ž–› Ž ”…„ˆ“ ˆ Ž–“ Ž €„…‘“ #2F90 ’€Œ †…
 ;---------------------------------------
-		ORG #1C69
+		ORG 0X1C69
 		OR B			;›‹Ž OR A Ž‚…Š€ „‹ˆ› ‚‚…„…Ž‰ ‘’ŽŠˆ
 ;---------------------------------------
-		ORG #1D0C		;“‘’€ˆ… €ƒ€ “‘’€…ƒŽ VELESOFT (‚Ž‘‘’€Ž‚‹…ˆ… HL'=#2758)
+		ORG 0X1D0C		;“‘’€ˆ… €ƒ€ “‘’€…ƒŽ VELESOFT (‚Ž‘‘’€Ž‚‹…ˆ… HL'=#2758)
 		EXX
-		LD HL,#2758
+		LD HL,0X2758
 		EXX
 		DEC HL
-		LD A,#12
+		LD A,0X12
 		CP (HL)
 		RET NZ
 		DEC HL
-		JP #235
+		JP 0X0235
 ;---------------------------------------
-		ORG #205E
-		LD B,#3C		;›‹Ž LD B,#32
+		ORG 0X205E
+		LD B,0X3C		;›‹Ž LD B,#32
 ;---------------------------------------
-		ORG #274A
-		LD A,#18		;›‹Ž LD A,#1B
+		ORG 0X274A
+		LD A,0X18		;›‹Ž LD A,#1B
 ;---------------------------------------
-		ORG #2A56		;“„€‹…ˆ… ‚‘…ƒŽ ŠŽ„€ „‹Ÿ ŠŽŠˆ MAGIC
-		DS #2F69-$-2,0
+		ORG 0X2A56		;“„€‹…ˆ… ‚‘…ƒŽ ŠŽ„€ „‹Ÿ ŠŽŠˆ MAGIC
+		DUPL 0X2F69-$-2,0
 		DI
 		HALT
-		DISPLAY $-#2A56
+		;DISPLAY $-0X2A56
 ;---------------------------------------
-;		ORG #2F55
-;		LD A,#18		;›‹Ž LD A,#1B
+;		ORG 0X2F55
+;		LD A,0X18		;›‹Ž LD A,#1B
 ;---------------------------------------
-;		ORG #2F65
-;		LD A,#08		;›‹Ž LD A,#0B
+;		ORG 0X2F65
+;		LD A,0X08		;›‹Ž LD A,#0B
 ;---------------------------------------
 ;ŠŽ„ ŠŽŠˆ Œ€ƒˆŠ ˆˆ‹, ‚ ‘‚Ÿ‡ˆ ‘ —…Œ ŠŽŒ€„€ GOTO ……Œ…™…€ ‚ Š‹Ž…– ‘ˆ‘Š€
-		ORG #2FF3
-		DB #CF			;CAT
-		DB #2A			;*
-		DB #D0			;FORMAT
-		DB #D1			;MOVE
-		DB #E6			;NEW
-		DB #D2			;ERASE
-		DB #EF			;LOAD
-		DB #F8			;SAVE
-		DB #FE			;RETURN
-		DB #BE			;PEEK
-		DB #F4			;POKE
-		DB #D5			;MERGE
-		DB #F7			;RUN
-		DB #D3			;OPEN
-		DB #D4			;CLOSE
-		DB #FF			;COPY
-		DB #34			;40
-		DB #38			;80
-		DB #F0			;LIST
-		DB #D6			;VERIFY
-		DB #EC			;GOTO
+		ORG 0X2FF3
+		DB 0X0CF		;CAT
+		DB 0X2A			;*
+		DB 0X0D0		;FORMAT
+		DB 0X0D1		;MOVE
+		DB 0X0E6		;NEW
+		DB 0X0D2		;ERASE
+		DB 0X0EF		;LOAD
+		DB 0X0F8		;SAVE
+		DB 0X0FE		;RETURN
+		DB 0X0BE		;PEEK
+		DB 0X0F4		;POKE
+		DB 0X0D5		;MERGE
+		DB 0X0F7		;RUN
+		DB 0X0D3		;OPEN
+		DB 0X0D4		;CLOSE
+		DB 0X0FF		;COPY
+		DB 0X34			;40
+		DB 0X0EC		;GOTO
+		DB 0X38			;80
+		DB 0X0F0		;LIST
+		DB 0X0D6		;VERIFY
 
-		ORG #3008
-		DW #0433		;CAT
-		DW #1018		;*
-		DW #1EC2		;FORMAT
-		DW #16AB		;MOVE
-		DW #053A		;NEW
-		DW #0787		;ERASE
-		DW #1815		;LOAD
-		DW #1AD0		;SAVE
-		DW #1CFB		;RETURN
-		DW #19A5		;PEEK
-		DW #19A9		;POKE
-		DW #19B1		;MERGE
-		DW #1D4D		;RUN
-		DW #2182		;OPEN
-		DW #2656		;CLOSE
-		DW #0690		;COPY
-		DW #2997		;40
-		DW #29AE		;80
-		DW #11CE		;LIST
-		DW #1810		;VERIFY
-		DW #2DA1		;GOTO
+		ORG 0X3008
+		DW 0X0433		;CAT
+		DW 0X1018		;*
+		DW 0X1EC2		;FORMAT
+		DW 0X16AB		;MOVE
+		DW 0X053A		;NEW
+		DW 0X0787		;ERASE
+		DW 0X1815		;LOAD
+		DW 0X1AD0		;SAVE
+		DW 0X1CFB		;RETURN
+		DW 0X19A5		;PEEK
+		DW 0X19A9		;POKE
+		DW 0X19B1		;MERGE
+		DW 0X1D4D		;RUN
+		DW 0X2182		;OPEN
+		DW 0X2656		;CLOSE
+		DW 0X0690		;COPY
+		DW 0X2997		;40
+		DW 0X2DA1		;GOTO
+		DW 0X29AE		;80
+		DW 0X11CE		;LIST
+		DW 0X1810		;VERIFY
 ;---------------------------------------
-		ORG #30FD
-		DB "SAVE",#80
+		ORG 0X30FD
+		DB "SAVE",0X80
 		DC "SAVE"
-		DB "LOAD",#80
+		DB "LOAD",0X80
 		DC "LOAD"
-		DB "RUN",#80
+		DB "RUN",0X80
 		DC "RUN"
-		DB "CAT",#80
+		DB "CAT",0X80
 		DC "CAT"
-		DB "ERASE",#80
+		DB "ERASE",0X80
 		DC "ERASE"
-		DB "NEW",#80
+		DB "NEW",0X80
 		DC "NEW"
-		DB "MOVE",#80
+		DB "MOVE",0X80
 		DC "MOVE"
-		DB "MERGE",#80
+		DB "MERGE",0X80
 		DC "MERGE"
-		DB "PEEK",#80
+		DB "PEEK",0X80
 		DC "PEEK"
-		DB "POKE",#80
+		DB "POKE",0X80
 		DC "POKE"
-		DB "OPEN",#83
-		DB "CLOSE",#83
-		DB "CODE",#80
+		DB "OPEN",0X83
+		DB "CLOSE",0X83
+		DB "CODE",0X80
 		DC "CODE"
-		DB "RND",#80
+		DB "RND",0X80
 		DC "RND"
-		DB "DATA",#80
+		DB "DATA",0X80
 		DC "DATA"
-		DB "SCREEN",#04,#84
-		DB "SCREEN",#84
-		DB "COPY",#80
+		DB "SCREEN",0X04,0X84
+		DB "SCREEN",0X84
+		DB "COPY",0X80
 		DC "COPY"
-		DB "FORMAT",#80
+		DB "FORMAT",0X80
 		DC "FORMAT"
-		DB "GOTO",#80
+		DB "GOTO",0X80
 		DC "GOTO"
-		DB "LIST",#80
+		DB "LIST",0X80
 		DC "LIST"
-		DB "LINE",#80
+		DB "LINE",0X80
 		DC "LINE"
-		DB "VERIFY",#80
+		DB "VERIFY",0X80
 		DC "VERIFY"
-		DB #FF,#FF
+		DB 0X0FF,0X0FF
 
-		ORG #31C8
-		DB #F8,#F8		;SAVE
-		DB #EF,#EF		;LOAD
-		DB #F7,#F7		;RUN
-		DB #CF,#CF		;CAT
-		DB #D2,#D2		;ERASE
-		DB #E6,#E6		;NEW
-		DB #D1,#D1		;MOVE
-		DB #D5,#D5		;MERGE
-		DB #BE,#BE		;PEEK
-		DB #F4,#F4		;POKE
-		DB #D3,#D4		;OPEN CLOSE
-		DB #AF,#AF		;CODE
-		DB #A5,#A5		;RND
-		DB #E4,#E4		;DATA
-		DB #AA,#AA		;SCREEN$
-		DB #FF,#FF		;COPY
-		DB #D0,#D0		;FORMAT
-		DB #EC,#EC		;GOTO
-		DB #F0,#F0		;LIST
-		DB #CA,#CA		;LINE
-		DB #D6,#D6		;VERIFY
+		ORG 0X31C8
+		DB 0X0F8,0X0F8		;SAVE
+		DB 0X0EF,0X0EF		;LOAD
+		DB 0X0F7,0X0F7		;RUN
+		DB 0X0CF,0X0CF		;CAT
+		DB 0X0D2,0X0D2		;ERASE
+		DB 0X0E6,0X0E6		;NEW
+		DB 0X0D1,0X0D1		;MOVE
+		DB 0X0D5,0X0D5		;MERGE
+		DB 0X0BE,0X0BE		;PEEK
+		DB 0X0F4,0X0F4		;POKE
+		DB 0X0D3,0X0D4		;OPEN CLOSE
+		DB 0X0AF,0X0AF		;CODE
+		DB 0X0A5,0X0A5		;RND
+		DB 0X0E4,0X0E4		;DATA
+		DB 0X0AA,0X0AA		;SCREEN$
+		DB 0X0FF,0X0FF		;COPY
+		DB 0X0D0,0X0D0		;FORMAT
+		DB 0X0EC,0X0EC		;GOTO
+		DB 0X0F0,0X0F0		;LIST
+		DB 0X0CA,0X0CA		;LINE
+		DB 0X0D6,0X0D6		;VERIFY
 
 ;---------------------------------------
-		ORG #122B		;“‘’€…ˆ… ƒ‹žŠ€ OUT OF MEMORY ˆ LIST
-		CALL #3BF6		;Ž„‘ŒŽ’…Ž ‚ —…˜‘ŠŽ‰ ‚…‘ˆˆ TR-DOS 5.05
+		ORG 0X122B		;“‘’€…ˆ… ƒ‹žŠ€ OUT OF MEMORY ˆ LIST
+		CALL 0X3BF6		;Ž„‘ŒŽ’…Ž ‚ —…˜‘ŠŽ‰ ‚…‘ˆˆ TR-DOS 5.05
 
-		ORG #3BF6		;Ž‹…Œ€ … “‘’€Ÿ…’‘Ÿ Ž‹Ž‘’œž, ’Ž‹œŠŽ “‚…‹ˆ—ˆ‚€…’‘Ÿ ‚Ž‡ŒŽ†Ž…
-		LD HL,#5E06		;ŠŽ‹ˆ—…‘’‚Ž ŠŽŒ€„ LIST
-		LD A,#FF		;ˆ Ž‹…Œ€ … ‚ Ž‘‚ŽŽ†„…ˆˆ ‚›„…‹…Ž‰ €ŒŸ’ˆ, € ‚ … ‚Ž‘‘’€Ž‚‹…ˆˆ
-		LD (#5D0E),A		;……Œ…Ž‰ WORKSP (#5C61)
+		ORG 0X3BF6		;Ž‹…Œ€ … “‘’€Ÿ…’‘Ÿ Ž‹Ž‘’œž, ’Ž‹œŠŽ “‚…‹ˆ—ˆ‚€…’‘Ÿ ‚Ž‡ŒŽ†Ž…
+		LD HL,0X5E06		;ŠŽ‹ˆ—…‘’‚Ž ŠŽŒ€„ LIST
+		LD A,0X0FF		;ˆ Ž‹…Œ€ … ‚ Ž‘‚ŽŽ†„…ˆˆ ‚›„…‹…Ž‰ €ŒŸ’ˆ, € ‚ … ‚Ž‘‘’€Ž‚‹…ˆˆ
+		LD (0X5D0E),A		;……Œ…Ž‰ WORKSP (#5C61)
 		RET
 ;---------------------------------------
-		ORG #3D26		;“ˆ—’Ž†…ˆ… ‘‹…„Ž‚ ŠŽ„€ „‹Ÿ INTERFACE 1
-		CALL C,#3D64		;›‹Ž CALL C,#3D4C
+		ORG 0X3D26		;“ˆ—’Ž†…ˆ… ‘‹…„Ž‚ ŠŽ„€ „‹Ÿ INTERFACE 1
+		CALL C,0X3D64		;›‹Ž CALL C,3D4C
 
-		ORG #3D38		
-		DS #3D64-$,#FF		;Ž‘‚ŽŽ†„…ˆ… €ŒŸ’ˆ
+		ORG 0X3D38
+		DS 0X3D64-$		;Ž‘‚ŽŽ†„…ˆ… €ŒŸ’ˆ
 
 		XOR A
-		OUT (#FF),A
+		OUT (0X0FF),A
 ;---------------------------------------
-		ORG #3D98
-		LD A,#08		;›‹Ž LD A,#0B
+		ORG 0X3D98
+		LD A,0X08		;›‹Ž LD A,0B
 ;---------------------------------------
-		ORG #3DAD
-		LD A,#08		;›‹Ž LD A,#0B
+		ORG 0X3DAD
+		LD A,0X08		;›‹Ž LD A,0B
 ;---------------------------------------
-		ORG #3DEA
-		JR Z,$+#10		;›‹Ž JR NZ,$+#10
+		ORG 0X3DEA
+		JR Z,$+0X10		;›‹Ž JR NZ,$+#10
 ;---------------------------------------
-		ORG #3E1E
-		LD A,#08		;›‹Ž LD A,#0B
+		ORG 0X3E1E
+		LD A,0X08		;›‹Ž LD A,0B
 ;---------------------------------------

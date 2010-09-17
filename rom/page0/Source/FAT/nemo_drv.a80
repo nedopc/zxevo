@@ -7,7 +7,7 @@ Hddrds		EQU 2
 Hddrdm		EQU 3
 
 ;™€ ’—€ ‚•„€ „‹ €’› ‘ HDD NEMO
-		EXA
+		EX AF,AF'
 		EX (SP),HL
 		LD A,(HL)
 		INC HL
@@ -24,7 +24,7 @@ Hddrdm		EQU 3
 		INC HL
 		LD H,(HL)
 		LD L,A
-		EXA
+		EX AF,AF'
 		EX (SP),HL
 		RET
 
@@ -39,29 +39,29 @@ TBLHDDN		DW HDDINIT
 ;A-ª®«¨η¥αβΆ® ΅«®ª®Ά (΅«®ª=512 ΅ ©β)
 ;β®«μª® ¤«ο ¬­®£®΅«®η­®© § ―¨α¨/ηβ¥­¨¨
 
-P_1F7		EQU #F0			;…ƒ‘’ ‘‘’/…ƒ‘’ €„
-P_1F6		EQU #D0			;CHS-… ƒ‹‚›  “‘’/LBA €„…‘ 24-27
-P_1F5		EQU #B0			;CHS-–‹„ 8-15/LBA €„…‘ 16-23
-P_1F4		EQU #90			;CHS-–‹„ 0-7/LBA €„…‘ 8-15
-P_1F3		EQU #70			;CHS-… ‘…’€/LBA €„…‘ 0-7
-P_1F2		EQU #50			;‘—…’— ‘…’‚
-P_1F1		EQU #30			;’ /‘‚‰‘’‚
-P_1F0		EQU #10			;’ „€›•
-P_3F6		EQU #C8			;…ƒ‘’ ‘‘’/“€‚‹…
-P_HI		EQU #19			;‘’€… 8 ’
+P_1F7		EQU 0XF0			;…ƒ‘’ ‘‘’/…ƒ‘’ €„
+P_1F6		EQU 0XD0			;CHS-… ƒ‹‚›  “‘’/LBA €„…‘ 24-27
+P_1F5		EQU 0XB0			;CHS-–‹„ 8-15/LBA €„…‘ 16-23
+P_1F4		EQU 0X90			;CHS-–‹„ 0-7/LBA €„…‘ 8-15
+P_1F3		EQU 0X70			;CHS-… ‘…’€/LBA €„…‘ 0-7
+P_1F2		EQU 0X50			;‘—…’— ‘…’‚
+P_1F1		EQU 0X30			;’ /‘‚‰‘’‚
+P_1F0		EQU 0X10			;’ „€›•
+P_3F6		EQU 0XC8			;…ƒ‘’ ‘‘’/“€‚‹…
+P_HI		EQU 0X11			;‘’€… 8 ’
 PRT_RW		EQU P_1F0*256+P_HI	;’› —’…/‡€‘ „ ‘‹‚
 
 ;€ ‚›•„…:
-;H-„‹ MASTER 0-HDD, 1-CDROM, #FF-NONE
-;L-„‹ SLAVE  0-HDD, 1-CDROM, #FF-NONE
-HDDINIT		LD A,#E0
+;H-„‹ MASTER 0-HDD, 1-CDROM, 0XFF-NONE
+;L-„‹ SLAVE  0-HDD, 1-CDROM, 0XFF-NONE
+HDDINIT		LD A,0XE0
 		PUSH HL
 		CALL ID_DEV
 		POP HL
 		AND A
 		CALL Z,INIT_91
 		LD D,A
-		LD A,#F0
+		LD A,0XF0
 		PUSH DE
 		PUSH HL
 		CALL ID_DEV
@@ -79,8 +79,8 @@ INIT_91		PUSH HL
 		LD A,(HL)
 		AND 2
 		JR Z,INI_912
-		LD BC,#FF00+P_1F2
-		LD L,#0C
+		LD BC,0XFF00+P_1F2
+		LD L,0X0C
 		LD A,(HL)
  		OUT (C),A
  		LD L,6
@@ -89,58 +89,57 @@ INIT_91		PUSH HL
 		DEC A
 		OUT (C),A
 		LD C,P_1F7
-		LD A,#91
+		LD A,0X91
 		OUT (C),A
-		LD DE,#1000
+		LD DE,0X1000
 INI_911		DEC DE
 		LD A,D
 		OR E
 		JR Z,INI_912
 		IN A,(C)
-		AND #80
+		AND 0X80
 		JR NZ,INI_911
 		POP HL
 		RET
 
-INI_912		LD A,#FF
+INI_912		LD A,0XFF
 		POP HL
 		RET
-
 
 HDDRDS		LD A,1
 HDDRDM		PUSH BC
 		PUSH DE
 		CALL SETHREG
-		EXA
+		EX AF,AF'
 		LD C,P_1F7
-		LD A,#20
+		LD A,0X20
 		OUT (C),A
 		LD C,P_1F7
 HDDRD1		IN A,(C)
-		AND #88
+		AND 0X88
 		CP 8
 		JR NZ,HDDRD1
-		EXA
-HDDRD2		EXA
+		EX AF,AF'
+HDDRD2		EX AF,AF'
 		CALL READSEC
 		LD C,P_1F7
 HDDRD3		IN A,(C)
-		AND #80
+		AND 0X80
 		JR NZ,HDDRD3
-		EXA
+		EX AF,AF'
 		DEC A
 		JR NZ,HDDRD2
 		POP DE
 		POP BC
 		LD A,B
-		AND #0F
+		AND 0X0F
 		LD B,A
 		XOR A
 		RET
 
-READSEC		LD A,#40
+READSEC		LD A,0X40
 		LD C,P_1F0
-READSC1		DUP 4
+READSC1		REPT 4
 		IN E,(C)
 		INC C
 		IN D,(C)
@@ -149,7 +148,7 @@ READSC1		DUP 4
 		INC HL
 		LD (HL),D
 		INC HL
-		EDUP
+		ENDM
 		DEC A
 		JR NZ,READSC1
 		RET
@@ -157,12 +156,12 @@ READSC1		DUP 4
 SETHREG		PUSH DE
 		LD D,B
 		LD E,C
-		LD BC,#FF00+P_1F6
+		LD BC,0XFF00+P_1F6
 		OUT (C),D
-		EXA
+		EX AF,AF'
 		LD C,P_1F7
 SETHRE1		IN A,(C)
-		AND #80
+		AND 0X80
 		JR NZ,SETHRE1
 		LD C,P_1F5
 		OUT (C),E
@@ -172,13 +171,13 @@ SETHRE1		IN A,(C)
 		LD C,P_1F3
 		OUT (C),E
 		LD C,P_1F2
-		EXA
+		EX AF,AF'
 		OUT (C),A
 		RET
 
 ;HL-€„…‘ “”…€ ‘…’€ „…’”€–
 ;A=E0-„‹ MASTER, A=F0-„‹ SLAVE
-ID_DEV		LD BC,#FF00+P_1F6
+ID_DEV		LD BC,0XFF00+P_1F6
 		OUT (C),A
 		LD C,P_1F7
 		IN A,(C)
@@ -191,7 +190,7 @@ ID_DEV		LD BC,#FF00+P_1F6
 		OUT (C),A
 		LD C,P_1F4
 		OUT (C),A
-		LD A,#EC
+		LD A,0XEC
 		LD C,P_1F7
 		OUT (C),A
 		LD C,P_1F7
@@ -204,7 +203,7 @@ ID_DEV1		IN A,(C)
 		RRCA
 		JR C,ID_DEV2
 		RLCA
-		AND #88
+		AND 0X88
 		CP 8
 		JR NZ,ID_DEV1
 ID_DEV2		LD C,P_1F4
@@ -214,9 +213,9 @@ ID_DEV2		LD C,P_1F4
 		LD A,D
 		OR E
 		JP Z,READSEC
-		LD HL,#EB14
+		LD HL,0XEB14
 		SBC HL,DE
 		LD A,1
 		RET Z
-NO_DEV		LD A,#FF
+NO_DEV		LD A,0XFF
 		RET

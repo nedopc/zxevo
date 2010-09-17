@@ -1,38 +1,38 @@
 
 ;‡€ƒ“‡€ ‘ ‹…’›
 TAPELOAD	LD IX,TAPE_LDT
-		CALL DRAWWIN		;€‘‚€‹   ‡€ƒ“‡“ ‘ ‹…’›
+		CALL WINW		;€‘‚€‹   ‡€ƒ“‡“ ‘ ‹…’›
 		CALL MEMSET		;‚›‘’€‚‹ …†› €’  ’“›
 		LD HL,BAS4TAPE
-		LD DE,#5C3A
+		LD DE,0X5C3A
 		LD BC,EBAS4TAPE-BAS4TAPE
 		LDIR			;………›… €‘€ ‘„…‹€‹ FOR ONLY TAPE
 		LD HL,ERROR_TAPE
 		PUSH HL
-		LD (#5C3D),SP		;……•‚€’  …‘‹ …‘’ †…‹€… ‚…“’‘
-		LD HL,#FF58
+		LD (0X5C3D),SP		;……•‚€’  …‘‹ …‘’ †…‹€… ‚…“’‘
+		LD HL,0XFF58
 		LD SP,HL		;‚›‘’€‚‹ ‘’… € ‹ …‰‘ 48
-		LD DE,#3E08
-		LD BC,#A8
+		LD DE,0X3E08
+		LD BC,0XA8
 		EX DE,HL
 		LDIR			;‹†‹ ”’ UDG
-		LD HL,#3E00
+		LD HL,0X3E00
 		PUSH HL
-		LD HL,#1303
+		LD HL,0X1303
 		PUSH HL
-		LD HL,#1B76
+		LD HL,0X1B76
 		PUSH HL			;‡€‹‹ „ ……‘’€‚‹…ƒ ‘’…€
-		LD IX,#5CD1		;“‘’€‚‹ „‹ ‡€ƒ“‡ ‘ ‹…’›
-		JP #073E		;……•„ € ‡€ƒ“‡“ ‘ ‹…’›
+		LD IX,0X5CD1		;“‘’€‚‹ „‹ ‡€ƒ“‡ ‘ ‹…’›
+		JP 0X073E		;……•„ € ‡€ƒ“‡“ ‘ ‹…’›
 
 ;……•‚€’  ‹ …€ „‹ ‚‡‚€’€ ‚ HE GLUK
 ERROR_TAPE	LD HL,BAS_VAR
-		LD DE,#5C00
+		LD DE,0X5C00
 		LD BC,END_BAS_VAR-BAS_VAR
 		LDIR			;‚…“‹ ’›„‘›… ………›… € …‘’
 		XOR A
-		LD (#5C3D),BC		;‘‹ ……•‚€’— 
-		OUT (#FE),A
+		LD (0X5C3D),BC		;‘‹ ……•‚€’— 
+		OUT (0XFE),A
 		DEC A
 		LD (gFenv),A
 		CALL GLUDIN		;ƒ“„…‹ ‚ €“ —’ ›‹€ €
@@ -55,107 +55,116 @@ RAM_764		LD HL,764*4		;RAM DISK € 768 ‹€‰’
 ;‘‡„€… € „‘€ € 896 ‹
 RAM_892		LD HL,892*4		;RAM DISK € 896 ‹€‰’
 KILRAMd		LD (SECFREE),HL		;‚›‘’€‚‹ ………“ ‹—…‘’‚€ ‘…’‚ € RAM DISK
-		LD A,#F7
-		CALL PAGE_A		;‚‹—‹ ‘’€–“ ƒ„… €‘‹€ƒ€…’‘ „€ RAM DISK
-		LD HL,#C000
+		LD A,0XF7
+		CALL SET_7FFD		;‚‹—‹ ‘’€–“ ƒ„… €‘‹€ƒ€…’‘ „€ RAM DISK
+		LD HL,0XC000
 		LD D,H
 		LD E,L
 		INC DE
-		LD BC,#0FFF
+		LD BC,0X0FFF
 		LD (HL),L
 		LDIR			;—‘’‹ ‘’€–“ „›
 		LD HL,DSKINFO
-		LD DE,#C8E1
+		LD DE,0XC8E1
 		LD C,DSK_END-DSKINFO
 		LDIR			;………‘‹ €‹ „‹ 9 ‘…’€ „›
-		CALL PAGE_0		;‚…“‹ ‘’€–“ 0
+		CALL SET_7FFD_0		;‚…“‹ ‘’€–“ 0
 		JP RESTART		;……‘‚€ ƒ‹€‚ƒ …
 
-_STUPID	LD SP,GlukStk
-	CALL PAGE_0
-	EI
-	CALL resVG
-	LD IX,mSTUPID
-	CALL DRAWWIN
-	CALL GLUKEY
-	LD A,#FF
-	LD (gFenv),A
-	CALL GLUDIN		;HL
-	LD A,1
-	LD (gFenv),A
-	JP RESTART
+RESETNGS	LD A,0X80
+		OUT (0X33),A
+		JP RESTART
+
+PRT_NONETRDOS	LD IX,NONETRDOS
+		CALL WINW
+		JR STUPID1
+
+_STUPID		LD IX,MSTUPID
+		CALL DRAWWIN
+STUPID1		LD SP,(TEK_SP)
+		CALL SET_7FFD_0
+		EI
+		CALL RESET_VG
+		CALL EXIT4ERROR
+		LD A,0XFF
+		LD (gFenv),A
+		CALL GLUDIN		;HL
+		LD A,1
+		LD (gFenv),A
+		JP RESTART
 
 ;……•„‹€ ‚ €‘128
-BAS128	CALL SYSTEM
-	CALL MEMSET
-	DI
-	XOR A
-	CALL PAGE_A
-	RST 0
+BAS128		CALL SYSTEM
+		CALL MEMSET
+		DI
+		XOR A
+		CALL SET_7FFD
+		RST 0
 
 ;……•„‹€ ‚ €‘48
-BAS48	CALL SYSTEM
-	CALL MEMSET
-	RST 0
+BAS48		CALL SYSTEM
+		CALL MEMSET
+		RST 0
 
 ;……•„‹€ ‚ ’›„‘
-DOS128	CALL SYSTEM
-	CALL MEMSET
-	LD IX,0
-	JP DOSIX
+DOS128		CALL SYSTEM
+		CALL MEMSET
+		LD IX,0
+		JP DOSIX
 
 ;…•€ ‡€—‘’ ‘’€–, ”€’‚€ €„‘€  „‘…’›‰ 
-_KILLS	LD IX,mKILLS
-	CALL DRAWWIN
-	LD IX,aKILLS
-	JP _RULILKA
+_KILLS		LD IX,MKILLS
+		CALL WINW
+		JP _RULILKA
 
 ;‡€“‹…… ‚‘… €’
-KIALPGS	LD A,#D7	;―ΰ Άλ¥ 512K
-	CALL KIPGSU
-	LD A,#F7	;«¥Άλ¥ 512K
-	JR 3F
+KIALPGS		LD A,0XD7	;―ΰ Άλ¥ 512K
+		CALL KIPGSU
+		LD A,0XF7	;«¥Άλ¥ 512K
+		JR KIPGS3
 
 ;‡€“‹…… 128 €’
-KIPGS	LD A,#17
-3	CALL KIPGSU
-	JP RESTART
+KIPGS		LD A,0X17
+KIPGS3		CALL KIPGSU
+		JP RESTART
 
 ;‘‘’‚… ‡€“‹’
-KIPGSU	DI
-	LD DE,0
-	LD HL,0
-	ADD HL,SP
-KIPGS0	CP #15
-	JR Z,2F
-	CP #12
-	JR Z,2F
-	LD BC,#7FFD
-	OUT (C),A
-	LD SP,0
-	LD B,D
-1	DUP 32
-	PUSH DE
-	EDUP
-	DJNZ 1B
-	LD SP,HL
-2	LD C,A
-	AND #C7
-	RET Z
-	AND 7
-	LD A,C
-	JR NZ,$+4
-	SUB #38
-	DEC A
-	JR KIPGS0
+KIPGSU		DI
+		LD DE,0
+		LD HL,0
+		ADD HL,SP
+KIPGS0		CP 0X15
+		JR Z,KIPGS2
+		CP 0X12
+		JR Z,KIPGS2
+		CP 0X10
+		JR Z,KIPGS2
+		LD BC,0X7FFD
+		OUT (C),A
+		LD SP,0
+		LD B,D
+KIPGS1		REPT 32
+		PUSH DE
+		ENDM
+		DJNZ KIPGS1
+		LD SP,HL
+KIPGS2		LD C,A
+		AND 0XC7
+		RET Z
+		AND 7
+		LD A,C
+		JR NZ,$+4
+		SUB 0X38
+		DEC A
+		JR KIPGS0
 
 COPYDISK
 	LD A,(DRV_SYM)
 	LD (CDsrc),A
 	LD IX,mINSOUT
 	CALL DRAWWIN
-	CALL GLUKEY
-	LD A,(#5C08)
+	CALL EXIT4ERROR
+	LD A,(0X5C08)
 	SUB "1"
 	CP 4
 	JR NC,COPYDQ
@@ -165,37 +174,32 @@ COPDSK0
 CDsrc	EQU $+1
 	LD A,0
 	CALL COPDSKPP
-	LD BC,#4005
+	LD BC,0X4005
 	PUSH DE
-	CALL #3D13
+	CALL TO_DOS4BAS
 	POP DE
 CDtrg	EQU $+1
 	LD A,0
 	CALL COPDSKPP
-	LD BC,#4006
-	CALL #3D13
-	LD DE,(#5CF4)
+	LD BC,0X4006
+	CALL TO_DOS4BAS
+	LD DE,(0X5CF4)
 	LD A,D
-	CP #A0
+	CP 0XA0
 	JR NZ,COPDSK0
 COPYDQ	JP RESTART
 
 COPDSKPP
 	CALL SELDRVPP
 	CALL GET_DRV_SYM
-	LD HL,#C000
+	LD HL,0XC000
 	RET
 
-	INCLUDE "HDDBOOT.A80"
-
-CDBOOTGO
-	INCLUDE "CDBOOT.a80"
-
-	ENT
+	INCLUDE "hdd_cd_boot.a80"
 
 HDDRDLN	EQU $-HDDREAD
 
 CDBOOT	XOR A
-	CALL CLSA
+	CALL CLS
 	CALL HDDBINI
 	JP CDBOOTGO

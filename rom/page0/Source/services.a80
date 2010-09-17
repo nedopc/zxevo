@@ -1,22 +1,22 @@
 
-DEPKADR		EQU #6000
+DEPKADR		EQU 0X6000
 
-		ORG #0000
+		ORG 0X0000
 
 		DI
-		LD IY,#5C3A
-		LD A,#3F
+		LD IY,0X5C3A
+		LD A,0X3F
 		LD I,A
 		IM 1
 		XOR A
-		OUT (#FE),A
-		LD LX,"P"		;…‘‹ … …„…‹’‘, ’ “„…’ ‚€ „‹ …’€ƒ€
+		OUT (0XFE),A
+		LD IXL,"P"		;…‘‹ … …„…‹’‘, ’ “„…’ ‚€ „‹ …’€ƒ€
 		LD HL,4
-		LD D,#40
+		LD D,0X40
 		LD E,L
-		LD B,#80
+		LD B,0X80
 		LD C,L
-1		LD A,(BC)
+CMPROM1		LD A,(BC)
 		CP (HL)
 		JP NZ,RSTKEYS
 		EX DE,HL
@@ -26,49 +26,49 @@ DEPKADR		EQU #6000
 		DEC L
 		DEC E
 		DEC C
-		JR NZ,1B
-		LD LX,"A"		;…„…‹‹‘, ‚€ „‹ €’
+		JR NZ,CMPROM1
+		LD IXL,"A"		;…„…‹‹‘, ‚€ „‹ €’
 
-		INCLUDE "init_atm_a.a80"
+		INCLUDE init_atm_a.a80
 
 ;―ΰ®Ά¥ΰª  ­ ¦ β¨ο ¤Άγε ª« Ά¨θ (―®ΰβ¨¬ β®«μª® AF,BC)
-RSTKEYS		LD BC,#FEFF
-1		LD A,B
-		IN A,(#FE)
-		DUP 5
+RSTKEYS		LD BC,0XFEFF
+RSTKEYS1	LD A,B
+		IN A,(0XFE)
+		REPT 5
 		RRA
 		JR C,$+3
 		INC C
-		EDUP
+		ENDM
 		RLC B
-		JR C,1B
+		JR C,RSTKEYS1
 		DEC C
 		JP P,GTSTKEY		;€†€’ ‹…… 1 , ……•„  ’…‘’“ ‹€‚€’“›
 		LD DE,0			;1 €†€’€, ‚…… —’ ’
-		LD BC,#7FFD
+		LD BC,0X7FFD
 		PUSH DE
-		LD A,#FE
-		IN A,(#FE)		;—’…… €†€’‘’  "CS"
+		LD A,0XFE
+		IN A,(0XFE)		;—’…… €†€’‘’  "CS"
 		RRA
 		LD A,0
 		JP NC,START_SELECT	; €†€’‰ "CS" ……•„ ‚ …‰‘ 128
-		LD A,#7F
-		IN A,(#FE)		;—’…… €†€’‘’  "SS"
+		LD A,0X7F
+		IN A,(0XFE)		;—’…… €†€’‘’  "SS"
 		LD D,A
 		RRA
 		RRA
-		LD A,#10
+		LD A,0X10
 		JP NC,START_SELECT	; €†€’‰ "CS" ……•„ ‚ …‰‘ 48
 		LD A,D
 		RRA			;‚…€ €†€’‘’  "SPACE"
-		JR C,1F			;……•„ „€‹…… …‘‹ —…ƒ … €†€’
-		LD A,#10
-		LD DE,#3D2F
+		JR C,CMPCFG1		;……•„ „€‹…… …‘‹ —…ƒ … €†€’
+		LD A,0X10
+		LD DE,0X3D2F
 		PUSH DE
 		JP START_SELECT		; €†€’‰ "SPACE" ……•„ ‚ TR-DOS
 
-1		LD A,#FD
-		IN A,(#FE)
+CMPCFG1		LD A,0XFD
+		IN A,(0XFE)
 		AND 4			;‡€“‘ „…
 		JP Z,GDEMO
 		LD HL,DEPKADR
@@ -76,27 +76,30 @@ RSTKEYS		LD BC,#FEFF
 		EX DE,HL
 		LD HL,LOADADR		;€‘€‚€ … ƒ‹€
 		CALL DEC40
+		LD HL,CHARS
+		LD DE,0X0F800
+		CALL DEC40
 		XOR A
-		IN A,(#FE)
+		IN A,(0XFE)
 		CPL
-		AND #1F
+		AND 0X1F
 		JR NZ,CMOSHELP
-		LD HL,#6000
+		LD HL,0X6000
 		PUSH HL
 		JR START_SELECT
 
 GTSTKEY		SCF
-		LD A,#10
+		LD A,0X10
 		
 CMOSHELP	LD HL,BONUADR		;CMOS setup & HELP
-		LD DE,#6000		;€‘€‚€  ‡€“‘ CMOS SETUP
+		LD DE,0X6000		;€‘€‚€  ‡€“‘ CMOS SETUP
 		PUSH DE
 		PUSH AF
 		CALL DEC40
 		POP AF
 		JR START_SELECT
 
-GDEMO		LD HL,#6000-szdemoini
+GDEMO		LD HL,0X6000-szdemoini
 		LD SP,HL
 		EX DE,HL
 		PUSH DE
@@ -106,46 +109,48 @@ GDEMO		LD HL,#6000-szdemoini
 
 START_SELECT	PUSH AF
 		LD D,A
-		LD HL,#5C07
-		LD (HL),#C9
+		LD HL,0X5C07
+		LD (HL),0XC9
 		DEC HL
-		LD (HL),#F1
+		LD (HL),0XF1
 		DEC HL
-		LD (HL),#79
+		LD (HL),0X79
 		DEC HL
-		LD (HL),#ED
-		LD A,LX
+		LD (HL),0XED
+		LD A,IXL
 		CP "A"
-		JR Z,1F			;…‘‹ …„…‹‹‘ € €’, ’ € €’  ‡€“‘€…
+		JR Z,CMPCFG2		;…‘‹ …„…‹‹‘ € €’, ’ € €’  ‡€“‘€…
 		LD A,D
-		LD BC,#7FFD
+		LD BC,0X7FFD
 		JP (HL)
 		
-1		LD BC,#0FF7
-		LD A,#81
+CMPCFG2		LD BC,0X0FF7
+		LD A,0X81
 		OUT (C),A
-		LD BC,#FF77
-		LD A,#AB
+		LD BC,0XFF77
+		LD A,0XAB
 		JP (HL)
+	
+BONUADR		BINCLUDE cmosset_pack.rom
 
-DEMO		LD BC,#7FFD
-		LD A,#10
+LOADADR		BINCLUDE main_pack.rom
+
+CHARS		BINCLUDE chars_pack.bin
+
+	       	DUPL 0X3D2F-$,0XFF
+
+		ORG 0X3D2F
+		NOP
+		RET
+
+DEMO		LD BC,0X7FFD
+		LD A,0X10
 		OUT (C),A
 		EI
 szdemoini	EQU $-DEMO
 
-		INCBIN "grass.bin"
+		BINCLUDE grass.bin
 
-		INCLUDE "dec40.a80"
-	
-BONUADR		INCBIN "cmosset_pack.rom"
-
-LOADADR		INCBIN "main_pack.rom"
-
-	       	DS #3D2F-$,#FF
-
-		ORG #3D2F
-		NOP
-		RET
+		INCLUDE dec40.a80
 		
-		DS #4000-$,#FF
+		DUPL 0X4000-$,0XFF
