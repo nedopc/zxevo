@@ -1,7 +1,126 @@
-;загрузчик файла "AUTORUN.ZX" с CD по адресу #6000
-;SP=#6000, DI
+
+hddstat		EQU 0XF0
+hddcmd		EQU 0XF0
+hddhead		EQU 0XD0
+hddcylhi	EQU 0XB0
+hddcyllo	EQU 0X90
+hddsec		EQU 0X70
+hddcount	EQU 0X50
+hdderr		EQU 0X30
+hdddatlo	EQU 0X10
+hdddathi	EQU 0X11
+hddupr		EQU 0XC8
+hdduprON	EQU 0
+
+HDDBINI	CALL SET_7FFD_0
+	LD HL,HDDREAD
+	LD DE,0XE800	;0X5B60
+	LD B,8		;BC,HDDRDLN
+	LDIR
+	RET
+
+HDDBOOT	DI
+	CALL HDDBINI
+INIT0	LD A,0XA0	;MASTER+CHS АДРЕСАЦИЯ
+	LD (devnum),A
+	CALL SELDEVICE
+	LD A,0X0C
+	LD BC,hddupr
+	PUSH BC
+	CALL OUT_A	;начинаем сброс
+	LD B,0
+	DJNZ $
+	LD A,8
+	POP BC
+	CALL OUT_A	;сбросили!
+	CALL NO_BSY
+	LD A,0X10	;Команда RECALIBRATE
+	CALL HDSC	;Запись COMMAND
+INIT2	IN A,(LOW (hddstat))	;Чтение STATUS REGISTER (0111)
+	BIT 7,A		;Проверка бита BSY занятость HDD
+	JR NZ,INIT2	;Переход если накопитель занят
+	AND 0XE9
+	CP 0X40
+	;CP 0X50		;Проверка битов DSC (уст-ка головок)
+			;и DRDY(готовность HDD)
+	JR NZ,INIT0	;Если установлены - выход
+	JP 0XE800
+;,**************************************************************
+;ЧТЕНИЕ СЕКТОРОВ
+HDDREAD	PHASE 0XE800
+	CALL NO_BSY	;ЗАПИСАТЬ В РЕГИСТРЫ ЦИЛИНДРА,ГОЛОВКИ,СЕКТОРА
+	LD BC,hddhead	;РЕГИСТР НАКОПИТЕЛЯ/ГОЛОВКИ
+	LD A,0XA0	;ГОЛОВКА 0,ВИНТ MASTER 0XB0-SLAVE
+	CALL OUT_A
+	LD BC,hddcylhi	;РЕГИСТР ЦИЛИНДРА (HI)
+	XOR A
+	CALL OUT_A
+	LD BC,hddcyllo	;РЕГИСТР ЦИЛИНДРА (LOW)
+	CALL OUT_A
+	LD BC,hddsec	;РЕГИСТР НОМЕРА СЕКТОРА
+	LD A,3		;НОМЕР СЕКТОРА
+	CALL OUT_A
+	LD BC,hddcount	;РЕГИСТР СЧЕТЧИКА СЕКТОРА
+	LD A,0X30	;СКОЛЬКО СЕКТОРОВ  24K
+	CALL OUT_A
+	LD A,0X20
+	CALL HDSC	;КОМАНДА "ЧИТАТЬ"
+	LD HL,0X6000
+	PUSH HL
+	LD B,0X30
+READ1	PUSH BC
+	CALL WAIT_DRQ
+;ЧИТАЕМ СЕКТОР
+	LD B,0
+READ_1	PUSH BC
+	LD BC,hdddatlo	;МЛАДШИЙ БАЙТ
+	INI
+	LD BC,hdddathi	;СТАРШИЙ БАЙТ
+	INI
+	POP BC
+	DJNZ READ_1
+        POP	    BC
+        DJNZ	   READ1
+        RET	
+
+;ОЖИДАНИЕ ГОТОВНОСТИ ПЕРЕДАЧИ ДАННЫХ
+WAIT_DRQ
+        CALL	IN_HDDSTAT
+        BIT	3,A
+        RET	NZ
+        JR	WAIT_DRQ
+
+;ПОСЛАТЬ КОМАНДЫ НА ВИНТ
+HDSC	PUSH AF
+	CALL SELDEVICE
+	POP AF
+	LD BC,hddcmd
+	CALL OUT_A
+;ОЖИДАНИЕ ОСВОБОЖДЕНИЯ УСТРОЙСТВА
+NO_BSY	CALL IN_HDDSTAT
+	RLCA
+	RET NC
+	JR NO_BSY
+
+IN_HDDSTAT
+	CALL SELDEVICE
+	LD BC,hddstat
+IN_A	IN A,(C)
+	RET	
+
+SELDEVICE
+devnum	EQU $+1
+	LD A,device
+	LD BC,hddhead
+OUT_A	OUT (C),A
+	RET
+
+CDBOOTGO
+
+;загрузчик файла "AUTORUN.ZX" с CD по адресу 0X6000
+;SP=0X6000, DI
 ;передает ему в регистрах:
-;A=#A0 (master) или #B0 (slave)
+;A=0XA0 (master) или 0XB0 (slave)
 ;B=тип компьютера:
  ;0=PENTAGON, 1=ATM, 2=SCORPION, 3=PROFI, 4=SPRINTER
 ;C=тип контроллера IDE:
@@ -9,18 +128,18 @@
 ;D=язык:
  ;0=ENGLISH, 1=РУССКИЙ
 ;E=адрес COVOX:
- ;#FB=ATM/PENTAGON, #FF=отсутствует
+ ;0XFB=ATM/PENTAGON, 0XFF=отсутствует
 ;HL=доступные видеорежимы (накладываются по OR)
  ;1=512x192 BW VMG
  ;2=384x304 ZX AC
  ;4=256x192 15 AC
  ;8=320x200 16 ATM
-device=#B0
-comptype=0
-idetype=0
-language=1
-COVPORT=#FB
-videomodes=4;8
+device		EQU 0XB0
+comptype	EQU 0
+idetype		EQU 0
+language	EQU 1
+COVPORT		EQU 0XFB
+videomodes	EQU 4;8
 
 ;===============ниже поддержаны только NEMO,SMUC,ATM============
 ;        IF	comptype-1
@@ -36,96 +155,96 @@ videomodes=4;8
 ;       IFN	smuc
 ;      IFN	atm
 ;схема ATM:
-;hddstat=#FEEF
-;hddcmd=#FEEF
-;hddhead=#FECF
-;hddcylhi=#FEAF
-;hddcyllo=#FE8F
-;hddsec=#FE6F
-;hddcount=#FE4F
-;hdderr=#FE2F
-;hdddatlo=#FE0F
-;hdddathi=#FF0F
-;hddupr=#FEBE ;при установленном b7 FFBA
-;hdduprON=#FFBA
-;hddupr1=#F7
-;hddupr0=#77
+;hddstat=0XFEEF
+;hddcmd=0XFEEF
+;hddhead=0XFECF
+;hddcylhi=0XFEAF
+;hddcyllo=0XFE8F
+;hddsec=0XFE6F
+;hddcount=0XFE4F
+;hdderr=0XFE2F
+;hdddatlo=0XFE0F
+;hdddathi=0XFF0F
+;hddupr=0XFEBE ;при установленном b7 FFBA
+;hdduprON=0XFFBA
+;hddupr1=0XF7
+;hddupr0=0X77
 ;      ELSE	
 ;схема SMUC:
-;hddstat=#FFBE
-;hddcmd=#FFBE
-;hddhead=#FEBE
-;hddcylhi=#FDBE
-;hddcyllo=#FCBE
-;hddsec=#FBBE
-;hddcount=#FABE
-;hdderr=#F9BE
-;hdddatlo=#F8BE
-;hdddathi=#D8BE
-;hddupr=#FEBE ;при установленном b7 FFBA
-;hdduprON=#FFBA
-;hddupr1=#F7
-;hddupr0=#77
+;hddstat=0XFFBE
+;hddcmd=0XFFBE
+;hddhead=0XFEBE
+;hddcylhi=0XFDBE
+;hddcyllo=0XFCBE
+;hddsec=0XFBBE
+;hddcount=0XFABE
+;hdderr=0XF9BE
+;hdddatlo=0XF8BE
+;hdddathi=0XD8BE
+;hddupr=0XFEBE ;при установленном b7 FFBA
+;hdduprON=0XFFBA
+;hddupr1=0XF7
+;hddupr0=0X77
 ;      ENDIF	
 ;       ELSE	
 ;схема Nemo:
-;hddstat=#F0
-;hddcmd=#F0
-;hddhead=#D0
-;hddcylhi=#B0
-;hddcyllo=#90
-;hddsec=#70
-;hddcount=#50
-;hdderr=#30
-;hdddatlo=#10
-;hdddathi=#11
-;hddupr=#C8
+;hddstat=0XF0
+;hddcmd=0XF0
+;hddhead=0XD0
+;hddcylhi=0XB0
+;hddcyllo=0X90
+;hddsec=0X70
+;hddcount=0X50
+;hdderr=0X30
+;hdddatlo=0X10
+;hdddathi=0X11
+;hddupr=0XC8
 ;hdduprON=0
 ;       ENDIF	
 
-SECBUF=#6000
+SECBUF		EQU 0X6000
 
-        ;DISP   	#E800
+        ;DISP   	0XE800
 begin
 ;GO
-;        LD	SP,#6000
-;        LD	(IY+1),#CC
+;        LD	SP,0X6000
+;        LD	(IY+1),0XCC
 ;        EI	
 ;        HALT	
 ;        XOR	A
 ;        OUT	(-2),A
-;        LD	DE,#5801
+;        LD	DE,0X5801
 ;        LD	H,D,L,A
 ;        LD	BC,767
 ;        LD	(HL),L
 ;        LDIR	
 
 ;       IFN	atm
-;        CALL	#3D46   ;вызов "проверочной" точки в (v)TR-DOS
+;        CALL	0X3D46   ;вызов "проверочной" точки в (v)TR-DOS
 ;        OR	A         ;если не 0,vTR-DOS нет и ПЗУ не подменяем
-;        CALL	Z,#3C98 ;вызов триггера подмены ПЗУ TRD/vTRD
+;        CALL	Z,0X3C98 ;вызов триггера подмены ПЗУ TRD/vTRD
 ;       ENDIF	
 
 ;инициализация
 iniini
-      ; LD A,device ;#B0=slave
+      ; LD A,device ;0XB0=slave
       ; LD BC,hddhead
       ; CALL OUT_A ;есть внутри NO_BSY
         CALL	NO_BSY
-    ;LD A,#FE
+    ;LD A,0XFE
     ;IN A,(-2)
     ;RRA
     ;JNC SKIPINI
-      ;LD A,#10        ;
+      ;LD A,0X10        ;
       ;CALL HDSC       ;ZET9 для HDD
-        LD	A,#08        ;
+        LD	A,0X08        ;
         CALL	HDSC       ;SMT для CD (сброс для ATAPI)
       ;RET C ;ATAPI only
-      ; LD A,device ;#B0=slave   ;
+      ; LD A,device ;0XB0=slave   ;
       ; LD BC,hddhead            ;BUDDER
       ; CALL OUT_A ;есть в HDSC  ;иначе при нераскрученном CD
                                  ;не выдаст EB14!!!
-        LD	A,#EC ;identify
+        LD	A,0XEC ;identify
         CALL	HDSC
       ;RET C ;для CD выдаст ошибку (VEGA)
 
@@ -134,7 +253,7 @@ iniini
         DJNZ	$-1
 
         CALL	LEN_TO_HL
-        LD	BC,#EB14
+        LD	BC,0XEB14
         OR	A
         SBC	HL,BC
        JP	NZ,iniini;0 ;HDD
@@ -165,7 +284,8 @@ SKIPINI
         CALL	WAIT_DRQ
       ;RET C
         CALL	LEN_TO_HL
-        LD	B,H,C,L
+        LD	B,H
+        LD C,L
         LD	HL,SECBUF
         CALL	TRANS_IN
         CALL	NO_BSY
@@ -178,11 +298,11 @@ SKIPINI
         LD	A,(HL)
         ADD	A,-10
         LD	L,A
-        LD	D,#87
+        LD	D,0X87
        ;CY=1
-        CALL	LOADER ;грузим начало сессии (#8800 байт)
+        CALL	LOADER ;грузим начало сессии (0X8800 байт)
 
-        LD	BC,#80A2
+        LD	BC,0X80A2
         ADD	HL,BC
        ;CY=0
         CALL	LOADER ;грузим корневой каталог
@@ -212,9 +332,9 @@ FNDID0  LD	A,(DE)
 
         CALL	LOADER ;грузим autorun.zx
        PUSH	HL
-        LD	A,device ;#B0=slave
+        LD	A,device ;0XB0=slave
         LD	BC,comptype*256+idetype ;1=ATM,1=ATM
-        LD	DE,language*256+COVPORT ;1=RUS,#FB
+        LD	DE,language*256+COVPORT ;1=RUS,0XFB
         LD	HL,videomodes ;8=ATM
        RET	
 FNDIDN
@@ -249,7 +369,7 @@ LOADER
          LD	E,(HL)
          INC	HL
          LD	D,(HL)
-        EXD	
+        EX DE,HL	
         SCF	
         LD	DE,2048
         INC	B
@@ -281,14 +401,14 @@ LOADER0 PUSH	BC
 ;        JR	CLOSEPORTS
 ;OPENPORTS
 ;        LD	A,%10101011
-;        LD	BC,#2A53
+;        LD	BC,0X2A53
 ;        PUSH	BC
-;        LD	BC,#4177
-;        JP	#3D2F
+;        LD	BC,0X4177
+;        JP	0X3D2F
 ;      ELSE	
-;        LD	IX,#3FF0
+;        LD	IX,0X3FF0
 ;        PUSH	IX
-;        JP	#3D2F
+;        JP	0X3D2F
 ;      ENDIF	
 ;       ELSE	;nemo
 ;        OUT	(C),A
@@ -310,14 +430,14 @@ LOADER0 PUSH	BC
 ;CLOSEPORTS
 ;        PUSH	AF,BC
 ;        LD	A,%10101011
-;        LD	BC,#FF77
+;        LD	BC,0XFF77
 ;        OUT	(C),A
 ;        POP	BC,AF
 ;        RET	
 ;      ELSE	
-;        LD	IX,#3FF3
+;        LD	IX,0X3FF3
 ;        PUSH	IX
-;        JP	#3D2F
+;        JP	0X3D2F
 ;      ENDIF	
 ;       ELSE	
 ;        IN	A,(C)
@@ -385,16 +505,16 @@ TR_IN0  PUSH	BC
 
 ;ПЕРЕДАЧА ATAPI-ПАКЕТА
 SEND_ATAPI
-      ;LD A,device ;#B0=slave
+      ;LD A,device ;0XB0=slave
       ;LD BC,hddhead
       ;CALL OUT_A
         LD	BC,hddcyllo
         XOR	A
         CALL	OUT_A
         LD	BC,hddcylhi
-        LD	A,HIGH 2048
+        LD	A,HIGH (2048)
         CALL	OUT_A
-        LD	A,#A0
+        LD	A,0XA0
         CALL	HDSC
       ;RET C
         LD	B,6
@@ -407,7 +527,8 @@ TR_OUT0 PUSH	BC
         LD	A,(HL)
         LD	BC,hdddatlo
         CALL	OUT_A
-        INC	HL,HL
+        INC	HL
+        INC HL
         POP	BC
         DJNZ	TR_OUT0
         RET	
@@ -450,31 +571,31 @@ READ_P2
 
 autorunname
         DB	"AUTORUN.ZX"
-autorunnamesz=$-autorunname
+autorunnamesz	EQU $-autorunname
 
 ;ATAPI-ПАКЕТ "ПУСТЫШКА"
 AP_00
         DW	0
-        DS	10
+        DUPL	10,0
 
 ;ATAPI-ПАКЕТ "SPEED 1x"
 AP_1x
-        DW	#BB
+        DW	0XBB
         DB	0
         DB	176 ;1x=176k/s
-        DS	8
+        DUPL	8,0
 
 ;ATAPI-ПАКЕТ "ЧТЕНИЕ"
 AP_READ
 ;       IFN	0
-;        DW	#BE   ;"READ CD"
+;        DW	0XBE   ;"READ CD"
 ;SECTOR  DB	0,0,0,0
 ;        DB	0
 ;        DB	0,1   ;=1 сектор
-;        DB	#10   ;читаем только данные
+;        DB	0X10   ;читаем только данные
 ;        DB	0,0
 ;       ELSE	
-        DW	#28   ;"READ(10)"
+        DW	0X28   ;"READ(10)"
 SECTOR  DB	0,0,0,0
         DB	0
         DB	0,1   ;=1 сектор
@@ -482,18 +603,19 @@ SECTOR  DB	0,0,0,0
         DB	0,0
 ;       ENDIF	
 AP_READTOC
-        DW	#43   ;SCMSF=0,т.е.секторы,а не MSF
+        DW	0X43   ;SCMSF=0,т.е.секторы,а не MSF
         DB	0     ;FORMAT=0:все сессии
-        DS	3
+        DUPL	3,0
         DB	0     ;с 1-й сессии
-        DB	HIGH 2048 ;длина табл
-        DB	LOW 2048
-        DB	#00   ;FUNC
-        DS	2
+        DB	HIGH (2048) ;длина табл
+        DB	LOW (2048)
+        DB	0X00   ;FUNC
+        DUPL	2,0
 
 ;end
 ;       DISPLAY	end-begin
-;        ORG	#5CDD
+;        ORG	0X5CDD
 ;        DB	"boot    B"
-;        INCLUDE	"mrip.a80"	;,#C0
+;        INCLUDE	"mrip.a80"	;,0XC0
 
+	DEPHASE

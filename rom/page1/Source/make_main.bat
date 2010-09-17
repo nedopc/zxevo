@@ -1,7 +1,6 @@
 @ECHO OFF
 
-..\..\..\tools\sjasmplus\sjasmplus --sym=sym.log --lst=dump.log -isrc make_main.a80
-
-rem ..\mhmt -mlz filename.rom filename_pack.rom
+..\..\..\tools\asw\bin\asw -cpu z80undoc -L main.a80
+..\..\..\tools\asw\bin\p2bin main.p evo_dos.rom -r $-$ -k
 
 pause

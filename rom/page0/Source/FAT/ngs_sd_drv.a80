@@ -2,10 +2,10 @@
 ;LAST UPDATE: 19.02.2010 savelij
 
 ;€„…‘ –‹€ ™… ‘ ‘…
-COMINT_		EQU #026E
+COMINT_		EQU 0X026E
 
 ;€„…‘ “‘’€‚™€ „€‰‚…€ € NeoGS
-SETUPSD		EQU #5B00
+SETUPSD		EQU 0X5B00
 
 ;„€‰‚… SD-CARD „‹ NGS
 
@@ -19,7 +19,7 @@ SETUPSD		EQU #5B00
 ;A=0-¨­¨ζ¨ «¨§ ζ¨ο ―ΰ®θ«  γα―¥θ­®
 ;A=1-ª ΰβ  ­¥ ­ ©¤¥­  ¨«¨ ­¥ ®βΆ¥β¨« 
 
-		EXA
+		EX AF,AF'
 		EX (SP),HL
 		LD A,(HL)
 		INC HL
@@ -36,7 +36,7 @@ SETUPSD		EQU #5B00
 		INC HL
 		LD H,(HL)
 		LD L,A
-		EXA
+		EX AF,AF'
 		EX (SP),HL
 		RET
 
@@ -46,35 +46,35 @@ NGSSDT		DW GSDINIT	;’ SD €’›
 		DW SDRDMUL	;—’€’ "A" ‘…’‚
 
 ;—’…… "A" ‘…’‚
-SDRDMUL		EXA
+SDRDMUL		EX AF,AF'
 		LD A,3
 		JR SDRDSN3
 
 ;—’…… „ƒ ‘…’€
 SDRDSIN		LD A,1
-		EXA
+		EX AF,AF'
 		LD A,2
 SDRDSN3		CALL COMM2SD
-		EXA
+		EX AF,AF'
 		PUSH DE
 		PUSH BC
 		LD BC,GSDAT
-SDRDSN1		EXA
+SDRDSN1		EX AF,AF'
 		OUT (GSCOM),A
 		CALL WC_
-		LD DE,#0200
+		LD DE,0X0200
 SDRDSN2		CALL WN_
 		INI
 		DEC DE
 		LD A,D
 		OR E
 		JR NZ,SDRDSN2
-		EXA
+		EX AF,AF'
 		DEC A
 		JR NZ,SDRDSN1
 		CALL WN_
 		IN A,(C)
-		CP #77
+		CP 0X77
 		JR NZ,$-4
 		POP BC
 		POP DE
@@ -90,7 +90,7 @@ GSDINIT		XOR A
 		CALL COMM2SD
 		CALL WN_
 		IN A,(GSDAT)
-		CP #77
+		CP 0X77
 		JR NZ,SD_NO
 		XOR A
 		RET
@@ -100,7 +100,7 @@ SD_NO		LD A,1
 
 ;……„€’— €„/€€…’‚ ‚ „€‰‚… € NeoGS
 COMM2SD		OUT (GSDAT),A		;“‹€ €„€ „€‰‚…“
-		LD A,#1E
+		LD A,0X1E
 		OUT (GSCOM),A
 		CALL WC_		;“‹€ €„€ ‚…
 		LD A,B
@@ -115,10 +115,10 @@ COMM2SD		OUT (GSDAT),A		;“‹€ €„€ „€‰‚…“
 		LD A,E
 		OUT (GSDAT),A
 		CALL WD_		;“‹ ’› 7-0 €€…’‚
-		EXA
+		EX AF,AF'
 		OUT (GSDAT),A
-		EXA
-		DS 9
+		EX AF,AF'
+		DUPL 9,0
 		RET			;“‹ ‹-‚ ‘…’‚
 
 ;†„€… ƒ„€ NeoGS €‰’ ‡€……’
@@ -140,14 +140,14 @@ WC_		IN A,(GSCOM)
 		RET
 
 ;“‘’€‚™ „€‰‚…€ € NeoGS
-INSTSDD		LD A,#80
+INSTSDD		LD A,0X80
 		OUT (GSCTR),A
 		EI
 		HALT
 		HALT
 		DI
-		LD A,#F3
-		LD B,#30
+		LD A,0XF3
+		LD B,0X30
 		OUT (GSCOM),A
 ISDD1		EI
 		HALT
@@ -159,10 +159,10 @@ ISDD1		EI
 		JR C,ISDD1
 		LD BC,GSDAT
 		IN A,(C)
-		LD DE,#0300
+		LD DE,0X0300
 		LD HL,SETUPSD
 		OUT (C),E
-		LD A,#14
+		LD A,0X14
 		OUT (GSCOM),A
 		CALL WC_
 		OUT (C),D
@@ -180,7 +180,7 @@ ISDD3		OUTI
 		JR NZ,ISDD3
 		LD HL,SETUPSD
 		OUT (C),L
-		LD A,#13
+		LD A,0X13
 		OUT (GSCOM),A
 		CALL WC_
 		OUT (C),H
@@ -192,24 +192,24 @@ ISDD3		OUTI
 		IN A,(GSDAT)
 		DEC B
 		JP Z,SD_NO
-		CP #77
+		CP 0X77
 		JP NZ,SD_NO
 		XOR A
 		RET
 
 UKLAD1	;’“„€ „ € ƒ‘ ‡€„›‚€’
 
-		DISP SETUPSD
+		PHASE SETUPSD
 
 ;‘€ “‘’€‚™ „€‰‚…€ „‹ NeoGS
 		DI
-		LD A,#9C
+		LD A,0X9C
 		OUT (SCTRL),A		;”ƒ“€’ NeoGS
 		CALL AVTODET
 		AND A
-		LD A,#77		;#77-NeoGS €‰„…
+		LD A,0X77		;0X77-NeoGS €‰„…
 		JR Z,$+4
-		LD A,#CC		;#CC-€‰„… OLDGS
+		LD A,0XCC		;0XCC-€‰„… OLDGS
 		OUT (ZXDATWR),A
 		OUT (CLRCBIT),A
 		JP NZ,COMINT_
@@ -217,8 +217,8 @@ UKLAD1	;’“„€ „ € ƒ‘ ‡€„›‚€’
 		IN A,(GSCFG0)
 		RES B_RAMRO,A
 		OUT (GSCFG0),A
-		LD HL,#1D00
-		LD (#0300+(#1E*2)),HL
+		LD HL,0X1D00
+		LD (0X0300+(0X1E*2)),HL
 		LD DE,UKLAD2
 		LD BC,GSDDRVE-GSDDRV
 		EX DE,HL
@@ -230,7 +230,7 @@ UKLAD1	;’“„€ „ € ƒ‘ ‡€„›‚€’
 
 ;‚…€ —’ ’ NeoGS  ‚‹—…… —€‘’’› 24MHz
 AVTODET		IN A,(GSCFG0)
-		AND #CF
+		AND 0XCF
 		OUT (GSCFG0),A		;€’€ ‡€‘ ‚ ’ ‘ ‘…›
 					;’€ 5-4 ‚‹—€…’ —€‘’’“ –…‘‘€
 					;€‚› 24 ƒζ
@@ -244,9 +244,9 @@ AVTODET		IN A,(GSCFG0)
 
 UKLAD2	;’“„€ „ ……„›‚€’
 
-		ENT
+		DEPHASE
 
-		DISP #1D00
+		PHASE 0X1D00
 
 ;™€ ’—€ ‚•„€ „‹ €’› ‘
 GSDDRV		DI
@@ -286,25 +286,25 @@ TABLSDG		DW SDINITG		;0 ― ΰ ¬¥βΰ®Ά ­¥ βΰ¥΅γ¥β, ­  Άλε®¤¥ A
 		DW RDMULG		;3 —’€’ "A" ‘…’‚
 
 ZAW003G		CALL CSHIGHG
-		LD A,#EE
+		LD A,0XEE
 		JP OUTSTAT
 
 SDINITG		CALL CSHIGHG
 		LD BC,SD_SEND
-		LD DE,#20FF
+		LD DE,0X20FF
 		OUT (C),E
 		DEC D
 		JR NZ,$-3
 		LD BC,SD_RSTR
 		XOR A
-		EXA
+		EX AF,AF'
 ZAW001G		LD HL,CMD00G
 		CALL OUTCOMG
 		CALL INOOUTG
-		EXA
+		EX AF,AF'
 		DEC A
 		JR Z,ZAW003G
-		EXA
+		EX AF,AF'
 		DEC A
 		JR NZ,ZAW001G
 		LD HL,CMD08G
@@ -320,7 +320,7 @@ ZAW001G		LD HL,CMD00G
 		LD HL,0
 		BIT 2,A
 		JR NZ,ZAW006G
-		LD H,#40
+		LD H,0X40
 ZAW006G		LD A,CMD_55
 		CALL OUT_COG
 		CALL INOOUTG
@@ -335,7 +335,7 @@ ZAW006G		LD A,CMD_55
 		OUT (C),L
 		NOP
 		OUT (C),L
-		LD A,#FF
+		LD A,0XFF
 		OUT (C),A
 		CALL INOOUTG
 		AND A
@@ -354,7 +354,7 @@ ZAW005G		LD HL,CMD16G
 SDOFFG		JP OK_WORK
 
 CSHIGHG		PUSH AF
-		LD A,M_SDNCS+M_SNCLR	;#81
+		LD A,M_SDNCS+M_SNCLR	;0X81
 		OUT (SCTRL),A
 		POP AF
 		RET
@@ -367,7 +367,7 @@ CSLOWG		PUSH AF
 
 OUTCOMG		CALL CSLOWG
 		PUSH BC
-		LD BC,#0600+SD_SEND
+		LD BC,0X0600+SD_SEND
 		OTIR
 		POP BC
 		RET
@@ -427,7 +427,7 @@ SECN20G		POP AF
 		OUT (C),D
 		NOP
 		OUT (C),E
-		LD A,#FF
+		LD A,0XFF
 		OUT (C),A
 		POP BC
 		POP DE
@@ -435,7 +435,7 @@ SECN20G		POP AF
 		RET
 
 INOOUTG		PUSH DE
-		LD DE,#20FF
+		LD DE,0X20FF
 INWAITG		IN A,(SD_RSTR)
 		CP E
 		JR NZ,INEXITG
@@ -444,9 +444,9 @@ INWAITG		IN A,(SD_RSTR)
 INEXITG		POP DE
 		RET
 
-CMD00G		DB #40,#00,#00,#00,#00,#95	;GO_IDLE_STATE
-CMD08G		DB #48,#00,#00,#01,#AA,#87	;SEND_IF_COND
-CMD16G		DB #50,#00,#00,#02,#00,#FF	;SET_BLOCKEN
+CMD00G		DB 0X40,0X00,0X00,0X00,0X00,0X95	;GO_IDLE_STATE
+CMD08G		DB 0X48,0X00,0X00,0X01,0XAA,0X87	;SEND_IF_COND
+CMD16G		DB 0X50,0X00,0X00,0X02,0X00,0XFF	;SET_BLOCKEN
 
 ;……„€—€ „ƒ ‘…’€ € ‘…
 RDSECTG		IN A,(ZXSTAT)
@@ -454,7 +454,7 @@ RDSECTG		IN A,(ZXSTAT)
 		JR NC,$-3
 		OUT (CLRCBIT),A
 		LD BC,SD_RSTR
-		LD HL,#0200
+		LD HL,0X0200
 		IN A,(C)
 		DEC HL
 		OUT (ZXDATWR),A
@@ -471,7 +471,7 @@ RDSECTG		IN A,(ZXSTAT)
 RDSING		LD A,CMD_17
 		CALL SECM20G
 		CALL INOOUTG
-		CP #FE
+		CP 0XFE
 		JR NZ,$-5
 		CALL RDSECTG
 		CALL INOOUTG
@@ -480,16 +480,16 @@ RDSING		LD A,CMD_17
 		JR OK_WORK
 
 ;‡€ƒ“‡€ "A" ‘…’‚
-RDMULG		EXA
+RDMULG		EX AF,AF'
 		LD A,CMD_18
 		CALL SECM20G
-		EXA
-RDMULG1		EXA
+		EX AF,AF'
+RDMULG1		EX AF,AF'
 		CALL INOOUTG
-		CP #FE
+		CP 0XFE
 		JR NZ,$-5
 		CALL RDSECTG
-		EXA
+		EX AF,AF'
 		DEC A
 		JR NZ,RDMULG1
 		LD A,CMD_12
@@ -499,7 +499,7 @@ RDMULG1		EXA
 		JR NZ,$-4
 
 OK_WORK		CALL CSHIGHG
-		LD A,#77
+		LD A,0X77
 
 OUTSTAT		OUT (ZXDATWR),A
 
@@ -515,4 +515,4 @@ WDY		IN A,(ZXSTAT)
 		JR NC,$-3
 		RET
 GSDDRVE
-		ENT
+		DEPHASE

@@ -1,5 +1,6 @@
 @ECHO OFF
 
-..\..\..\tools\sjasmplus\sjasmplus --sym=sym.log --lst=dump.log -isrc make_tr503.a80
+..\..\..\tools\asw\bin\asw -cpu z80undoc -L tr503.a80
+..\..\..\tools\asw\bin\p2bin tr503.p tr503.bin -r $-$ -k
 
 pause
