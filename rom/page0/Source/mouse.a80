@@ -34,6 +34,10 @@ REST2X21	LD A,(DE)
 
 DETECTMOUSE	LD HL,FLAGS
 		LD BC,0XFBDF
+		LD E,0X20
+		EI
+		HALT
+		DI
 		IN D,(C)		;1.‘’€ˆ‹œŽ‘’œ X
 SETMOU1		IN A,(C)
 		CP D
@@ -195,3 +199,46 @@ PRAR1		SCF
 		POP BC
 		DJNZ PRAR0
 		RET
+
+;Œ…‘’ŽŽ‹Ž†…ˆ… Š“‘Ž€
+OPMSPL		LD E,(IX+0X14)
+		LD D,(IX+0X15)
+		LD A,D
+		OR E
+		RET Z			;€„…‘ Žˆ‘€’…‹…‰ … ‡€„€
+		PUSH IX
+		PUSH DE
+		POP IX
+		LD HL,(ARXY)		;H=Y, L=X
+		SRL H
+		SRL H
+		SRL H
+		SRL L
+		SRL L
+		SRL L			;HL=HL/8
+NXTPOS2		LD A,(IX+0)
+		INC A
+		JR Z,ENDWI
+		LD A,L
+		CP (IX+1)
+		JR C,NXTPOS1		;Š“‘Ž ‹…‚……
+		LD A,(IX+1)
+		ADD A,(IX+4)
+		DEC A
+		CP L
+		JR C,NXTPOS1		;Š“‘Ž €‚……
+		LD A,H
+		CP (IX+2)
+		JR C,NXTPOS1		;Š“‘Ž ‚›˜…
+		LD A,(IX+2)
+		ADD A,(IX+3)
+		DEC A
+		CP H
+		JR C,NXTPOS1		;Š“‘Ž ˆ†…
+		LD A,(IX+5)		;Ž‹“—ˆ‹ˆ ŠŽ„ ŠŽŠˆ  
+ENDWI		POP IX			;Ž€‹ˆ ‚ ‡€„€“ž ‡Ž“
+		RET			;‚›•Ž„ˆŒ
+
+NXTPOS1		LD DE,6			;ŽŠ€ ˆŠ“„€ … Ž€‹ˆ
+		ADD IX,DE		;……•Ž„ˆŒ Š Ž‚…Š… ‘‹…„“™…ƒŽ
+		JR NXTPOS2

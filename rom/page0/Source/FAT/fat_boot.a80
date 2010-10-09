@@ -1,8 +1,9 @@
 
 ;‚›Ž “‘’Ž‰‘’‚€ „‹Ÿ ‡€ƒ“‡Šˆ
-FATBOOT		SET 4,(IY+55)
+FATBOOT		LD HL,ADRTBLDIRL
+		LD (DIR_LEVEL),HL		;“‘’€Ž‚ˆ‹ˆ „Ž ‘’…Š€ ‘Ž•€…ˆ‰ ŽŠŽ˜…Š
 		LD HL,FLAGS
-		SET 3,(HL)
+		SET 3,(HL)			;€Ž’€’œ “„…Œ ‘ FAT
 		CALL COM_DEV
 		DB Devfind			;‘Š€ˆŽ‚€ˆ… “‘’Ž‰‘’‚
 		JP C,_STUPID			;Ž˜ˆŠ€, ˆ Ž„ŽƒŽ €‡„…‹€ … €‰„…Ž
@@ -14,7 +15,11 @@ FATBOOT		SET 4,(IY+55)
 		LD (IX+2),E			;“‘’€Ž‚ˆ‹ˆ ‚›‘Ž’“ ‚›‚Ž„ˆŒŽƒŽ ŽŠ€
 		LD DE,6				;˜€ƒ Ž ’€‹ˆ–… €‰„…›• €‡„…‹Ž‚ -2
 		EXX
-		LD HL,SEL_FAT_DRV		;€„…‘ ƒ„… “„…’ ”ŽŒˆŽ‚€’œ‘Ÿ ’…Š‘’ ŽŠ€ ‚›Ž€ €‡„…‹Ž‚
+		LD HL,TXT_FAT_SEL
+		LD DE,SEL_FAT_DRV		;€„…‘ ƒ„… “„…’ ”ŽŒˆŽ‚€’œ‘Ÿ ’…Š‘’ ŽŠ€ ‚›Ž€ €‡„…‹Ž‚
+		LD BC,ETXT_FAT_SEL-TXT_FAT_SEL
+		LDIR
+		EX DE,HL
 		EXX
 FATBOOT1	EXX
 		LD (HL),0X0D
@@ -75,6 +80,8 @@ FATBOOT1	EXX
 		DEC B
 		LD C,B
 		LD A,"e"
+		LD (HL),B
+		INC HL
 FATBOOT3	LD (HL),A			;”ŽŒˆŽ‚€ˆ… ’€‹ˆ–› ƒŽŸ—ˆ• Š‹€‚ˆ˜
 		INC HL
 		INC A
@@ -86,12 +93,9 @@ FATBOOT2	LD (HL),LOW (SEL_FAT)		;”ŽŒˆŽ‚€ˆ… ’€‹ˆ–› €„…‘Ž‚ ‚›‡›‚Ž‚
 		LD (HL),HIGH (SEL_FAT)
 		INC HL
 		DJNZ FATBOOT2
-		LD (HL),LOW (RESTART)		;€„…‘ ‚›•Ž„€ ˆ Ž’Š€‡…
-		INC HL
-		LD (HL),HIGH (RESTART)
 		EXX
 		CALL WINW			;‚›‚…‹ˆ ‘”ŽŒˆŽ‚€Ž… ŽŠŽ
-		JP _RULILKA
+		JP _RULILKA			;‚Ž‡‚€™€…Œ‘Ÿ Š Ž™…Œ“ “€‚‹…ˆž
 
 ;……Š‹ž—…ˆ… € “‘’Ž‰‘’‚€ ˆ ‚›‚Ž„ €‰„…ŽƒŽ € …Œ
 SEL_FAT		LD A,(IX+0X0F)			;‚‡Ÿ‹ˆ ŽŒ… ‚›€ŽƒŽ “‘’Ž‰‘’‚€
@@ -103,30 +107,84 @@ SEL_FAT		LD A,(IX+0X0F)			;‚‡Ÿ‹ˆ ŽŒ… ‚›€ŽƒŽ “‘’Ž‰‘’‚€
 		CALL COM_FAT
 		DB Fhobeta			;Žˆ‘Š •Ž…’€ ”€‰‹Ž‚ "$C " C Ž‚…Š€Œˆ
 		LD IX,FAT_FILES
-		LD C,A
-		JP OUT_HOB		
+		JP OUT_HOB
 
 ;‡€“‘Š ‚›€ŽƒŽ ŠŽ„Ž‚ŽƒŽ ”€‰‹€ ˆ‡ HOBETA ”€‰‹€
 RUN_HOB		DI
 		CALL SHUT2AY			;“ŒŠ€‹Š€ ‚ AY
-		CALL MEMSET			;‚›‘’€‚ˆ‹ˆ …†ˆŒ ŠŽŒ€
-		LD A,(IX+0X0F)
-		ADD A,(IX+0X12)
-		LD L,A
-		LD H,0				;ŽŒ… ‚›€ŽƒŽ ”€‰‹€ 
+		LD L,(IX+0X12)
+		LD H,(IX+0X13)
 		LD DE,ADR_CAT
 		ADD HL,HL
-		ADD HL,HL
-		ADD HL,HL
-		ADD HL,HL
 		ADD HL,DE			;Ž’Š“„€ ˆŒŸ ”€‰‹€ ‚‡Ÿ’œ
-		LD DE,0X0A
+		LD C,(HL)
+		INC HL
+		LD B,(HL)			;Ž‹“—ˆ‹ˆ ’…Š“™ˆ‰ ‚›€›‰ ŽŒ…
+		LD A,6
+		CALL COM_FAT
+		DB Positf			;“‘’€Ž‚Š€ ‚“’……ƒŽ “Š€‡€’…‹Ÿ FAT „€‰‚…€
+		CALL COM_FAT
+		DB Getfzap			;Ž‹“—ˆ‹ˆ Žˆ‘€’…‹œ Ž “‘’€Ž‚‹…ŽŒ“ ŽŒ…“
+		LD DE,0X0B			;“†… €‰’ Ž ‘Œ…™…ˆž
 		ADD HL,DE
-		LD DE,AFILCLS
-		LD BC,4
-		LDIR				;………‘‹ˆ ‚ ……Œ…›… ”€’ „€‰‚…€
+		LD A,0X10			;ˆ‡ ’ŽƒŽ €‰’€ “†… Ž„ˆ ˆ’
+		AND (HL)			;Ž‚…ˆ‹ˆ
+		JR Z,GO_RUN_HOB			;…‘‹ˆ =0, ’Ž ‡€“‘Š€…Œ ŠŽ„Ž‚›‰ ‹ŽŠ
+		PUSH BC				;‘Ž•€ˆ‹ˆ ŽŒ…
+		CALL COM_FAT
+		DB Ent_dir			;‚Ž‰’ˆ/‚›‰’ˆ ‚/ˆ‡ „ˆ…Š’Žˆ‰
+		POP BC				;‚Ž‘‘’€Ž‚ˆ‹ˆ ’…Š“™ˆ‰ ŽŒ…
+		LD A,D				;“„…Œ Ž‚…Ÿ’œ …‚›‰ ‘ˆŒ‚Ž‹ ˆŒ…ˆ …„›„“™…ƒŽ Žˆ‘€’…‹Ÿ
+		LD HL,0				;€„…‘ ‘’…Š€ ŽŠŽ›• ‘Ž•€…ˆ‰ „‹Ÿ •Ž†„…ˆŸ Ž „ˆ€Œ
+DIR_LEVEL	EQU $-2
+		CP "."				;…‘‹ˆ ŽŽ …‘’œ ‚ ˆŒ…ˆ, ’Ž 
+		JR NZ,SNYT0			;‘Ž•€Ÿ…Œ ’…Š“™ˆ… ‡€—…ˆŸ ŽŠŽ˜Š€ ˆ ‚•Ž„ˆŒ ‚ „ˆ“
+		INC HL				;ˆ€—… ‚Ž‡‚€™€…Œ‘Ÿ ‚ …„›„“™“ž
+		LD A,(HL)
+		INC HL
+		LD E,(HL)
+		INC HL
+		LD D,(HL)
+		LD (DIR_LEVEL),HL		;‘Ž•€ˆ‹ˆ ˆ‡Œ…ˆ‚˜ˆ‰‘Ÿ €„…‘ ‘’…Š€
+		LD (IX+0X12),E
+		LD (IX+0X13),D
+		LD (IX+0X0F),A
+		LD DE,ADR_CAT
+		CALL COM_FAT
+		DB Fhobeta			;Žˆ‘Š •Ž…’€ ”€‰‹Ž‚ "$C " C Ž‚…Š€Œˆ
+		LD (IX+0X10),C
+		LD (IX+0X11),B
+		JP REOUT_HOB
+
+SNYT0		LD D,(IX+0X13)
+		LD E,(IX+0X12)
+		LD A,(IX+0X0F)
+		LD (HL),D
+		DEC HL
+		LD (HL),E
+		DEC HL
+		LD (HL),A
+		DEC HL
+		LD (DIR_LEVEL),HL		;‘Ž•€ˆ‹ˆ ˆ‡Œ…ˆ‚˜ˆ‰‘Ÿ €„…‘ ‘’…Š€
+		LD DE,ADR_CAT
+		CALL COM_FAT
+		DB Fhobeta			;Žˆ‘Š •Ž…’€ ”€‰‹Ž‚ "$C " C Ž‚…Š€Œˆ
+		JP OUT_HOB
+
+GO_RUN_HOB	LD E,9				;……•Ž„ˆŒ Š ‘Œ…™…ˆž ‚ Žˆ‘€’…‹… „‹Ÿ Ž‹“—…ˆŸ
+		ADD HL,DE			;‘’€˜ˆ• 16 ˆ’ ŽŒ…€ Š‹€‘’…€ €—€‹€ ”€‰‹€ „‹Ÿ ‡€“‘Š€
+		LD C,(HL)
+		INC HL
+		LD B,(HL)			;‡€€‹ˆ ‘’€˜ˆ… 16 ˆ’ ŽŒ…€ Š‹€‘’…€
+		LD E,5				;’……œ ˆ„…Œ ‡€ Œ‹€„˜ˆŒˆ 16 ˆ’€Œˆ ŽŒ…€ Š‹€‘’…€
+		ADD HL,DE
+		LD E,(HL)
+		INC HL
+		LD D,(HL)			;’……œ BCDE=Ž‹›‰ 32-• ˆ’›‰ ŽŒ… Š‹€‘’…€
+		LD (AFILCLS),DE
+		LD (AFILCLS+2),BC		;………‘‹ˆ ‚ ……Œ…›… ”€’ „€‰‚…€
 		CALL COM_DEV
-		DB Kol_vol
+		DB Kol_vol			;‡€Ž‘ “ Œ……„†…€ “‘’Ž‰‘’‚ Ž ’…Š™“Œ “‘’Ž‰‘’‚…
 		LD A,D				;‚‡Ÿ‹ˆ ŽŒ… ’…Š“™…ƒŽ “‘’Ž‰‘’‚€
 		ADD A,A
 		ADD A,A
@@ -148,9 +206,12 @@ RUN_HOB		DI
 		LD HL,ERORDRV
 		LD DE,0X4200
 		LD B,1
-		LDIR				;……Ž‘ ……Œ…›• ”€’€ „‹Ÿ ’…Š“™…ƒŽ “‘’Ž‰‘’‚€
+		LDIR				;……Ž‘ ……Œ…›• ”€’€ „‹Ÿ MICROBOOT
 		PUSH DE				;‘ž„€ ……Ž‘ ŠŽ„€ ˆ ‡€“‘Š
 		LD HL,MICROBOOT
 		LD BC,END_MICROBOOT-MICROBOOT
 		LDIR				;………‘‹ˆ ‡€“‘Š€‹Š“
+		PUSH AF
+		CALL MEMSET			;‚›‘’€‚ˆ‹ˆ …†ˆŒ ŠŽŒ€
+		POP AF
 		RET				;‡€“‘Š ‡€“‘Š€‹Šˆ :)

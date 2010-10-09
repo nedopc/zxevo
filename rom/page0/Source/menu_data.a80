@@ -32,6 +32,24 @@
 ;+11 : “Š’Ž‚ Œ…ž
 ;+12 "C" ’…Š“™ˆ‰
 ;+13 "B" “Š’ Œ…ž
+;+14 | €„…‘ ‘ˆ‘Š€ €Š’ˆ‚›•
+;+15 | ‡Ž „‹Ÿ Œ›˜ˆ
+
+;€‘Š‹€„Š€ €‰’ ‚›„…‹…ˆ‰
+;IX+0 ”‹€ƒŽ‚›‰
+;    7 ˆ €Š’ˆ‚Ž‘’ˆ “‘’€Ž‚‹…
+;    6 “‘’€Ž‚‹…, … ‚›„…‹Ÿ…’‘Ÿ
+;    5 “‘’€Ž‚‹…, ‚›‡Ž‚ ‚…Š’Ž€
+;    4
+;    3 \
+;    2  } ”ŽŒ€ Š“‘Ž€
+;    1  } ˆ Ž€„€ˆˆ
+;    0 /
+;IX+1 X ŠŽŽ„ˆ€’€
+;IX+2 Y ŠŽŽ„ˆ€’€
+;IX+3 V ‚›‘Ž’€
+;IX+4 H ˜ˆˆ€
+;IX+5 K ŠŽ„ Š‹€‚ˆ˜ˆ
 
 ;===============—ˆ‘‹€=====================
 ;ŽŒ…€ ‘…Š’ŽŽ‚ „‹Ÿ ”ŽŒ€’ˆ‹Šˆ 
@@ -46,44 +64,45 @@ SPRAR2		DB 0X3F,0X00,0X1F,0X40,0X0F,0X60,0X07,0X70,0X03,0X78,0X01,0X7C,0X01,0X70
 	
 ;=========================Œ…ž „ˆ‘ŠŽ‚Ž‰ Ž˜ˆŠˆ========================
 DSK_ERR		;X,Y,V,H,C,C,ADR_CODE*2,F,X,Y,V,H,ADR_TXT*2,TEK_WIN,KOL_NUM*2,TEK_NUMF*2
-		DB 0X08,0X06,LOW ((D_ERR2-D_ERR1)/2)+3,0X11,0X23,0X1D
+		DB 0X08,0X08,LOW ((D_ERR2-D_ERR1)/2)+2,0X11,0X17,0X3A
 		DW D_ERR1
-		DB 0,0,0,0,0
+		DB %00100000,0,0,0,0
 		DW DSKERRTXT
 		DB 0
-		DW ((D_ERR2-D_ERR1)/2),0
-DSKERRTXT	DB 0X0D,3,"DOS MEDITATE!"
-		DB 0X0D,3,"Retry:"
+		DW ((D_ERR2-D_ERR1)/2),0,0
+DSKERRTXT	DB 0X14,1,"DOS MEDITATE!",0X14,0
+		DB 0X0D," R.Retry:  "
 NUM_TRK_TXT	DB "  /"
 NUM_SEC_TXT	DB "  /"
 SIDE_DISK	DB " "				;r
-		DB 0X0D,3,"Ignore sector"	;i
-		DB 0X0D,3,"    Break    ",0	;b
-		DB "rib"
+		DB 0X0D," I.Ignore sector"	;i
+		DB 0X0D," B.Break",0		;b
+		DB LOW (D_ERR1-$-1),"rib"
 
 D_ERR1		DW _RETRY
 		DW _IGNORE
 DSTUPID		DW _STUPID
-D_ERR2		DW RESTART
+D_ERR2
 ;=========================Œ…ž „ˆ‘ŠŽ‚Ž‰ Ž˜ˆŠˆ========================
 
 ;=============Œ…ž ‡€—ˆ‘’Šˆ ‘’€ˆ– ˆ ŠŽˆŽ‚€ˆŸ „ˆ‘Š…’==============
 MKILLS		;X,Y,V,H,C,C,ADR_CODE*2,F,X,Y,V,H,ADR_TXT*2,TEK_WIN,KOL_NUM*2,TEK_NUMF*2
-		DB 0X08,0X0A,LOW ((KILL2-KILL1)/2)+2,0X11,0X17,0X7A
+		DB 0X08,0X0A,LOW ((KILL2-KILL1)/2)+2,0X12,0X0F,0X1F
 		DW KILL1
-		DB 0,0,0,0,0
+		DB %00100000,0,0,0,0
 		DW MKILLSTXT
 		DB 0
-		DW ((KILL2-KILL1)/2),0
-MKILLSTXT	DB 0X0D,3,"Reset neogs"		;r
-		DB 0X0D,3,"reset Pages 128K"	;p
-		DB 0X0D,3,"reset all paGes"	;g
-		DB 0X0D,3,"ramdiSk 512k"	;s
-		DB 0X0D,3,"ramdisK 640k"	;k
-		DB 0X0D,3,"ramDisk 768k"	;d
-		DB 0X0D,3,"ramdIsk 896k"	;i
-		DB 0X0D,3,"copY diskette",0	;y
-		DB "rpgskdiy"
+		DW ((KILL2-KILL1)/2),0,0
+MKILLSTXT	DB 0X14,1,"Services",0X14,0
+		DB 0X0D," R.Reset NeoGS"		;r
+		DB 0X0D," P.Reset pages 128K"		;p
+		DB 0X0D," G.Reset all pages"		;g
+		DB 0X0D," S.Create ramdisk 512k"	;s
+		DB 0X0D," K.Create ramdisk 640k"	;k
+		DB 0X0D," D.Create ramdisk 768k"	;d
+		DB 0X0D," I.Create ramdisk 896k"	;i
+		DB 0X0D," Y.Copy diskette",0		;y
+		DB LOW (KILL1-$-1),"rpgskdiy"
 
 KILL1		DW RESETNGS
 		DW KIPGS		
@@ -93,50 +112,62 @@ KILL1		DW RESETNGS
 		DW RAM_764
 		DW RAM_892
 		DW COPYDISK
-KILL2		DW RESTART
+KILL2
 ;==============Œ…ž ‡€—ˆ‘’Šˆ ‘’€ˆ– ˆ ŠŽˆŽ‚€ˆŸ „ˆ‘Š…’==============
 
 ;=====================‚›Ž FAT “‘’Ž‰‘’‚€=============================
 SEL_FAT_DEV	;X,Y,V,H,C,C,ADR_CODE*2,F,X,Y,V,H,ADR_TXT*2,TEK_WIN,KOL_NUM*2,TEK_NUMF*2
-		DB 0X0C,0X04,0X00,0X14,0X0F,0X1F
+		DB 0X0C,0X05,0X00,0X14,0X0F,0X1F
 SELFATDEVEXE	DW 0
-		DB 0,0,0,0,0
+		DB %00100000,0,0,0,0
 		DW SEL_FAT_DRV
 		DB 0
-		DW 0,0
+		DW 0,0,0
+TXT_FAT_SEL	DB 0X14,1,"Select FAT device",0X14,0
+ETXT_FAT_SEL
 ;=====================‚›Ž FAT “‘’Ž‰‘’‚€=============================
 
 ;=========================ƒ‹€‚Ž… Œ…ž===============================
 MAINMENU	;X,Y,V,H,C,C,ADR_CODE*2,F,X,Y,V,H,ADR_TXT*2,TEK_WIN,KOL_NUM*2,TEK_NUMF*2
-		DB 0X0A,0X03,LOW ((MAIN2-MAIN1)/2)+2,0X0D,0X0F,0X1F
+		DB 0X0F,0X06,LOW ((MAIN2-MAIN1)/2)+2,0X0C,0X0F,0X1F
 		DW MAIN1
-		DB 0,0,0,0,0
+		DB %00100000,0,0,0,0
 		DW MAINTXT
 		DB 0
-		DW ((MAIN2-MAIN1)/2),0
-MAINTXT		DB 0X0D,3,"Gluk boot"		;g
-		DB 0X0D,3,"Fat boot"		;f
-		DB 0X0D,3,"Tape load"		;t
-;		DB 0X0D,3,"Copy & open" 	;c
-		DB 0X0D,3,"hdd0 Boot"		;b
-		DB 0X0D,3,"cD boot"		;d
-		DB 0X0D,3,"trdoS"		;s
-		DB 0X0D,3,"48k basIc"		;i
-		DB 0X0D,3,"128k menU"		;u
-		DB 0X0D,3,"Kills",0		;k
-		DB "gftbdsiuk"
+		DW ((MAIN2-MAIN1)/2),0,MAIN_ZONE
+
+MAINTXT		DB 0X14,1,"Main menu",0X14,0
+		DB 0X0D," Z.TR-DOS boot"	;z
+		DB 0X0D," F.FAT boot"		;f
+		DB 0X0D," T.Tape load"		;t
+;		DB 0X0D," C.Copy & open" 	;c
+		DB 0X0D," B.HDD boot"		;b
+		DB 0X0D," D.CD boot"		;d
+		DB 0X0D," S.TR-DOS"		;s
+		DB 0X0D," I.48k basic"		;i
+		DB 0X0D," U.128k menu"		;u
+		DB 0X0D," R.Service",0		;r
+		DB LOW (MAIN1-$-1),"zftbdsiurwm123489v"
 	
 MAIN1		DW GLUBOOT			;„ˆ‘Š…’Ž‡€ƒ“‡—ˆŠ
 		DW FATBOOT			;‡€ƒ“‡—ˆŠ ‘ ”€’€
 		DW TAPELOAD			;‡€ƒ“‡Š€ ‘ ‹…’›
 ;		DW COPYOPEN			;ŠŽˆŽ‚€ˆ… € „ˆ‘Š…’“ ˆ Ž’Š›’ˆ…
-		DW HDDBOOT			;‘’€›‰ ‡€ƒ“‡—ˆŠ ‘ ‚ˆ’€
+		DW HDD_BOOT			;‘’€›‰ ‡€ƒ“‡—ˆŠ ‘ ‚ˆ’€
 		DW CDBOOT			;‘’€›‰ ‡€ƒ“‡—ˆŠ ‘ ‘ˆ„žŠ€
 		DW DOS128			;……•Ž„ ‚ TR-DOS
 		DW BAS48			;……•Ž„ ‚ …‰‘ˆŠ 48
 		DW BAS128			;……•Ž„ ‚ …‰‘ˆŠ 128
 		DW _KILLS			;Œ…ž Ž—ˆ‘’Šˆ ‘’€ˆ–, €Œ „ˆ‘Š ˆ „ˆ‘ŠŽŠŽˆ 
-MAIN2		DW RESTART			;rulMAIN ;fix £«îª  _rulNMO
+MAIN2		DW CHNGTURBO			;w
+		DW CHNGMODE			;m
+		DW SELDRV			;1
+		DW SELDRV			;2
+		DW SELDRV			;3
+		DW SELDRV			;4
+		DW MOUSE_ONOFF			;8
+		DW CMOS_ONOFF			;9
+		DW NEXTDRIVE			;v
 ;=========================ƒ‹€‚Ž… Œ…ž================================
 
 ;========================„‹Ÿ ‡€ƒ“‡Šˆ ‘ ‹…’›=========================
@@ -145,48 +176,48 @@ EBAS4TAPE
 
 ;„‹Ÿ ‡€ƒ“‡Šˆ ‘ ‹…’›
 TAPE_LDT	;X,Y,V,H,C,C,ADR_CODE*2,F,X,Y,V,H,ADR_TXT*2,TEK_WIN,KOL_NUM*2,TEK_NUMF*2
-		DB 0X05,0X07,0X04,0X16,0X0E,0X0F
+		DB 0X06,0X08,0X04,0X14,0X0E,0X0F
 		DW 0
 		DB 0,0,0,0,0
 		DW TAPELDTTXT
 		DB 0
-		DW 0,0
+		DW 0,0,0
 TAPELDTTXT	DB 0X0D,3,"Tape loading..."
 		DB 0X0D,3,"Press PLAY on tape",0
 ;========================„‹Ÿ ‡€ƒ“‡Šˆ ‘ ‹…’›=========================
 
 ;========================… TR-DOS „ˆ‘Š===============================
 NONETRDOS	;X,Y,V,H,C,C,ADR_CODE*2,F,X,Y,V,H,ADR_TXT*2,TEK_WIN,KOL_NUM*2,TEK_NUMF*2
-		DB 0X05,0X07,0X03,0X16,0X16,0X0F
+		DB 0X05,0X08,0X03,0X16,0X16,0X0F
 		DW 0
 		DB 0,0,0,0,0
 		DW TXT_NONETRDOS
 		DB 0
-		DW 0,0
+		DW 0,0,0
 TXT_NONETRDOS	DB 0X0D,3,"Not TR-DOS disk",0 
 ;========================… TR-DOS „ˆ‘Š===============================
 
 ;=================ŽŠŽ ‚›‚Ž„€ €‰„…›• ”€‰‹Ž‚ TR-DOS=================
 WIN_FILES	;X,Y,V,H,C,C,ADR_CODE*2,F,X,Y,V,H,ADR_TXT*2,TEK_WIN,KOL_NUM*2,TEK_NUMF*2
-		DB 0X00,0X00,0X00,0X0C,0X0F,0X27
+		DB 0X00,0X00,0X00,0X0C,0X0F,0X1F
 		DW WFILES1
-		DB 0X12,0,0,0,0
+		DB %00010010,0,0,0,0
 		DW SEL_FAT_DRV
 		DB 0
-		DW 0,0
+		DW 0,0,0
 WFILES1		REPT H_FILE
 		DW RUNFILE
 		ENDM
 ;=================ŽŠŽ ‚›‚Ž„€ €‰„…›• ”€‰‹Ž‚ TR-DOS=================
 
 ;=================ŽŠŽ ‚›‚Ž„€ €‰„…›• ”€‰‹Ž‚ FAT====================
-FAT_FILES		;X,Y,V,H,C,C,ADR_CODE*2,F,X,Y,V,H,ADR_TXT*2,TEK_WIN,KOL_NUM*2,TEK_NUMF*2
-		DB 0X00,0X00,0X00,0X0C,0X0F,0X27
+FAT_FILES	;X,Y,V,H,C,C,ADR_CODE*2,F,X,Y,V,H,ADR_TXT*2,TEK_WIN,KOL_NUM*2,TEK_NUMF*2
+		DB 0X00,0X00,0X00,0X0C,0X0F,0X1F
 		DW FATFILES1
-		DB 0X12,0,0,0,0
+		DB %00010010,0,0,0,0
 		DW SEL_FAT_DRV
 		DB 0
-		DW 0,0
+		DW 0,0,0
 FATFILES1	REPT H_FILE
 		DW RUN_HOB
 		ENDM
@@ -199,31 +230,66 @@ NOBASIC		;X,Y,V,H,C,C,ADR_CODE*2,F,X,Y,V,H,ADR_TXT*2,TEK_WIN,KOL_NUM*2,TEK_NUMF*
 		DB 0,0,0,0,0
 		DW TXTNOBASIC
 		DB 0
-		DW 0,0
+		DW 0,0,0
 TXTNOBASIC	DB 0X0D,3,"No Progs",0
 ADRNOBAS	DW RESTART
 ;========================…’ …‰‘ˆŠ ”€‰‹Ž‚============================
 
+;=========================HDD … €‰„…===============================
+HDDBOOT_ERROR	;X,Y,V,H,C,C,ADR_CODE*2,F,X,Y,V,H,ADR_TXT*2,TEK_WIN,KOL_NUM*2,TEK_NUMF*2
+		DB 0X08,0X08,0X04,0X10,0X17,0X00
+		DW 0
+		DB 0,0,0,0,0
+		DW TXT_HDDBOOTERR
+		DB 0
+		DW 0,0,0
+TXT_HDDBOOTERR	DB 0X0D,3,"HDD not found",0X0D,3,"Press any key",0
+;=========================HDD … €‰„…===============================
+
 ;***************’…Š‘’› ˆ Ž—€Ÿ ”ˆƒŸ********************
 
+TXTFULLSCR	DB 0X16,0X00,0X00,0X17,4,"EVO Reset Service v",VERSBIOS
+		DB 0X16,0X08,0X00,0X17,6,"ZX-Evolution 4096 Kb"
+		DB 0X16,0X10,0X00,0x17,0X45,"www.nedopc.com forum.nedopc.com "
+		DB 0X16,0X18,0X00,0X17,5,"Baseconf: ",0X17,0XFF
+VERS_CONF	DB "NONE                            "
+		DB 0X16,0X20,0X00,0X17,5,"AVR Boot: ",0X17,0XFF
+		;   12345678901234567890123456789012
+VERS_BOOT	DB "NONE                            "
+		DB 0X16,0XB0,0X00,0X17,3,"Press ",0X17,0X43,"1/2/3/4 ",0X17,3,"choose TR-DOS boot drive "
+		DB 0X16,0XB8,0X00,0X17,0X43,"W ",0X17,3,"Turbo on/off,",0X17,0X43," M ",0X17,3,"Memory lock 48/128/off",0X17,0XFF,0
+
+MAIN_ZONE	DB 0,0X00,0X06,0X01,0X0D,"v"
+		DB 0,0X00,0X07,0X01,0X0D,"w"
+		DB 0,0X00,0X08,0X01,0X0D,"m",0XFF
+
+TRDDRV_MODE	DB 0X16,0X30,0X00,0X17,3,"TR-DOS Drive: ",0X17,0XFF," A",0
+TXT_DRIVE	EQU $-2
+SPEED_MODE	DB 0X16,0X38,0X00,0X17,3,"Turbo Mode:  ",0X17,0XFF," off",0
+TXT_SPEED	EQU $-3
+MEM_MODE	DB 0X16,0X40,0X00,0X17,3,"Memory Lock: ",0X17,0XFF," "
+TXT_MEM		DB "128",0
+
+BUFF_TIME	DB 0X16,0X00,0XD0,0X17,0X4E
+TXT_TIME	DB "00:00:00",0X16,0X08,0XD0
+TXT_DATA	DB "00.00.00",0X17,0XFF,0
+
+TIME_OFF	DB 0X16,0X00,0XD0,0X17,7,"        ",0X16,0X08,0XD0,"        ",0X17,0XFF,0
+
+HOT_KEYS	DB 0X0D,8,3," .",0
+HOT_KEY		EQU $-3
+
+MASK_EXT	DB "TRDSCL",0
+
 ;‘ˆ‘ŽŠ Š‹€‚ˆ˜ Ž‚…Ÿ…Œ›• ‚‘…ƒ„€
-MAIN_KEYS	;DB "qawm 123489",0x07,0x0A,0x0B,0X0D
-		DB "qawmop 123489",0x07,0x08,0x09,0x0A,0X0B,0X0D
+MAIN_KEYS	DB LOW (EMAIN_KEYS-$-1),"qaop ",0x07,0X08,0X09,0x0A,0x0B,0X0D
 EMAIN_KEYS
 
 ADREXEKEYS	DW UP		;q
 		DW DOWN		;a
-		DW CHNGTURBO	;w
-		DW CHNGMODE	;m
 		DW LEFT		;o
 		DW RIGHT	;p
 		DW ENTER	;SPACE
-		DW SELDRV	;1
-		DW SELDRV	;2
-		DW SELDRV	;3
-		DW SELDRV	;4
-		DW MOUSE_ONOFF	;8
-		DW CMOS_ONOFF	;9
 		DW RESTART	;EDIT
 		DW LEFT		;0X08
 		DW RIGHT	;0X09
@@ -234,12 +300,12 @@ EADREXEKEYS
 
 ;’…Š‘’ „‹Ÿ Ž’Ž€†…ˆŸ €‰„…›• €‡„…‹Ž‚, Ž 16 €‰’ ‘’ŽŠ€
 TXT4MENU_DEVICE	   ;1234567890123456
-		DB ":ZContr  SDCard:"	;4
-		DB ":NeoGS   SDCard:"	;5
-		DB ":HDDNemo MASTER:"	;6-MASTER
-		DB ":HDDSmuc MASTER:"	;7-SLAVE
-		DB ":HDDNemo  SLAVE:"	;6-MASTER
-		DB ":HDDSmuc  SLAVE:"	;7-SLAVE
+		DB ".ZContr  SDCard:"	;4
+		DB ".NeoGS   SDCard:"	;5
+		DB ".HDDNemo MASTER:"	;6-MASTER
+		DB ".HDDSmuc MASTER:"	;7-SLAVE
+		DB ".HDDNemo  SLAVE:"	;6-MASTER
+		DB ".HDDSmuc  SLAVE:"	;7-SLAVE
 
 ;’ˆ €‡„…‹€
 TXT4MENU_TYPE	DB "FAT12"
@@ -263,12 +329,6 @@ SECFREE		DW 3568		;+0XE5-ŠŽ‹ˆ—…‘’‚Ž ‘‚ŽŽ„›• ‘…Š’ŽŽ‚
 		DB "RAMDISK "	;+0XF5-ˆŒŸ „ˆ‘Š…’›
 DSK_END
 
-;’…Š‘’ Ž’ŽŸ†…ˆŸ ’“Ž …†ˆŒ€ ˆ …†ˆŒ€ €ŒŸ’ˆ
-TMODE		DB "Fast ALL",0XFF
-
-;“Š‚› „ˆ‘ŠŽ‚Ž„Ž‚
-TDRVS		DB "A B C D",0XFF
-
 ;„‹Ÿ Œ…ž ‚›Ž€ ŠŽˆŽ‚€ˆŸ „ˆ‘Š…’
 mINSOUT		DB 7-WIDE,0X0C
 		DB 1+2
@@ -277,27 +337,17 @@ mINSOUT		DB 7-WIDE,0X0C
 		DC "INSERT OUTPUT 1-4"
 		DB 0XFF
 
-SPACE8		DB "        ",0XFF
-NO_CMOS		DB "NO CMOS ",0XFF
-OFFCMOS		DB "OFF CMOS",0XFF
-
 MSTUPID		DB 3,8,3,26,0XEA
 		DC "GO SLEEP,STUPID USER!!!"
 		DB 0XFF
 
 TXT_BETA	DB " beta"
 
-NAME_ROM	   ;12345678901234567890123456789012
-		DB "HE GLUK, ONLY RESET SERVICE ",g1,".",g2,g3,0XFF
-
-T_ALL		DB "ALL"	;0
+T_ALL		DB "off"	;0
 T_128		DB "128"	;2
-T_48		DB "48 ",0XFF	;1
-T_FAST		DB "Fast"
-T_SLOW		DB "Slow"
+T_48		DB " 48"	;1
 
 DRV_SYM		DB 0	;ŽŒ… ‚›€ŽƒŽ „ˆ‘ŠŽ‚Ž„€
-BOOTPG		DB 0	;ŽŒ… ‘’€ˆ–› ‚›‚…„…ŽƒŽ Š€’€‹Žƒ€
 yIKNOW		DB 0	;0=­¥â I KNOW ;???
 OLD_1F		DB 0	;¤«ï BOOT
 MEMMODE		DB 0	;…†ˆŒ €ŒŸ’ˆ

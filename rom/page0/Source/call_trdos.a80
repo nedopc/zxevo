@@ -67,7 +67,8 @@ _IKNOW	CALL GLUDIN
 ;	CALL DOSIX
 ;	LD IX,0X3EF5
 ;	CALL DOSIX
-GLUBOOT		RES 4,(IY+55)
+GLUBOOT		LD HL,FLAGS
+		RES 3,(HL)			;‡€“‘Š ‘ „ˆ‘Š…’›
 		LD HL,ADR_CAT
 		LD DE,8
 		LD BC,0X0105
@@ -75,8 +76,6 @@ GLUBOOT		RES 4,(IY+55)
 		LD A,(ADR_CAT+0XE7)
 		CP 0X10				;Ž‚…Š€ € ˆ‡€Š TR_DOS
 		JP NZ,PRT_NONETRDOS		;Ž˜ˆŠ€, „ˆ‘Š … TR-DOS
-		LD HL,FLAGS
-		RES 3,(HL)			;‡€“‘Š ‘ „ˆ‘Š…’›
 		LD HL,ADR_CAT
 		LD DE,0
 		LD BC,0X0905
@@ -89,22 +88,21 @@ GLUBOOT		RES 4,(IY+55)
 		LD IX,ADR_CAT
 		LD DE,0X10
 		LD A,(ADR_CAT+0X8E4)
-		LD B,A				;‘ŠŽ‹œŠŽ ”€‰‹Ž‚ Ž‘ŒŽ’…’œ
-		LD C,0
+		LD B,A				;‘ŠŽ‹œŠŽ ”€‰‹Ž‚ €„Ž Ž‘ŒŽ’…’œ
+		LD C,0				;Ž“‹…ˆ… ‘—…’—ˆŠ€ €‰„…ŽƒŽ
 		EXX
 		PUSH IX
 		POP DE
 		EXX
-FIND_BASIC	
-		LD A,(IX+8)
-		CP "B"
+FIND_BASIC	LD A,(IX+8)
+		CP "B"				;ˆ™…Œ ’Ž‹œŠŽ €‘ˆŠ ”€‰‹›
 		JR NZ,FINDBAS1
 		LD A,(IX+0)
-		DEC A
+		DEC A				;Ž‚…Š€ € “„€‹…›‰ ”€‰‹
 		JR Z,FINDBAS1
 		EXX
 		PUSH IX
-		POP HL
+		POP HL				;Ž’Š“„€ ……Ž‘ˆ’œ Žˆ‘€’…‹œ
 		REPT 16
 		LDI
 		ENDM
@@ -112,101 +110,142 @@ FIND_BASIC
 		INC C
 FINDBAS1	ADD IX,DE
 		DJNZ FIND_BASIC
-		LD IX,WIN_FILES
+		LD IX,WIN_FILES			;ŽŠŽ „‹Ÿ ‚›‚Ž„€ €‘ˆŠ ”€‰‹Ž‚
 OUT_HOB		LD (IX+0X0F),0
+		LD (IX+0X10),C
+		LD (IX+0X11),B			;Ž‹Ž… ŠŽ‹ˆ—…‘’‚Ž €‰„…ŽƒŽ
 		LD (IX+0X12),0
-		LD (IX+0X13),0
-		LD A,C			;Ž‚…Š€ ŠŽ‹ˆ—…‘’‚€ €‰„…ŽƒŽ
+		LD (IX+0X13),0			;Ž“‹Ÿ…Œ Ž‡ˆ–ˆž ”€‰‹Ž‚ ˆ Š“‘Ž€
+REOUT_HOB	LD A,B
+		OR C				;Ž‚…Š€ ŠŽ‹ˆ—…‘’‚€ €‰„…ŽƒŽ
+		JP Z,NO_BAS			;…‘‹ˆ 0, ’Ž …’ €‘ˆŠŽ‚
+		RES 2,(IY+55)			;…„Ž‹Ž†ˆ’…‹œŽ ”€‰‹Ž‚ Œ……… ‚›‘Ž’› ŽŠ€
+		LD A,B
 		AND A
-		JP Z,NO_BAS		;…‘‹ˆ 0, ’Ž …’ €‘ˆŠŽ‚
-		RES 2,(IY+55)		;€‚…Ž ”€‰‹Ž‚ Œ……… ‚›‘Ž’› ŽŠ€
-		CP H_FILE+1
-		JR C,FINDBAS2
 		LD A,C
-		SET 2,(IY+55)		;”€‰‹Ž‚ Ž‹œ˜… ‚›‘Ž’› ŽŠ€
-FINDBAS2	LD (IX+0X10),A
-		CP H_FILE
-		JR C,FINDBAS5
-		LD A,H_FILE
-FINDBAS5	ADD A,2
+		JR NZ,FINDBAS2
+		CP H_FILE-1
+		JR C,FINDBAS2
+		SET 2,(IY+55)			;”€‰‹Ž‚ Ž‹œ˜… ‚›‘Ž’› ŽŠ€
+		LD A,H_FILE-2
+FINDBAS2	LD (KOL4OUT),A			;“‘’€Ž‚Š€ ŠŽ‹ˆ—…‘’‚€ Žˆ‘€’…‹…‰ ‚ ŽŠŽ
+		ADD A,2
+		LD (IX+2),A			;“‘’€Ž‚Š€ ‚›—ˆ‘‹…Ž‰ ‚›‘Ž’› ŽŠ€
+		LD (IX+3),V_FILE		;“‘’€Ž‚Š€ ˜ˆˆ› ŽŠ€
+FINDBAS6	LD HL,FLAGS
+		BIT 3,(HL)
+		JR Z,FINDBAS5			;…‘‹ˆ €Ž’€ ‘ TR-DOS, ’Ž ……•Ž„ˆŒ € ‚›‚Ž„ ŽŠ€
+		INC (IX+3)
+		LD A,(IX+2)			;…‘‹ˆ €Ž’€ ‘ FAT, ’Ž ŽŠŽ €„€ ‚›‚Ž„ˆ’œ ‚ Ž‹›‰ Ž‘’
+		PUSH AF				;‘Ž•€ˆ‹ˆ ‚›—ˆ‘‹…“ž ‚›‘Ž’“ ˆ ˜ˆˆ“ ŽŠ€
+		LD (IX+2),H_FILE
+		CALL WINW			;‚›‚…‹ˆ ŽŠŽ ‚ Ž‹›‰ Ž‘’
+		POP AF
 		LD (IX+2),A
-		CALL WINW
-		CALL OUT_TEK_DIR
+		JR FINDBAS7
+
+FINDBAS5	CALL WINW			;‚›‚Ž„ˆŒ ŽŠŽ
+FINDBAS7
+;		LD B,(IX+2)
+;		DEC B
+;		DEC B
+;		LD C,"A"
+;		LD DE,HOT_KEY
+;FINDBAS5	PUSH BC
+;		LD A,C
+;		LD (DE),A
+;		LD HL,HOT_KEYS
+;		CALL NEXT
+;		POP BC
+;		INC C
+;		DJNZ FINDBAS5
+		CALL OUT_TEK_DIR		;‚›‚Ž„ˆŒ Š“‘Ž—…Š „ˆ…Š’Žˆˆ
 		BIT 2,(IY+55)
 		JP Z,_RULILKA
-		LD A,(IX+0)
-		ADD A,(IX+3)
-		SUB 2
-		LD H,A
-		LD L,0
-		CALL ADRDIS
-		PUSH HL
-		LD A,(IX+2)
-		ADD A,A
-		ADD A,A
-		ADD A,A
-		SUB 2
-		LD B,A
-		INC H
-SCROLLER1	LD (HL),1
-		CALL INC_H
-		DJNZ SCROLLER1
-		LD A,H
-		SUB 7
-		LD H,A
-		INC L
-		LD DE,0X19*8+CHARS
-		REPT 7
-		LD A,(DE)
-		CPL
-		LD (HL),A
-		INC H
-		INC E
-		ENDM
-		POP HL
-		INC L
-		LD DE,0X18*8+CHARS+1
-		REPT 7
-		INC H
-		LD A,(DE)
-		CPL
-		LD (HL),A
-		INC E
-		ENDM	
+		CALL RIGHT_SIDE			;…‘‹ˆ €‰„…Ž Ž‹œ˜… ‚›‘Ž’› ŽŠ€ -2, ’Ž ˆ‘“…Œ ŽŠŽ‚“˜Š“
 		JP _RULILKA
 
-OUT_TEK_DIR	LD L,(IX+0X12)
-		LD H,(IX+0X13)
-		LD E,(IX+0X0F)
-		LD D,0
-		AND A
-		SBC HL,DE
-		ADD HL,HL
-		ADD HL,HL
-		ADD HL,HL
-		ADD HL,HL
+;‚›‚Ž„ —€‘’ˆ „ˆ…Š’Žˆˆ ‘ “Š€‡€Ž‰ Ž‡ˆ–ˆˆ
+OUT_TEK_DIR	LD L,(IX+0X12)			;‚›‚Ž„ „ˆ› TR-DOS „ˆ‘Š€
+		LD H,(IX+0X13)			;Ž‹“—ˆ‹ˆ ŽŒ… ’…Š“™…‰ Ž‡ˆ–ˆˆ
+		LD E,(IX+0X0F)			;Ž‹“—ˆ‹ˆ Ž‡ˆ–ˆž Š“‘Ž€ ‚ ŽŠ…
+		XOR A
+		LD D,A
+		SBC HL,DE			;‚›—ˆ‘‹ˆ‹ˆ Ž‡ˆ–ˆž ”€‰‹€ ‘ ŠŽ’ŽŽƒŽ “„…Œ ‚›‚Ž„ˆ’œ
 		LD DE,ADR_CAT
-		ADD HL,DE
+		ADD HL,HL
+		LD A,(FLAGS)
+		AND 8
+		JR NZ,OUT_TEK_FAT		;……•Ž„ …‘‹ˆ „‹Ÿ FAT
+		ADD HL,HL
+		ADD HL,HL
+		ADD HL,HL			;“ŒŽ†ˆ‹ˆ € €‡Œ… Žˆ‘€’…‹Ÿ
+		ADD HL,DE			;‚›—ˆ‘‹ˆ‹ˆ €„…‘ Žˆ‘€’…‹Ÿ ‘ ŠŽ’ŽŽƒŽ “„…Œ ‚›‚Ž„ˆ’œ
+		LD C,(IX+2)
+		DEC C
+		DEC C				;‚›—ˆ‘‹ˆ‹ˆ ‘ŠŽ‹œŠŽ ‚›‚Ž„ˆ’œ
 		LD D,(IX+0)
 		LD E,(IX+1)
 		INC D
 		INC D
-		INC E
-		LD C,(IX+2)
-		DEC C
-		DEC C
-FINDBAS3	LD B,8
+		INC E				;‚›—ˆ‘‹ˆ‹ˆ Ž‡ˆ–ˆž ‚›‚Ž„€ € Š€
+FINDBAS3	LD B,8				;…—€’€…Œ ’Ž‹œŠŽ ˆŒŸ
 		PUSH DE
 FINDBAS4	LD A,(HL)
 		INC HL
 		CALL PRT_SYM
 		DJNZ FINDBAS4
-		LD DE,8
+		LD DE,8				;8 ‘ˆŒ‚Ž‹Ž‚ €…—€’ˆ‹ˆ, Ž‘’€‹œ›… 8 Ž“‘Š€…Œ
 		ADD HL,DE
 		POP DE
 		INC E
 		DEC C
-		JR NZ,FINDBAS3
+		JR NZ,FINDBAS3			;…‘‹ˆ … ŠŽ—ˆ‹ˆ‘œ ……•Ž„ˆŒ € …—€’œ ‘‹…„“ž™…ƒŽ ˆŒ…ˆ
+		RET
+
+;‚›‚Ž„ „ˆ› € FAT
+OUT_TEK_FAT	ADD HL,DE
+		LD D,(IX+0)
+		LD E,(IX+1)
+		INC D
+		INC D
+		INC E				;‚›—ˆ‘‹ˆ‹ˆ Ž‡ˆ–ˆž ‚›‚Ž„€ € Š€
+		LD C,0
+KOL4OUT		EQU $-1
+OTF2		PUSH BC
+		LD C,(HL)
+		INC HL
+		LD B,(HL)
+		INC HL
+		PUSH HL
+		PUSH DE
+		LD A,6
+		CALL COM_FAT
+		DB Positf
+		CALL COM_FAT
+		DB Getfzap
+		POP DE
+		PUSH DE
+		LD BC,0X0B
+		ADD HL,BC
+		LD A,(HL)
+		SBC HL,BC
+		AND 0X10
+		LD A,0
+		JR NZ,OTF4
+		LD A,1
+OTF4		CALL PRTSYMALT
+		LD B,8
+OTF1		LD A,(HL)
+		INC HL
+		CALL PRT_SYM
+		DJNZ OTF1
+		POP DE
+		POP HL
+		POP BC
+		INC E
+		DEC C
+		JR NZ,OTF2
 		RET
 
 NO_BAS		LD IX,NOBASIC
@@ -215,7 +254,6 @@ NO_BAS		LD IX,NOBASIC
 
 RUNFILE		DI
 		CALL SHUT2AY			;“ŒŠ€‹Š€ ‚ AY
-		CALL MEMSET			;‚›‘’€‚ˆ‹ˆ …†ˆŒ ŠŽŒ€
 		LD L,(IX+0X12)
 		LD H,(IX+0X13)			;ŽŒ… ‚›€ŽƒŽ ”€‰‹€ 
 		LD DE,ADR_CAT
@@ -224,11 +262,53 @@ RUNFILE		DI
 		ADD HL,HL
 		ADD HL,HL
 		ADD HL,DE			;Ž’Š“„€ ˆŒŸ ”€‰‹€ ‚‡Ÿ’œ
-		JP NEWRUNPROGS			;Ž‘’€‹œ›… “‘’€Ž‚Šˆ ˆ ‡€“‘Š
+		LD DE,RUNNAM
+		LD BC,8
+		LDIR
+		EX DE,HL
+		DEC HL
+		RES 7,(HL)
+		LD HL,0X3E08+0XA7
+		LD DE,0XFFFF
+		LD C,0XA8			;21 á¨¬¢®« UDG
+		LDDR
+		LD HL,BUFSTR
+		LD DE,0X5D3B
+		LD BC,ENDSTR-BUFSTR
+		LDIR				;……Ž‘ …‰‘ˆŠ Žƒˆ „‹Ÿ ‡€“‘Š€
+		CALL MEMSET			;‚›‘’€‚ˆ‹ˆ …†ˆŒ ŠŽŒ€
+		LD IY,0X5C3A
+		LD (IY),0XFF
+		SET 7,(IY+1)
+		RES 4,(IY+1)
+		LD HL,0X2758
+		EXX
+		LD A,0XC9
+		LD (0X5CC2),A
+		LD HL,1
+		LD (0X5C42),HL
+		XOR A
+		LD (0X5C44),A
+		LD BC,0X5FFF
+		CALL 0X1EB7			;“‘’€Ž‚Š€ ‘’…Š€ ‘…„‘’‚€Œˆ …‰‘ˆŠ€
+		LD HL,0X1303
+		PUSH HL
+		LD (0X5C3D),SP
+		EI
+		JP 0X1B7D			;‡€“‘Š ………‘…Ž‰ …‰‘ˆŠ Žƒˆ
+
+;Š“ƒŽ‚Ž‰ ……Ž ˆŒ…ˆ „ˆ‘ŠŽ‚Ž„€ 1-4 (A-D)
+NEXTDRIVE	LD A,(TXT_DRIVE)		;‚‡Ÿ‹ˆ “Š‚“ ’…Š“™…ƒŽ „ˆ‘ŠŽ‚Ž„€
+		INC A				;+1, ’Ž …‘’œ ‚›€‹ˆ ‘‹…„“ž™ˆ‰ Ž ŽŸ„Š“
+		SUB 0X10			;…‚€’ˆ‹ˆ ‚ ŽŒ…
+		CP "5"				;…‘‹ˆ …‚›‘ˆ‹ˆ 4
+		JR C,SELDRV1
+		SUB 4				;’Ž ˆ‡Œ…ˆ‹ˆ € ŽŒ… …‚›‰
+		JR SELDRV1
 
 ;ˆ‡Œ……ˆ… ŽŒ…€ „ˆ‘ŠŽ‚Ž„€ ˆ ‘Ž•€…ˆ… ‚ ŠŒŽ‘… …‘‹ˆ ’€ŠŽ‚Ž‰ Ž€“†…
-SELDRV		LD A,D				;‚‡Ÿ‹ˆ ŽŒ… „ˆ‘ŠŽ‚Ž„€
-		SUB "1"				;Ž€’ˆ‹ˆ ‚ ˆ€›‰ ‚ˆ„ „‹Ÿ ‡€ˆ‘ˆ ‚ ……Œ…“ž
+SELDRV		LD A,(0X5C08)			;‚‡Ÿ‹ˆ ŽŒ… „ˆ‘ŠŽ‚Ž„€
+SELDRV1		SUB "1"				;Ž€’ˆ‹ˆ ‚ ˆ€›‰ ‚ˆ„ „‹Ÿ ‡€ˆ‘ˆ ‚ ……Œ…“ž
 		LD HL,MAINLOP			;€„…‘ Š“„€ ‚…“’œ‘Ÿ Ž‘‹… ‡€ˆ‘ˆ
 		PUSH HL
 SELDRVPP	LD (DRV_SYM),A
@@ -238,11 +318,10 @@ SELDRVPP	LD (DRV_SYM),A
 		RET Z				;…‘‹ˆ ŠŒŽ‘ … ”‰„…, ‚›•Ž„ˆŒ
 		LD H,0X10
 		CALL WRITECMOS			;‘Ž•€Ÿ…Œ ‚›€›‰ „ˆ‘ŠŽ‚Ž„ ‚ ŠŒŽ‘…
-		CALL SET_DRIVE
-		CALL PRT_DRV_SYM
-		BIT 4,(IY+55)
-		RET NZ
-		JP RESTART
+		CALL SET_DRIVE			;“‘’€Ž‚Š€ ˆ‡Œ……ˆŸ
+		CALL REST2X2			;‚Ž‘‘’€Ž‚ˆ‹ˆ Ž„ Š“‘ŽŽŒ Œ›˜ˆ
+		CALL PRT_DRV_SYM		;………—€’€‹ˆ ‘’ŽŠ“ Ž „ˆ‘ŠŽ‚Ž„€•
+		JP DRAW_MOUSE			;€ˆ‘Ž‚€‹ˆ Œ›˜œ € ‘’€ŽŒ Œ…‘’…
 
 ;FIX mouse key if no mouse
 ONERNCLS
@@ -274,34 +353,26 @@ ONERR	EX (SP),HL
 	EI
 	CALL GLUDIN
 	LD HL,0X5CF4
-	LD A,(HL)		;‚‡Ÿ‹ˆ ŽŒ… ‘…Š’Ž€
+	LD A,(HL)			;‚‡Ÿ‹ˆ ŽŒ… ‘…Š’Ž€
+	INC A
 	CALL DIV10
 	LD (NUM_SEC_TXT+1),A
 	LD A,D
 	LD (NUM_SEC_TXT),A
 	INC HL
-	LD A,(HL)		;‚‡Ÿ‹ˆ ŽŒ… ’…Š€
+	LD A,(HL)			;‚‡Ÿ‹ˆ ŽŒ… ’…Š€
 	SRL A
 	LD E,A
 	ADC A,"0"
 	SUB E
-	LD (SIDE_DISK),A	;‘’ŽŽ€ „ˆ‘Š€
+	LD (SIDE_DISK),A		;‘’ŽŽ€ „ˆ‘Š€
 	LD A,E
 	CALL DIV10
 	LD (NUM_TRK_TXT+1),A
 	LD A,D
 	LD (NUM_TRK_TXT),A
-		LD IX,DSK_ERR				;ŽŠŽ ‚›‚Ž„ˆŒ Ž‹Ž‘’œž
-		LD HL,DSK_ERR+1
-		LD (HL),6
-		INC HL
-		LD (HL),LOW ((D_ERR2-D_ERR1)/2)+3
-		PUSH HL
+		LD IX,DSK_ERR		;ŽŠŽ ‚›‚Ž„ˆŒ Ž‹Ž‘’œž
 		CALL WINW
-		POP HL					;Ž‘‹… ‚›‚Ž„€ € Š€ “Œ…œ˜€…Œ
-		DEC (HL)				;ŠŽ‹ˆ—…‘’‚Ž “Š’Ž‚
-		DEC HL
-		INC (HL)				;ˆ ‚›‘Ž’“ ŽŠ€, ’€Š Š€Š …‚›‰ “Š’ …„Ž‘’“…
 		JP _RULILKA
 
 RESET_VG	LD C,0XFF

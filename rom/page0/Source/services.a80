@@ -1,10 +1,16 @@
 
-DD		EQU 17				;„€’€
-MM		EQU 9				;Œ…‘Ÿ–
+DD		EQU 06				;„€’€
+MM		EQU 10				;Œ…‘Ÿ–
 YY		EQU 10				;ƒŽ„
-DATA		EQU DD+(MM<<5)+(YY<<9)+0X8000	;“†… “€ŠŽ‚€Ž
+DATA		EQU DD+(MM<<5)+(YY<<9);+0X8000	;“†… “€ŠŽ‚€Ž
 
 DEPKADR		EQU 0X6000
+
+SYSREG_EFF7	EQU 0XEFF7
+SET_ADR_CMOS	EQU 0XDFF7
+RD_WR_CMOS	EQU 0XBFF7
+CMOS_ON		EQU 0X80
+CMOS_OFF	EQU 0
 
 		ORG 0X0000
 
@@ -33,33 +39,57 @@ CMPROM1		LD A,(BC)
 		DEC C
 		JR NZ,CMPROM1
 		LD IXL,"A"		;Ž…„…‹ˆ‹Ž‘œ, Ž˜ˆ‚Š€ „‹Ÿ €’Œ
+;		JR RSTRAM
 
+;CP_PENTEVO	LD HL,0XF000		;‡€Ž‘ ‚…‘ˆˆ FPGA
+;		LD C,L
+;		CALL WRITECMOS		;ˆ˜…Œ ‚ €„…‘ 0XF0 „‹Ÿ Ž‹“—…ˆŸ ‚…‘ˆˆ
+;		CALL READCMOS		;—ˆ’€…Œ Ž’‚…’
+;		LD A,L
+;		CP C			;‘Ž‚€‹Ž ‘ ’…Œ —’Ž ‡€ˆ‘€Ž, … Ž„„…†ˆ‚€…’‘Ÿ
+;		JP Z,RSTKEYS		;ˆ ’Ž … …’…‚€ (ˆ‹ˆ ‚…‘ˆŸ FPGA ‘’€€Ÿ). ‚›•Ž„ˆŒ
+;		INC A			;ˆ˜…‹ 0XFF, ‡€—ˆ’ —€‘Ž‚ …’“
+;		JP Z,RSTKEYS		;‚›•Ž„ˆŒ
+;		LD B,0X0F		;Ž‘’€‹Ž‘œ Ž—ˆ’€’œ Ž‘’€‹œ›… …™… 15 €‰’
+;GVE1		INC H
+;		CALL READCMOS		;—ˆ’€…Œ €‰’
+;		DJNZ GVE1		;—ˆ’€…Œ ŽŠ€ ‚‘… €‰’› … ŠŽ—€’‘Ÿ
+;		LD IXL,"E"		;Ž…„…‹ˆ‹€‘œ, Ž˜ˆ‚Š€ „‹Ÿ …’…‚›
+;		LD A,1
+;		OUT (0XBF),A
+
+;€ …‚ŽŒ Ž•Ž„… ‚ ‚ˆ„…Ž …†ˆŒ… 640•200
+;€ ‚’ŽŽŒ Ž•Ž„… ‚ ’…Š‘’Ž‚ŽŒ …†ˆŒ…
 RSTRAM		LD DE,0X1002
-RSRAMp0		LD BC,0X0077
-		OUT (C),E
+RSRAMP0		LD BC,0X0077
+		OUT (C),E		;‚›“€…Œ „ˆ‘…’—…€ €ŒŸ’ˆ
 		LD HL,TRSTRAM
-RSRAMp1		LD BC,0X7FFD
-		OUT (C),D
+RSRAMP1		LD BC,0X7FFD
+		OUT (C),D		;‚“€…Œ ŠŽ”ˆƒ 48Š € …‚ŽŒ Ž•Ž„…, 128Š € ‚’ŽŽŒ
 		LD BC,0X0FF7
-RSRAMp2		LD A,(HL)
-		OUT (C),A
+RSRAMP2		LD A,(HL)
+		OUT (C),A		;ˆ˜…Œ ŽŒ… ‘’€ˆ–› „‹Ÿ ’…Š“™…ƒŽ ŽŠ€ Ž…–ˆŽ‚€ˆŸ
 		INC HL
 		LD A,B
-		ADD A,0X40
+		ADD A,0X40		;‘‹…„“ž™…… ŽŠŽ Ž…–ˆŽ‚€ˆŸ
 		LD B,A
-		JR NC,RSRAMp2
+		JR NC,RSRAMP2		;…‘‹ˆ … ŠŽ—ˆ‹Ž‘œ ……•Ž„ˆŒ Š ‡€ˆ‘ˆ ‚ ‘‹…„“™…… ŽŠŽ
 		LD A,D
-		XOR 0X10
+		XOR 0X10		;‘Œ…ˆ‹ˆ …†ˆŒ € 128Š
 		LD D,A
-		JR Z,RSRAMp1
-		LD A,E
-		XOR 4
+		JR Z,RSRAMP1		;ˆ ……Š‹ž—…ˆˆ ‚ 128Š Ž‚’ŽŸ…Œ
+		LD A,E			;ˆ€—… Ž„Ž‹†€…Œ „€‹……
+		XOR 4			
 		LD E,A
 		CP 2
-		JR NZ,RSRAMp0			;§ ç¥¬ 2 à § ?
-		LD A,0XAB			;ZX scr, turbo
-		LD BC,0X4177			;¢ëª«.PAL
-		OUT (C),A			;¢ª« RAM (PEN)
+		JR NZ,RSRAMP0		;§ ç¥¬ 2 à § ? Ÿ ’Ž†… … ŽˆŒ€ž ‡€—…Œ :)
+;		LD A,IXL
+;		CP "A"
+;		JP NZ,END_INIT
+		LD A,%10101011		;ZX SCREEN MODE, TURBO ON („‹Ÿ €’Œ)
+		LD BC,0X4177		;¢ëª«.PAL
+		OUT (C),A		;¢ª« RAM (PEN)
+;„‹Ÿ …’…‚› Ž•Ž„ ˆŽ … “†Ž ˆˆ’ˆ’œ ”€—
 ;”€—
 		LD A,0X06
 		LD BC,0X0177
@@ -86,6 +116,7 @@ FAPC0		LD A,(HL)
 		LD A,0XFF
 		OUT (0XFF),A
 ;~”€—
+;„‹Ÿ €‹ˆ’› ŽŠ€ ’Ž†… Ž•Ž„
 ;¯ «¨âà 
 		LD HL,TRSTPAL		;+15
 		LD DE,0XAB0F
@@ -101,8 +132,11 @@ RSTPAL0		LD A,E
 		OUT (0XFF),A
 		DEC E
 		JP P,RSTPAL0
+END_INIT	LD A,%10101011
 		LD BC,0X4177
-		OUT (C),D		;¢ëª«.PAL
+		OUT (C),A		;¢ëª«.PAL
+;		XOR A
+;		OUT (0XBF),A
 ;~¯ «¨âà 
 
 ;¯à®¢¥àª  ­ ¦ â¨ï ¤¢ãå ª« ¢¨è (¯®àâ¨¬ â®«ìª® AF,BC)
@@ -234,6 +268,34 @@ TFAPC		DB 0XF1,0XE1,0XD1,0XC1,0XC1,0XB1,0XA1,0X91
 
 TRSTPAL		DB 0X00,0X21,0X42,0X63,0X90,0XB1,0XD2,0XF3
 		DB 0XE0,0XE1,0XE2,0XE3,0XF0,0XF1,0XF2,0XF3
+
+;€ ‚•Ž„…: H-€„…‘ Ÿ—…‰Šˆ
+;	   L-Ž—ˆ’€Ž… ‡€—…ˆ…
+READCMOS	PUSH BC
+		LD BC,SYSREG_EFF7
+		LD A,CMOS_ON
+		OUT (C),A
+		LD B,HIGH (SET_ADR_CMOS)
+		OUT (C),H
+		LD B,HIGH (RD_WR_CMOS)
+		IN L,(C)
+		JR OFF_CMOS
+
+;€ ‚•Ž„…: H-€„…‘ Ÿ—…‰Šˆ
+;	   L-—’Ž ’“„€ ‡€ˆ‘€’œ
+WRITECMOS	PUSH BC
+		LD BC,SYSREG_EFF7
+		LD A,CMOS_ON
+		OUT (C),A
+		LD B,HIGH (SET_ADR_CMOS)
+		OUT (C),H
+		LD B,HIGH (RD_WR_CMOS)
+		OUT (C),L
+OFF_CMOS	XOR A				;CMOS_OFF
+		LD B,HIGH (SYSREG_EFF7)
+		OUT (C),A
+		POP BC
+		RET
 		
 		DUPL 0X3FF8-$,0XFF
 
