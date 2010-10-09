@@ -115,6 +115,8 @@ RASCH		LD A,(IX)
 		ADD A,A
 		ADD A,A
 		LD (EX1+1),A
+		BIT 5,(IX+8)
+		CALL NZ,RADUGA
 		LD HL,0
 		BIT 4,(IX+8)
 		JR NZ,WINW2
@@ -426,6 +428,63 @@ ADRATR		LD A,H
 ASD		LD A,0
 		RET
 
+RADUGA		LD A,(IX+0)
+		ADD A,(IX+3)
+		LD H,A
+		LD L,(IX+1)
+		CALL ADRDIS
+		EX DE,HL
+		LD A,(IX+4)
+		AND 0X47
+		LD C,A
+		AND 0X40
+		LD B,A
+		DEC L
+		LD A,C
+		ADD A,5*8
+		LD (HL),A	;5*8+7
+		DEC L
+		LD A,4*8+5
+		OR B
+		LD (HL),A	;4*8+5
+		DEC L
+		LD A,6*8+4
+		OR B
+		LD (HL),A	;6*8+4
+		DEC L
+		LD A,2*8+6
+		OR B
+		LD (HL),A	;2*8+6
+		DEC L
+		LD A,C
+		AND 7
+		RLCA
+		RLCA
+		RLCA
+		OR B
+		ADD A,2
+		LD (HL),A	;7*8+2
+		EX DE,HL
+		DEC L
+		LD B,8
+		XOR A
+		LD C,L
+RADUGA1		SCF
+		RLA
+		LD (HL),A
+		DEC L
+		LD (HL),A
+		DEC L
+		LD (HL),A
+		DEC L
+		LD (HL),A
+		DEC L
+		LD (HL),A
+		LD L,C
+		INC H
+		DJNZ RADUGA1
+		RET		
+
 INC_H		INC H
 		LD A,H
 		AND 7
@@ -530,12 +589,27 @@ COD14		CP 0X14
 		RET
 
 COD16		CP 0X16
-		RET NZ
+		JR NZ,COD17
 		LD E,(HL)		;èÖóÄíú Ç ìäÄáÄççéâ èéáàñàà
 		INC HL
 		LD D,(HL)
 		INC HL
 		LD (ADRSTR+1),DE
+		RET
+
+COD17		CP 0X17
+		JR NZ,COD8
+		LD A,(HL)
+		INC HL
+		LD (COLOR4SYM),A
+		RET
+
+COD8		CP 8
+		RET NZ
+		LD A,(ADRSTR+2)
+		ADD A,(HL)
+		INC HL
+		LD (ADRSTR+2),A
 		RET
 
 ;èÖóÄíú ëàåÇéãÄ Ç "A"
@@ -617,7 +691,21 @@ SKOLKO		JR $+21
 		EX AF,AF'
 		DEC A
 		JP NZ,SLEDU
-		EXX
+		LD E,0
+COLOR4SYM	EQU $-1
+		INC E
+		JR Z,PRINTA1
+		DEC H
+		DEC E
+		LD A,H
+		RRCA
+		RRCA
+		RRCA
+		AND 3
+		OR 0X58
+		LD H,A
+		LD (HL),E
+PRINTA1		EXX
 		POP DE
 		POP HL
 		RET
@@ -638,10 +726,8 @@ PAG_128		PUSH BC
 		POP BC
 		RET
 
-DRAWWIN		;LD HL,JPNZKEY
-;		LD (HL),0XC2
-		LD C,(IX)	;X
-		LD B,(IX+1)	;Y
+DRAWWIN		LD C,(IX)		;X
+		LD B,(IX+1)		;Y
 	        EX DE,HL
 		LD A,C
 		ADD A,A
@@ -659,12 +745,12 @@ DRAWWIN		;LD HL,JPNZKEY
 		INC HL
 		INC HL
 		INC HL
-		LD B,(HL)	;òàêàçÄ-1
+		LD B,(HL)		;òàêàçÄ-1
 		INC HL
 		DEC B
 		LD A,(HL)
 		INC HL
-		LD (COL_SYM),A	;ñÇÖí éäçÄ
+		LD (COL_SYM),A		;ñÇÖí éäçÄ
 		PUSH DE
 		LD C,B
 		CALL PR32
@@ -681,7 +767,7 @@ DRAWWIN		;LD HL,JPNZKEY
 		CALL PR32
 		DJNZ $-3
 		POP BC
-		LD A,C		;çÄèÖóÄíÄçé ëíêéä
+		LD A,C			;çÄèÖóÄíÄçé ëíêéä
 		ADD A,A
 		ADD A,A
 		ADD A,A
@@ -891,6 +977,31 @@ COLCURS2	LD C,(IX+5)
 		DJNZ $-5
 		RET
 
+PRTSYMALT	PUSH HL
+		PUSH DE
+		EX DE,HL
+		CALL ADRDIS
+		EX DE,HL
+		PUSH BC
+		LD BC,CHARS
+		LD L,A
+		LD H,0
+		ADD HL,HL
+		ADD HL,HL
+		ADD HL,HL
+		ADD HL,BC
+		POP BC
+		REPT 8
+		LD A,(HL)
+		LD (DE),A
+		INC L
+		INC D
+		ENDM
+		POP DE
+		POP HL
+		INC D
+		RET
+
 PRT_SYM		PUSH HL
 		PUSH DE
 		EX DE,HL
@@ -935,20 +1046,46 @@ CURSOR_UP1	CALL REST2X2
 DOWN1		LD D,(IX+0)
 		INC D
 		INC D
+		LD HL,FLAGS
+		BIT 3,(HL)
 		LD L,(IX+0X12)
 		LD H,(IX+0X13)
-		ADD HL,HL
-		ADD HL,HL
-		ADD HL,HL
-		ADD HL,HL
 		LD BC,ADR_CAT
+		JR NZ,DOWN3
+		ADD HL,HL
+		ADD HL,HL
+		ADD HL,HL
+		ADD HL,HL
 		ADD HL,BC
-		LD B,8
+DOWN4		LD B,8
 DOWN2		LD A,(HL)
 		INC HL
 		CALL PRT_SYM
 		DJNZ DOWN2
 		JP DRAW_MOUSE
+
+DOWN3		ADD HL,HL
+		ADD HL,BC
+		LD C,(HL)
+		INC HL
+		LD B,(HL)
+		PUSH DE
+		LD A,6
+		CALL COM_FAT
+		DB Positf
+		CALL COM_FAT
+		DB Getfzap
+		LD BC,0X0B
+		ADD HL,BC
+		LD A,(HL)
+		SBC HL,BC
+		AND 0X10
+		LD A,0
+		JR NZ,DOWN5
+		LD A,1
+DOWN5		POP DE
+		CALL PRTSYMALT
+		JR DOWN4
 
 CURSOR_DOWN	LD C,(IX+0X12)
 		LD B,(IX+0X13)
@@ -976,7 +1113,7 @@ CURSOR_DOWN1	CALL REST2X2
 		ADD A,(IX+2)
 		SUB 2
 		LD E,A
-		JR DOWN1
+		JP DOWN1
 
 GET_XY		LD E,(IX+0X10)
 		LD D,(IX+0X11)		;äéã-Çé
@@ -1019,8 +1156,9 @@ PDN00		ADD HL,BC
 		EX DE,HL
 		SBC HL,DE
 		ADD HL,DE
+		JR Z,PDUN1
 		JR NC,PDUN0
-		EX DE,HL
+PDUN1		EX DE,HL
 		DEC DE
 PDUN0		LD (IX+0X0F),A
 		LD (IX+0X12),E
@@ -1028,3 +1166,45 @@ PDUN0		LD (IX+0X0F),A
 		CALL REST2X2
 		CALL OUT_TEK_DIR
 		JP DRAW_MOUSE
+
+;Öëãà çÄâÑÖçé ÅéãúòÖ Çõëéíõ éäçÄ -2, íé êàëìÖå ÅéäéÇìòäì
+RIGHT_SIDE	LD A,(IX+0)
+		ADD A,(IX+3)
+		SUB 2
+		LD H,A
+		LD L,0
+		CALL ADRDIS
+		PUSH HL
+		LD A,(IX+2)
+		ADD A,A
+		ADD A,A
+		ADD A,A
+		SUB 2
+		LD B,A
+		INC H
+SCROLLER1	LD (HL),1
+		CALL INC_H
+		DJNZ SCROLLER1
+		LD A,H
+		SUB 7
+		LD H,A
+		INC L
+		LD DE,0X19*8+CHARS
+		REPT 7
+		LD A,(DE)
+		CPL
+		LD (HL),A
+		INC H
+		INC E
+		ENDM
+		POP HL
+		INC L
+		LD DE,0X18*8+CHARS+1
+		REPT 7
+		INC H
+		LD A,(DE)
+		CPL
+		LD (HL),A
+		INC E
+		ENDM	
+		RET
