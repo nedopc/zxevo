@@ -42,11 +42,11 @@ OBJECTS = zx.o interrupts.o main.o ps2.o spi.o depacker_dirty.o rs232.o rtc.o at
 FPGACORE = top.o
 
 ## Build
-all: $(TARGET) core.hex core.eep core.lss size zxevo_test.bin
-	mv zxevo_test.bin ZXEVO_FW.BIN
+all: $(TARGET) core.hex core.eep core.lss size zxevo_beta.bin
+	mv zxevo_beta.bin zxevo_fw.bin
 
 release: $(TARGET) core.hex core.eep core.lss size zxevo_release.bin
-	mv zxevo_release.bin ZXEVO_FW.BIN
+	mv zxevo_release.bin zxevo_fw.bin
 
 ## Compile
 zx.o: ../zx.c ../zx.h
@@ -112,21 +112,16 @@ size: ${TARGET}
 	@echo
 	@avr-size -C --mcu=${MCU} ${TARGET}
 
-##zxevo_fw.bin: core.hex core.eep
-##	../../../tools/make_fw/make_fw core.hex core.eep version.txt
-
-zxevo_test.bin: core.hex core.eep
-	../../../tools/make_fw/make_fw core.hex core.eep version.txt
-	mv ZXEVO_FW.BIN zxevo_test.bin
+zxevo_beta.bin: core.hex core.eep
+	../../../tools/make_fw/make_fw core.hex core.eep zxevo_beta.bin version.txt
 
 zxevo_release.bin: core.hex core.eep
-	../../../tools/make_fw/make_fw core.hex core.eep version.txt o
-	mv ZXEVO_FW.BIN zxevo_release.bin
+	../../../tools/make_fw/make_fw core.hex core.eep zxevo_release.bin version.txt o
 
 ## Clean target
 .PHONY: clean
 clean:
-	-rm -rf $(OBJECTS) $(FPGACORE) core.* dep/* top.* ZXEVO_FW.BIN
+	-rm -rf $(OBJECTS) $(FPGACORE) core.* dep/* top.* zxevo_*.bin
 
 ## program chip
 pgm: core.hex
@@ -136,4 +131,3 @@ pgm: core.hex
 
 ## Other dependencies
 -include $(shell mkdir dep 2>/dev/null) $(wildcard dep/*)
-
