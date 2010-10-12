@@ -532,7 +532,7 @@ NEXT		LD A,(HL)
 		JR NEXT
 
 PRINT		CP 0X20
-		JR NC,PRINTA
+		JP NC,PRINTA
 		CP 3
 		JR NZ,COD9
 CENTR		LD B,0		;–…’Ž‚Š€ ‘’ŽŠˆ ‚ ŽŠ…
@@ -605,11 +605,24 @@ COD17		CP 0X17
 		RET
 
 COD8		CP 8
-		RET NZ
+		JR NZ,COD1
 		LD A,(ADRSTR+2)
 		ADD A,(HL)
 		INC HL
 		LD (ADRSTR+2),A
+		RET
+
+COD1		CP 1
+		RET NZ
+		LD D,(IX+0)
+		LD E,(IX+1)
+		EX DE,HL
+		ADD HL,HL
+		ADD HL,HL
+		ADD HL,HL
+		INC H
+		LD (ADRSTR+1),HL
+		EX DE,HL
 		RET
 
 ;…—€’œ ‘ˆŒ‚Ž‹€ ‚ "A"
@@ -943,14 +956,24 @@ PRTXT		LD A,(HL)
 		CALL PRSN
 		JR PRTXT
 
+REST_COLOR	LD DE,(COL_CURSOR)
+		LD HL,COLBUF
+		LD C,(IX+3)
+		BIT 2,(IY+55)		;”€‰‹Ž‚ Ž‹œ˜… ‚›‘Ž’› ŽŠ€?
+		JR Z,RESTCOL1
+		DEC C			;–‚…’€Ÿ Ž‹Ž‘Š€ € 1 ŠŽŽ—…
+RESTCOL1	LD B,0
+		LDIR
+		RET
+
 ;ˆ‘Ž‚€‹Š€ –‚…’Ž‰ Ž‹Ž‘Šˆ ‚ Œ…ž
 COLOR_CURSOR	LD DE,0
 COL_CURSOR	EQU $-2
 		LD HL,COLBUF
 		LD C,(IX+3)
-		BIT 2,(IY+55)		;”€‰‹Ž‚ Ž‹œ˜… ‚›‘Ž’› ŽŠ€?
-		JR Z,COLCURS1
-		DEC C			;–‚…’€Ÿ Ž‹Ž‘Š€ € 1 ŠŽŽ—…
+;		BIT 2,(IY+55)		;”€‰‹Ž‚ Ž‹œ˜… ‚›‘Ž’› ŽŠ€?
+;		JR Z,COLCURS1
+;		DEC C			;–‚…’€Ÿ Ž‹Ž‘Š€ € 1 ŠŽŽ—…
 COLCURS1	LD B,0
 		LDIR
 SET_ADR_ATR	LD A,(IX+0X0F)
@@ -965,9 +988,9 @@ SET_ADR_ATR	LD A,(IX+0X0F)
 		LD (COL_CURSOR),HL	;Ž‹Ž†ˆ‹ˆ €„…‘ „‹Ÿ ‚Ž‘‘’€Ž‚‹…ˆŸ –‚…’€
 		LD DE,COLBUF
 		LD B,(IX+3)
-		BIT 2,(IY+55)		;”€‰‹Ž‚ Ž‹œ˜… ‚›‘Ž’› ŽŠ€?
-		JR Z,COLCURS2
-		DEC B			;–‚…’€Ÿ Ž‹Ž‘Š€ € 1 ŠŽŽ—…
+;		BIT 2,(IY+55)		;”€‰‹Ž‚ Ž‹œ˜… ‚›‘Ž’› ŽŠ€?
+;		JR Z,COLCURS2
+;		DEC B			;–‚…’€Ÿ Ž‹Ž‘Š€ € 1 ŠŽŽ—…
 COLCURS2	LD C,(IX+5)
 		LD A,(HL)
 		LD (DE),A

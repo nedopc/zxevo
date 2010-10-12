@@ -140,7 +140,6 @@ MAINTXT		DB 0X14,1,"Main menu",0X14,0
 		DB 0X0D," Z.TR-DOS boot"	;z
 		DB 0X0D," F.FAT boot"		;f
 		DB 0X0D," T.Tape load"		;t
-;		DB 0X0D," C.Copy & open" 	;c
 		DB 0X0D," B.HDD boot"		;b
 		DB 0X0D," D.CD boot"		;d
 		DB 0X0D," S.TR-DOS"		;s
@@ -149,16 +148,15 @@ MAINTXT		DB 0X14,1,"Main menu",0X14,0
 		DB 0X0D," R.Service",0		;r
 		DB LOW (MAIN1-$-1),"zftbdsiurwm123489v"
 	
-MAIN1		DW GLUBOOT			;„ˆ‘Š…’Ž‡€ƒ“‡—ˆŠ
-		DW FATBOOT			;‡€ƒ“‡—ˆŠ ‘ ”€’€
-		DW TAPELOAD			;‡€ƒ“‡Š€ ‘ ‹…’›
-;		DW COPYOPEN			;ŠŽˆŽ‚€ˆ… € „ˆ‘Š…’“ ˆ Ž’Š›’ˆ…
-		DW HDD_BOOT			;‘’€›‰ ‡€ƒ“‡—ˆŠ ‘ ‚ˆ’€
-		DW CDBOOT			;‘’€›‰ ‡€ƒ“‡—ˆŠ ‘ ‘ˆ„žŠ€
-		DW DOS128			;……•Ž„ ‚ TR-DOS
-		DW BAS48			;……•Ž„ ‚ …‰‘ˆŠ 48
-		DW BAS128			;……•Ž„ ‚ …‰‘ˆŠ 128
-		DW _KILLS			;Œ…ž Ž—ˆ‘’Šˆ ‘’€ˆ–, €Œ „ˆ‘Š ˆ „ˆ‘ŠŽŠŽˆ 
+MAIN1		DW GLUBOOT			;z „ˆ‘Š…’Ž‡€ƒ“‡—ˆŠ
+		DW FATBOOT			;f ‡€ƒ“‡—ˆŠ ‘ ”€’€
+		DW TAPELOAD			;t ‡€ƒ“‡Š€ ‘ ‹…’›
+		DW HDD_BOOT			;b ‘’€›‰ ‡€ƒ“‡—ˆŠ ‘ ‚ˆ’€
+		DW CDBOOT			;d ‘’€›‰ ‡€ƒ“‡—ˆŠ ‘ ‘ˆ„žŠ€
+		DW DOS128			;s ……•Ž„ ‚ TR-DOS
+		DW BAS48			;i ……•Ž„ ‚ …‰‘ˆŠ 48
+		DW BAS128			;u ……•Ž„ ‚ …‰‘ˆŠ 128
+		DW _KILLS			;r Œ…ž Ž—ˆ‘’Šˆ ‘’€ˆ–, €Œ „ˆ‘Š ˆ „ˆ‘ŠŽŠŽˆ
 MAIN2		DW CHNGTURBO			;w
 		DW CHNGMODE			;m
 		DW SELDRV			;1
@@ -246,6 +244,17 @@ HDDBOOT_ERROR	;X,Y,V,H,C,C,ADR_CODE*2,F,X,Y,V,H,ADR_TXT*2,TEK_WIN,KOL_NUM*2,TEK_
 TXT_HDDBOOTERR	DB 0X0D,3,"HDD not found",0X0D,3,"Press any key",0
 ;=========================HDD … €‰„…===============================
 
+;=========================FILE NOT FOUND==============================
+FILENONE	;X,Y,V,H,C,C,ADR_CODE*2,F,X,Y,V,H,ADR_TXT*2,TEK_WIN,KOL_NUM*2,TEK_NUMF*2
+		DB 0X08,0X08,0X04,0X10,0X17,0X00
+		DW 0
+		DB 0,0,0,0,0
+		DW TXT_FILENONE
+		DB 0
+		DW 0,0,0
+TXT_FILENONE	DB 0X0D,3,"File not found",0X0D,3,"Press any key",0
+;=========================FILE NOT FOUND==============================
+
 ;***************’…Š‘’› ˆ Ž—€Ÿ ”ˆƒŸ********************
 
 TXTFULLSCR	DB 0X16,0X00,0X00,0X17,4,"EVO Reset Service v",VERSBIOS
@@ -278,8 +287,6 @@ TIME_OFF	DB 0X16,0X00,0XD0,0X17,7,"        ",0X16,0X08,0XD0,"        ",0X17,0XFF
 
 HOT_KEYS	DB 0X0D,8,3," .",0
 HOT_KEY		EQU $-3
-
-MASK_EXT	DB "TRDSCL",0
 
 ;‘ˆ‘ŽŠ Š‹€‚ˆ˜ Ž‚…Ÿ…Œ›• ‚‘…ƒ„€
 MAIN_KEYS	DB LOW (EMAIN_KEYS-$-1),"qaop ",0x07,0X08,0X09,0x0A,0x0B,0X0D
