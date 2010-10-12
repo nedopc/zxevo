@@ -93,12 +93,15 @@ FATBOOT2	LD (HL),LOW (SEL_FAT)		;”ŽŒˆŽ‚€ˆ… ’€‹ˆ–› €„…‘Ž‚ ‚›‡›‚Ž‚
 		LD (HL),HIGH (SEL_FAT)
 		INC HL
 		DJNZ FATBOOT2
+		LD A,C
 		EXX
+		DEC A
+		JR Z,SEL_FAT
 		CALL WINW			;‚›‚…‹ˆ ‘”ŽŒˆŽ‚€Ž… ŽŠŽ
 		JP _RULILKA			;‚Ž‡‚€™€…Œ‘Ÿ Š Ž™…Œ“ “€‚‹…ˆž
 
 ;……Š‹ž—…ˆ… € “‘’Ž‰‘’‚€ ˆ ‚›‚Ž„ €‰„…ŽƒŽ € …Œ
-SEL_FAT		LD A,(IX+0X0F)			;‚‡Ÿ‹ˆ ŽŒ… ‚›€ŽƒŽ “‘’Ž‰‘’‚€
+SEL_FAT		LD A,(IX+0X12)			;‚‡Ÿ‹ˆ ŽŒ… ‚›€ŽƒŽ “‘’Ž‰‘’‚€
 		CALL COM_DEV
 		DB Set_vol			;‚›€‹ˆ “‘’Ž‰‘’‚Ž Ž ŽŒ…“
 		CALL COM_FAT
@@ -106,7 +109,22 @@ SEL_FAT		LD A,(IX+0X0F)			;‚‡Ÿ‹ˆ ŽŒ… ‚›€ŽƒŽ “‘’Ž‰‘’‚€
 		LD DE,ADR_CAT
 		CALL COM_FAT
 		DB Fhobeta			;Žˆ‘Š •Ž…’€ ”€‰‹Ž‚ "$C " C Ž‚…Š€Œˆ
-		LD IX,FAT_FILES
+		LD HL,1
+		AND A
+		SBC HL,BC			;€‰„…Ž —’Ž-’Ž Ž„Ž?
+		JR NZ,SEL_FAT1			;…‘‹ˆ … €‚Ž 1, ’Ž Ž„Ž‹†€…Œ
+		PUSH BC				;‘Ž•€ˆ‹ˆ ŠŽ‹ˆ—…‘’‚Ž €‰„…ŽƒŽ
+		LD BC,(ADR_CAT)			;‚‡Ÿ‹ˆ ŽŒ… €‰„…ŽƒŽ
+		CALL COM_FAT
+		DB Getfzap			;Ž‹“—ˆ‹ˆ Žˆ‘€’…‹œ
+		POP BC				;‚…“‹ˆ ŠŽ‹ˆ—…‘’‚Ž €‰„…ŽƒŽ
+		LD DE,0X0B
+		ADD HL,DE
+		LD A,(HL)			;‚‡Ÿ‹ˆ ”‹€ƒŽ‚›‰ €‰’ ’ŽƒŽ —’Ž €˜‹ˆ
+		AND 0X10
+		LD HL,0				;…‘‹ˆ ‡€“‘Š€…Œ, ’Ž ŽŒ… 0 ˆ‡ €‰„…ŽƒŽ
+		JR Z,RUN_HOB1			;…‘‹ˆ ’Ž ”€‰‹ ‘€‡“ ‡€“‘Š€…Œ
+SEL_FAT1	LD IX,FAT_FILES			;…‘‹ˆ „ˆ€, ’Ž ‚›‚Ž„ˆŒ ‚ ŽŠŽ
 		JP OUT_HOB
 
 ;‡€“‘Š ‚›€ŽƒŽ ŠŽ„Ž‚ŽƒŽ ”€‰‹€ ˆ‡ HOBETA ”€‰‹€
@@ -114,7 +132,7 @@ RUN_HOB		DI
 		CALL SHUT2AY			;“ŒŠ€‹Š€ ‚ AY
 		LD L,(IX+0X12)
 		LD H,(IX+0X13)
-		LD DE,ADR_CAT
+RUN_HOB1	LD DE,ADR_CAT
 		ADD HL,HL
 		ADD HL,DE			;Ž’Š“„€ ˆŒŸ ”€‰‹€ ‚‡Ÿ’œ
 		LD C,(HL)
@@ -127,8 +145,9 @@ RUN_HOB		DI
 		DB Getfzap			;Ž‹“—ˆ‹ˆ Žˆ‘€’…‹œ Ž “‘’€Ž‚‹…ŽŒ“ ŽŒ…“
 		LD DE,0X0B			;“†… €‰’ Ž ‘Œ…™…ˆž
 		ADD HL,DE
-		LD A,0X10			;ˆ‡ ’ŽƒŽ €‰’€ “†… Ž„ˆ ˆ’
-		AND (HL)			;Ž‚…ˆ‹ˆ
+		LD A,(HL)			;ˆ‡ ’ŽƒŽ €‰’€ “†… Ž„ˆ ˆ’
+		SBC HL,DE
+		AND 0X10			;Ž‚…ˆ‹ˆ
 		JR Z,GO_RUN_HOB			;…‘‹ˆ =0, ’Ž ‡€“‘Š€…Œ ŠŽ„Ž‚›‰ ‹ŽŠ
 		PUSH BC				;‘Ž•€ˆ‹ˆ ŽŒ…
 		CALL COM_FAT
@@ -171,7 +190,7 @@ SNYT0		LD D,(IX+0X13)
 		DB Fhobeta			;Žˆ‘Š •Ž…’€ ”€‰‹Ž‚ "$C " C Ž‚…Š€Œˆ
 		JP OUT_HOB
 
-GO_RUN_HOB	LD E,9				;……•Ž„ˆŒ Š ‘Œ…™…ˆž ‚ Žˆ‘€’…‹… „‹Ÿ Ž‹“—…ˆŸ
+GO_RUN_HOB	LD DE,0X14			;……•Ž„ˆŒ Š ‘Œ…™…ˆž ‚ Žˆ‘€’…‹… „‹Ÿ Ž‹“—…ˆŸ
 		ADD HL,DE			;‘’€˜ˆ• 16 ˆ’ ŽŒ…€ Š‹€‘’…€ €—€‹€ ”€‰‹€ „‹Ÿ ‡€“‘Š€
 		LD C,(HL)
 		INC HL
@@ -184,7 +203,7 @@ GO_RUN_HOB	LD E,9				;……•Ž„ˆŒ Š ‘Œ…™…ˆž ‚ Žˆ‘€’…‹… „‹Ÿ Ž‹“—…ˆŸ
 		LD (AFILCLS),DE
 		LD (AFILCLS+2),BC		;………‘‹ˆ ‚ ……Œ…›… ”€’ „€‰‚…€
 		CALL COM_DEV
-		DB Kol_vol			;‡€Ž‘ “ Œ……„†…€ “‘’Ž‰‘’‚ Ž ’…Š™“Œ “‘’Ž‰‘’‚…
+		DB Kol_vol			;‡€Ž‘ “ Œ……„†…€ “‘’Ž‰‘’‚ Ž ’…Š“™…Œ “‘’Ž‰‘’‚…
 		LD A,D				;‚‡Ÿ‹ˆ ŽŒ… ’…Š“™…ƒŽ “‘’Ž‰‘’‚€
 		ADD A,A
 		ADD A,A

@@ -1,6 +1,6 @@
 
 ;VERSION
-VERSBIOS	EQU "0.1A4"
+VERSBIOS	EQU "0.2 "
 
 ;BIT 4,(IY+55)
 ;BIT 3,(IY+55)-0-‡€…’ €ˆŒ€–ˆˆ ŠŽ˜€Š€, 1-€‡…˜…ˆ…
@@ -68,7 +68,6 @@ START2		SET 2,(HL)			;ŠŒŽ‘ €‰„…
 START4		CALL SET_MODES
 START1		CALL DETECTMOUSE		;Ž…„…‹…ˆ… €‹ˆ—ˆŸ Œ›˜ˆ
 		CALL GLUDIN			;“ŒŠ“‹ˆ ‚ AY
-		DI
 		CALL MOUSE			;ŽŽ‘ Œ›˜ˆ
 		LD HL,0X6FCC
 		LD (ARXY),HL			;“‘’€Ž‚Š€ „…”Ž‹’Ž‰ Ž‡ˆ–ˆˆ Œ›˜ˆ ˆ ‘’€’…
@@ -135,7 +134,7 @@ SET_POS		LD (IX+0X0F),A			;ˆ‡Œ…ˆ‹ˆ Ž‡ˆ–ˆž Š“‘Ž€
 SET_POS1	CALL COLOR_CURSOR		;……ˆ‘Ž‚Š€ –‚…’Ž‰ Ž‹Ž‘Šˆ Œ…ž
 SET_POS2	CALL GLUDIN			;“ŒŠ“‹ˆ ‚ AY
 MAINLOP		RES 5,(IY+1)			;‘Ž‘ €†€’›• ŠŽŽŠ
-GLUNOKY		CALL G1FKNOW
+		CALL G1FKNOW
 		LD A,(FLAGS)
 		AND 2				;Ž‚…Š€ €‹ˆ—ˆŸ Œ›˜ˆ
 		JP Z,MAINNMO
@@ -185,7 +184,7 @@ MAINNMO		CALL PRINTTIME			;ŽŽ‚‹…ˆ… ‚…Œ…ˆ, …‘‹ˆ ‚ ŽŽ ŽŽ‚ˆ‹Ž‘œ
 		HALT
 MAINQMO		BIT 5,(IY+1)			;Ž‚…Š€ €†€’ˆŸ ŠŽŽŠ Š‹€‚ˆ€’“›
 		CALL Z,CP_TIME_KOSHAK		;…‘‹ˆ … €†€’Ž ˆ—…ƒŽ, Ž‚…Ÿ…Œ ‘—…’—ˆŠ ŠŽ˜€Š€
-		JP Z,GLUNOKY			;Ž„Ž‹†€…Œ ŽŽ‘ “€‚‹…ˆŸ
+		JP Z,MAINLOP			;Ž„Ž‹†€…Œ ŽŽ‘ “€‚‹…ˆŸ
 		CALL 0X1F54			;Ž‚…Š€ € BREAK
 		JP NC,RESTART			;…‘‹ˆ BREAK €†€’ ……‡€“‘Š€…Œ‘Ÿ
 SELECT_KEY 	CALL RESTORE_KOSHAK		;€†€’Ž …—’Ž € Š‹€‚…, ‘Ž‘ ‘—…’—ˆŠ€ ŠŽ˜€Š€
@@ -194,15 +193,15 @@ SELECT_KEY 	CALL RESTORE_KOSHAK		;€†€’Ž …—’Ž € Š‹€‚…, ‘Ž‘ ‘—…’—ˆŠ€ ŠŽ˜€Š€
 		LD B,0
 		LD HL,MAIN_KEYS
 		LD C,(HL)			;ŠŽ‹ˆ—…‘’‚Ž „Ž‘’“›• ŠŽŽŠ
-		LD E,C
+		LD D,C
 		INC HL
 		CPIR
 		JR NZ,NOMAINKEYS		;ˆ—…ƒŽ … €˜‹ˆ, „€‹…… ‘ŒŽ’ˆŒ ŠŽŠˆ ’…Š“™…ƒŽ ŽŠ€
-;€†€’Ž —’Ž-’Ž ˆ‡ ƒ‹€‚›• ŠŽŽŠ, „Ž‘’“›• ‚‘…ƒ„€
-		LD A,E				;ŠŽ‹ˆ—…‘’‚Ž ŠŽŽŠ ‚ ’€‹ˆ–… -1
+						;€†€’Ž —’Ž-’Ž ˆ‡ ƒ‹€‚›• ŠŽŽŠ, „Ž‘’“›• ‚‘…ƒ„€
+		LD HL,ADREXEKEYS
+		LD A,D				;ŠŽ‹ˆ—…‘’‚Ž ŠŽŽŠ ‚ ’€‹ˆ–… -1
 		SUB C				;Ž‹“—ˆ‹ˆ ‚›€›‰ ŽŒ…
 		DEC A
-		LD HL,ADREXEKEYS
 		JR JUMP2HL
 
 ;Ž‚…Š€ •Ž’Š……‚ ‚ ’…Š“™…Œ ŽŠ…
@@ -221,11 +220,12 @@ PRESSEDKEY	EQU $-2				;€„…‘ ‘ˆ‘Š€ €†€’›• ŠŽŽŠ ’…Š“™…ƒŽ ŽŠ€
 		LD D,C
 		LD B,0
 		CPIR				;‘Š€ˆŽ‚€ˆ… ‘ˆ‘Š€ ‡€„€›• Š‹€‚ˆ˜
-		JR NZ,OSTAT_KEYS 
+		JR NZ,OSTAT_KEYS
 		LD A,D				;‚›‘Ž’€ ŽŠ€
 		SUB C
-		DEC A				;Ž‹“—ˆ‹ˆ ŽŒ… €†€’Ž‰ ŠŽŠˆ ˆ -3
-		LD (IX+0X0F),A			;ŽŒ… €†€’Ž‰ Š‹€‚ˆ˜ˆ Ž “Š€‡€ŽŒ“ ‘ˆ‘Š“
+		DEC A				;Ž‹“—ˆ‹ˆ ŽŒ… €†€’Ž‰ ŠŽŠˆ ˆ -1
+		LD (IX+0X0F),A			;ŽŒ… “Š’€ ‚ ŽŠ…
+		LD (IX+0X12),A			;ŽŒ… €†€’Ž‰ Š‹€‚ˆ˜ˆ Ž “Š€‡€ŽŒ“ ‘ˆ‘Š“
 ENTER		LD A,(FLAGS)
 		AND 2
 		CALL NZ,TIMELP			;ŽŽ‚‹…ˆ… ‚…Œ…ˆ …‘‹ˆ ŽŽ ˆ‡Œ…ˆ‹Ž‘œ	
@@ -287,7 +287,7 @@ CHNGMODEY	LD A,(FLAGS)
 ;‚Š‹ž—…ˆ…/‚›Š‹ž—…ˆE Ž’Ž€†…ˆŸ —€‘Ž‚
 CMOS_ONOFF	LD A,(FLAGS)
 		AND 4				;Ž‚…Š€ €‹ˆ—ˆŸ ŠŒŽ‘€
-		RET Z
+		JP Z,MAINLOP
 		LD H,0X11
 		CALL READCMOS
 		CPL

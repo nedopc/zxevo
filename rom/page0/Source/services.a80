@@ -1,8 +1,8 @@
 
-DD		EQU 06				;„€’€
+DD		EQU 12				;„€’€
 MM		EQU 10				;Œ…‘Ÿ–
 YY		EQU 10				;ƒŽ„
-DATA		EQU DD+(MM<<5)+(YY<<9);+0X8000	;“†… “€ŠŽ‚€Ž
+DATA		EQU DD+(MM<<5)+(YY<<9)+0X8000	;“†… “€ŠŽ‚€Ž
 
 DEPKADR		EQU 0X6000
 
@@ -39,24 +39,6 @@ CMPROM1		LD A,(BC)
 		DEC C
 		JR NZ,CMPROM1
 		LD IXL,"A"		;Ž…„…‹ˆ‹Ž‘œ, Ž˜ˆ‚Š€ „‹Ÿ €’Œ
-;		JR RSTRAM
-
-;CP_PENTEVO	LD HL,0XF000		;‡€Ž‘ ‚…‘ˆˆ FPGA
-;		LD C,L
-;		CALL WRITECMOS		;ˆ˜…Œ ‚ €„…‘ 0XF0 „‹Ÿ Ž‹“—…ˆŸ ‚…‘ˆˆ
-;		CALL READCMOS		;—ˆ’€…Œ Ž’‚…’
-;		LD A,L
-;		CP C			;‘Ž‚€‹Ž ‘ ’…Œ —’Ž ‡€ˆ‘€Ž, … Ž„„…†ˆ‚€…’‘Ÿ
-;		JP Z,RSTKEYS		;ˆ ’Ž … …’…‚€ (ˆ‹ˆ ‚…‘ˆŸ FPGA ‘’€€Ÿ). ‚›•Ž„ˆŒ
-;		INC A			;ˆ˜…‹ 0XFF, ‡€—ˆ’ —€‘Ž‚ …’“
-;		JP Z,RSTKEYS		;‚›•Ž„ˆŒ
-;		LD B,0X0F		;Ž‘’€‹Ž‘œ Ž—ˆ’€’œ Ž‘’€‹œ›… …™… 15 €‰’
-;GVE1		INC H
-;		CALL READCMOS		;—ˆ’€…Œ €‰’
-;		DJNZ GVE1		;—ˆ’€…Œ ŽŠ€ ‚‘… €‰’› … ŠŽ—€’‘Ÿ
-;		LD IXL,"E"		;Ž…„…‹ˆ‹€‘œ, Ž˜ˆ‚Š€ „‹Ÿ …’…‚›
-;		LD A,1
-;		OUT (0XBF),A
 
 ;€ …‚ŽŒ Ž•Ž„… ‚ ‚ˆ„…Ž …†ˆŒ… 640•200
 ;€ ‚’ŽŽŒ Ž•Ž„… ‚ ’…Š‘’Ž‚ŽŒ …†ˆŒ…
@@ -83,9 +65,6 @@ RSRAMP2		LD A,(HL)
 		LD E,A
 		CP 2
 		JR NZ,RSRAMP0		;§ ç¥¬ 2 à § ? Ÿ ’Ž†… … ŽˆŒ€ž ‡€—…Œ :)
-;		LD A,IXL
-;		CP "A"
-;		JP NZ,END_INIT
 		LD A,%10101011		;ZX SCREEN MODE, TURBO ON („‹Ÿ €’Œ)
 		LD BC,0X4177		;¢ëª«.PAL
 		OUT (C),A		;¢ª« RAM (PEN)
@@ -135,8 +114,6 @@ RSTPAL0		LD A,E
 END_INIT	LD A,%10101011
 		LD BC,0X4177
 		OUT (C),A		;¢ëª«.PAL
-;		XOR A
-;		OUT (0XBF),A
 ;~¯ «¨âà 
 
 ;¯à®¢¥àª  ­ ¦ â¨ï ¤¢ãå ª« ¢¨è (¯®àâ¨¬ â®«ìª® AF,BC)
