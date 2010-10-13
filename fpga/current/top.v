@@ -265,20 +265,25 @@ module top(
 	// this causes compications when writing to the flashROM from Z80
 	// and need to split and re-build old ATM romfiles before burning in
 	// flash
-	wire [1:0] adr_fix;
-	assign adr_fix = ~{ rompg[0], rompg[1] };
-	assign rompg0_n = ~adr_fix[0];
-	assign dos_n    =  adr_fix[1];
+//	wire [1:0] adr_fix;
+//	assign adr_fix = ~{ rompg[0], rompg[1] };
+//	assign rompg0_n = ~adr_fix[0];
+//	assign dos_n    =  adr_fix[1];
+//	assign rompg2   =  1'b0;//rompg[2];
+//	assign rompg3   =  1'b0;//rompg[3];
+//	assign rompg4   =  1'b0;//rompg[4];
 
-	assign rompg2   =  1'b0;//rompg[2];
-	assign rompg3   =  1'b0;//rompg[3];
-	assign rompg4   =  1'b0;//rompg[4];
+	assign rompg0_n = ~rompg[0];
+	assign dos_n    =  rompg[1];
+	assign rompg2   =  rompg[2];
+	assign rompg3   =  rompg[3];
+	assign rompg4   =  rompg[4];
 
 	wire [3:0] zclk_stall;
 
 	zclock zclock( .fclk(fclk), .rst_n(rst_n), .zclk(zclk), .rfsh_n(rfsh_n), .zclk_out(clkz_out),
 	               .zpos(zpos), .zneg(zneg),
-	               .turbo( {1'b0,~(peff7[4]|dos)} ), .pre_cend(pre_cend), .cbeg(cbeg),
+	               .turbo( {1'b0,~(peff7[4] /*|dos*/ )} ), .pre_cend(pre_cend), .cbeg(cbeg),
 	               .zclk_stall( |zclk_stall ) );
 
 
