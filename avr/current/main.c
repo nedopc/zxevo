@@ -85,8 +85,8 @@ start:
 
 	hardware_init();
 
-#ifdef LOGENABLE
 	rs232_init();
+#ifdef LOGENABLE
 	to_log("VER:");
 	{
 	 	UBYTE b,i;
