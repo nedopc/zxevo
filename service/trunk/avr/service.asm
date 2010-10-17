@@ -76,28 +76,25 @@
 .MACRO  SPICS_CLR
         CBI     PORTB,0
 .ENDMACRO
-
-.MACRO  DEBUGPIN1_UP
-        SBI     PORTE,2
-.ENDMACRO
-
-.MACRO  DEBUGPIN1_DOWN
-        CBI     PORTE,2
-.ENDMACRO
-
-.MACRO  DEBUGPIN2_UP
-        SBI     PORTE,3
-.ENDMACRO
-
-.MACRO  DEBUGPIN2_DOWN
-        CBI     PORTE,3
-.ENDMACRO
 ;
 ;--------------------------------------
 ;
 .DSEG
+        .ORG    $0300
+DSTACK:
+.EQU    UART_TXBSIZE    =128            ;размер буфера д.б. равен СТЕПЕНЬ_ДВОЙКИ байт (...32,64,128,256)
+UART_TX_BUFF:   .BYTE   UART_TXBSIZE    ;адрес д.б. кратен UART_TXBSIZE
+.EQU    UART_RXBSIZE    =128            ;размер буфера д.б. равен СТЕПЕНЬ_ДВОЙКИ байт
+UART_RX_BUFF:   .BYTE   UART_RXBSIZE    ;адрес д.б. кратен UART_RXBSIZE
+
+        .ORG    $0400
+BUFSECT:                ;буфер сектора
+        .ORG    $0600
+BUF4FAT:                ;временный буфер (FAT и т.п.)
         .ORG    $0800
 MEGABUFFER:
+        .ORG    RAMEND
+HSTACK:
         .ORG    $0100
 RND:    .BYTE   3
 ;
@@ -129,7 +126,7 @@ EE_LANG:        .DB     $00
         JMP     START   ;TIM1_COMPB ; Timer1 CompareB Handler
         JMP     START   ;TIM1_OVF ; Timer1 Overflow Handler
         JMP     START   ;TIM0_COMP ; Timer0 Compare Handler
-        JMP     START   ;TIM0_OVF ; Timer0 Overflow Handler
+        JMP     TIM0_OVF ; Timer0 Overflow Handler
         JMP     START   ;SPI_STC ; SPI Transfer Complete Handler
         JMP     START   ;USART0_RXC ; USART0 RX Complete Handler
         JMP     START   ;USART0_DRE ; USART0,UDR Empty Handler
@@ -264,9 +261,9 @@ RDE1:   LSL     DATA
         OUTPORT PORTF,TEMP
         OUTPORT DDRF,TEMP
 
-        LDI     TEMP,      0B11111111
+        LDI     TEMP,      0B11101111
         OUT     PORTE,TEMP
-        LDI     TEMP,      0B00000000
+        LDI     TEMP,      0B00010000
         OUT     DDRE,TEMP
 
         LDI     TEMP,      0B11111111
@@ -304,7 +301,7 @@ UP12:   SBIC    PINF,0 ;VCC5
         LDIZ    MLMSG_STATUSOF_CR*2
         CALL    POWER_STATUS
         RJMP    UP12
-UP11:   LDI     COUNT,170 ;170 раз по 31 символу на скорости 115200
+UP11:   LDI     COUNT,170 ;170 раз по 31 символу на скорости 115200 = ~500ms
 UP13:   PUSH    COUNT
         LDIZ    MLMSG_STATUSOF_CR*2
         CALL    POWER_STATUS
@@ -366,20 +363,27 @@ CLRRAM: ST      Z+,NULL
         CALL    TIMERS_INIT
         SEI
 
-        CALL    PS2K_DETECT_KBD
-
         MOV     DATA,MODE1
         LDI     TEMP,SCR_MODE
         CALL    FPGA_REG
 
+        CALL    PS2K_DETECT_KBD
+
         LDI     DATA,$01
         LDI     TEMP,MTST_CONTROL
         CALL    FPGA_REG
+
+        LDIZ    MSG_READY*2
+        CALL    PRINTSTRZ
+        CALL    SCR_KBDSETLED
 ;
 NOEXIT:
         LDIZ    MENU_MAIN*2
         CALL    MENU
         RJMP    NOEXIT
+;
+MSG_READY:
+        .DB     "---",$0D,$0A,0
 ;
 ;--------------------------------------
 ;
@@ -400,7 +404,7 @@ POWER_STATUS:
 ;
 ;--------------------------------------
 ;
-NOTHING:RET
+;NOTHING:RET
 ;
 ;--------------------------------------
 ;
@@ -411,26 +415,6 @@ TABL_SINUS:
         .ORG    $8000
 PACKED_FPGA:
 .INCLUDE "FPGA.INC"
-;
-;--------------------------------------
-;
-.LIST
-.DSEG
-        .ORG    $0300
-DSTACK:
-.EQU    UART_TXBSIZE    =128            ;размер буфера д.б. равен СТЕПЕНЬ_ДВОЙКИ байт (...32,64,128,256)
-UART_TX_BUFF:   .BYTE   UART_TXBSIZE    ;адрес д.б. кратен UART_TXBSIZE
-.EQU    UART_RXBSIZE    =128            ;размер буфера д.б. равен СТЕПЕНЬ_ДВОЙКИ байт
-UART_RX_BUFF:   .BYTE   UART_RXBSIZE    ;адрес д.б. кратен UART_RXBSIZE
-
-        .ORG    $0400
-BUFSECT:                ;буфер сектора
-        .ORG    $0600
-BUF4FAT:                ;временный буфер (FAT и т.п.)
-;        .ORG    $0800
-;MEGABUFFER:
-        .ORG    RAMEND
-HSTACK:
 ;
 ;--------------------------------------
 ;

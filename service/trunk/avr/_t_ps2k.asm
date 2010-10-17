@@ -1,4 +1,4 @@
-;to do: перенумерация меток
+;to do: перенумерация меток (работает - не трогай;)
 
 ;   0                                   4
 ;   5                                   1
@@ -30,13 +30,13 @@
 ;
 ;--------------------------------------
 ;
-TESTPS2KEYB_NOEXIT:
-        GETMEM  5
-        STH     TPSK_FLAGS,FF
-
-        LDIZ    WIND_T_PS2K*2
-        CALL    WINDOW
-        RJMP    T_PSK00
+;TESTPS2KEYB_NOEXIT:
+;        GETMEM  5
+;        STH     TPSK_FLAGS,FF
+;
+;        LDIZ    WIND_T_PS2K*2
+;        CALL    WINDOW
+;        RJMP    T_PSK00
 ;
 ; - - - - - - - - - - - - - - - - - - -
 ;
@@ -107,8 +107,8 @@ T_PSK1L:
         STH     TPSK_TEMP,TEMP
 
         LDH     COUNT,TPSK_FLAGS
-        TST     COUNT
-        BRMI    T_PSK21
+;        TST     COUNT
+;        BRMI    T_PSK21
         SBRS    TEMP,PS2K_BIT_RELEASE
         RJMP    T_PSK21
         SBRC    TEMP,PS2K_BIT_EXTKEY
@@ -120,18 +120,7 @@ T_PSK1L:
         CPI     COUNT,3
         BRCS    T_PSK21
 
-        LDI     DATA,$ED
-        RCALL   PS2K_SEND_BYTE
-        BREQ    T_PSK9_SETLED_FAIL
-        RCALL   PS2K_RECEIVE_BYTE
-        BREQ    T_PSK9_SETLED_FAIL
-        CPI     DATA,$FA
-        BRNE    T_PSK9_SETLED_FAIL
-        CLR     DATA
-        RCALL   PS2K_SEND_BYTE
-        BREQ    T_PSK9_SETLED_FAIL
-        RCALL   PS2K_RECEIVE_BYTE
-T_PSK9_SETLED_FAIL:
+        RCALL   SCR_KBDSETLED
         FREEMEM 5
         RET
 ;
@@ -231,9 +220,6 @@ T_PSK81:STH     TPSK_COUNT,COUNT
         STH     TPSK_TEMP,ZL
         LD      DATA,Z
         PUSH    DATA
-;        LDI     TEMP,$07
-;        TST     DATA
-;        BREQ    T_PSK82
         LDI     TEMP,$0E
         CPI     DATA,$E0
         BREQ    T_PSK82

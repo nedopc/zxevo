@@ -509,6 +509,7 @@ MENU_SWVGA0:
         MOV     DATA,MODE1
         LDIW    EE_MODE1
         CALL    EEPROM_WRITE
+        RCALL   SCR_KBDSETLED
         RJMP    MENU_AGAIN
 ;
 MENU_CLR_CURSOR:
@@ -521,6 +522,21 @@ MENU_CLR_CURSOR:
         LDH     TEMP,MENU_WIN_ATTR
         LDH     COUNT,MENU_WIDTH2
         RJMP    SCR_FILL_ATTR
+;
+SCR_KBDSETLED:
+        LDI     DATA,$ED
+        RCALL   PS2K_SEND_BYTE
+        BREQ    SCR_SETLED_FAIL
+        RCALL   PS2K_RECEIVE_BYTE
+        BREQ    SCR_SETLED_FAIL
+        CPI     DATA,$FA
+        BRNE    SCR_SETLED_FAIL
+        MOV     DATA,MODE1
+        COM     DATA
+        ANDI    DATA,$01
+        RCALL   PS2K_SEND_BYTE
+SCR_SETLED_FAIL:
+        RET
 ;
 ;--------------------------------------
 ;Установка текущего атрибута

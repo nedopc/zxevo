@@ -69,7 +69,7 @@ PINTEST_UART_OK:
         OUTPORT PORTG,TEMP
         LDI     TEMP,0B00001010
         OUTPORT DDRG,TEMP
-        DELAY_US 1000
+        DELAY_US 100
 
         CLR     DATA
         IN      TEMP,PINA
@@ -126,7 +126,7 @@ PINTEST_OK15:
         OUTPORT PORTG,TEMP
         LDI     TEMP,0B00010101
         OUTPORT DDRG,TEMP
-        DELAY_US 1000
+        DELAY_US 100
 
         IN      TEMP,PINA
         CPI     TEMP,0B10101010
