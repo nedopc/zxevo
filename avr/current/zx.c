@@ -519,6 +519,12 @@ void zx_wait_task(UBYTE status)
 			if ( status&0x80 ) data = gluk_get_reg(addr);
 			break;
 		}
+	case ZXW_KONDR_RS232:
+		{
+			addr = zx_spi_send(SPI_RS232_ADDR, data, 0);
+			if ( status&0x80 ) data = rs232_zx_read(addr);
+			break;
+		}
 	}
 
 	if ( status&0x80 ) zx_spi_send(SPI_WAIT_DATA, data, 0);
@@ -532,6 +538,11 @@ void zx_wait_task(UBYTE status)
 		case ZXW_GLUK_CLOCK:
 			{
 				gluk_set_reg(addr, data);
+				break;
+			}
+		case ZXW_KONDR_RS232:
+			{
+				rs232_zx_write(addr, data);
 				break;
 			}
 		}

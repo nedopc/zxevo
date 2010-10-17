@@ -51,11 +51,12 @@
 /** ZX $FE.D6 (tape in) bit flag of configuration register. */
 #define SPI_TAPE_FLAG 0x04
 
-/** ZX Gluk address register. */
-#define SPI_GLUK_ADDR 0x41
 /** ZX all data for wait registers. */
-#define SPI_WAIT_DATA 0x40
-
+#define SPI_WAIT_DATA  0x40
+/** ZX Gluk address register. */
+#define SPI_GLUK_ADDR  0x41
+/** ZX Kondratiev's rs232 address register. */
+#define SPI_RS232_ADDR 0x42
 
 /** Send/recv data for spi registers. */
 UBYTE zx_spi_send(UBYTE addr, UBYTE data, UBYTE mask);
@@ -145,8 +146,11 @@ void zx_mouse_reset(UBYTE enable);
 void zx_mouse_task(void);
 
 
-/** Gluk clock port. */
-#define ZXW_GLUK_CLOCK 0x01
+/** Gluk clock ZX port out. */
+#define ZXW_GLUK_CLOCK  0x01
+
+/** Kondratiev's modem ZX port out. */
+#define ZXW_KONDR_RS232 0x02
 
 /**
  * Work with WAIT ports.
