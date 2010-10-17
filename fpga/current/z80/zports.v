@@ -724,8 +724,12 @@ module zports(
 	begin
 		atm_scr_mode = 3'b011;
 		atm_turbo    = 1'b1;
+
 		atm_pen      = 1'b0; // UNLIKE ATM - reset with normal ROMs! (TEMPORARY???)
 		atm_cpm_n    = 1'b1; // no permanent dos
+		// these should be 1,0 for atm-like init of manager
+
+
 		atm_pen2     = 1'b0;
 	end
 	else if( atm77_wr_fclk )
