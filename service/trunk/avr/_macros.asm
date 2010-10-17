@@ -145,6 +145,7 @@
 .ENDMACRO
 
 ;max. 23703 us
+;CPU @ 11059200Hz
 .MACRO  DELAY_US
 .IF (@0<70)
         LDI     WL,LOW(@0*36864/10000)

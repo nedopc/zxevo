@@ -126,21 +126,30 @@ MSG_KBD_DETECT_ENG:
 ;
 ;------------------------------------------------------------------------------
 ;
-MLMSG_KBD_FAIL0:
-        .DW     MSG_KBD_FAIL0_RUS*2, MSG_KBD_FAIL0_ENG*2
-MSG_KBD_FAIL0_RUS:
-        .DB     $0D,$0A,"Нет ответа от клавиатуры.",0
-MSG_KBD_FAIL0_ENG:
-        .DB     $0D,$0A,"No keyboard response.",0
+MLMSG_NORESPONSE:
+        .DW     MSG_NORESPONSE_RUS*2, MSG_NORESPONSE_ENG*2
+MSG_NORESPONSE_RUS:
+        .DB     " ...нет ответа",$0D,$0A,0,0
+MSG_NORESPONSE_ENG:
+        .DB     " ...no response",$0D,$0A,0
 ;
 ;------------------------------------------------------------------------------
 ;
-MLMSG_KBD_FAIL1:
-        .DW     MSG_KBD_FAIL1_RUS*2, MSG_KBD_FAIL1_ENG*2
-MSG_KBD_FAIL1_RUS:
-        .DB     $0D,$0A,"Имеются некоторые проблемы с клавиатурой.",0
-MSG_KBD_FAIL1_ENG:
-        .DB     $0D,$0A,"There are some problems of the keyboard.",0,0
+MLMSG_UNWANTED:
+        .DW     MSG_UNWANTED_RUS*2, MSG_UNWANTED_ENG*2
+MSG_UNWANTED_RUS:
+        .DB     " ...неожидаемый ответ",$0D,$0A,0
+MSG_UNWANTED_ENG:
+        .DB     " ...unwanted response",$0D,$0A,0
+;
+;------------------------------------------------------------------------------
+;
+MLMSG_TXFAIL:
+        .DW     MSG_TXFAIL_RUS*2, MSG_TXFAIL_ENG*2
+MSG_TXFAIL_RUS:
+        .DB     " ...сбой при передаче",$0D,$0A,0
+MSG_TXFAIL_ENG:
+        .DB     " ...fail to transmit",$0D,$0A,0,0
 ;
 ;------------------------------------------------------------------------------
 ;
@@ -414,7 +423,7 @@ MSG_FL_SDERROR3_ENG:
 ;width fixed!   "123456789012345"
 ;
 ;------------------------------------------------------------------------------
-;
+;это сообщение никогда ;) не должно появляться
 MLMSG_FL_SDERRORX:
         .DW     MSG_FL_SDERRORX_RUS*2,MSG_FL_SDERRORX_ENG*2
 MSG_FL_SDERRORX_RUS:

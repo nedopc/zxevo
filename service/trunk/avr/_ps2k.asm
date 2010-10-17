@@ -66,12 +66,31 @@ PS2K_INIT:
         ORI     TEMP,(1<<INT4)
         OUT     EIMSK,TEMP
 
+        LDI     TEMP,(0<<CS02)|(1<<CS01)|(0<<CS00) ; clk/8
+        OUT     TCCR0,TEMP
+
         STS     PS2K_FLAGS,NULL
         STS     PS2K_BIT_COUNT,NULL
         STS     PS2K_SKIP,NULL
         STS     PS2K_KEY_FLAGS,NULL
 
         RET
+;
+;--------------------------------------
+;
+TIM0_OVF:
+        PS2K_DATALINE_UP
+        PUSH    TEMP
+        IN      TEMP,SREG
+        PUSH    TEMP
+        IN      TEMP,TIMSK
+        CBR     TEMP,(1<<TOIE0)
+        OUT     TIMSK,TEMP
+        POP     TEMP
+        OUT     SREG,TEMP
+        POP     TEMP
+        PS2K_CLOCKLINE_UP
+        RETI
 ;
 ;--------------------------------------
 ;
@@ -120,6 +139,14 @@ INT4RXS:SBIS    PIND,6   ; data line
 
         STS     PS2K_RAW_READY,COUNT
         STS     PS2K_RAW_CODE,DATA
+        PS2K_CLOCKLINE_DOWN
+        LDI     COUNT,$80
+        OUT     TCNT0,COUNT     ;Tclk*8*128=~92us
+        LDI     COUNT,(1<<TOV0)
+        OUT     TIFR,COUNT
+        IN      COUNT,TIMSK
+        ORI     COUNT,(1<<TOIE0)
+        OUT     TIMSK,COUNT
 
         LDS     COUNT,PS2K_SKIP
         TST     COUNT
@@ -276,6 +303,11 @@ INKEY9: SEZ
 ;in:    DATA
 ;out:   sreg.Z - CLR == ok; SET == timeout
 PS2K_SEND_BYTE:
+        PS2K_DATALINE_UP
+        IN      TEMP,TIMSK
+        CBR     TEMP,(1<<TOIE0)
+        OUT     TIMSK,TEMP
+        PS2K_CLOCKLINE_UP
         CLR     TEMP
 PS2K_SEND0:
         SBIS    PINE,4   ; clock line
@@ -284,6 +316,7 @@ PS2K_SEND0:
         BRNE    PS2K_SEND0
 
         CLI
+        PS2K_CLOCKLINE_DOWN
         STS     PS2K_DATA,DATA
         LDI     TEMP,(1<<PS2K_BIT_TX)
         STS     PS2K_FLAGS,TEMP
@@ -291,7 +324,6 @@ PS2K_SEND0:
         STS     PS2K_SKIP,NULL
         STS     PS2K_KEY_FLAGS,NULL
         STS     PS2K_RAW_READY,NULL
-        PS2K_CLOCKLINE_DOWN
         SEI
         DELAY_US 100
         PS2K_DATALINE_DOWN
@@ -307,6 +339,7 @@ PS2K_SEND1:
         LDIZ    PS2K_TIMEOUT
         CALL    CHECK_TIMEOUT_MS
         BRCC    PS2K_SEND1
+        PS2K_DATALINE_UP
         SEZ
 PS2K_SEND2:
         RET
@@ -341,6 +374,7 @@ PS2K_RXBYTE2:
 ;
 PS2K_DETECT_KBD:
         GETMEM  1
+        PS2K_CLOCKLINE_UP
         LDIZ    MLMSG_KBD_DETECT*2
         RCALL   PRINTMLSTR
 
@@ -362,15 +396,8 @@ PS2K_DETECT_K2:
 PS2K_DETECT_K3:
 
         LDI     DATA,$FF
-        RCALL   HEXBYTE_FOR_DUMP
-        RCALL   PS2K_SEND_BYTE
-        BREQ    PS2K_DETECT_FAIL0
-        RCALL   PS2K_RECEIVE_BYTE
-        BREQ    PS2K_DETECT_FAIL0
-        RCALL   HEXBYTE_FOR_DUMP
-        CPI     DATA,$FA
-        BRNE    PS2K_DETECT_FAIL0
-
+        RCALL   PS2K_DETECT_SEND
+;        BRNE    PS2K_DETECT_K6
         STS     PS2K_RAW_READY,NULL
         LDIZ    PS2K_TIMEOUT
         LDIW    1000
@@ -382,65 +409,74 @@ PS2K_DETECT_K4:
         LDIZ    PS2K_TIMEOUT
         CALL    CHECK_TIMEOUT_MS
         BRCC    PS2K_DETECT_K4
-        RJMP    PS2K_DETECT_FAIL2
+        RCALL   PS2K_DETECT_NORESPONSE
+        RJMP    PS2K_DETECT_K6
 PS2K_DETECT_K5:
         LDS     DATA,PS2K_RAW_CODE
         RCALL   HEXBYTE_FOR_DUMP
         CPI     DATA,$AA
-        BRNE    PS2K_DETECT_FAIL2
+        BREQ    PS2K_DETECT_K6
+        RCALL   PS2K_DETECT_UNWANTED
 
+PS2K_DETECT_K6:
         LDI     DATA,$F2
         RCALL   PS2K_DETECT_SEND
+        BRNE    PS2K_DETECT_K7
         LDI     DATA,$AB
         RCALL   PS2K_DETECT_RECEIVE
+        BRNE    PS2K_DETECT_K7
         LDI     DATA,$83
         RCALL   PS2K_DETECT_RECEIVE
-
+PS2K_DETECT_K7:
         LDI     DATA,$F0
         RCALL   PS2K_DETECT_SEND
+        BRNE    PS2K_DETECT_K8
         LDI     DATA,$02
         RCALL   PS2K_DETECT_SEND
-
+PS2K_DETECT_K8:
         LDI     DATA,$F3
         RCALL   PS2K_DETECT_SEND
+        BRNE    PS2K_DETECT_K9
         LDI     DATA,$00
         RCALL   PS2K_DETECT_SEND
-
-        RJMP    PS2K_DETECT_EXIT
-;
-PS2K_DETECT_FAIL1:
-        POPZ
-PS2K_DETECT_FAIL2:
-        LDIZ    MLMSG_KBD_FAIL1*2
-        RJMP    PS2K_DETECT_PSTRZ
-;
-PS2K_DETECT_FAIL0:
-        LDIZ    MLMSG_KBD_FAIL0*2
-PS2K_DETECT_PSTRZ:
-        CALL    PRINTMLSTR
-PS2K_DETECT_EXIT:
+        LDIZ    MSG_READY*2+3
+        CALL    PRINTSTRZ
+PS2K_DETECT_K9:
         FREEMEM 1
         RET
 ;
 PS2K_DETECT_SEND:
         RCALL   HEXBYTE_FOR_DUMP
         RCALL   PS2K_SEND_BYTE
-        BREQ    PS2K_DETECT_FAIL1
+        BREQ    PS2K_DETECT_TXFAIL
         RCALL   PS2K_RECEIVE_BYTE
-        BREQ    PS2K_DETECT_FAIL1
+        BREQ    PS2K_DETECT_NORESPONSE
         RCALL   HEXBYTE_FOR_DUMP
         CPI     DATA,$FA
-        BRNE    PS2K_DETECT_FAIL1
+        BRNE    PS2K_DETECT_UNWANTED
         RET
 ;
 PS2K_DETECT_RECEIVE:
         STH     PS2K_DETECT_TEMP,DATA
         RCALL   PS2K_RECEIVE_BYTE
-        BREQ    PS2K_DETECT_FAIL1
+        BREQ    PS2K_DETECT_NORESPONSE
         RCALL   HEXBYTE_FOR_DUMP
         LDH     TEMP,PS2K_DETECT_TEMP
         CP      DATA,TEMP
-        BRNE    PS2K_DETECT_FAIL1
+        BRNE    PS2K_DETECT_UNWANTED
+        RET
+;
+PS2K_DETECT_TXFAIL:
+        LDIZ    MLMSG_TXFAIL*2
+        RJMP    PS2K_DETECT_XXFAIL
+PS2K_DETECT_UNWANTED:
+        LDIZ    MLMSG_UNWANTED*2
+        RJMP    PS2K_DETECT_XXFAIL
+PS2K_DETECT_NORESPONSE:
+        LDIZ    MLMSG_NORESPONSE*2
+PS2K_DETECT_XXFAIL:
+        CALL    PRINTMLSTR
+        CLZ
         RET
 ;
 ;--------------------------------------

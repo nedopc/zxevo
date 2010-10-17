@@ -1,21 +1,5 @@
 ;
 ;--------------------------------------
-;DELAY
-;in:    DATA/10 == количество секунд
-DELAY:
-        LDI     WL,$1E  ;\
-        LDI     WH,$FE  ;/ 0,1 сек @ 11.0592MHz
-DELAY1: LPM             ;3
-        LPM             ;3
-        LPM             ;3
-        LPM             ;3
-        SUBI    WL,1    ;1
-        SBCI    WH,0    ;1
-        SBCI    DATA,0  ;1
-        BRNE    DELAY1  ;2(1)
-        RET
-;
-;--------------------------------------
 ;out:   DATA == п.случайное число
 RANDOM: PUSHW
         LDS     DATA,RND+0
@@ -80,15 +64,15 @@ WREE9:  RET
 ;--------------------------------------
 ;
 CRC32_INIT:
-        STH     CRC32_0,FF
-        STH     CRC32_1,FF
-        STH     CRC32_2,FF
-        STH     CRC32_3,FF
+        STD     Y+0,FF
+        STD     Y+1,FF
+        STD     Y+2,FF
+        STD     Y+3,FF
         RET
 ;
 CRC32_UPDATE:
         PUSHZ
-        LDH     TEMP,CRC32_0
+        LDD     TEMP,Y+0
         EOR     DATA,TEMP
         CLR     TEMP
         LSL     DATA
@@ -99,35 +83,35 @@ CRC32_UPDATE:
         ADD     ZL,DATA
         ADC     ZH,TEMP
         LPM     DATA,Z+
-        LDH     TEMP,CRC32_1
+        LDD     TEMP,Y+1
         EOR     DATA,TEMP
-        STH     CRC32_0,DATA
+        STD     Y+0,DATA
         LPM     DATA,Z+
-        LDH     TEMP,CRC32_2
+        LDD     TEMP,Y+2
         EOR     DATA,TEMP
-        STH     CRC32_1,DATA
+        STD     Y+1,DATA
         LPM     DATA,Z+
-        LDH     TEMP,CRC32_3
+        LDD     TEMP,Y+3
         EOR     DATA,TEMP
-        STH     CRC32_2,DATA
+        STD     Y+2,DATA
         LPM     DATA,Z
-        STH     CRC32_3,DATA
+        STD     Y+3,DATA
         POPZ
         RET
 ;
 CRC32_RELEASE:
-        LDH     R0,CRC32_0
+        LDD     R0,Y+0
         COM     R0
-        STH     CRC32_0,R0
-        LDH     R1,CRC32_1
+        STD     Y+0,R0
+        LDD     R1,Y+1
         COM     R1
-        STH     CRC32_1,R1
-        LDH     R2,CRC32_2
+        STD     Y+1,R1
+        LDD     R2,Y+2
         COM     R2
-        STH     CRC32_2,R2
-        LDH     R3,CRC32_3
+        STD     Y+2,R2
+        LDD     R3,Y+3
         COM     R3
-        STH     CRC32_3,R3
+        STD     Y+3,R3
         RET
 ;
 TAB32:  .DW     $0000,$0000,$3096,$7707,$612C,$EE0E,$51BA,$9909

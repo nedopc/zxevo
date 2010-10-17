@@ -32,6 +32,8 @@ MSG_FL_ID:
         .DB     "ID: ",0,0
 MSG_FL_M29F040:
         .DB     ": M29F040",0
+MSG_FL_AM29F040:
+        .DB     ":Am29F040",0
 MSG_FL_CRC:
         .DB     $16, 2,10,$15,$9F,"CRC: "        ,0,0
 MSG_FL_SDCARD:
@@ -346,17 +348,27 @@ FL_CLRCNT1:
         CALL    SCR_PRINTSTRZ
 
         RCALL   F_ID
+        CPI     ZL,$01
+        BRNE    FL_DET_CHIP1
+        CPI     ZH,$A4
+        BRNE    FL_DET_CHIP1
+        LDIZ    MSG_FL_AM29F040*2
+        RJMP    FL_DET_CHIP2
+FL_DET_CHIP1:
         CPI     ZL,$20
-        BRNE    FL_DET_CHIP1
+        BRNE    FL_DET_CHIP8
         CPI     ZH,$E2
-        BRNE    FL_DET_CHIP1
+        BRNE    FL_DET_CHIP8
         LDIZ    MSG_FL_M29F040*2
+FL_DET_CHIP2:
         CALL    SCR_PRINTSTRZ
         RJMP    FL_DET_CHIP9
 
-FL_DET_CHIP1:
+FL_DET_CHIP8:
+        PUSHZ
         LDIZ    MSG_FL_ID*2
         CALL    SCR_PRINTSTRZ
+        POPZ
         MOV     DATA,ZL
         CALL    HEXBYTE
         LDI     DATA,$20
@@ -1580,15 +1592,15 @@ FP_RDDX:LDH     COUNT,FLFP_TOTAL
         RJMP    FP_NOFILES
 FP_SORT:
 FP_RDDY:
+        LDIZ    FL_BUFFER
         CLR     TMP2
         LDH     TMP3,FLFP_TOTAL
         DEC     TMP3
-        LDS     DATA,FL_BUFFER
+        LD      DATA,Z
         CPI     DATA,$2E
         BRNE    FP_RDDZ
         INC     TMP2
-FP_RDDZ:LDIZ    FL_BUFFER
-        RCALL   FSORT
+FP_RDDZ:RCALL   FSORT
 FP_NOFILES:
 FP_NOSORT:
 ;
@@ -1791,9 +1803,7 @@ DEC1MTAB:.DW    $86A0,10000,1000,100,10
 ;in:    Z == buffer ptr
 ;       TMP2 == lo index
 ;       TMP3 == hi index (TMP2!=TMP3)
-FSORT:
-;       CALL    DEBUG_INFO
-        MOV     R2,TMP2
+FSORT:  MOV     R2,TMP2
         MOV     R3,TMP3
         MOV     R4,TMP2
         ADD     R4,TMP3

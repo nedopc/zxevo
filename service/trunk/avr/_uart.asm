@@ -15,7 +15,7 @@ UART_TX_LN:     .BYTE   1
 UART_RX_HD:     .BYTE   1
 UART_RX_TL:     .BYTE   1
 UART_RX_LN:     .BYTE   1
-;        .ORG    $0200
+;        .ORG    $0300                   ;см. SERVICE.ASM
 ;.EQU    UART_TXBSIZE    =128            ;размер буфера д.б. равен СТЕПЕНЬ_ДВОЙКИ байт (...32,64,128,256)
 ;UART_TX_BUFF:   .BYTE   UART_TXBSIZE    ;адрес д.б. кратен UART_TXBSIZE
 ;.EQU    UART_RXBSIZE    =128            ;размер буфера д.б. равен СТЕПЕНЬ_ДВОЙКИ байт
@@ -45,7 +45,7 @@ UD_PCHR:INPORT  R0,UCSR1A
 ;
 UART_SET_BAUDRATE:
         OUTPORT UBRR1H,NULL
-        LDI     TEMP,5 ;115200 baud @ 11.0592 MHz, Normal speed
+        LDI     TEMP,5 ;115200 baud (CPU @ 11.0592 MHz), Normal speed
         OUTPORT UBRR1L,TEMP
         OUTPORT UCSR1A,NULL ;Normal Speed
         LDI     TEMP,(1<<UCSZ1)|(1<<UCSZ0)|(1<<USBS) ;data8bit, 2stopbits
