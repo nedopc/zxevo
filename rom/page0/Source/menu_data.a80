@@ -258,8 +258,8 @@ TXT_FILENONE	DB 0X0D,3,"File not found",0X0D,3,"Press any key",0
 ;***************íÖäëíõ à èêéóÄü îàÉçü********************
 
 TXTFULLSCR	DB 0X16,0X00,0X00,0X17,4,"EVO Reset Service v",VERSBIOS
-		DB 0X16,0X08,0X00,0X17,6,"ZX-Evolution 4096 Kb"
-		DB 0X16,0X10,0X00,0x17,0X45,"www.nedopc.com forum.nedopc.com "
+		DB 0X16,0X08,0X00,0X17,6,"ZX-Evolution 4096 Kb "
+		DB 0X16,0X10,0X00,0x17,0X45,"www.nedopc.com "	;forum.nedopc.com "
 		DB 0X16,0X18,0X00,0X17,5,"Baseconf: ",0X17,0XFF
 VERS_CONF	DB "NONE                            "
 		DB 0X16,0X20,0X00,0X17,5,"AVR Boot: ",0X17,0XFF
