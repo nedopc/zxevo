@@ -1,6 +1,7 @@
 
 ;‚›Ž “‘’Ž‰‘’‚€ „‹Ÿ ‡€ƒ“‡Šˆ
-FATBOOT		LD HL,ADRTBLDIRL
+FATBOOT		DI
+		LD HL,ADRTBLDIRL
 		LD (DIR_LEVEL),HL		;“‘’€Ž‚ˆ‹ˆ „Ž ‘’…Š€ ‘Ž•€…ˆ‰ ŽŠŽ˜…Š
 		LD HL,FLAGS
 		SET 3,(HL)			;€Ž’€’œ “„…Œ ‘ FAT
@@ -101,7 +102,8 @@ FATBOOT2	LD (HL),LOW (SEL_FAT)		;”ŽŒˆŽ‚€ˆ… ’€‹ˆ–› €„…‘Ž‚ ‚›‡›‚Ž‚
 		JP _RULILKA			;‚Ž‡‚€™€…Œ‘Ÿ Š Ž™…Œ“ “€‚‹…ˆž
 
 ;……Š‹ž—…ˆ… € “‘’Ž‰‘’‚€ ˆ ‚›‚Ž„ €‰„…ŽƒŽ € …Œ
-SEL_FAT		LD A,(IX+0X12)			;‚‡Ÿ‹ˆ ŽŒ… ‚›€ŽƒŽ “‘’Ž‰‘’‚€
+SEL_FAT		DI
+		LD A,(IX+0X12)			;‚‡Ÿ‹ˆ ŽŒ… ‚›€ŽƒŽ “‘’Ž‰‘’‚€
 		CALL COM_DEV
 		DB Set_vol			;‚›€‹ˆ “‘’Ž‰‘’‚Ž Ž ŽŒ…“
 		CALL COM_FAT

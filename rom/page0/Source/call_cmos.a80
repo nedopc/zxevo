@@ -4,8 +4,7 @@
 READCMOS	DI
 		PUSH BC
 		LD BC,SYSREG_EFF7
-		LD A,(SYSREG1)
-		OR CMOS_ON
+		LD A,CMOS_ON			;€‡…˜…ˆ… „Ž‘’“€ Š ŠŒŽ‘“
 		OUT (C),A
 		LD B,HIGH (SET_ADR_CMOS)
 		OUT (C),H
@@ -18,20 +17,19 @@ READCMOS	DI
 WRITECMOS	DI
 		PUSH BC
 		LD BC,SYSREG_EFF7
-		LD A,(SYSREG1)
-		OR CMOS_ON
+		LD A,CMOS_ON			;€‡…˜…ˆ… „Ž‘’“€ Š ŠŒŽ‘“
 		OUT (C),A
 		LD B,HIGH (SET_ADR_CMOS)
 		OUT (C),H
 		LD B,HIGH (RD_WR_CMOS)
 		OUT (C),L
-OFF_CMOS	LD A,(SYSREG1)
+OFF_CMOS	
+		LD A,CMOS_OFF			;‡€…’ „Ž‘’“€ Š ŠŒŽ‘“
 		LD B,HIGH (SYSREG_EFF7)
 		OUT (C),A
 		POP BC
 		LD A,L
 		AND A
-		EI
 		RET
 
 ;—’…ˆ… ‚…‘ˆˆ FPGA ˆ‹ˆ BOOTLOADER, …‘‹ˆ ’Ž …’…‚€
@@ -43,6 +41,7 @@ GET_VERS_EVO	LD C,L
 		RET Z			;ˆ ’Ž … …’…‚€ (ˆ‹ˆ ‚…‘ˆŸ FPGA ‘’€€Ÿ). ‚›•Ž„ˆŒ
 		INC A			;ˆ˜…‹ 0XFF, ‡€—ˆ’ —€‘Ž‚ …’“
 		RET Z			;‚›•Ž„ˆŒ
+		DI
 		DEC A			;‚Ž‡‚€™€…Œ ‘—ˆ’€Ž… ‡€—…ˆ…
 		PUSH DE
 		LD (DE),A		;Ž‹Ž†ˆ‹ˆ ‚ “”… “†… Ž—ˆ’€›‰ €‰’
@@ -166,7 +165,6 @@ PRINTTIME	LD A,(FLAGS)
 		LD HL,BUFF_TIME			;…—€’…Œ ‚…ŒŸ ˆ‡ “”…€
 		CALL NEXT
 		EXX
-		EI
 		RET
 
 ;……‚Ž„ "A" ‚ „…‘Ÿ’ˆ—Š“ ˆ ‚ ’…Š‘’

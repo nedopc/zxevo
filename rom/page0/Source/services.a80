@@ -1,5 +1,5 @@
 
-DD		EQU 12				;„€’€
+DD		EQU 21				;„€’€
 MM		EQU 10				;Œ…‘Ÿ–
 YY		EQU 10				;ƒŽ„
 DATA		EQU DD+(MM<<5)+(YY<<9)+0X8000	;“†… “€ŠŽ‚€Ž
@@ -15,6 +15,7 @@ CMOS_OFF	EQU 0
 		ORG 0X0000
 
 		DI
+		LD SP,DEPKADR
 		LD IY,0X5C3A
 		LD A,0X3F
 		LD I,A
@@ -40,6 +41,9 @@ CMPROM1		LD A,(BC)
 		JR NZ,CMPROM1
 		LD IXL,"A"		;Ž…„…‹ˆ‹Ž‘œ, Ž˜ˆ‚Š€ „‹Ÿ €’Œ
 
+;		LD A,1
+;		OUT (0XBF),A
+
 ;€ …‚ŽŒ Ž•Ž„… ‚ ‚ˆ„…Ž …†ˆŒ… 640•200
 ;€ ‚’ŽŽŒ Ž•Ž„… ‚ ’…Š‘’Ž‚ŽŒ …†ˆŒ…
 RSTRAM		LD DE,0X1002
@@ -48,7 +52,7 @@ RSRAMP0		LD BC,0X0077
 		LD HL,TRSTRAM
 RSRAMP1		LD BC,0X7FFD
 		OUT (C),D		;‚“€…Œ ŠŽ”ˆƒ 48Š € …‚ŽŒ Ž•Ž„…, 128Š € ‚’ŽŽŒ
-		LD BC,0X0FF7
+		LD BC,0X3FF7
 RSRAMP2		LD A,(HL)
 		OUT (C),A		;ˆ˜…Œ ŽŒ… ‘’€ˆ–› „‹Ÿ ’…Š“™…ƒŽ ŽŠ€ Ž…–ˆŽ‚€ˆŸ
 		INC HL
@@ -60,40 +64,40 @@ RSRAMP2		LD A,(HL)
 		XOR 0X10		;‘Œ…ˆ‹ˆ …†ˆŒ € 128Š
 		LD D,A
 		JR Z,RSRAMP1		;ˆ ……Š‹ž—…ˆˆ ‚ 128Š Ž‚’ŽŸ…Œ
-		LD A,E			;ˆ€—… Ž„Ž‹†€…Œ „€‹……
-		XOR 4			
-		LD E,A
-		CP 2
-		JR NZ,RSRAMP0		;§ ç¥¬ 2 à § ? Ÿ ’Ž†… … ŽˆŒ€ž ‡€—…Œ :)
+;		LD A,E			;ˆ€—… Ž„Ž‹†€…Œ „€‹……
+;		XOR 4			
+;		LD E,A
+;		CP 2
+;		JR NZ,RSRAMP0		;§ ç¥¬ 2 à § ? Ÿ ’Ž†… … ŽˆŒ€ž ‡€—…Œ :)
 		LD A,%10101011		;ZX SCREEN MODE, TURBO ON („‹Ÿ €’Œ)
-		LD BC,0X4177		;¢ëª«.PAL
-		OUT (C),A		;¢ª« RAM (PEN)
+		LD BC,0X4177		;ˆ „Ž‘’“ Š €‹ˆ’…
+		OUT (C),A
 ;„‹Ÿ …’…‚› Ž•Ž„ ˆŽ … “†Ž ˆˆ’ˆ’œ ”€—
 ;”€—
-		LD A,0X06
-		LD BC,0X0177
-		OUT (C),A
-		LD HL,TFAPC
-		LD DE,0X0610
-		LD C,0X77
-		LD A,0X08
-		OUT (0XFF),A
-FAPC0		LD A,(HL)
-		INC HL
-		OUT (0XFF),A
-		LD B,0X41
-		OUT (C),D
-		OR 0X08
-		OUT (0XFF),A
-		LD B,0X01
-		OUT (C),D
-		DEC E
-		JR NZ,FAPC0
-		LD BC,0X4177
-		LD A,0X26		;0X06 ¢ëª«îç¨â INT
-		OUT (C),A
-		LD A,0XFF
-		OUT (0XFF),A
+;		LD A,0X06
+;		LD BC,0X0177
+;		OUT (C),A
+;		LD HL,TFAPC
+;		LD DE,0X0610
+;		LD C,0X77
+;		LD A,0X08
+;		OUT (0XFF),A
+;FAPC0		LD A,(HL)
+;		INC HL
+;		OUT (0XFF),A
+;		LD B,0X41
+;		OUT (C),D
+;		OR 0X08
+;		OUT (0XFF),A
+;		LD B,0X01
+;		OUT (C),D
+;		DEC E
+;		JR NZ,FAPC0
+;		LD BC,0X4177
+;		LD A,0X26		;0X06 ¢ëª«îç¨â INT
+;		OUT (C),A
+;		LD A,0XFF
+;		OUT (0XFF),A
 ;~”€—
 ;„‹Ÿ €‹ˆ’› ŽŠ€ ’Ž†… Ž•Ž„
 ;¯ «¨âà 
@@ -116,6 +120,9 @@ END_INIT	LD A,%10101011
 		OUT (C),A		;¢ëª«.PAL
 ;~¯ «¨âà 
 
+;		XOR A
+;		OUT (0XBF),A
+
 ;¯à®¢¥àª  ­ ¦ â¨ï ¤¢ãå ª« ¢¨è (¯®àâ¨¬ â®«ìª® AF,BC)
 RSTKEYS		LD BC,0XFEFF
 RSTKEYS1	LD A,B
@@ -131,7 +138,7 @@ RSTKEYS1	LD A,B
 		JP P,GTSTKEY		;€†€’Ž Ž‹…… 1 ŠŽŠˆ, ……•Ž„ˆŒ Š ’…‘’“ Š‹€‚ˆ€’“›
 		LD DE,0			;1 €†€’€, Ž‚…Ÿ…Œ —’Ž ’Ž
 		LD BC,0X7FFD
-		PUSH DE
+		PUSH DE			;€„…‘ ……•Ž„€ ‚ ‡“ …‘‹ˆ ‚›€Ž
 		LD A,0XFE
 		IN A,(0XFE)		;—’…ˆ… €†€’Ž‘’ˆ ŠŽŠˆ "CS"
 		RRA
@@ -143,7 +150,7 @@ RSTKEYS1	LD A,B
 		RRA
 		RRA
 		LD A,0X10
-		JP NC,START_SELECT	;ˆ €†€’Ž‰ "CS" ……•Ž„ˆŒ ‚ …‰‘ˆŠ 48
+		JP NC,START_SELECT	;ˆ €†€’Ž‰ "SS" ……•Ž„ˆŒ ‚ …‰‘ˆŠ 48
 		LD A,D
 		RRA			;Ž‚…Š€ €†€’Ž‘’ˆ ŠŽŠˆ "SPACE"
 		JR C,CMPCFG1		;……•Ž„ˆŒ „€‹…… …‘‹ˆ ˆ—…ƒŽ … €†€’Ž
@@ -168,6 +175,7 @@ CMPCFG1		LD A,0XFD
 		IN A,(0XFE)
 		CPL
 		AND 0X1F
+		LD A,0X10
 		JR NZ,CMOSHELP
 		LD HL,0X6000
 		PUSH HL
@@ -192,29 +200,81 @@ GDEMO		LD HL,0X6000-szdemoini
 		LD B,3
 		LDIR
 
-START_SELECT	PUSH AF
-		LD D,A
-		LD HL,0X5C07
-		LD (HL),0XC9
-		DEC HL
-		LD (HL),0XF1
-		DEC HL
-		LD (HL),0X79
-		DEC HL
-		LD (HL),0XED
+START_SELECT	EX AF,AF'			;‘Ž•€…ˆ… € ˆ ”‹€ƒŽ‚
+		LD HL,ERAM_CODE-1
+		LD DE,0X5C07
+		LD BC,ERAM_CODE-RAM_CODE
+		LDDR
+		EX DE,HL
+		INC HL
+
+;		PUSH AF
+;		LD D,A
+;		LD HL,0X5C07
+;		LD (HL),0XC9
+;		DEC HL
+;		LD (HL),0XF1
+;		DEC HL
+;		LD (HL),0X79
+;		DEC HL
+;		LD (HL),0XED
+
 		LD A,IXL
 		CP "A"
 		JR Z,CMPCFG2		;…‘‹ˆ Ž…„…‹ˆ‹Ž‘œ Š€Š €’Œ, ’Ž € €’Œ ˆ ‡€“‘Š€…Œ
-		LD A,D
-		LD BC,0X7FFD
-		JP (HL)
-		
-CMPCFG2		LD BC,0X0FF7
+		LD BC,NOATM_CODE-RAM_CODE
+		ADD HL,BC
+CMPCFG2		JP (HL)
+
+RAM_CODE	LD BC,0X7FFD
+		XOR A
+		OUT (C),A
+		LD BC,0X3FF7
 		LD A,0X81
 		OUT (C),A
 		LD BC,0XFF77
 		LD A,0XAB
-		JP (HL)
+		OUT (C),A
+NOATM_CODE	LD BC,0X7FFD
+		EX AF,AF'		;‚Ž‘‘’€Ž‚ˆ‹ˆ € ˆ ”‹€ƒˆ
+		OUT (C),A
+		RET
+ERAM_CODE
+
+;		LD A,D			;‡€“‘Š „‹Ÿ …’€ƒŽ€
+;		LD BC,0X7FFD
+;		JP (HL)
+		
+;CMPCFG2		EXX
+;		LD HL,SET4ATM
+;		LD DE,0X5C00
+;		PUSH DE
+;		LD BC,ESET4ATM-SET4ATM
+;		LDIR			;……Ž‘ ŠŽ„€ „Žˆˆ’€ „‹Ÿ €’Œ
+;		EXX
+;		RET
+		
+;SET4ATM		LD A,0X81
+;		LD BC,0X3FF7
+;		OUT (C),A
+;		LD A,0XAB
+;		LD BC,0XFF77
+;		OUT (C),A
+;		LD A,D
+;		LD BC,0X7FFD
+;		OUT (C),A
+;		POP AF
+;		RET
+;ESET4ATM
+
+;		LD A,0XAB
+;		LD BC,0XFF77
+;		OUT (C),A
+;		LD BC,0X3FF7
+;		LD A,0X81
+;		LD BC,0XFF77
+;		LD A,0XAB
+;		JP (HL)
 	
 BONUADR		BINCLUDE cmosset_pack.rom
 
@@ -238,7 +298,8 @@ szdemoini	EQU $-DEMO
 
 		INCLUDE dec40.a80
 
-TRSTRAM		DB 0X83,0X7A,0X7D,0XFF,0X00,0X7A,0X7D,0XFF
+TRSTRAM		DB 0X83,0X7A,0X7D,0XFF	;BASIC 48
+		DB 0X00,0X7A,0X7D,0XFF	;BASIC 128
 
 TFAPC		DB 0XF1,0XE1,0XD1,0XC1,0XC1,0XB1,0XA1,0X91
 		DB 0X41,0X21,0X31,0X11,0X01,0X01,0XF1,0XE1
@@ -246,34 +307,6 @@ TFAPC		DB 0XF1,0XE1,0XD1,0XC1,0XC1,0XB1,0XA1,0X91
 TRSTPAL		DB 0X00,0X21,0X42,0X63,0X90,0XB1,0XD2,0XF3
 		DB 0XE0,0XE1,0XE2,0XE3,0XF0,0XF1,0XF2,0XF3
 
-;€ ‚•Ž„…: H-€„…‘ Ÿ—…‰Šˆ
-;	   L-Ž—ˆ’€Ž… ‡€—…ˆ…
-READCMOS	PUSH BC
-		LD BC,SYSREG_EFF7
-		LD A,CMOS_ON
-		OUT (C),A
-		LD B,HIGH (SET_ADR_CMOS)
-		OUT (C),H
-		LD B,HIGH (RD_WR_CMOS)
-		IN L,(C)
-		JR OFF_CMOS
-
-;€ ‚•Ž„…: H-€„…‘ Ÿ—…‰Šˆ
-;	   L-—’Ž ’“„€ ‡€ˆ‘€’œ
-WRITECMOS	PUSH BC
-		LD BC,SYSREG_EFF7
-		LD A,CMOS_ON
-		OUT (C),A
-		LD B,HIGH (SET_ADR_CMOS)
-		OUT (C),H
-		LD B,HIGH (RD_WR_CMOS)
-		OUT (C),L
-OFF_CMOS	XOR A				;CMOS_OFF
-		LD B,HIGH (SYSREG_EFF7)
-		OUT (C),A
-		POP BC
-		RET
-		
 		DUPL 0X3FF8-$,0XFF
 
 		DB "HEGLUK"
