@@ -114,59 +114,7 @@ module atm_pager(
 
 	// port reading: sets pages, ramnrom, dos_7ffd
 	//
-	always @(posedge fclk, negedge rst_n)
-	if( !rst_n )
-	begin
-		// default mode must be pent1m
-		case( ADDR )
-
-		2'b00: begin // ROM pages
-			ramnrom[0] = 1'b0;
-			ramnrom[1] = 1'b0;
-
-			dos_7ffd[0] = 1'b1;
-			dos_7ffd[1] = 1'b1;
-
-			pages[0] = 8'hFE; // basic128 page
-			pages[1] = 8'hFC; // basic48 page
-		end
-
-		2'b01: begin // 4000-7fff ram page 5
-			ramnrom[0] = 1'b1;
-			ramnrom[1] = 1'b1;
-
-			dos_7ffd[0] = 1'b0;
-			dos_7ffd[1] = 1'b0;
-
-			pages[0] = 8'h05; // pent1m 5 page
-			pages[1] = 8'h05; // pent1m 5 page
-		end
-
-		2'b10: begin // 8000-bfff ram page 2
-			ramnrom[0] = 1'b1;
-			ramnrom[1] = 1'b1;
-
-			dos_7ffd[0] = 1'b0;
-			dos_7ffd[1] = 1'b0;
-
-			pages[0] = 8'h02; // pent1m 2 page
-			pages[1] = 8'h02; // pent1m 2 page
-		end
-
-		2'b11: begin // c000-ffff
-			ramnrom[0] = 1'b1;
-			ramnrom[1] = 1'b1;
-
-			dos_7ffd[0] = 1'b1;
-			dos_7ffd[1] = 1'b1;
-
-			pages[0] = 8'h00; // pent1m 0 page
-			pages[1] = 8'h00; // pent1m 0 page
-		end
-
-		endcase
-	end
-	else if( atmF7_wr )
+	always @(posedge fclk) if( atmF7_wr )
 	begin
 		if( za[15:14]==ADDR )
 		begin
