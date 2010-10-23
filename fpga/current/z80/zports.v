@@ -324,7 +324,7 @@ module zports(
 
 
 		PORTF7: begin
-			if( !a[14] && gluclock_on ) // $BFF7 - data i/o
+			if( !a[14] && (a[8]^shadow) && gluclock_on ) // $BFF7 - data i/o
 				dout = wait_read;
 			else // any other $xxF7 port
 				dout = 8'hFF;
@@ -345,8 +345,14 @@ module zports(
 
 	assign portfe_wr    = ( (loa==PORTFE) && port_wr);
 	assign portfd_wr    = ( (loa==PORTFD) && port_wr);
-	assign portf7_wr    = ( (loa==PORTF7) && port_wr && (!shadow) );
-	assign portf7_rd    = ( (loa==PORTF7) && port_rd && (!shadow) );
+
+	// F7 ports (like EFF7) are accessible in shadow mode but at addresses like EEF7, DEF7, BEF7 so that
+	// there are no conflicts in shadow mode with ATM xFF7 and x7F7 ports
+	assign portf7_wr    = ( (loa==PORTF7) && (a[8]==1'b1) && port_wr && (!shadow) ) ||
+	                      ( (loa==PORTF7) && (a[8]==1'b0) && port_wr &&   shadow  ) ;
+
+	assign portf7_rd    = ( (loa==PORTF7) && (a[8]==1'b1) && port_rd && (!shadow) ) ||
+	                      ( (loa==PORTF7) && (a[8]==1'b0) && port_rd &&   shadow  ) ;
 
 	assign vg_wrFF = ( ( (loa==VGSYS)&&shadow ) && port_wr);
 
@@ -694,7 +700,7 @@ module zports(
 	wire atm77_wr_fclk;
 	wire zxevbf_wr_fclk;
 
-	assign atmF7_wr_fclk = ( (loa==ATMF7) && shadow && port_wr_fclk );
+	assign atmF7_wr_fclk = ( (loa==ATMF7) && (a[8]==1'b1) && shadow && port_wr_fclk ); // xFF7 and x7F7 ports, NOT xEF7!
 	assign atm77_wr_fclk = ( (loa==ATM77) && shadow && port_wr_fclk );
 
 	assign zxevbf_wr_fclk = ( (loa==ZXEVBF) && port_wr_fclk );
@@ -725,9 +731,8 @@ module zports(
 		atm_scr_mode = 3'b011;
 		atm_turbo    = 1'b1;
 
-		atm_pen      = 1'b0; // UNLIKE ATM - reset with normal ROMs! (TEMPORARY???)
-		atm_cpm_n    = 1'b1; // no permanent dos
-		// these should be 1,0 for atm-like init of manager
+		atm_pen =   1'b1; // no manager,
+		atm_cpm_n = 1'b0; // permanent dosen (shadow ports on)
 
 
 		atm_pen2     = 1'b0;
