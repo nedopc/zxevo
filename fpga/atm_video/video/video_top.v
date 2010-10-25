@@ -48,12 +48,7 @@ module video_top(
 	input  wire [20:0] varb_addr,
 	input  wire [15:0] varb_data,
 	output wire [ 1:0] varb_bw,
-	output wire        varb_go,
-
-
-
-
-
+	output wire        varb_go
 );
 
 
