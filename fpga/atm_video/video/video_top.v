@@ -51,6 +51,53 @@ module video_top(
 	output wire        varb_go
 );
 
+	// these decoded in video_modedecode.v
+	wire mode_atm_n_pent;
+	wire mode_zx;
+	wire mode_p_16c;
+	wire mode_p_hmclr;
+	wire mode_a_hmclr;
+	wire mode_a_16c;  
+	wire mode_a_text; 
+	wire mode_pixf_14;
+
+
+
+
+
+
+
+	// decode video modes
+	video_modedecode video_modedecode(
+
+		.clk(clk),
+
+		.pent_vmode(pent_vmode),
+		.atm_vmode (atm_vmode),
+
+		.mode_atm_n_pent(mode_atm_n_pent),
+
+		.mode_zx     (mode_zx),
+
+		.mode_p_16c  (mode_p_16c),
+		.mode_p_hmclr(mode_p_hmclr),
+
+		.mode_a_hmclr(mode_a_hmclr),
+		.mode_a_16c  (mode_a_16c),
+		.mode_a_text (mode_a_text),
+		
+		.mode_pixf_14(mode_pixf_14)
+	);
+
+
+
+
+
+
+
+
+
+
 
 
 endmodule
