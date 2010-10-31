@@ -28,10 +28,7 @@ module tb;
 	tri1 ziorq_n,zmreq_n,zrd_n,zwr_n,zm1_n,zrfsh_n; // connected to Z80
 
 	tri1 wait_n,nmi_n;
-
-	assign nmi_n = 1'b1;
-	assign wait_n = 1'b1;
-
+	wire zwait_n,znmi_n;
 
 	wire [15:0] za;
 	wire [7:0] zd;
@@ -46,6 +43,11 @@ module tb;
 
 
 	tri1 [15:0] ide_d;
+
+
+
+	assign zwait_n = (wait_n==1'b0) ? 1'b0 : 1'b1;
+	assign znmi_n = (nmi_n==1'b0) ? 1'b0 : 1'b1;
 
 
 
@@ -135,9 +137,9 @@ module tb;
 
 	T80a z80( .RESET_n(zrst_n),
 	          .CLK_n(clkz_in),
-	          .WAIT_n(wait_n),
+	          .WAIT_n(zwait_n),
 	          .INT_n(int_n),
-	          .NMI_n(nmi_n),
+	          .NMI_n(znmi_n),
 	          .M1_n(zm1_n),
 	          .RFSH_n(zrfsh_n),
 	          .MREQ_n(zmreq_n),
@@ -231,12 +233,12 @@ module tb;
 	begin
 		$display("at time %t us",$time/10000);
 
-		case( {~rma14, ~rma15} )
+		case( {rma15, rma14} )
 
-		2'b00: $display("GLUKROM");
+		2'b00: $display("BASIC 48");
 		2'b01: $display("TR-DOS");
 		2'b10: $display("BASIC 128");
-		2'b11: $display("BASIC 48");
+		2'b11: $display("GLUKROM");
 		default: $display("unknown");
 
 		endcase
