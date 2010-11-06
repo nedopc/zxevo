@@ -44,12 +44,6 @@
 .EQU    nSTATUS         =PORTF1
 .EQU    CONF_DONE       =PORTF2
 
-.EQU    SOH             =$01
-.EQU    EOT             =$04
-.EQU    ACK             =$06
-.EQU    NAK             =$15
-.EQU    CAN             =$18
-
 .EQU    CMD_17          =$51    ;read_single_block
 .EQU    ACMD_41         =$69    ;sd_send_op_cond
 
@@ -389,7 +383,20 @@ SDINIT3:
         LDI     TEMP,4
         RCALL   SD_WR_PGX
         TST     DATA
+
         BRNE    SDINIT3
+
+;        BREQ    SDINIT4
+;        SBRS    DATA,2
+;        RJMP    SDINIT3
+;
+;SDINIT6:
+;       LDIZ    MSG_CMD01*2
+;       RCALL   PRINTSTRZ
+;        LDIZ    CMD01*2
+;        RCALL   SD_WR_PGM_6
+;        TST     DATA
+;        BRNE    SDINIT6
 
 SDINIT4:
        LDIZ    MSG_CMD59*2
@@ -431,6 +438,8 @@ WC_FAT: LDIX    0
         CPI     DATA,$0C
         BREQ    RDFAT06
         LDI     TEMP,1
+        CPI     DATA,$04
+        BREQ    RDFAT06
         CPI     DATA,$06
         BREQ    RDFAT06
         CPI     DATA,$0E
@@ -1310,6 +1319,7 @@ DELAY1: LPM             ;3
 CMD00:  .DB     $40,$00,$00,$00,$00,$95
 CMD08:  .DB     $48,$00,$00,$01,$AA,$87
 CMD16:  .DB     $50,$00,$00,$02,$00,$FF
+CMD01:  .DB     $41,$00,$00,$00,$00,$FF
 CMD55:  .DB     $77,$00,$00,$00,$00,$FF ;app_cmd
 CMD58:  .DB     $7A,$00,$00,$00,$00,$FF ;read_ocr
 CMD59:  .DB     $7B,$00,$00,$00,$00,$FF ;crc_on_off
@@ -1320,6 +1330,8 @@ MSG_START:
         .DB     $04, 19," SD LOGGER ",0 ;11+8
 MSG_CMD00:
         .DB     $04,  5,"CMD00",0
+MSG_CMD01:
+        .DB     $04,  5,"CMD01",0
 MSG_CMD08:
         .DB     $04,  5,"CMD08",0
 MSG_CMD17:

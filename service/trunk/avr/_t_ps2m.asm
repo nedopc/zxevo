@@ -435,6 +435,10 @@ T_PSM_WAITKEY:
         RJMP    T_PSM_RESTART
 
 T_PSM_ESCAPE:
+        LDI     DATA,0B00000000
+        MOV     INT6VECT,DATA
+        LDI     TEMP,INT_CONTROL
+        CALL    FPGA_REG
         CLR     DATA
         LDI     TEMP,SCR_MOUSE_TEMP
         RCALL   FPGA_REG
@@ -459,6 +463,10 @@ T_PSM_ESCAPE:
 ;
 T_PSM_MAIN:
         ANDI    FLAGS1,0B11111100
+        LDI     DATA,0B00000010
+        MOV     INT6VECT,DATA
+        LDI     TEMP,INT_CONTROL
+        CALL    FPGA_REG
 
         LDIZ    WIND_T_PS2M_3*2
         CALL    WINDOW
@@ -534,7 +542,11 @@ T_PSM12:PUSH    XH
         INC     XH
         CPI     XH,14
         BRCS    T_PSM12
-
+T_PSM20:
+        LDS     DATA,NEWFRAME
+        TST     DATA
+        BREQ    T_PSM21
+        STS     NEWFRAME,NULL
         LDH     XL,TPSM_X0
         LDH     XH,TPSM_X1
         ADIW    XL,49
@@ -556,14 +568,13 @@ T_PSM12:PUSH    XH
         POP     DATA
         LDI     TEMP,SCR_MOUSE_Y
         RCALL   FPGA_REG
-
-T_PSM20:
-        CALL    INKEY
-        BREQ    T_PSM21
-        CPI     DATA,KEY_ESC
-        BRNE    T_PSM21
-        RJMP    T_PSM_ESCAPE
 T_PSM21:
+        CALL    INKEY
+        BREQ    T_PSM22
+        CPI     DATA,KEY_ESC
+        BRNE    T_PSM22
+        RJMP    T_PSM_ESCAPE
+T_PSM22:
         LDS     DATA,PS2M_RAW_READY
         TST     DATA
         BREQ    T_PSM20

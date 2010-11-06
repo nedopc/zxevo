@@ -4,8 +4,8 @@
 .LIST
 .LISTMAC
 
-.DEF    MODE1   =R10    ;глобальный регистр, (.0 - 1=TV mode; .1 - 0=сетка на "бордюре")
-.DEF    LANG    =R11    ;глобальный регистр, язык интерфейса (умнож.на 2)
+.DEF    MODE1   =R10    ;глобальный регистр, (.0 - 0=VGAmode, 1=TVmode) читается из EEPROM
+.DEF    LANG    =R11    ;глобальный регистр, язык интерфейса (умнож.на 2) читается из EEPROM
 .DEF    INT6VECT=R12    ;глобальный регистр, (обработчики INT6)
 .DEF    FF      =R13    ;глобальный регистр, всегда = $FF
 .DEF    ONE     =R14    ;глобальный регистр, всегда = $01
@@ -18,7 +18,7 @@
                         ;.0 - PUTCHAR вызывает UARTDIRECT_PUTCHAR
                         ;.1 - PUTCHAR вызывает UART_PUTCHAR
                         ;.2 - PUTCHAR вызывает SCR_PUTCHAR
-                        ;.7 - видимый/скрытый курсор (на экране)
+                        ;.3 - лог обмена SD в RS232
 .DEF    TMP2    =R22
 .DEF    TMP3    =R23
 .DEF    WL      =R24
@@ -55,7 +55,7 @@
 .EQU    SCR_MOUSE_TEMP  =TEMP_REG
 .EQU    SCR_MOUSE_X     =$AD
 .EQU    SCR_MOUSE_Y     =$AE
-.EQU    SCR_MODE        =$AF    ; .0 - TV-mode (default==1)
+.EQU    SCR_MODE        =$AF    ; .0 - 0=VGAmode, 1=TVmode; .1 - 0=сетка 720x576;
 
 .EQU    MTST_CONTROL    =$50
 .EQU    MTST_PASS_CNT0  =$51
@@ -80,23 +80,26 @@
 ;--------------------------------------
 ;
 .DSEG
-        .ORG    $0300
+                .ORG    $0300
 DSTACK:
 .EQU    UART_TXBSIZE    =128            ;размер буфера д.б. равен СТЕПЕНЬ_ДВОЙКИ байт (...32,64,128,256)
 UART_TX_BUFF:   .BYTE   UART_TXBSIZE    ;адрес д.б. кратен UART_TXBSIZE
 .EQU    UART_RXBSIZE    =128            ;размер буфера д.б. равен СТЕПЕНЬ_ДВОЙКИ байт
 UART_RX_BUFF:   .BYTE   UART_RXBSIZE    ;адрес д.б. кратен UART_RXBSIZE
 
-        .ORG    $0400
-BUFSECT:                ;буфер сектора
-        .ORG    $0600
-BUF4FAT:                ;временный буфер (FAT и т.п.)
-        .ORG    $0800
+                .ORG    $0400
+BUFSECT:        ;буфер сектора
+                .ORG    $0600
+BUF4FAT:        ;временный буфер (FAT и т.п.)
+                .ORG    $0800
 MEGABUFFER:
-        .ORG    RAMEND
+                .ORG    RAMEND
 HSTACK:
-        .ORG    $0100
-RND:    .BYTE   3
+                .ORG    $0100
+RND:            .BYTE   3
+NEWFRAME:       .BYTE   1
+GLB_STACK:      .BYTE   2
+GLB_Y:          .BYTE   2
 ;
 ;--------------------------------------
 ;
@@ -154,6 +157,7 @@ EE_LANG:        .DB     $00
 ;--------------------------------------
 ;
 .INCLUDE "_MESSAGE.INC"
+.INCLUDE "_T_SD.ASM"
 .INCLUDE "_UART.ASM"
 .INCLUDE "_TIMERS.ASM"
 .INCLUDE "_PINTEST.ASM"
@@ -195,12 +199,14 @@ FPGA_RDY_RD:
 ;--------------------------------------
 ;
 EXT_INT6:
-        PUSH    DATA
-        IN      DATA,SREG
+        PUSH    BITS
+        IN      BITS,SREG
         SBRC    INT6VECT,0
         CALL    T_BEEP_INT
-        OUT     SREG,DATA
-        POP     DATA
+        SBRC    INT6VECT,1
+        STS     NEWFRAME,ONE
+        OUT     SREG,BITS
+        POP     BITS
         RETI
 ;
 ;--------------------------------------
@@ -361,10 +367,20 @@ CLRRAM: ST      Z+,NULL
         CALL    UART_INIT
         CALL    PS2K_INIT
         CALL    TIMERS_INIT
+        IN      TEMP,EICRB
+        ORI     TEMP,(1<<ISC61)|(0<<ISC60)
+        OUT     EICRB,TEMP
+        IN      TEMP,EIMSK
+        ORI     TEMP,(1<<INT6)
+        OUT     EIMSK,TEMP
         SEI
 
         MOV     DATA,MODE1
+        ORI     DATA,0B11111110
         LDI     TEMP,SCR_MODE
+        CALL    FPGA_REG
+        LDI     DATA,0B00000000
+        LDI     TEMP,INT_CONTROL
         CALL    FPGA_REG
 
         CALL    PS2K_DETECT_KBD

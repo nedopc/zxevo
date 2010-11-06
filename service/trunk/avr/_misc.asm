@@ -99,6 +99,10 @@ CRC32_UPDATE:
         POPZ
         RET
 ;
+RAM_CRC32:
+        RCALL   CRC32_INIT
+        RCALL   RAM_CRC32_UPDATE
+;
 CRC32_RELEASE:
         LDD     R0,Y+0
         COM     R0
@@ -112,6 +116,13 @@ CRC32_RELEASE:
         LDD     R3,Y+3
         COM     R3
         STD     Y+3,R3
+        RET
+;
+RAM_CRC32_UPDATE:
+        LD      DATA,Z+
+        RCALL   CRC32_UPDATE
+        SBIW    XL,1
+        BRNE    RAM_CRC32_UPDATE
         RET
 ;
 TAB32:  .DW     $0000,$0000,$3096,$7707,$612C,$EE0E,$51BA,$9909

@@ -1,5 +1,5 @@
 ;01234567890123456789012345678901234567890123456789012
-;            ZX Evolution Service [101005]            00
+;            ZX Evolution Service (101106)            00
 ;┌───────────────┐┌──────────────────────────────────┐01    ┌───────────────┐
 ;│ Exit          ││..          │ <DIR>│31.12.09│23:58│02    │ Выход         │
 ;│ Retrieve all  ││НОВАЯП~1    │ <DIR>│31.12.09│23:58│03    │ Всё снова     │
@@ -15,7 +15,7 @@
 ;└───────────────┘└──────────────────────────────────┘13    └───────────────┘
 ;┌────────────────── [√] Erase chip ─────────────────┐14
 ;│gluk     rom trdos610 rom basic128 rom basic48  rom│15     секторов(1)  нач.кластер(4)  имя(8+3)  |  итого на ячейку 16
-;│80  12345678 ............ ............ ............│16                                            |  итого на всё   512
+;│............ ............ ............ ............│16                                            |  итого на всё   512
 ;│............ ............ ............ ............│17
 ;│............ ............ ............ ............│18
 ;│............ ............ ............ ............│19
@@ -75,6 +75,9 @@ FL_ALCOGLUKPEN:
 FL_HEGLUK:
         .DB     "HEGL"
         .DB     "hegluk     ",0
+FL_EVODOS:
+        .DB     "EVOD"
+        .DB     "evodos     ",0
 FL_ATM2CPM:
         .DB     $1E,$65,$1E,$B3 ;B31E651E
         .DB     "atm2_cpm   ",0
@@ -93,12 +96,10 @@ MSG_FP_DIR:
 ;--------------------------------------
 ;
 .EQU    FL_CONTENT      =MEGABUFFER
-.EQU    FL_BUFFER       =FL_CONTENT+512
+.EQU    FL_BUFFER       =MEGABUFFER+512
 .DSEG
 FL_TMP0:        .BYTE   2
 FL_TMP2:        .BYTE   1
-FL_STACK:       .BYTE   2
-FL_Y:           .BYTE   2
 .CSEG
 ;
 ;======================================
@@ -476,6 +477,9 @@ FL_DET_ROM_3:
         LDIZ    FL_HEGLUK*2
         RCALL   FL_CRC_CMP
         BREQ    FL_DET_ROM_4
+        LDIZ    FL_EVODOS*2
+        RCALL   FL_CRC_CMP
+        BREQ    FL_DET_ROM_4
 
         LDIZ    FL_BUFFER+$012F
         LDIX    $0209
@@ -544,11 +548,11 @@ FL_DET_ROM_7:
         CALL    SCR_PRINTMLSTR
 
         IN      TEMP,SPL
-        STS     FL_STACK+0,TEMP
+        STS     GLB_STACK+0,TEMP
         IN      TEMP,SPH
-        STS     FL_STACK+1,TEMP
-        STS     FL_Y+0,YL
-        STS     FL_Y+1,YH
+        STS     GLB_STACK+1,TEMP
+        STS     GLB_Y+0,YL
+        STS     GLB_Y+1,YH
         LDIZ    FL_ERRHANDLER
         RCALL   SD_FAT_INIT
 
@@ -997,12 +1001,12 @@ FL_EX92:CALL    SCR_PRINTMLSTR
 ;
 FL_ERRHANDLER:
         CLI
-        LDS     TEMP,FL_STACK+0
+        LDS     TEMP,GLB_STACK+0
         OUT     SPL,TEMP
-        LDS     TEMP,FL_STACK+1
+        LDS     TEMP,GLB_STACK+1
         OUT     SPH,TEMP
-        LDS     YL,FL_Y+0
-        LDS     YH,FL_Y+1
+        LDS     YL,GLB_Y+0
+        LDS     YH,GLB_Y+1
         SEI
         PUSH    DATA
         LDIZ    MSG_FL_ERRPOS*2
@@ -1016,6 +1020,9 @@ FL_ERRHANDLER:
         BREQ    FL_ERRHNDL1
         LDIZ    MLMSG_FL_SDERROR3*2
         CPI     DATA,3
+        BREQ    FL_ERRHNDL1
+        LDIZ    MLMSG_FL_SDERROR4*2
+        CPI     DATA,4
         BREQ    FL_ERRHNDL1
         LDIZ    MLMSG_FL_SDERRORX*2
 FL_ERRHNDL1:
@@ -1482,23 +1489,8 @@ FP_RD_DIR:
         STH     FLFP_TOP,NULL
         STH     FLFP_SELECT,NULL
 
-        LDI     TEMP,1
-        MOV     R0,WL
-        OR      R0,WH
-        OR      R0,XL
-        OR      R0,XH
-        BREQ    LASTCLS
-NEXTCLS:PUSH    TEMP
-        RCALL   RDFATZP
-        RCALL   LST_CLS
-        POP     TEMP
-        BRCC    LASTCLS
-        INC     TEMP
-        RJMP    NEXTCLS
-LASTCLS:STS     FAT_KCLSDIR,TEMP
-
         LDIW    0
-        RCALL   RDDIRSC
+        CALL    RDDIRSC
 ;поиск файла в директории
 ;       LDIW    0               ;номер описателя файла
         RJMP    FP_RDD2
@@ -1758,7 +1750,7 @@ TOLOWER:CPI     DATA,$41
         BRCC    TOLOW9   ;$F8...$FF
         ORI     DATA,$01 ;"Ё"..."ў"
         RET
-TOLOW7: ADDI    DATA,$80
+TOLOW7: ADDI    DATA,$50
         RET
 TOLOW8: ADDI    DATA,$20
 TOLOW9: RET
@@ -1802,82 +1794,94 @@ DEC1MTAB:.DW    $86A0,10000,1000,100,10
 ;======================================
 ;in:    Z == buffer ptr
 ;       TMP2 == lo index
-;       TMP3 == hi index (TMP2!=TMP3)
-FSORT:  MOV     R2,TMP2
+;       TMP3 == hi index
+FSORT:  CP      TMP2,TMP3
+        BRLT    FSRT_1
+        RET
+FSRT_1: MOV     WH,TMP2
+        ADD     WH,TMP3
+        LSR     WH
+        MOV     WL,TMP2
+        RCALL   FXCHNG
+        MOV     R2,TMP2
+        INC     R2
         MOV     R3,TMP3
-        MOV     R4,TMP2
-        ADD     R4,TMP3
-        LSR     R4
-FSRT_00:
-        MOV     WL,R4
+FSRT_2: CP      R3,R2
+        BRLT    FSRT_7
+FSRT_3: CP      TMP3,R2
+        BRLT    FSRT_4
+        MOV     WL,TMP2
         MOV     WH,R2
-FSRT_02:RCALL   FCOMP
-        BRCC    FSRT_01
-        INC     WH
-        RJMP    FSRT_02
-FSRT_01:MOV     R2,WH
-
-        MOV     WL,R3
-        MOV     WH,R4
-FSRT_04:RCALL   FCOMP
-        BRCC    FSRT_03
-        DEC     WL
-        RJMP    FSRT_04
-FSRT_03:MOV     R3,WL
-
-        CP      R3,R2
-        BRLT    FSRT_10
-        CP      R2,R3
-        BRGE    FSRT_06
-
+        RCALL   FCOMP
+        BRCS    FSRT_4
+        INC     R2
+        RJMP    FSRT_3
+FSRT_4: CP      R3,TMP2
+        BRLT    FSRT_5
+        MOV     WL,TMP2
+        MOV     WH,R3
+        RCALL   FCOMP
+        BRCC    FSRT_5
+        DEC     R3
+        RJMP    FSRT_4
+FSRT_5: CP      R2,R3
+        BRGE    FSRT_6
+        MOV     WL,R2
+        MOV     WH,R3
+        RCALL   FXCHNG
+FSRT_6: RJMP    FSRT_2
+FSRT_7: MOV     WL,TMP2
+        MOV     WH,R3
+        RCALL   FXCHNG
+        PUSH    R3
+        PUSH    TMP3
+        MOV     TMP3,R3
+        DEC     TMP3
+        RCALL   FSORT
+        POP     TMP3
+        POP     TMP2
+        INC     TMP2
+        RJMP    FSORT
+;
+;======================================
+;in:    Z
+;       WL, WH - indexes
+;chng:  COUNT,DATA,TEMP (,X,R0,R1)
+FXCHNG:
+        CP      WL,WH
+        BRNE    FXCHN_1
+        RET
+FXCHN_1:
         PUSHZ
         MOVW    XL,ZL
         LDI     COUNT,32
-        MUL     R2,COUNT
+        MUL     WL,COUNT
         ADD     XL,R0
         ADC     XH,R1
-        MUL     R3,COUNT
+        MUL     WH,COUNT
         ADD     ZL,R0
         ADC     ZH,R1
-FSRT_05:LD      DATA,X
+FXCHN_2:LD      DATA,X
         LD      TEMP,Z
         ST      X+,TEMP
         ST      Z+,DATA
         DEC     COUNT
-        BRNE    FSRT_05
+        BRNE    FXCHN_2
         POPZ
-
-FSRT_06:INC     R2
-        DEC     R3
-        CP      R3,R2
-        BRGE    FSRT_00
-
-FSRT_10:CP      R2,TMP3
-        BRGE    FSRT_11
-        PUSH    TMP2
-        PUSH    R3
-        MOV     TMP2,R2
-        RCALL   FSORT
-        POP     R3
-        POP     TMP2
-FSRT_11:CP      TMP2,R3
-        BRGE    FSRT_12
-        MOV     TMP3,R3
-        RCALL   FSORT
-FSRT_12:RET
+        RET
 ;
 ;======================================
-;in:    Z - array (item = filedescriptor = 32bytes)
-;       WL, WH - lo & hi indexes
-;out:   sreg.C - SET - [WL]>[WH], CLR - [WL]<=[WH]
-;chng:  COUNT,DATA,TEMP
+;in:    Z
+;       WL, WH - indexes
+;out:   sreg.C - SET - [WL]<[WH], CLR - [WL]>=[WH]
+;chng:  COUNT,DATA,TEMP (,X,R0,R1)
 FCOMP:  PUSHZ
         MOVW    XL,ZL
         LDI     DATA,32
-        MUL     WL,DATA
+        MUL     WH,DATA
         ADD     XL,R0
         ADC     XH,R1
-        MUL     WH,DATA
+        MUL     WL,DATA
         ADD     ZL,R0
         ADC     ZH,R1
         LDD     TEMP,Z+11
@@ -1897,16 +1901,6 @@ FCMP1:  LD      DATA,X+
         BRNE    FCMP1
 FCMP9:  POPZ
         RET
-;
-;======================================
-;
-RAM_CRC32:
-        RCALL   CRC32_INIT
-RAM_C32:LD      DATA,Z+
-        RCALL   CRC32_UPDATE
-        SBIW    XL,1
-        BRNE    RAM_C32
-        RJMP    CRC32_RELEASE
 ;
 ;======================================
 ;

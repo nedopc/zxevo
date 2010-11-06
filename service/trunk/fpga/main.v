@@ -404,10 +404,11 @@ module main(
                 ( charcode==8'hb2 ) ? ( (vcount[0]^hcount[1])| hcount[0] ) :
                 ( fontenable ) ? charpix[3'd5-pixptr] : 1'b0;
 
- assign mark = scr_mark&vmark&hmark&(vcount[0]^hcount[0]);
+ assign mark = vmark&hmark&(vcount[0]^hcount[0]);
 
  assign image_color = (mouse_mask) ? 6'h00 : ( pixel ? fcolor : bcolor ) ;
- assign color = (hblank | vblank) ? ((mark) ? 6'h3f : 6'h00) :
+ assign color = (scr_mark) ? ((mark) ? 6'h3f : 6'h00) :
+                (hblank | vblank) ? 6'h00 :
                 (mouse_image) ? ~image_color : image_color;
 
  assign vhsync = hsync;
@@ -426,7 +427,7 @@ module main(
  localparam FLASH_DATA    = 8'ha6;
  localparam FLASH_CTRL    = 8'ha7;
  localparam SCR_LOADDR    = 8'ha8;
- localparam SCR_HIADDR    = 8'ha9; // ...и управление курсором (скрыть/показать)
+ localparam SCR_HIADDR    = 8'ha9;
  localparam SCR_SET_ATTR  = 8'haa; // запись в ATTR
  localparam SCR_FILL      = 8'hab; // прединкремент адреса и запись в ATTR и в память
                                    // (если только дергать spics_n, то в память будет писаться предыдущее значение)
@@ -434,7 +435,7 @@ module main(
                                    // (если только дергать spics_n, то в память будет писаться предыдущие значения)
  localparam SCR_MOUSE_X   = 8'had;
  localparam SCR_MOUSE_Y   = 8'hae;
- localparam SCR_MODE      = 8'haf; // .0 - TV-mode (default==1); .1 - 0=сетка на "бордюре"
+ localparam SCR_MODE      = 8'haf; // .0 - 0=VGAmode, 1=TVmode; .1 - 0=сетка 720x576
 
  localparam MTST_CONTROL  = 8'h50; // .0 - тест памяти (0 - сброс, 1 - работа)
  localparam MTST_PASS_CNT0= 8'h51;

@@ -21,27 +21,15 @@ T_VID01:
         CPI     DATA,KEY_ESC
         BREQ    T_VID99
 ;
-        LDI     DATA,0B11111101
-        AND     DATA,MODE1
+        MOV     DATA,MODE1
+        ANDI    DATA,0B00000001
+        ORI     DATA,0B11111100
         LDI     TEMP,SCR_MODE
         CALL    FPGA_REG
-        LDI     XL,0
-        LDI     XH,0
-        CALL    SCR_SET_CURSOR
-        LDI     DATA,$0F
-        LDI     TEMP,SCR_ATTR
-        CALL    FPGA_REG
-        LDI     DATA,$B1 ;"±"
-        LDI     TEMP,SCR_CHAR
-        CALL    FPGA_REG
-        LDIW    53*25-1
-T_VID20:SPICS_CLR
-        SPICS_SET
-        SBIW    WL,1
-        BRNE    T_VID20
         CALL    WAITKEY
         PUSH    DATA
         MOV     DATA,MODE1
+        ORI     DATA,0B11111110
         LDI     TEMP,SCR_MODE
         CALL    FPGA_REG
         POP     DATA
