@@ -154,7 +154,7 @@ MSG_TXFAIL_ENG:
 ;------------------------------------------------------------------------------
 ;
 MENU_MAIN:
-        .DB     6,3,26+2,6,$9F,$F0
+        .DB     6,3,26+2,7,$9F,$F0
         .DW     MTST_SHOW_REPORT,1000
         ;handlers
         .DW     TESTPS2KEYB
@@ -162,6 +162,7 @@ MENU_MAIN:
         .DW     TESTMOUSE
         .DW     TESTBEEP
         .DW     TESTVIDEO
+        .DW     TESTSD
         .DW     FLASHER
         ;lang0
         .DB     "──────────────────────────"
@@ -170,6 +171,7 @@ MENU_MAIN:
         .DB     "Тест мыши                 "
         .DB     "Тест BEEP/TAPEOUT/COVOX   "
         .DB     "Тест видео                "
+        .DB     "Диагностика SD/MMC        "
         .DB     "Программирование Flash-ROM"
         ;lang1
         .DB     "──────────────────────────"
@@ -178,6 +180,7 @@ MENU_MAIN:
         .DB     "Mouse test                "
         .DB     "BEEP/TAPEOUT/COVOX test   "
         .DB     "Video test                "
+        .DB     "SD/MMC diagnostic         "
         .DB     "Write Flash-ROM           "
 ;width fixed!   "12345678901234567890123456"
 ;
@@ -423,6 +426,16 @@ MSG_FL_SDERROR3_ENG:
 ;width fixed!   "123456789012345"
 ;
 ;------------------------------------------------------------------------------
+;
+MLMSG_FL_SDERROR4:
+        .DW     MSG_FL_SDERROR4_RUS*2,MSG_FL_SDERROR4_ENG*2
+MSG_FL_SDERROR4_RUS:
+        .DB     "  Ошибка FAT ! ",0
+MSG_FL_SDERROR4_ENG:
+        .DB     "  FAT error !  ",0
+;width fixed!   "123456789012345"
+;
+;------------------------------------------------------------------------------
 ;это сообщение никогда ;) не должно появляться
 MLMSG_FL_SDERRORX:
         .DW     MSG_FL_SDERRORX_RUS*2,MSG_FL_SDERRORX_ENG*2
@@ -511,6 +524,131 @@ MSG_FLRES2_RUS:
 MSG_FLRES2_ENG:
         .DB     $16,14, 7,  "Some errors are detected!"  ,0,0
 ;width limited!           "23456789012345678901234567890"
+;
+;------------------------------------------------------------------------------
+;
+MLMSG_SENSORS:
+        .DW     MSG_SENSORS_RUS*2,MSG_SENSORS_ENG*2
+MSG_SENSORS_RUS:
+        .DB     "   Датчики: ",0,0
+MSG_SENSORS_ENG:
+        .DB     "   Sensors: ",0,0
+;width fixed!   "012345678901"
+;
+;------------------------------------------------------------------------------
+;
+MLMSG_S_NOCARD:
+        .DW     MSG_S_NOCARD_RUS*2,MSG_S_NOCARD_ENG*2
+MSG_S_NOCARD_RUS:
+        .DB     "     Нет карты     ",0
+MSG_S_NOCARD_ENG:
+        .DB     "      No card      ",0
+;width fixed!   "2345678901234567890"
+;
+;------------------------------------------------------------------------------
+;
+MLMSG_S_INSERTED:
+        .DW     MSG_S_INSERTED_RUS*2,MSG_S_INSERTED_ENG*2
+MSG_S_INSERTED_RUS:
+        .DB     " Карта установлена ",0
+MSG_S_INSERTED_ENG:
+        .DB     "   Card inserted   ",0
+;width fixed!   "2345678901234567890"
+;
+;------------------------------------------------------------------------------
+;
+MLMSG_S_READONLY:
+        .DW     MSG_S_READONLY_RUS*2,MSG_S_READONLY_ENG*2
+MSG_S_READONLY_RUS:
+        .DB     "  Защита от записи ",0
+MSG_S_READONLY_ENG:
+        .DB     "     Read only     ",0
+;width fixed!   "1234567890123456789"
+;
+;------------------------------------------------------------------------------
+;
+MLMSG_S_WRITEEN:
+        .DW     MSG_S_WRITEEN_RUS*2,MSG_S_WRITEEN_ENG*2
+MSG_S_WRITEEN_RUS:
+        .DB     "  Запись разрешена ",0
+MSG_S_WRITEEN_ENG:
+        .DB     "   Write enabled   ",0
+;width fixed!   "1234567890123456789"
+;
+;------------------------------------------------------------------------------
+;
+MLMSG_TSD_INIT:
+        .DW     MSG_TSD_INIT_RUS*2,MSG_TSD_INIT_ENG*2
+MSG_TSD_INIT_RUS:
+        .DB     "Инициализация карточки...",0
+MSG_TSD_INIT_ENG:
+        .DB     "Card initialization...",0,0
+;
+;------------------------------------------------------------------------------
+;
+MLMSG_TSD_NOCARD:
+        .DW     MSG_TSD_NOCARD_RUS*2,MSG_TSD_NOCARD_ENG*2
+MSG_TSD_NOCARD_RUS:
+        .DB     "SD/MMC карта не обнаружена.",0
+MSG_TSD_NOCARD_ENG:
+        .DB     "No SD/MMC card found.",0
+;
+;------------------------------------------------------------------------------
+;
+MLMSG_TSD_FOUNDCARD:
+        .DW     MSG_TSD_FOUNDCARD_RUS*2,MSG_TSD_FOUNDCARD_ENG*2
+MSG_TSD_FOUNDCARD_RUS:
+        .DB     "Обнаружена карта: ",0,0
+MSG_TSD_FOUNDCARD_ENG:
+        .DB     "Found card: ",0,0
+;
+;------------------------------------------------------------------------------
+;
+MLMSG_TSD_MENU:
+        .DW     MSG_TSD_MENU_RUS*2,MSG_TSD_MENU_ENG*2
+MSG_TSD_MENU_RUS:
+        .DB     $16,16,11,    "Начать диагностику "
+        .DB     $16,12,12,"[ ] Подробный отчёт в RS-232",0
+MSG_TSD_MENU_ENG:
+        .DB     $16,17,11,     "Start diagnostic "
+        .DB     $16,12,12,"[ ] Detailed log to RS-232",0
+;width limited!           "2345678901234567890123456789"
+;
+;------------------------------------------------------------------------------
+;
+MLMSG_TSD_FOUNDFAT:
+        .DW     MSG_TSD_FOUNDFAT_RUS*2,MSG_TSD_FOUNDFAT_ENG*2
+MSG_TSD_FOUNDFAT_RUS:
+        .DB     "Обнаружена FAT",0,0
+MSG_TSD_FOUNDFAT_ENG:
+        .DB     "Found FAT",0
+;
+;------------------------------------------------------------------------------
+;
+MLMSG_TSD_DETECT:
+        .DW     MSG_TSD_DETECT_RUS*2,MSG_TSD_DETECT_ENG*2
+MSG_TSD_DETECT_RUS:
+        .DB     "Поиск файловой системы...",0
+MSG_TSD_DETECT_ENG:
+        .DB     "Detecting of file system...",0
+;
+;------------------------------------------------------------------------------
+;
+MLMSG_TSD_READFILE:
+        .DW     MSG_TSD_READFILE_RUS*2,MSG_TSD_READFILE_ENG*2
+MSG_TSD_READFILE_RUS:
+        .DB     "Чтение тестового файла...",0
+MSG_TSD_READFILE_ENG:
+        .DB     "Reading of test file...",0
+;
+;------------------------------------------------------------------------------
+;
+MLMSG_TSD_COMPLETE:
+        .DW     MSG_TSD_COMPLETE_RUS*2,MSG_TSD_COMPLETE_ENG*2
+MSG_TSD_COMPLETE_RUS:
+        .DB     "Диагностика завершена.",0,0
+MSG_TSD_COMPLETE_ENG:
+        .DB     "Diagnostic is complete.",0
 ;
 ;------------------------------------------------------------------------------
 ;

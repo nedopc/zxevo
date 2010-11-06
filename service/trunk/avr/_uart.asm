@@ -212,3 +212,44 @@ UART_CRLF:
 ;
 ;--------------------------------------
 ;
+UART_DUMP512:
+        PUSH    FLAGS1
+        CBR     FLAGS1,0B00001101
+        SBR     FLAGS1,0B00000010
+        PUSHZ
+        LDIZ    MSG_DUMPHEAD*2
+        RCALL   PRINTSTRZ
+        POPZ
+        LDIX    0
+UDUMP3: RCALL   UART_CRLF
+        MOV     DATA,XH
+        RCALL   HEXBYTE
+        MOV     DATA,XL
+        RCALL   HEXBYTE
+        LDI     DATA,$20
+        RCALL   UART_PUTCHAR
+        RCALL   UART_PUTCHAR
+        PUSHZ
+        LDI     WL,16
+UDUMP1: LD      DATA,Z+
+        RCALL   HEXBYTE_FOR_DUMP
+        DEC     WL
+        BRNE    UDUMP1
+        LDI     DATA,$20
+        RCALL   UART_PUTCHAR
+        POPZ
+        LDI     WL,16
+UDUMP2: LD      DATA,Z+
+        RCALL   PUTCHAR_FOR_DUMP
+        DEC     WL
+        BRNE    UDUMP2
+        ADIW    XL,16
+        CPI     XH,$02
+        BRNE    UDUMP3
+        POP     FLAGS1
+        RET
+MSG_DUMPHEAD:
+        .DB     $0D,$0A,$3B,"     .0 .1 .2 .3 .4 .5 .6 .7 .8 .9 .A .B .C .D .E .F",0
+;
+;--------------------------------------
+;

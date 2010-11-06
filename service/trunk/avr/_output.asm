@@ -147,3 +147,11 @@ HEXBYTE_FOR_DUMP:
 ;
 ;--------------------------------------
 ;
+PUTCHAR_FOR_DUMP:
+        CPI     DATA,$20
+        BRCC    PCHAR4D
+        LDI     DATA,$2E
+PCHAR4D:RJMP    PUTCHAR
+;
+;--------------------------------------
+;

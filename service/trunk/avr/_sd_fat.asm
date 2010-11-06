@@ -1,6 +1,8 @@
 ;
 .DSEG
-SD_HC:          .BYTE   1
+SD_CARDTYPE:    .BYTE   1       ;.0-SDv1; .1-SDv2; .2-SDv2HC; .4-MMC
+;       на данный момент имеет значение только это ^^^^^^^^^
+;
 FAT_CAL_FAT:    .BYTE   1       ;тип обнаруженной FAT
 FAT_MANYFAT:    .BYTE   1       ;количество FAT-таблиц
 FAT_BYTSSEC:    .BYTE   1       ;количество секторов в кластере
@@ -23,6 +25,10 @@ FAT_LASTSECFLAG:.BYTE   1
 FAT_ERRHANDLER: .BYTE   2
 .CSEG
 ;
+CMD00:  .DB     $40,$00,$00,$00,$00,$95
+CMD08:  .DB     $48,$00,$00,$01,$AA,$87
+CMD16:  .DB     $50,$00,$00,$02,$00,$FF
+;
 ;инициализация SD карточки
 ;out:   XW == номер кластера root-директории
 SD_FAT_INIT:
@@ -38,16 +44,16 @@ SD_FAT_INIT:
         SER     DATA
         CALL    FPGA_REG
         SER     COUNT
-SDINIT1:LDIZ    CMD00*2
+SDINIT1:LDIZ    CMD00*2     ;CMD0 (go_idle_state)
         RCALL   SD_WR_PGM_6
         DEC     COUNT
         BRNE    SDINIT2
-        LDI     DATA,1  ;нет SD
+        LDI     DATA,1  ;нет карты
         RJMP    SD_ERROR
 SDINIT2:CPI     DATA,$01
         BRNE    SDINIT1
 
-        LDIZ    CMD08*2
+        LDIZ    CMD08*2     ;CMD8 (send_if_cond)
         RCALL   SD_WR_PGM_6
         LDI     WL,$00
         SBRS    DATA,2
@@ -55,46 +61,59 @@ SDINIT2:CPI     DATA,$01
         LDI     TEMP,4
         RCALL   SD_RD_DUMMY
 
-SDINIT3:LDIZ    CMD55*2
-        RCALL   SD_WR_PGM_6
+SDINIT3:LDI     DATA,$40+55 ;CMD55
+        RCALL   SD_WR_CMD
         LDI     TEMP,2
         RCALL   SD_RD_DUMMY
-        LDI     DATA,ACMD_41
+        LDI     DATA,$40+41 ;ACMD41 (sd_send_op_cond)
         RCALL   SD_EXCHANGE
         MOV     DATA,WL
         RCALL   SD_EXCHANGE
-
-        LDIZ    CMD55*2+2
-        LDI     TEMP,4
-        RCALL   SD_WR_PGX
+        RCALL   SD_WR_CMX4
         TST     DATA
-        BRNE    SDINIT3
+        BREQ    SDINIT5
+        SBRS    DATA,2
+        RJMP    SDINIT3
 
-SDINIT4:LDIZ    CMD59*2
-        RCALL   SD_WR_PGM_6
+SDINIT4:LDI     DATA,$40+1  ;CMD1 (send_op_cond)
+        RCALL   SD_WR_CMD
         TST     DATA
         BRNE    SDINIT4
+        RCALL   SD_CRC_OFF
+        RCALL   SD_SETBLKLEN
+        LDI     TEMP,0B00010000
+        RJMP    SDINIT9
 
-SDINIT5:LDIZ    CMD16*2
-        RCALL   SD_WR_PGM_6
-        TST     DATA
-        BRNE    SDINIT5
+SDINIT5:RCALL   SD_CRC_OFF
+        RCALL   SD_SETBLKLEN
 
-        LDIZ    CMD58*2
-        RCALL   SD_WR_PGM_6
+        LDI     TEMP,0B00000001
+        TST     WL
+        BREQ    SDINIT9
+        LDI     DATA,$40+58 ;CMD58 (read_ocr)
+        RCALL   SD_WR_CMD
         RCALL   SD_RECEIVE
-        STS     SD_HC,DATA
+        PUSH    DATA
         LDI     TEMP,3+2
         RCALL   SD_RD_DUMMY
+        POP     DATA
+        LDI     TEMP,0B00000010
+        SBRC    DATA,6
+        LDI     TEMP,0B00000110
+SDINIT9:STS     SD_CARDTYPE,TEMP
 ;
 ; - - - - - - - - - - - - - - - - - - -
 ;поиск FAT, инициализация переменных
 WC_FAT: LDIW    0
         LDIX    0
         RCALL   LOADLST
-        LDIZ    BUF4FAT+$01BE
+        RCALL   FAT_CHKSIGN
+        BREQ    WC_FAT1
+SDERR3: LDI     DATA,3  ;не найдена FAT
+        RJMP    SD_ERROR
+WC_FAT1:LDI     ZL,$BE
         LD      DATA,Z
-        TST     DATA
+        ANDI    DATA,$7F
         BRNE    RDFAT05
         LDI     ZL,$C2
         LD      DATA,Z
@@ -107,6 +126,8 @@ WC_FAT: LDIW    0
         CPI     DATA,$0C
         BREQ    RDFAT06
         LDI     TEMP,1
+        CPI     DATA,$04
+        BREQ    RDFAT06
         CPI     DATA,$06
         BREQ    RDFAT06
         CPI     DATA,$0E
@@ -156,15 +177,26 @@ RDF055: LDD     DATA,Z+$15
         INC     TEMP
 RDF056: CPI     TEMP,4
         BREQ    RDF057
-        LDI     DATA,3  ;не найдена FAT
-        RJMP    SD_ERROR
+        RJMP    SDERR3
 RDF057: STS     FAT_CAL_FAT,FF
         LDIW    0
         LDIX    0
 RDFAT00:STSW    FAT_STARTRZ+0
         STSX    FAT_STARTRZ+2
         RCALL   LOADLST
-        LDIX    0
+        RCALL   FAT_CHKSIGN
+        BREQ    RDF011
+        RJMP    SDERR3
+RDF011: LDIZ    BUF4FAT
+        LDD     DATA,Z+11
+        TST     DATA
+        BRNE    SDERR4
+        LDD     DATA,Z+12
+        CPI     DATA,$02
+        BREQ    RDF012
+SDERR4: LDI     DATA,4  ;ошибка FAT (сектор не 512 байт)
+        RJMP    SD_ERROR
+RDF012: LDIX    0
         LDD     WL,Z+22
         LDD     WH,Z+23         ;bpb_fatsz16
         MOV     DATA,WH
@@ -229,7 +261,10 @@ RDF031: LSL     WL
         RCALL   BCDEHLM         ;вычли из полного к-ва секторов раздела
         LDIZ    BUF4FAT
         LDD     DATA,Z+13
-        STS     FAT_BYTSSEC,DATA
+        CPI     DATA,65
+        BRCS    RDF032
+        RJMP    SDERR4  ;ошибка FAT (кластер>32Kb)
+RDF032: STS     FAT_BYTSSEC,DATA
         RCALL   BCDE_A          ;разделили на к-во секторов в кластере
         STSW    FAT_CLS_DSC+0
         STSX    FAT_CLS_DSC+2   ;положили кол-во кластеров на разделе
@@ -295,21 +330,111 @@ FSRROO2:STSW    FAT_ROOTCLS+0
         STSX    FAT_FATSTR1+2
         POPX
         POPW
+
+        LDI     TEMP,1
+        MOV     R0,WL                   
+        OR      R0,WH                   
+        OR      R0,XL                   
+        OR      R0,XH                   
+        BREQ    LASTCLS                 
+NEXTCLS:PUSH    TEMP                    
+        RCALL   RDFATZP                 
+        RCALL   LST_CLS                 
+        POP     TEMP                    
+        BRCC    LASTCLS                 
+        INC     TEMP                    
+        RJMP    NEXTCLS                 
+LASTCLS:STS     FAT_KCLSDIR,TEMP        
+
+        RET
+;
+;--------------------------------------
+;
+SD_CRC_OFF:
+        LDI     DATA,$40+59 ;CMD59 (crc_on_off)
+        RCALL   SD_WR_CMD
+        TST     DATA
+        BRNE    SD_CRC_OFF
+        RET
+;
+;--------------------------------------
+;
+SD_SETBLKLEN:
+        LDIZ    CMD16*2     ;CMD16 (set_blocklen)
+        RCALL   SD_WR_PGM_6
+        TST     DATA
+        BRNE    SD_SETBLKLEN
+        RET
+;
+;--------------------------------------
+;out:   sreg.Z  SET==signature exist
+;       Z==BUF4FAT+$01FF
+FAT_CHKSIGN:
+        LDIZ    BUF4FAT+$01FE
+        LD      DATA,Z+
+        CPI     DATA,$55
+        LD      DATA,Z
+        BRNE    FAT_CHKSIG9
+        CPI     DATA,$AA
+FAT_CHKSIG9:
         RET
 ;
 ;--------------------------------------
 ;чтение сектора данных
 LOAD_DATA:
+        SBRS    FLAGS1,3
+        RJMP    LOAD_DAT1
+        PUSH    FLAGS1
+        CBR     FLAGS1,0B00001101
+        SBR     FLAGS1,0B00000010
+        LDIZ    MSG_TSD_READSECTOR*2
+        CALL    PRINTSTRZ
+        MOV     DATA,XH
+        CALL    HEXBYTE
+        MOV     DATA,XL
+        CALL    HEXBYTE
+        MOV     DATA,WH
+        CALL    HEXBYTE
+        MOV     DATA,WL
+        CALL    HEXBYTE
+        POP     FLAGS1
+LOAD_DAT1:
         LDIZ    BUFSECT
         RCALL   SD_READ_SECTOR  ;читать один сектор
         BREQ    SDERR2
+;        SBRS    FLAGS1,3
         RET
+;        LDIZ    BUFSECT
+;        CALL    UART_DUMP512
+;        RET
 ;
 ;--------------------------------------
 ;чтение сектора служ.инф. (FAT/DIR/...)
-LOADLST:LDIZ    BUF4FAT
+LOADLST:
+        SBRS    FLAGS1,3
+        RJMP    LOADLST1
+        PUSH    FLAGS1
+        CBR     FLAGS1,0B00001101
+        SBR     FLAGS1,0B00000010
+        LDIZ    MSG_TSD_READSECTOR*2
+        CALL    PRINTSTRZ
+        MOV     DATA,XH
+        CALL    HEXBYTE
+        MOV     DATA,XL
+        CALL    HEXBYTE
+        MOV     DATA,WH
+        CALL    HEXBYTE
+        MOV     DATA,WL
+        CALL    HEXBYTE
+        POP     FLAGS1
+LOADLST1:
+        LDIZ    BUF4FAT
         RCALL   SD_READ_SECTOR  ;читать один сектор
         BREQ    SDERR2
+        LDIZ    BUF4FAT
+        SBRS    FLAGS1,3
+        RET
+        CALL    UART_DUMP512
         LDIZ    BUF4FAT
         RET
 ;
@@ -453,7 +578,9 @@ RDFATS0:MOVW    ZL,WL
         PUSHZ
         LDIZ    FAT_FATSTR0
         RCALL   BCDEHLP
+        PUSHW
         RCALL   LOADLST
+        POPW
         POPX
         ANDI    XH,$01
         ADD     ZL,XL

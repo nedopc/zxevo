@@ -1,22 +1,3 @@
-.EQU    CMD_17          =$51    ;read_single_block
-.EQU    ACMD_41         =$69    ;sd_send_op_cond
-;
-CMD00:  .DB     $40,$00,$00,$00,$00,$95
-CMD08:  .DB     $48,$00,$00,$01,$AA,$87
-CMD16:  .DB     $50,$00,$00,$02,$00,$FF
-CMD55:  .DB     $77,$00,$00,$00,$00,$FF ;app_cmd
-CMD58:  .DB     $7A,$00,$00,$00,$00,$FF ;read_ocr
-CMD59:  .DB     $7B,$00,$00,$00,$00,$FF ;crc_on_off
-;
-;--------------------------------------
-;out:   DATA
-SD_RECEIVE:
-        SER     DATA
-; - - - - - - - - - - - - - - - - - - -
-;in:    DATA
-;out:   DATA
-SD_EXCHANGE:
-        RJMP    FPGA_SAME_REG
 ;
 ;--------------------------------------
 ;in;    TEMP - n
@@ -26,6 +7,27 @@ SD_RD_DUMMY:
         DEC     TEMP
         BRNE    SD_RD_DUMMY
         RET
+;
+;--------------------------------------
+;in:    DATA
+SD_WR_CMD:
+        PUSH    DATA
+        LDI     TEMP,2
+        RCALL   SD_RD_DUMMY
+        POP     DATA
+        RCALL   SD_EXCHANGE
+        CLR     DATA
+        RCALL   SD_EXCHANGE
+SD_WR_CMX4:
+        CLR     DATA
+        RCALL   SD_EXCHANGE
+        CLR     DATA
+        RCALL   SD_EXCHANGE
+        CLR     DATA
+        RCALL   SD_EXCHANGE
+        SER     DATA
+        RCALL   SD_EXCHANGE
+        RJMP    SD_WAIT_NOTFF
 ;
 ;--------------------------------------
 ;in:    Z
@@ -55,8 +57,8 @@ SDWNFF1:RET
 ;       X,W - №сектора
 ;out:   sreg.Z - SET==error
 SD_READ_SECTOR:
-        LDS     DATA,SD_HC
-        SBRC    DATA,6
+        LDS     DATA,SD_CARDTYPE
+        SBRC    DATA,2
         RJMP    SDRDSE1
         LSL     WL
         ROL     WH
@@ -66,7 +68,9 @@ SD_READ_SECTOR:
         MOV     WH,WL
         CLR     WL
 SDRDSE1:
-        LDI     DATA,CMD_17
+        SER     DATA
+        RCALL   SD_EXCHANGE
+        LDI     DATA,$40|17 ;CMD17 (read_single_block)
         RCALL   SD_EXCHANGE
         MOV     DATA,XH
         RCALL   SD_EXCHANGE
@@ -86,21 +90,75 @@ SDRDSE2:RCALL   SD_WAIT_NOTFF
         CPI     DATA,$FE
         BRNE    SDRDSE2
 
-        LDIW    512
+        PUSH    FLAGS1
+        SBRS    FLAGS1,3
+        RJMP    SDRDSE5
+        CBR     FLAGS1,0B00001101
+        SBR     FLAGS1,0B00000010
+        PUSHZ
+        LDIZ    MSG_TSD_SKIP*2
+        CALL    PRINTSTRZ
+        POPZ
+SDRDSE5:LDIW    512
 SDRDSE3:RCALL   SD_RECEIVE
         ST      Z+,DATA
         SBIW    WL,1
         BRNE    SDRDSE3
+        POP     FLAGS1
 
-        LDI     TEMP,2
+        LDI     TEMP,2+1
         RCALL   SD_RD_DUMMY
-;SDRDSE4:RCALL   SD_WAIT_NOTFF
-;        CPI     DATA,$FF
-;        BRNE    SDRDSE4
         CLZ
         RET
 ;ошибка при чтении сектора
 SDRDSE8:RET
+;
+;--------------------------------------
+;out:   DATA
+SD_RECEIVE:
+        SER     DATA
+; - - - - - - - - - - - - - - - - - - -
+;in:    DATA
+;out:   DATA
+SD_EXCHANGE:
+        SBRS    FLAGS1,3
+        RJMP    FPGA_SAME_REG
+;То же, что и FPGA_SAME_REG, но с логом в RS-232
+;in:    DATA == данные
+;out:   DATA == данные
+        PUSH    FLAGS1
+        CBR     FLAGS1,0B00000101
+        SBR     FLAGS1,0B00000010
+        PUSHZ
+        PUSH    DATA
+        LDIZ    MSG_TSD_OUT*2
+        RCALL   PRINTSTRZ
+        POP     DATA
+        PUSH    DATA
+        RCALL   HEXBYTE
+        POP     DATA
+        SPICS_CLR
+        OUT     SPDR,DATA
+;ожидание окончания обмена с FPGA по SPI
+;и чтение пришедших данных
+;out:   DATA == данные
+SD_RDY_RD:
+;        SBIC    SPSR,WCOL
+;        JMP     CHAOS00
+        SBIS    SPSR,SPIF
+        RJMP    SD_RDY_RD
+        IN      DATA,SPDR
+        SPICS_SET
+        PUSH    DATA
+        LDIZ    MSG_TSD_IN*2
+        RCALL   PRINTSTRZ
+        POP     DATA
+        PUSH    DATA
+        RCALL   HEXBYTE
+        POP     DATA
+        POPZ
+        POP     FLAGS1
+        RET
 ;
 ;--------------------------------------
 ;

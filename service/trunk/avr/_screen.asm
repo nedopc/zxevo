@@ -13,21 +13,22 @@ SCR_FADE:
 ;--------------------------------------
 ;
 SCR_BACKGND:
-        LDI     DATA,$B0        ;"░"
-        LDI     TEMP,$77
-        RCALL   SCR_CLEAR
-        LDI     DATA,$20        ;" "
-        LDI     TEMP,$F0
-        LDI     COUNT,53
-        RCALL   SCR_FILL_CHAR_ATTR
         LDI     XL,0
-        LDI     XH,24
+        LDI     XH,0
         RCALL   SCR_SET_CURSOR
         LDI     DATA,$20        ;" "
         LDI     TEMP,$F0
         LDI     COUNT,53
         RCALL   SCR_FILL_CHAR_ATTR
-        CBR     FLAGS1,0B10000011
+        LDI     DATA,$B0        ;"░"
+        LDI     TEMP,$77
+        LDIW    53*23
+        RCALL   SCR_FILLLONG_CHAR_ATTR
+        LDI     DATA,$20        ;" "
+        LDI     TEMP,$F0
+        LDI     COUNT,53
+        RCALL   SCR_FILL_CHAR_ATTR
+        CBR     FLAGS1,0B00000011
         SBR     FLAGS1,0B00000100
         LDI     XL,0
         LDI     XH,0
@@ -504,6 +505,7 @@ WIND_MENU_SWLNG:
 MENU_SWVGA0:
         EOR     MODE1,ONE
         MOV     DATA,MODE1
+        ORI     DATA,0B11111110
         LDI     TEMP,SCR_MODE
         CALL    FPGA_REG
         MOV     DATA,MODE1
@@ -533,7 +535,7 @@ SCR_KBDSETLED:
         BRNE    SCR_SETLED_FAIL
         MOV     DATA,MODE1
         COM     DATA
-        ANDI    DATA,$01
+        ANDI    DATA,0B00000001
         RCALL   PS2K_SEND_BYTE
 SCR_SETLED_FAIL:
         RET
@@ -562,9 +564,7 @@ SCR_SET_CURSOR:
         MOV     DATA,XL
         RCALL   FPGA_REG
         LDI     TEMP,SCR_HIADDR
-        MOV     DATA,FLAGS1
-        ANDI    DATA,$80
-        OR      DATA,XH
+        MOV     DATA,XH
         RJMP    FPGA_REG
 ;
 ;--------------------------------------
@@ -683,7 +683,28 @@ SCR_FA1:SPICS_CLR
 SCR_FA9:RET
 ;
 ;--------------------------------------
-;Заполнение атрибутом
+;Заполнение символом и атрибутом (LONG)
+;in:    DATA == символ
+;       TEMP == атрибут
+;       W == количество
+SCR_FILLLONG_CHAR_ATTR:
+        PUSH    DATA
+        MOV     DATA,TEMP
+        LDI     TEMP,SCR_ATTR
+        RCALL   FPGA_REG
+        POP     DATA
+;Заполнение символом и текущим атрибутом (LONG)
+;in:    DATA == символ
+;       W == количество
+SCR_FILLLONG_CHAR:
+        LDI     TEMP,SCR_CHAR
+        RCALL   FPGA_REG
+        SBIW    WL,1
+        BRNE    SCR_FL1
+        RET
+;
+;--------------------------------------
+;Заполнение атрибутом (LONG)
 ;in:    TEMP == атрибут
 ;       W == количество
 SCR_FILLLONG_ATTR:
@@ -698,32 +719,6 @@ SCR_FL1:SPICS_CLR
         BRNE    SCR_FL1
 SCR_FL9:RET
 ;
-;--------------------------------------
-;Очистка (заполнение) экрана
-;in:    DATA == символ
-;       TEMP == атрибут
-SCR_CLEAR:
-        PUSH    DATA
-        PUSH    TEMP
-        LDI     XL,0
-        LDI     XH,0
-        RCALL   SCR_SET_CURSOR
-        POP     DATA
-        LDI     TEMP,SCR_ATTR
-        RCALL   FPGA_REG
-        POP     DATA
-        LDI     TEMP,SCR_CHAR
-        RCALL   FPGA_REG
-        LDIW    53*25-1
-SCR_CLR1:
-        SPICS_CLR
-        SPICS_SET
-        SBIW    WL,1
-        BRNE    SCR_CLR1
-        LDI     XL,0
-        LDI     XH,0
-        RCALL   SCR_SET_CURSOR
-        RET
 ;
 ;--------------------------------------
 ;

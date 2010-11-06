@@ -24,12 +24,6 @@ TESTBEEP:
         LDIZ    MLMSG_TBEEP*2
         CALL    SCR_PRINTMLSTR
 
-        IN      TEMP,EICRB
-        ORI     TEMP,(1<<ISC61)|(0<<ISC60)
-        OUT     EICRB,TEMP
-        IN      TEMP,EIMSK
-        ORI     TEMP,(1<<INT6)
-        OUT     EIMSK,TEMP
         LDI     DATA,0B00000001
         LDI     TEMP,INT_CONTROL
         CALL    FPGA_REG
@@ -91,9 +85,6 @@ T_BEEP_ESCAPE:
         LDI     DATA,0B00000000
         LDI     TEMP,INT_CONTROL
         CALL    FPGA_REG
-        IN      TEMP,EIMSK
-        CBR     TEMP,(1<<INT6)
-        OUT     EIMSK,TEMP
 
         FREEMEM 1
         RET
