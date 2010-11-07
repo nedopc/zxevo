@@ -40,8 +40,18 @@ add wave -noupdate /tb/DUT/wait_n
 add wave -noupdate /tb/DUT/zwait/wait_start_gluclock
 add wave -noupdate /tb/DUT/zports/wait_start_gluclock
 add wave -noupdate /tb/DUT/zports/wait_rnw
+add wave -noupdate -divider <NULL>
+add wave -noupdate /tb/z80/clk_n
+add wave -noupdate /tb/z80/mreq_n
+add wave -noupdate /tb/z80/iorq_n
+add wave -noupdate /tb/z80/rd_n
+add wave -noupdate /tb/z80/wr_n
+add wave -noupdate /tb/mreq_wr_n
+add wave -noupdate /tb/iorq_wr_n
+add wave -noupdate /tb/full_wr_n
+add wave -noupdate /tb/wr_n
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {7154200 ps} 0} {{Cursor 2} {631252485400 ps} 0}
+WaveRestoreCursors {{Cursor 1} {810192700 ps} 0} {{Cursor 2} {631252485400 ps} 0}
 configure wave -namecolwidth 340
 configure wave -valuecolwidth 40
 configure wave -justifyvalue left
@@ -56,4 +66,4 @@ configure wave -griddelta 8
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {7629700 ps} {18132100 ps}
+WaveRestoreZoom {810146300 ps} {810197500 ps}
