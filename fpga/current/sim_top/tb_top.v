@@ -1,4 +1,5 @@
 // simulate fpga top-level with external dram, rom, z80
+// (c) 2010 NedoPC
 
 `include "../include/tune.v"
 
@@ -28,10 +29,7 @@ module tb;
 	tri1 ziorq_n,zmreq_n,zrd_n,zwr_n,zm1_n,zrfsh_n; // connected to Z80
 
 	tri1 wait_n,nmi_n;
-
-	assign nmi_n = 1'b1;
-	assign wait_n = 1'b1;
-
+	wire zwait_n,znmi_n;
 
 	wire [15:0] za;
 	wire [7:0] zd;
@@ -46,6 +44,11 @@ module tb;
 
 
 	tri1 [15:0] ide_d;
+
+
+
+	assign zwait_n = (wait_n==1'b0) ? 1'b0 : 1'b1;
+	assign znmi_n = (nmi_n==1'b0) ? 1'b0 : 1'b1;
 
 
 
@@ -135,9 +138,9 @@ module tb;
 
 	T80a z80( .RESET_n(zrst_n),
 	          .CLK_n(clkz_in),
-	          .WAIT_n(wait_n),
+	          .WAIT_n(zwait_n),
 	          .INT_n(int_n),
-	          .NMI_n(nmi_n),
+	          .NMI_n(znmi_n),
 	          .M1_n(zm1_n),
 	          .RFSH_n(zrfsh_n),
 	          .MREQ_n(zmreq_n),
@@ -150,6 +153,22 @@ module tb;
 	        );
 
 	// now make delayed versions of signals
+	//
+	reg  mreq_wr_n;
+	wire iorq_wr_n, full_wr_n;
+	//
+	// first, assure there is no X's at the start
+	//
+	initial
+	begin
+		m1_n      = 1'b1;
+		rfsh_n    = 1'b1;
+		mreq_n    = 1'b1;
+		iorq_n    = 1'b1;
+		rd_n      = 1'b1;
+		wr_n      = 1'b1;
+		mreq_wr_n = 1'b1;
+	end
 	//
 	always @(zm1_n)
 		if( zm1_n )
@@ -181,12 +200,25 @@ module tb;
 		else
 			rd_n <= #`Z80_DELAY_DOWN zrd_n;
 	//
-	// special handling for broken WR_n
+	//
+	// special handling for broken T80 WR_n
+	//	
 	always @(negedge clkz_in)
-		if( zwr_n )
-			wr_n <= #`Z80_DELAY_UP zwr_n;
+		mreq_wr_n <= zwr_n;
+	//
+	assign iorq_wr_n = ziorq_n | (~zrd_n) | (~zm1_n);
+	//
+	assign full_wr_n = mreq_wr_n & iorq_wr_n;
+	//
+	// this way glitches won't affect state of wr_n
+	always @(full_wr_n)
+		if( !full_wr_n )
+			#`Z80_DELAY_DOWN wr_n <= full_wr_n;
 		else
-			wr_n <= #`Z80_DELAY_DOWN zwr_n;
+			#`Z80_DELAY_UP wr_n <= full_wr_n;
+
+
+
 
 
 	// ROM model
@@ -219,6 +251,7 @@ module tb;
 
 
 
+`ifndef GATE
 
 	// trace rom page
 	wire rma14,rma15;
@@ -231,12 +264,12 @@ module tb;
 	begin
 		$display("at time %t us",$time/10000);
 
-		case( {~rma14, ~rma15} )
+		case( {rma15, rma14} )
 
-		2'b00: $display("GLUKROM");
+		2'b00: $display("BASIC 48");
 		2'b01: $display("TR-DOS");
 		2'b10: $display("BASIC 128");
-		2'b11: $display("BASIC 48");
+		2'b11: $display("GLUKROM");
 		default: $display("unknown");
 
 		endcase
@@ -261,22 +294,6 @@ module tb;
 
 
 
-	// time ticks
-	always
-	begin : timemark
-
-		integer ms;
-
-		ms = ($time/1000000);
-
-		$display("timemark %d ms",ms);
-
-		#10000000.0; // 1 ms
-	end
-
-
-
-
 	// emulate key presses
 	initial
 	begin
@@ -295,6 +312,27 @@ module tb;
 		
 //		$stop;
 	end
+
+
+
+`endif
+
+
+	// time ticks
+	always
+	begin : timemark
+
+		integer ms;
+
+		ms = ($time/1000000);
+
+		$display("timemark %d ms",ms);
+
+		#10000000.0; // 1 ms
+	end
+
+
+
 
 
 

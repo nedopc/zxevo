@@ -1,4 +1,4 @@
-// full zxevo ROM here (pentagon paging: gluk(0)/trdos(1)/bas128(2)/bas48(3)
+// full zxevo ROM here. ATM paging: bas48(0)/trdos(1)/bas128(2)/gluk(3)
 
 module rom(
 	input [15:0] addr,
