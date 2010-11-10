@@ -1,3 +1,5 @@
+`include "../include/tune.v"
+
 // Pentevo project (c) NedoPC 2010
 //
 // decoding mode setup: which border, which modes in one-hot style coding

@@ -1,3 +1,5 @@
+`include "../include/tune.v"
+
 // Pentevo project (c) NedoPC 2010
 //
 // top module for video output.
