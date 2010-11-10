@@ -25,7 +25,8 @@ module zwait(
 `ifdef SIMULATE
 	initial
 	begin
-		force waits = 7'd0;
+//		force waits = 7'd0;
+		waits <= 7'd0;
 	end
 `endif
 
