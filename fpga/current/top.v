@@ -212,6 +212,9 @@ module top(
 
 
 
+
+
+
 	assign ide_rs_n = rst_n;
 
 	assign ide_d = idedataout ? ideout : 16'hZZZZ;
@@ -245,7 +248,21 @@ module top(
 	wire [7:0] sd_dataout,sd_datain;
 
 
-	wire tape_read;
+	wire tape_read; // data for tapein
+
+	wire beeper_mux; // what is mixed to FPGA beeper output - beeper (0) or tapeout (1)
+
+	wire beeper, tapeout; // actual outs
+
+
+
+	// BEEPER
+
+	assign beep = beeper_mux ? tapeout : beeper;
+
+
+
+
 
 
 
@@ -548,22 +565,24 @@ module top(
 
 
 
-	slavespi slavespi( .fclk(fclk), .rst_n(rst_n),
-	                   .spics_n(spics_n), .spidi(spidi),
-	                   .spido(spido), .spick(spick),
-	                   .status_in({wait_rnw, waits[6:0]}), .genrst(genrst),
-	                   .rstrom(rstrom), .kbd_out(kbd_data),
-	                   .kbd_stb(kbd_stb), .mus_out(mus_data),
-	                   .mus_xstb(mus_xstb), .mus_ystb(mus_ystb),
-	                   .mus_btnstb(mus_btnstb), .kj_stb(kj_stb),
-	                   .gluclock_addr(gluclock_addr),
-			   .comport_addr (comport_addr),
-	                   .wait_write(wait_write),
-	                   .wait_read(wait_read),
-	                   .wait_rnw(wait_rnw),
-	                   .wait_end(wait_end),
-	                   .config0( { not_used[7:3], tape_read, set_nmi, cfg_vga_on} )
-	                 );
+	slavespi slavespi(
+		.fclk(fclk), .rst_n(rst_n),
+
+		.spics_n(spics_n), .spidi(spidi),
+		.spido(spido), .spick(spick),
+		.status_in({wait_rnw, waits[6:0]}), .genrst(genrst),
+		.rstrom(rstrom), .kbd_out(kbd_data),
+		.kbd_stb(kbd_stb), .mus_out(mus_data),
+		.mus_xstb(mus_xstb), .mus_ystb(mus_ystb),
+		.mus_btnstb(mus_btnstb), .kj_stb(kj_stb),
+		.gluclock_addr(gluclock_addr),
+		.comport_addr (comport_addr),
+		.wait_write(wait_write),
+		.wait_read(wait_read),
+		.wait_rnw(wait_rnw),
+		.wait_end(wait_end),
+		.config0( { not_used[7:4], beeper_mux, tape_read, set_nmi, cfg_vga_on} )
+	);
 
 	zkbdmus zkbdmus( .fclk(fclk), .rst_n(rst_n),
 	                 .kbd_in(kbd_data), .kbd_stb(kbd_stb),
@@ -578,7 +597,7 @@ module top(
 	zports zports( .zclk(zclk), .fclk(fclk), .rst_n(rst_n), .zpos(zpos), .zneg(zneg),
 	               .din(d), .dout(dout_ports), .dataout(ena_ports),
 	               .a(a), .iorq_n(iorq_n), .rd_n(rd_n), .wr_n(wr_n), .porthit(porthit),
-	               .ay_bdir(ay_bdir), .ay_bc1(ay_bc1), .border(border), .beep(beep),
+	               .ay_bdir(ay_bdir), .ay_bc1(ay_bc1), .border(border), .beeper(beeper), .tapeout(tapeout),
 	               .p7ffd(p7ffd), .peff7(peff7), .mreq_n(mreq_n), .m1_n(m1_n), .dos(dos),
 	               .rstrom(rstrom), .vg_intrq(intrq), .vg_drq(drq), .vg_wrFF(vg_wrFF),
 	               .vg_cs_n(vg_cs_n), .sd_start(sd_start), .sd_dataout(sd_dataout),

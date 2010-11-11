@@ -42,7 +42,9 @@ module zports(
 	input  wire [ 4:0] kj_in,
 
 	output reg  [ 2:0] border,
-	output reg         beep,
+
+	output reg         beeper,
+	output reg         tapeout,
 
 	input  wire        dos,
 
@@ -366,8 +368,9 @@ module zports(
 	begin
 		if( portfe_wr )
 		begin
-			beep <= din[4]^din[3]; // beeper and tapeout in the same bit
-			border <= din[2:0];
+			tapeout <= din[3];
+			beeper  <= din[4];
+			border  <= din[2:0];
 		end
 	end
 
@@ -547,7 +550,7 @@ module zports(
 	begin
 		if( !rst_n )
 			peff7_int <= 8'h00;
-		else if( !a[12] && portf7_wr )
+		else if( !a[12] && portf7_wr && (!shadow) ) // EEF7 in shadow mode is abandoned!
 			peff7_int <= din; // 4 - turbooff, 0 - p16c on, 2 - block1meg
 	end
 	assign block1m = peff7_int[2];
@@ -567,7 +570,8 @@ module zports(
 
 	// gluclock ports (bit7:eff7 is above)
 
-	assign gluclock_on = peff7_int[7];
+	assign gluclock_on = peff7_int[7] || shadow; // in shadow mode EEF7 is abandoned: instead, gluclock access
+	                                             // is ON forever in shadow mode.
 
 	always @(posedge zclk)
 	begin
