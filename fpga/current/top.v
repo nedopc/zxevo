@@ -311,7 +311,7 @@ module top(
 	wire ena_ports;
 
 
-	wire [2:0] border;
+	wire [3:0] border;
 
 	wire drive_ff;
 
@@ -544,7 +544,7 @@ module top(
 
 
 
-	wire [5:0] pixel;
+	wire [3:0] pixel;
 
 	fetch fecher( .clk(fclk), .cend(cend), .line_start(line_start), .vpix(vpix), .int_start(int_start),
 	              .vmode( {peff7[0],peff7[5]} ), .screen(p7ffd[3]), .video_addr(video_addr), .video_data(video_data),
@@ -552,12 +552,16 @@ module top(
 
 
 
+	wire atm_pen2;
 
-	videoout vidia( .clk(fclk), .pixel(pixel), .border({ border[1],1'b0,border[2],1'b0,border[0],1'b0 }),
+	videoout vidia( .clk(fclk), .pixel(pixel), .border(border),
 	                .hblank(hblank), .vblank(vblank), .hpix(hpix), .vpix(vpix), .hsync(hsync), .vsync(vsync),
 	                .vred(vred), .vgrn(vgrn), .vga_hsync(vga_hsync), .vblu(vblu),
 	                .vhsync(vhsync), .vvsync(vvsync), .vcsync(vcsync), .hsync_start(hsync_start),
-	                .scanin_start(scanin_start), .scanout_start(scanout_start), .cfg_vga_on(cfg_vga_on) );
+	                .scanin_start(scanin_start), .scanout_start(scanout_start), .cfg_vga_on(cfg_vga_on),
+					.rst_n(rst_n), .wr_pal64(vg_wrFF&atm_pen2),
+					.newrealcolor({~d[4],~d[7],~d[1],~d[6],~d[0],~d[5]})
+	);
 
 
 
@@ -626,7 +630,7 @@ module top(
 	               .atm_turbo   (),
 	               .atm_pen     (pager_off),
 	               .atm_cpm_n   (cpm_n),
-	               .atm_pen2    (),
+	               .atm_pen2    (atm_pen2),
 
 	               .romrw_en(romrw_en),
 
