@@ -41,7 +41,7 @@ module zports(
 	input  wire [ 7:0] mus_in,  // mouse (xxDF)
 	input  wire [ 4:0] kj_in,
 
-	output reg  [ 2:0] border,
+	output reg  [ 3:0] border,
 
 	output reg         beeper,
 	output reg         tapeout,
@@ -107,6 +107,7 @@ module zports(
 
 
 	localparam PORTFE = 8'hFE;
+	localparam PORTF6 = 8'hF6;
 	localparam PORTF7 = 8'hF7;
 
 	localparam NIDE10 = 8'h10;
@@ -212,7 +213,7 @@ module zports(
 
 	always @*
 	begin
-		if( (loa==PORTFE) ||
+		if( (loa==PORTFE) || (loa==PORTF6) ||
 		    (loa==PORTFD) ||
 
 		    (loa==NIDE10) || (loa==NIDE11) || (loa==NIDE30) || (loa==NIDE50) || (loa==NIDE70) ||
@@ -301,6 +302,8 @@ module zports(
 		case( loa )
 		PORTFE:
 			dout = { 1'b1, tape_read, 1'b0, keys_in };
+		PORTF6:
+			dout = { 1'b1, tape_read, 1'b0, keys_in };
 
 
 		NIDE10,NIDE30,NIDE50,NIDE70,NIDE90,NIDEB0,NIDED0,NIDEF0,NIDEC8:
@@ -345,7 +348,7 @@ module zports(
 
 
 
-	assign portfe_wr    = ( (loa==PORTFE) && port_wr);
+	assign portfe_wr    = (((loa==PORTFE) || (loa==PORTF6)) && port_wr);
 	assign portfd_wr    = ( (loa==PORTFD) && port_wr);
 
 	// F7 ports (like EFF7) are accessible in shadow mode but at addresses like EEF7, DEF7, BEF7 so that
@@ -370,7 +373,7 @@ module zports(
 		begin
 			tapeout <= din[3];
 			beeper  <= din[4];
-			border  <= din[2:0];
+			border <= { ~a[3], din[2:0] };
 		end
 	end
 
