@@ -1,6 +1,6 @@
 .NOLIST
-.INCLUDE "M128DEF.INC"
-.INCLUDE "_MACROS.ASM"
+.INCLUDE "m128def.inc"
+.INCLUDE "_macros.asm"
 
 .MACRO  SDCS_SET
         SBI     PORTB,0
@@ -2034,11 +2034,11 @@ MSG_MAINOK:
 MSG_MAINBAD:
         .DB     "Update is failure.",0,0
 MSG_TITLE:
-.INCLUDE "EVOTITLE.INC"
+.INCLUDE "evotitle.inc"
 ;
 PACKED_FPGA:
 .NOLIST
-.INCLUDE "FPGA.INC"
+.INCLUDE "fpga.inc"
 .LIST
 ;
 ;--------------------------------------
