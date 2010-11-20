@@ -1,51 +1,58 @@
 
-;LAST UPDATE: 12.02.2010 savelij
+;LAST UPDATE: 12.11.2010 savelij
 
-;мнлепю бшгшбюелшу тсмйжхи
-Wc_fat		EQU 0X00		;хмхжхюкхгюжхъ оепелеммшу
-Getfzap		EQU 0X01		;онксвемхе нохяюрекъ тюикю/дхпейрнпхх
-Ent_dir		EQU 0X02		;бунд б дхпс/бшунд хг дхпш
-Openfil		EQU 0X03		;нрйпшрхе тюикю
-Readfil		EQU 0X04		;времхе нрйпшрнцн тюикю
-Getlong		EQU 0X05		;онксвемхе пюяоюйнбюммнцн дкхммнцн хлемх
-Positf		EQU 0X06		;пюанрю я онгхжхеи рейсыецн тюикю
-Prvlegz		EQU 0X07		;онхяй опедшдсыеи "кецюкэмни гюохях"
-Nxtlegz		EQU 0X08		;онхяй якедсчыеи "кецюкэмни гюохях"
-Fhobeta		EQU 0X09		;онхяй HOBETA тюикнб я опнбепйни
+;█▌▄┘░─ ┌⌡┤⌡┌─┘▄⌡∙ ■⌠█┼√┬┴
+Wc_fat		EQU 0X00		;┬█┬√┬─▀┬┤─√┬÷ ▐┘░┘▄┘██⌡∙
+Getfzap		EQU 0X01		;▐▌▀⌠≈┘█┬┘ ▌▐┬▒─▓┘▀÷ ■─┴▀─/└┬░┘┼▓▌░┬┬
+Ent_dir		EQU 0X02		;┌∙▌└ ┌ └┬░⌠/┌⌡∙▌└ ┬┤ └┬░⌡
+Openfil		EQU 0X03		;▌▓┼░⌡▓┬┘ ■─┴▀─
+Readfil		EQU 0X04		;≈▓┘█┬┘ ▌▓┼░⌡▓▌┐▌ ■─┴▀─
+Getlong		EQU 0X05		;▐▌▀⌠≈┘█┬┘ ░─▒▐─┼▌┌─██▌┐▌ └▀┬██▌┐▌ ┬▄┘█┬
+Positf		EQU 0X06		;░─│▌▓─ ▒ ▐▌┤┬√┬┘┴ ▓┘┼⌠≥┘┐▌ ■─┴▀─
+Prvlegz		EQU 0X07		;▐▌┬▒┼ ▐░┘└⌡└⌠≥┘┴ "▀┘┐─▀°█▌┴ ┤─▐┬▒┬"
+Nxtlegz		EQU 0X08		;▐▌┬▒┼ ▒▀┘└⌠·≥┘┴ "▀┘┐─▀°█▌┴ ┤─▐┬▒┬"
+Find_file	EQU 0X09		;⌠▒▓─█▌┌┼─ ─└░┘▒ ▒┼▀─└┬░▌┌─█┬÷ ┬ ▒▐┬▒┼─ ░─▒≤┬░┘█┬┴, █─≈─▀▌ ▐▌┬▒┼─
+Next_find	EQU 0X0A		;▐▌┬▒┼ ■─┴▀▌┌ ▐▌ ░─▒≤┬░┘█┬÷▄
+Load_file	EQU 0X0B		;▐▌▒▀┘└▌┌─▓┘▀°█▌┘ ≈▓┘█┬┘ ▒┘┼▓▌░▌┌
+Read0sector	EQU 0X0C		;≈▓┘█┬┘ ▐┘░┌▌┐▌ ▒┘┼▓▌░─ ■─┴▀─
 
-;оепелеммше FAT
-BUF_512		EQU DRV_VAR		;0X200 астеп яейрнпю
-TDIRCLS		EQU BUF_512+0X0200	;0X400 рюакхжю йкюярепнб DIR
-DIR_CEP		EQU TDIRCLS+0X0400	;0X100 жеонвйю йкюярепнб онддхпейрнпхи
-ERORDRV		EQU DIR_CEP+0X0100	;2 бнгбпюр я ньхайни б A
-CAL_FAT		EQU ERORDRV+2		;1 йюкхап FAT
-MANYFAT		EQU CAL_FAT+1		;1 йнкхвеярбн FAT-рюакхж
-BYTSSEC		EQU MANYFAT+1		;1 йнкхвеярбн яейрнпнб б йкюярепе
-ROOTCLS		EQU BYTSSEC+1		;4 яейрнп мювюкю ROOT дхпейрнпхх
-ROOTZAP		EQU ROOTCLS+4		;2 йнк-бн гюохяеи б ROOT дхпейрнпхх
-SEC_FAT		EQU ROOTZAP+2		;4 йнкхвеярбн яейрнпнб ндмни тюр
-RSVDSEC		EQU SEC_FAT+4		;2 пюглеп пегепбмни накюярх
-STARTRZ		EQU RSVDSEC+2		;4 мювюкн дхяйю/пюгдекю
-FRSTDAT		EQU STARTRZ+4		;4 юдпея оепбнцн яейрнпю дюммшу нр BPB
-SEC_DSC		EQU FRSTDAT+4		;4 йнкхвеярбн яейрнпнб мю дхяйе/пюгдеке
-CLS_DSC		EQU SEC_DSC+4		;4 йнкхвеярбн йкюярепнб мю дхяйе/пюгдеке
-FATSTR		EQU CLS_DSC+4		;4 мювюкн оепбни FAT рюакхжш
-FILE_SZ		EQU FATSTR+4		;4 пюглеп тюикю б аюирюу
-KOLWCLS		EQU FILE_SZ+4		;4 йнкхвеярбн ябнандмшу йкюярепнб
-LST0ZAP		EQU KOLWCLS+4		;4 оепбши ябнандмши йкюяреп
-LSTLOAD		EQU LST0ZAP+4		;4 мнлеп яейрнпю гюцпсфеммнцн б астеп
-TEK_DIR		EQU LSTLOAD+4		;4 йкюяреп рейсыеи DIR
-TEK_ZAP		EQU TEK_DIR+4		;2 рейсыюъ гюохяэ б DIR
-SAVEZAP		EQU TEK_ZAP+2		;2 янупюмеммюъ рейсыюъ онгхжхъ
-TEK_LVL		EQU SAVEZAP+2		;1 рейсыхи спнбемэ йюрюкнцю
-TEK_LEV		EQU TEK_LVL+1		;1 цксахмю мюунфдемхъ б дхпейрнпхъу
-FREECLS		EQU TEK_LEV+1		;8 янупюмемше оепелеммше дкъ нрйюрю
-KOLFIND		EQU FREECLS+8		;2 йнкхвеярбн мюидеммшу он люяйе тюикнб
-AFILCLS		EQU KOLFIND+2		;4 мнлеп оепбнцн йкюярепю дкъ гюцпсгйх
-FB_EXT		EQU AFILCLS+4		;B астеп 8.3 дкъ онхяйю хлемх
-TFILCLS		EQU ERORDRV+0X0100	;? рюакхжю йкюярепнб тюикю, пюглеп гюбхяхр нр пюглепю йкюярепю
+;▐┘░┘▄┘██⌡┘ FAT
+BUF_512		EQU DRV_VAR		;0X200 │⌠■┘░ ▒┘┼▓▌░─
+TDIRCLS		EQU BUF_512+0X0200	;0X400 ▓─│▀┬√─ ┼▀─▒▓┘░▌┌ DIR
+DIR_CEP		EQU TDIRCLS+0X0400	;0X100 √┘▐▌≈┼─ ┼▀─▒▓┘░▌┌ ▐▌└└┬░┘┼▓▌░┬┴
+ERORDRV		EQU DIR_CEP+0X0100	;2 ┌▌┤┌░─▓ ▒ ▌≤┬│┼▌┴ ┌ A
+CAL_FAT		EQU ERORDRV+2		;1 ┼─▀┬│░ FAT
+MANYFAT		EQU CAL_FAT+1		;1 ┼▌▀┬≈┘▒▓┌▌ FAT-▓─│▀┬√
+BYTSSEC		EQU MANYFAT+1		;1 ┼▌▀┬≈┘▒▓┌▌ ▒┘┼▓▌░▌┌ ┌ ┼▀─▒▓┘░┘
+ROOTCLS		EQU BYTSSEC+1		;4 ▒┘┼▓▌░ █─≈─▀─ ROOT └┬░┘┼▓▌░┬┬
+ROOTZAP		EQU ROOTCLS+4		;2 ┼▌▀-┌▌ ┤─▐┬▒┘┴ ┌ ROOT └┬░┘┼▓▌░┬┬
+SEC_FAT		EQU ROOTZAP+2		;4 ┼▌▀┬≈┘▒▓┌▌ ▒┘┼▓▌░▌┌ ▌└█▌┴ ■─▓
+RSVDSEC		EQU SEC_FAT+4		;2 ░─┤▄┘░ ░┘┤┘░┌█▌┴ ▌│▀─▒▓┬
+STARTRZ		EQU RSVDSEC+2		;4 █─≈─▀▌ └┬▒┼─/░─┤└┘▀─
+FRSTDAT		EQU STARTRZ+4		;4 ─└░┘▒ ▐┘░┌▌┐▌ ▒┘┼▓▌░─ └─██⌡∙ ▌▓ BPB
+SEC_DSC		EQU FRSTDAT+4		;4 ┼▌▀┬≈┘▒▓┌▌ ▒┘┼▓▌░▌┌ █─ └┬▒┼┘/░─┤└┘▀┘
+CLS_DSC		EQU SEC_DSC+4		;4 ┼▌▀┬≈┘▒▓┌▌ ┼▀─▒▓┘░▌┌ █─ └┬▒┼┘/░─┤└┘▀┘
+FATSTR		EQU CLS_DSC+4		;4 █─≈─▀▌ ▐┘░┌▌┴ FAT ▓─│▀┬√⌡
+FILE_SZ		EQU FATSTR+4		;4 ░─┤▄┘░ ■─┴▀─ ┌ │─┴▓─∙
+KOLWCLS		EQU FILE_SZ+4		;4 ┼▌▀┬≈┘▒▓┌▌ ▒┌▌│▌└█⌡∙ ┼▀─▒▓┘░▌┌
+LST0ZAP		EQU KOLWCLS+4		;4 ▐┘░┌⌡┴ ▒┌▌│▌└█⌡┴ ┼▀─▒▓┘░
+LSTLOAD		EQU LST0ZAP+4		;4 █▌▄┘░ ▒┘┼▓▌░─ ┤─┐░⌠├┘██▌┐▌ ┌ │⌠■┘░
+TEK_DIR		EQU LSTLOAD+4		;4 ┼▀─▒▓┘░ ▓┘┼⌠≥┘┴ DIR
+TEK_ZAP		EQU TEK_DIR+4		;2 ▓┘┼⌠≥─÷ ┤─▐┬▒° ┌ DIR
+SAVEZAP		EQU TEK_ZAP+2		;2 ▒▌∙░─█┘██─÷ ▓┘┼⌠≥─÷ ▐▌┤┬√┬÷
+TEK_LVL		EQU SAVEZAP+2		;1 ▓┘┼⌠≥┬┴ ⌠░▌┌┘█° ┼─▓─▀▌┐─
+TEK_LEV		EQU TEK_LVL+1		;1 ┐▀⌠│┬█─ █─∙▌├└┘█┬÷ ┌ └┬░┘┼▓▌░┬÷∙
+FREECLS		EQU TEK_LEV+1		;8 ▒▌∙░─█┘█⌡┘ ▐┘░┘▄┘██⌡┘ └▀÷ ▌▓┼─▓─
+KOLFIND		EQU FREECLS+8		;2 ┼▌▀┬≈┘▒▓┌▌ █─┴└┘██⌡∙ ▐▌ ▄─▒┼┘ ■─┴▀▌┌
+AFILCLS		EQU KOLFIND+2		;4 █▌▄┘░ ▐┘░┌▌┐▌ ┼▀─▒▓┘░─ └▀÷ ┤─┐░⌠┤┼┬
+FB_EXT		EQU AFILCLS+4		;B │⌠■┘░ 8.3 └▀÷ ▐▌┬▒┼─ ┬▄┘█┬
+SAVE_IY		EQU FB_EXT+0X0B		;2 ┌█⌠▓░┘█┘┘ ▒▌∙░─█┘█┬┘ ░┘┐┬▒▓░▌┌ └▀÷ └─▀°█┘┴≤┘┐▌ ┬▒▐▌▀°┤▌┌─█┬÷
+ADR_MASK_EXT	EQU SAVE_IY+2		;2 ─└░┘▒ ░─▒≤┬░┘█┬┴ ■─┴▀▌┌ └▀÷ ▐▌┬▒┼─
+ADR_SKLAD	EQU ADR_MASK_EXT+2	;2 ─└░┘▒ ▒┼▀─└┬░▌┌─█┬÷ █─┴└┘██▌┐▌
+MAKS_ADR	EQU ADR_SKLAD+2		;1 ▒▓─░≤┬┴ │─┴▓ ▄─┼▒┬▄─▀°█▌┐▌ ─└░┘▒─ │⌠■┘░─ ▒┼▀─└┬░▌┌─█┬÷
+TFILCLS		EQU ERORDRV+0X0100	;? ▓─│▀┬√─ ┼▀─▒▓┘░▌┌ ■─┴▀─, ░─┤▄┘░ ┤─┌┬▒┬▓ ▌▓ ░─┤▄┘░─ ┼▀─▒▓┘░─
 
-;наыюъ рнвйю бундю дкъ пюанрш я FAT
+;▌│≥─÷ ▓▌≈┼─ ┌∙▌└─ └▀÷ ░─│▌▓⌡ ▒ FAT
 		EX AF,AF'
 		EX (SP),HL
 		LD A,(HL)
@@ -78,19 +85,22 @@ EXITDRV		POP IY
 		POP IX
 		RET
 
-TABLFAT		DW WC_FAT		;00 INIT FAT&SD/HDD
-		DW GETFZAP		;01 HL=FILE OPISATEL
-		DW ENT_DIR		;02 ENTER DIR
-		DW OPENFIL		;03 OPENFILE
-		DW READFIL		;04 READ FILE
-		DW GETLONG		;05 GET LONGNAME
+TABLFAT		DW WC_FAT		;00 ┬█┬√┬─▀┬┤─√┬÷ FAT
+		DW GETFZAP		;01 ▐▌▀⌠≈┘█┬┘ ▌▐┬▒─▓┘▀÷ ■─┴▀─
+		DW ENT_DIR		;02 ┌∙▌└/┌⌡∙▌└ ┌ └┬░
+		DW OPENFIL		;03 ▌░▓┼░⌡▓┬┘ ■─┴▀─
+		DW READFIL		;04 ▐░▌┬┤┌▌▀°█▌┘ ▐▌▒┘┼▓▌░█▌┘ ≈▓┘█┬┘ ▌▓┼░⌡▓▌┐▌ ■─┴▀─
+		DW GETLONG		;05 ▐▌▀⌠≈┘█┬┘ └▀┬██▌┐▌ ┬▄┘█┬
 		DW POSITF		;06 WORK FOR TEK POSIT
 		DW PRVLEGZ		;07 PREV LEGAL OPISAT
 		DW NXTLEGZ		;08 NEXT LEGAL OPISAT
-		DW FHOBETA		;09 онхяй тюикнб он пюяьхпемхч
+		DW FIND_FILE		;09 ⌠▒▓─█▌┌┼─ ─└░┘▒─ ▒┼▀─└┬░▌┌─█┬÷ ┬ ▒▐┬▒┼─ ░─▒≤┬░┘█┬┴ └▀÷ ▐▌┬▒┼─, █─≈─▀▌ ▐▌┬▒┼─
+		DW NEXT_FIND		;0A ▐░▌└▌▀├┘█┬┘ ▐▌┬▒┼─ ■─┴▀▌┌ ▐▌ ░─▒≤┬░┘█┬·
+		DW LD_FILE		;0B ▐▌▒▀┘└▌┌─▓┘▀°█▌┘ ≈▓┘█┬┘ ▒┘┼▓▌░▌┌ ■─┴▀⌡
+		DW READ0SECTOR		;0C ≈▓┘█┬┘ ▐┘░┌▌┐▌ ▒┘┼▓▌░─ ■─┴▀─
 
-;времхе/гюохяэ я тюик я рнвмнярэч
-;дн яейрнпю (512 аюир)
+;≈▓┘█┬┘/┤─▐┬▒° ▒ ■─┴▀ ▒ ▓▌≈█▌▒▓°·
+;└▌ ▒┘┼▓▌░─ (512 │─┴▓)
 READFIL		EXX
 		LD E,0
 		EXX
@@ -204,7 +214,7 @@ ADD2FI2		POP AF
 		XOR A
 		JR ADD2FI1
 
-;нрйпшрхе тюикю
+;▌▓┼░⌡▓┬┘ ■─┴▀─
 OPENFIL		CALL GETFZAP
 		LD DE,20
 		ADD HL,DE
@@ -259,7 +269,7 @@ HWOSTSC		LD A,D
 		LD C,L
 		RET
 
-;гюцпсфюел яейрнп б астеп
+;┤─┐░⌠├─┘▄ ▒┘┼▓▌░ ┌ │⌠■┘░
 LOADLST		CALL CPNUMSC
 		JR NZ,LOADLS1
 		LD HL,BUF_512
@@ -276,7 +286,7 @@ LOADLS1		LD (LSTLOAD+2),BC
 		POP HL
 		RET
 
-;опнбепйю мю сфе гюцпсфеммши яейрнп
+;▐░▌┌┘░┼─ █─ ⌠├┘ ┤─┐░⌠├┘██⌡┴ ▒┘┼▓▌░
 CPNUMSC		LD HL,LSTLOAD
 		LD A,(HL)
 		INC HL
@@ -294,7 +304,7 @@ CPNUMSC		LD HL,LSTLOAD
 		CP B
 		RET
 
-;бунфдемхе б DIR
+;┌∙▌├└┘█┬┘ ┌ DIR
 ENT_DIR		CALL GETFZAP
 		BIT 4,A
 		EX AF,AF'
@@ -365,25 +375,25 @@ ENT_DI0		LD (TEK_DIR),DE
 		POP DE
 		RET
 
-;онксвхрэ нохяюрекэ рейсыецн тюикю
-GETFZAP		LD BC,(TEK_ZAP)			;рейсыхи мнлеп нохяюрекъ
+;▐▌▀⌠≈┬▓° ▌▐┬▒─▓┘▀° ▓┘┼⌠≥┘┐▌ ■─┴▀─
+GETFZAP		LD BC,(TEK_ZAP)			;▓┘┼⌠≥┬┴ █▌▄┘░ ▌▐┬▒─▓┘▀÷
 		LD A,B
 		OR C
-		JR Z,GETRZAP			;еякх мнлеп =0, рн опедшдсыхи мнлеп ме опнбепъел
-		PUSH BC				;янупюмхкх рейсыхи мнлеп
-		DEC BC				;мсфмн опнбепхрэ опедшдсыхи мнлеп
-		CALL GETRZAP			;опнбепъел
-		POP BC				;бепмскх рейсыхи мнлеп
-		LD E,A				;хг опедшдсыецн нохяюрекъ мсфем рнкэйн ткюцнбши аюир
+		JR Z,GETRZAP			;┘▒▀┬ █▌▄┘░ =0, ▓▌ ▐░┘└⌡└⌠≥┬┴ █▌▄┘░ █┘ ▐░▌┌┘░÷┘▄
+		PUSH BC				;▒▌∙░─█┬▀┬ ▓┘┼⌠≥┬┴ █▌▄┘░
+		DEC BC				;█⌠├█▌ ▐░▌┌┘░┬▓° ▐░┘└⌡└⌠≥┬┴ █▌▄┘░
+		CALL GETRZAP			;▐░▌┌┘░÷┘▄
+		POP BC				;┌┘░█⌠▀┬ ▓┘┼⌠≥┬┴ █▌▄┘░
+		LD E,A				;┬┤ ▐░┘└⌡└⌠≥┘┐▌ ▌▐┬▒─▓┘▀÷ █⌠├┘█ ▓▌▀°┼▌ ■▀─┐▌┌⌡┴ │─┴▓
 GETRZAP		PUSH DE
-		CALL RDDIRSC			;вхрюел яейрнп я рейсыхл мнлепнл
-		POP DE				;бепмскх пецхярп E
+		CALL RDDIRSC			;≈┬▓─┘▄ ▒┘┼▓▌░ ▒ ▓┘┼⌠≥┬▄ █▌▄┘░▌▄
+		POP DE				;┌┘░█⌠▀┬ ░┘┐┬▒▓░ E
 		INC A
-		LD A,E				;бепмскх мюкхвхе/нрясярбхе дкхммнцн хлемх
-		RET Z				;бшундхл еякх бшкерекх гю опедекш ясыеярбсчыеи дхпш
+		LD A,E				;┌┘░█⌠▀┬ █─▀┬≈┬┘/▌▓▒⌠▒▓┌┬┘ └▀┬██▌┐▌ ┬▄┘█┬
+		RET Z				;┌⌡∙▌└┬▄ ┘▒▀┬ ┌⌡▀┘▓┘▀┬ ┤─ ▐░┘└┘▀⌡ ▒⌠≥┘▒▓┌⌠·≥┘┴ └┬░⌡
 		EX AF,AF'			
 GETFZA1		LD A,C
-		AND 0X0F			;онксвхкх мнлеп нохяюрекъ б гюцпсфеммнл яейрнпе дхпш
+		AND 0X0F			;▐▌▀⌠≈┬▀┬ █▌▄┘░ ▌▐┬▒─▓┘▀÷ ┌ ┤─┐░⌠├┘██▌▄ ▒┘┼▓▌░┘ └┬░⌡
 		LD E,A
 		LD D,0
 		EX DE,HL
@@ -392,28 +402,28 @@ GETFZA1		LD A,C
 		ADD HL,HL
 		ADD HL,HL
 		ADD HL,HL
-		ADD HL,DE			;бшвхякхкх юдпея бшапюммнцн нохяюрекъ
+		ADD HL,DE			;┌⌡≈┬▒▀┬▀┬ ─└░┘▒ ┌⌡│░─██▌┐▌ ▌▐┬▒─▓┘▀÷
 		LD DE,0X0B
-		LD A,(HL)			;бгъкх ткюцнбши аюир рейсыецн нохяюрекъ
+		LD A,(HL)			;┌┤÷▀┬ ■▀─┐▌┌⌡┴ │─┴▓ ▓┘┼⌠≥┘┐▌ ▌▐┬▒─▓┘▀÷
 		EX DE,HL
 		ADD HL,DE
-		LD L,(HL)			;бгъкх оепбши аюир хлемх
-		LD H,A				;онкнфхкх ткюцнбши аюир щрнцн нохяюрекъ
+		LD L,(HL)			;┌┤÷▀┬ ▐┘░┌⌡┴ │─┴▓ ┬▄┘█┬
+		LD H,A				;▐▌▀▌├┬▀┬ ■▀─┐▌┌⌡┴ │─┴▓ ²▓▌┐▌ ▌▐┬▒─▓┘▀÷
 		EX DE,HL
-		CALL CP_TWOT			;опнбепйю мю мюкхвхе б хлемх ".." 
-		LD D,0				;асдел бундхрэ б дхпейрнпхч
+		CALL CP_TWOT			;▐░▌┌┘░┼─ █─ █─▀┬≈┬┘ ┌ ┬▄┘█┬ ".." 
+		LD D,0				;│⌠└┘▄ ┌∙▌└┬▓° ┌ └┬░┘┼▓▌░┬·
 		JR NZ,GETFZA2
-		LD D,0X80			;асдел бшундхрэ б опедшдсысч дхпейрнпхч
+		LD D,0X80			;│⌠└┘▄ ┌⌡∙▌└┬▓° ┌ ▐░┘└⌡└⌠≥⌠· └┬░┘┼▓▌░┬·
 GETFZA2		EX AF,AF'
-		CP 0X0F				;опнбепъел ткюцнбши аюир опедшдсыецн нохяюрекъ
-		LD A,E				;бгъкх ткюцнбши аюир рейсыецн нохяюрекъ
-		LD E,D				;бшярюбхкх мюопюбкемхе дбхфемхъ б дхпюу
+		CP 0X0F				;▐░▌┌┘░÷┘▄ ■▀─┐▌┌⌡┴ │─┴▓ ▐░┘└⌡└⌠≥┘┐▌ ▌▐┬▒─▓┘▀÷
+		LD A,E				;┌┤÷▀┬ ■▀─┐▌┌⌡┴ │─┴▓ ▓┘┼⌠≥┘┐▌ ▌▐┬▒─▓┘▀÷
+		LD E,D				;┌⌡▒▓─┌┬▀┬ █─▐░─┌▀┘█┬┘ └┌┬├┘█┬÷ ┌ └┬░─∙
 		RET NZ
-		INC E				;сярюмнбйю мюкхвхъ дкхммнцн хлемх
+		INC E				;⌠▒▓─█▌┌┼─ █─▀┬≈┬÷ └▀┬██▌┐▌ ┬▄┘█┬
 		RET
 
-;времхе яейрнпю DIR он мнлепс BC
-;мю бшунде: A=0XFF-бшунд гю опедекш DIR
+;≈▓┘█┬┘ ▒┘┼▓▌░─ DIR ▐▌ █▌▄┘░⌠ BC
+;█─ ┌⌡∙▌└┘: A=0XFF-┌⌡∙▌└ ┤─ ▐░┘└┘▀⌡ DIR
 RDDIRSC		PUSH BC
 		LD D,B
 		LD E,C
@@ -459,8 +469,8 @@ RDDIRS3		CALL REALSEC
 		XOR A
 		RET
 
-;тнплхпнбюмхе рюакхжш йкюярепнб DIR
-;х онхяй оепбни "кецюкэмни" гюохях б DIR
+;■▌░▄┬░▌┌─█┬┘ ▓─│▀┬√⌡ ┼▀─▒▓┘░▌┌ DIR
+;┬ ▐▌┬▒┼ ▐┘░┌▌┴ "▀┘┐─▀°█▌┴" ┤─▐┬▒┬ ┌ DIR
 INIRTSC		PUSH AF
 		LD HL,TDIRCLS
 		CALL SAVEZP
@@ -483,7 +493,7 @@ LASTCLS		LD BC,0XFFFF
 		POP AF
 		RET
 
-;опнбепйю мю 1 рнвйс
+;▐░▌┌┘░┼─ █─ 1 ▓▌≈┼⌠
 CP_ONET		LD A,(HL)
 		CP 0X2E
 		RET NZ
@@ -495,7 +505,7 @@ CP_ONET		LD A,(HL)
 		XOR A
 		RET
 
-;опнбепйю мю 2 рнвйх
+;▐░▌┌┘░┼─ █─ 2 ▓▌≈┼┬
 CP_TWOT		LD A,(HL)
 		CP 0X2E
 		RET NZ
@@ -506,13 +516,6 @@ CP_TWOT		LD A,(HL)
 		RET NZ
 		XOR A
 		RET
-
-;PAGEMEM		PUSH BC
-;		OR 0X10
-;		LD BC,0X7FFD
-;		OUT (C),A
-;		POP BC
-;		RET
 
 POSITF		CP LOW ((ENDTPOS-TPOSITF)/2)
 		RET NC
@@ -537,17 +540,17 @@ TPOSITF		DW POSTF00
 		DW POSTF07
 ENDTPOS
 
-;янупюмемхе рейсыеи онгхжхх тюикю
+;▒▌∙░─█┘█┬┘ ▓┘┼⌠≥┘┴ ▐▌┤┬√┬┬ ■─┴▀─
 POSTF00		LD HL,(TEK_ZAP)
 		LD (SAVEZAP),HL
 		RET
 
-;бняярюмнбкемхе рейсыеи онгхжхх тюикю
+;┌▌▒▒▓─█▌┌▀┘█┬┘ ▓┘┼⌠≥┘┴ ▐▌┤┬√┬┬ ■─┴▀─
 POSTF01		LD HL,(SAVEZAP)
 		LD (TEK_ZAP),HL
 		RET
 
-;оепелнрюрэ мю "B" тюикнб мюгюд
+;▐┘░┘▄▌▓─▓° █─ "B" ■─┴▀▌┌ █─┤─└
 POSTF03		LD A,B
 		AND A
 		RET Z
@@ -557,7 +560,7 @@ POSTF03		LD A,B
 		DJNZ $-5
 		RET
 
-;оепелнрюрэ мю "B" тюикнб боепед
+;▐┘░┘▄▌▓─▓° █─ "B" ■─┴▀▌┌ ┌▐┘░┘└
 POSTF04		LD A,B
 		AND A
 		RET Z
@@ -567,7 +570,7 @@ POSTF04		LD A,B
 		DJNZ $-5
 		RET
 
-;ондявер йнкхвеярбю "кецюкэмшу" гюохяеи
+;▐▌└▒≈┘▓ ┼▌▀┬≈┘▒▓┌─ "▀┘┐─▀°█⌡∙" ┤─▐┬▒┘┴
 POSTF05		LD BC,0
 		PUSH BC
 		EXX
@@ -629,11 +632,11 @@ KOL_ZA3		LD D,B
 		XOR A
 		RET
 
-;сярюмнбхрэ мнлеп "кецюкэмни" гюохях хг "BC"
+;⌠▒▓─█▌┌┬▓° █▌▄┘░ "▀┘┐─▀°█▌┴" ┤─▐┬▒┬ ┬┤ "BC"
 POSTF06		LD (TEK_ZAP),BC
 		RET
 
-;бепмсрэ б "BC" рейсыхи мнлеп "кецюкэмни" гюохях
+;┌┘░█⌠▓° ┌ "BC" ▓┘┼⌠≥┬┴ █▌▄┘░ "▀┘┐─▀°█▌┴" ┤─▐┬▒┬
 POSTF07		LD BC,(TEK_ZAP)
 		RET
 
@@ -658,7 +661,7 @@ CPTEKZP		CALL RDDIRSC
 		AND A
 		RET
 
-;яапня рейсыеи онгхжхх б 0 х онхяй оепбни "кецюкэмни" гюохях
+;▒│░▌▒ ▓┘┼⌠≥┘┴ ▐▌┤┬√┬┬ ┌ 0 ┬ ▐▌┬▒┼ ▐┘░┌▌┴ "▀┘┐─▀°█▌┴" ┤─▐┬▒┬
 POSTF02		LD BC,0
 		LD (TEK_ZAP),BC
 		CALL RDDIRSC
@@ -722,7 +725,7 @@ LOADZP		LD E,(HL)
 		INC HL
 		RET
 
-;хмхжхюкхгюжхъ оепелеммшу FAT
+;┬█┬√┬─▀┬┤─√┬÷ ▐┘░┘▄┘██⌡∙ FAT
 WC_FAT		LD HL,0XFFFF
 		LD (LSTLOAD),HL
 		LD (LSTLOAD+2),HL
@@ -756,29 +759,29 @@ WC_FAT		LD HL,0XFFFF
 		LD D,(IX+0X17)		;BPB_FATSZ16
 		LD A,D
 		OR E
-		JR NZ,RDFAT01		;еякх ме FAT12/16 (BPB_FATSZ16=0)
+		JR NZ,RDFAT01		;┘▒▀┬ █┘ FAT12/16 (BPB_FATSZ16=0)
 		LD E,(IX+0X24)
 		LD D,(IX+0X25)
 		LD L,(IX+0X26)
 		LD H,(IX+0X27)		;BPB_FATSZ32
-					;рн аепел хг ялеыемхъ +36
+					;▓▌ │┘░┘▄ ┬┤ ▒▄┘≥┘█┬÷ +36
 RDFAT01		LD (SEC_FAT+2),HL
-		LD (SEC_FAT),DE		;вхякн яейрнпнб мю FAT-рюакхжс
+		LD (SEC_FAT),DE		;≈┬▒▀▌ ▒┘┼▓▌░▌┌ █─ FAT-▓─│▀┬√⌠
 		LD HL,0
 		LD E,(IX+0X13)
 		LD D,(IX+0X14)		;BPB_TOTSEC16
 		LD A,D
 		OR E
-		JR NZ,RDFAT02		;еякх ме FAT12/16 (BPB_TOTSEC16=0)
+		JR NZ,RDFAT02		;┘▒▀┬ █┘ FAT12/16 (BPB_TOTSEC16=0)
 		LD E,(IX+0X20)
 		LD D,(IX+0X21)
 		LD L,(IX+0X22)
 		LD H,(IX+0X23)		;BPB_TOTSEC32
-					;рн аепел хг ялеыемхъ +32
+					;▓▌ │┘░┘▄ ┬┤ ▒▄┘≥┘█┬÷ +32
 RDFAT02		LD (SEC_DSC+2),HL
-		LD (SEC_DSC),DE		;й-бн яейрнпнб мю дхяйе/пюгдеке
+		LD (SEC_DSC),DE		;┼-┌▌ ▒┘┼▓▌░▌┌ █─ └┬▒┼┘/░─┤└┘▀┘
 
-;бшвхякъел ROOTDIRSECTORS
+;┌⌡≈┬▒▀÷┘▄ ROOTDIRSECTORS
 		LD E,(IX+0X11)
 		LD D,(IX+0X12)		;BPB_ROOTENTCNT
 		LD (ROOTZAP),DE
@@ -792,9 +795,9 @@ RDFAT02		LD (SEC_DSC+2),HL
 		CALL BCDE_A
 		EX DE,HL
 
-;щрн пеюкхгнбюмю тнплскю
+;²▓▌ ░┘─▀┬┤▌┌─█─ ■▌░▄⌠▀─
 ;ROOTDIRSECTORS=((BPB_ROOTENTCNT*32)++(BPB_BYTSPERSEC-1))/BPB_BYTSPERSEC
-;б HL ROOTDIRSECTORS. еякх FAT32, рн HL=0 бяецдю
+;┌ HL ROOTDIRSECTORS. ┘▒▀┬ FAT32, ▓▌ HL=0 ┌▒┘┐└─
 
 RDFAT03		PUSH HL			;ROOTDIRSECTORS
 		LD A,(IX+0X10)		;BPB_NUMFATS
@@ -808,50 +811,47 @@ RDFAT03		PUSH HL			;ROOTDIRSECTORS
 		ADC HL,HL
 		DEC A
 		JR NZ,$-6
-		POP BC			;онкмши пюглеп FAT-накюярх б яейрнпюу
-		CALL HLDEPBC		;опхаюбхкх ROOTDIRSECTORS
+		POP BC			;▐▌▀█⌡┴ ░─┤▄┘░ FAT-▌│▀─▒▓┬ ┌ ▒┘┼▓▌░─∙
+		CALL HLDEPBC		;▐░┬│─┌┬▀┬ ROOTDIRSECTORS
 		LD C,(IX+0X0E)
 		LD B,(IX+0X0F)		;BPB_RSVDSECCNT
 		LD (RSVDSEC),BC
-		CALL HLDEPBC		;опхаюбхкх BPB_RESVDSECCNT
+		CALL HLDEPBC		;▐░┬│─┌┬▀┬ BPB_RESVDSECCNT
 		LD (FRSTDAT),DE
-		LD (FRSTDAT+2),HL	;онкнфхкх мнлеп оепбнцн яейрнпю дюммшу
+		LD (FRSTDAT+2),HL	;▐▌▀▌├┬▀┬ █▌▄┘░ ▐┘░┌▌┐▌ ▒┘┼▓▌░─ └─██⌡∙
 		LD B,H
 		LD C,L
-		LD HL,SEC_DSC		;BCDE+32-НЕ вхякн он юдпеяс HL
-		CALL BCDEHLM		;бшвкх хг онкмнцн й-бю яейрнпнб пюгдекю
+		LD HL,SEC_DSC
+		CALL BCDEHLM		;┌⌡≈▀┬ ┬┤ ▐▌▀█▌┐▌ ┼-┌─ ▒┘┼▓▌░▌┌ ░─┤└┘▀─
 		LD A,(IX+0X0D)
-		LD (BYTSSEC),A
-		CALL BCDE_A		;пюгдекхкх мю й-бн яейрнпнб б йкюярепе
+		LD (BYTSSEC),A		;┼▌▀┬≈┘▒▓┌▌ ▒┘┼▓▌░▌┌ █─ ┼▀─▒▓┘░
+		CALL BCDE_A		;░─┤└┘▀┬▀┬ █─ ┼-┌▌ ▒┘┼▓▌░▌┌ ┌ ┼▀─▒▓┘░┘
 		LD (CLS_DSC),DE
-		LD (CLS_DSC+2),BC	;онкнфхкх йнк-бн йкюярепнб мю пюгдеке
+		LD (CLS_DSC+2),BC	;▐▌▀▌├┬▀┬ ┼▌▀-┌▌ ┼▀─▒▓┘░▌┌ █─ ░─┤└┘▀┘
 
-		LD A,(CAL_FAT)
-		CP 0XFF
-		JR NZ,RDFAT04
+;		LD A,(CAL_FAT)
+;		CP 0XFF			;▓┬▐ FAT █┘ ▌▐░┘└┘▀┘█?
+;		JR NZ,RDFAT04
+;▌▐░┘└┘▀┘█┬┘ ▓┬▐─ FAT ▐░┬ ▌▓▒⌠▒▓┌┬┬ MBR
 		LD HL,(CLS_DSC)
-		LD DE,(CLS_DSC+2)
-		PUSH HL
-		PUSH DE
+		LD DE,(CLS_DSC+2)	;HLDE=┼▌▀┬≈┘▒▓┌▌ ┼▀─▒▓┘░▌┌ █─ ░─┤└┘▀┘
 		ADD HL,HL
+		PUSH HL
 		EX DE,HL
-		ADC HL,HL
+		ADC HL,HL		;HLDE=┼▌▀┬≈┘▒▓┌▌ ▒┘┼▓▌░▌┌ *2
+		PUSH HL
 		LD B,H
-		LD C,L
+		LD C,L			;BCDE=┼▌▀┬≈┘▒▓┌▌ ┼▀─▒▓┘░▌┌ *2
 		CALL RASCHET
 		LD A,1
 		POP DE
-		POP HL
+		POP HL			;HLDE=┼▌▀┬≈┘▒▓┌▌ ┼▀─▒▓┘░▌┌ *2
 		JR Z,RDFAT04
 		ADD HL,HL
 		EX DE,HL
-		ADC HL,HL
-		EX DE,HL
-		ADD HL,HL
-		EX DE,HL
-		ADC HL,HL
+		ADC HL,HL		;HLDE=┼▌▀┬≈┘▒▓┌▌ ┼▀─▒▓┘░▌┌ *4
 		LD B,H
-		LD C,L
+		LD C,L			;BCDE=┼▌▀┬≈┘▒▓┌▌ ┼▀─▒▓┘░▌┌ *4
 		CALL RASCHET
 		LD A,2
 		JR Z,RDFAT04
@@ -859,9 +859,9 @@ RDFAT03		PUSH HL			;ROOTDIRSECTORS
 
 RDFAT04		LD (CAL_FAT),A
 
-;дкъ FAT12/16 ROOT йкюяреп=0
-;дкъ FAT32 аепел он ялеыелхч +44
-;мю бшунде BCDE-яейрнп ROOTDIR йкюяреп
+;└▀÷ FAT12/16 ROOT ┼▀─▒▓┘░=0
+;└▀÷ FAT32 │┘░┘▄ ▐▌ ▒▄┘≥┘▄┬· +44
+;█─ ┌⌡∙▌└┘ BCDE-▒┘┼▓▌░ ROOTDIR ┼▀─▒▓┘░
 		PUSH AF
 		AND A
 		LD DE,0
@@ -875,7 +875,7 @@ RDFAT04		LD (CAL_FAT),A
 		LD C,(IX+0X2E)
 		LD B,(IX+0X2F)		;FAT32
 FSRROO2		LD (ROOTCLS),DE
-		LD (ROOTCLS+2),BC	;яейрнп ROOT дхпейрнпхх
+		LD (ROOTCLS+2),BC	;▒┘┼▓▌░ ROOT └┬░┘┼▓▌░┬┬
 		LD (TEK_DIR),DE
 		LD (TEK_DIR+2),BC
 FSRR121		PUSH DE
@@ -893,16 +893,18 @@ FSRR121		PUSH DE
 		POP AF
 		JP INIRTSC
 
-RASCHET		CALL BCDE200
+;▒░─┌█┘█┬┘ ░┘─▀°█▌ ┤─█┬▄─┘▄▌┘ ┼▀─▒▓┘░─▄┬ ▄┘▒▓▌ ┬ ┼▌┬≈┘▒▓┌▌▄ ▒┘┼▓▌░▌┌ ▐▌└ 1 FAT ▓─│▀┬√⌠
+RASCHET		CALL BCDE200		;░─┤└┘▀┬▀┬ █─ 512
 		LD HL,SEC_FAT
-		CALL BCDEHLM
+		CALL BCDEHLM		;┌⌡≈▀┬ ┬┤ ┼▌▀┬≈┘▒▓┌─ ▒┘┼▓▌░▌┌ █─ 1 FAT ▓─│▀┬√⌠
 		LD A,E
-		AND 0XF0
+		AND 0XF0		;▄▀─└≤┬┘ 4 │┬▓─ █┘ ┬█▓┘░┘▒█⌡
 		OR D
 		OR C
 		OR B
 		RET
 
+;▌▓└─≈─ ┼▌░▌▓┼▌┐▌ ┬▄┘█┬ ■─┴▀─, ┘▒▀┬ └▀┬██▌┘ ▌▓▒⌠▒▓┌⌠┘▓
 NO_LNG		POP DE
 		LD BC,8
 		LDIR
@@ -921,6 +923,7 @@ NO_LNG1		EX DE,HL
 		POP HL
 		RET
 
+;▌▓└─≈─ └▀┬██▌┐▌ ┬▄┘█┬ ■─┴▀─
 GETLONG		PUSH HL
 		PUSH HL
 		CALL GETFZAP
@@ -1021,16 +1024,17 @@ GETLNG5		EXX
 		JR GETLNG1+3
 ;401,410-44F,451
 
-LST_CLS		LD A,(CAL_FAT)
+;▐░▌┌┘░┼─ █─ ▐▌▒▀┘└█┬┴ ┼▀─▒▓┘░
+LST_CLS		LD A,(CAL_FAT)			;┌┤÷▀┬ ▓┬▐ FAT
 		AND A
 		JR NZ,LST_CL1
-		LD HL,0X0FF7
+		LD HL,0X0FF7			;└▀÷ FAT12
 		SBC HL,DE
 		RET
 
 LST_CL1		DEC A
 		JR NZ,LST_CL2
-		LD HL,0XFFF7
+		LD HL,0XFFF7			;└▀÷ FAT16
 		SBC HL,DE
 		RET
 
@@ -1041,6 +1045,7 @@ LST_CL2		LD HL,0X0FFF
 		SBC HL,DE
 		RET
 
+;≈▓┘█┬┘ ▒▀┘└⌠·≥┘┐▌ █▌▄┘░─ ┼▀─▒▓┘░─
 RDFATZP		LD A,(CAL_FAT)
 		AND A
 		JR Z,RDFATS0
@@ -1135,9 +1140,9 @@ RDFATS3		LD A,D
 		LD D,A
 		RET
 
-;бшвхякемхе пеюкэмнцн яейрнпю
-;мю бунде BCDE=мнлеп FAT
-;мю бшунде BCDE=юдпея яейрнпю
+;┌⌡≈┬▒▀┘█┬┘ ░┘─▀°█▌┐▌ ▒┘┼▓▌░─
+;█─ ┌∙▌└┘: BCDE=█▌▄┘░ ┼▀─▒▓┘░─ FAT
+;█─ ┌⌡∙▌└┘: BCDE=─└░┘▒ ▒┘┼▓▌░─
 REALSEC		LD A,B
 		OR C
 		OR D
@@ -1156,7 +1161,7 @@ REALSE1		LD HL,0XFFFE
 		ADD HL,DE
 		EX DE,HL
 		INC HL
-		ADC HL,BC		;мнлеп йкюярепю-2
+		ADC HL,BC		;█▌▄┘░ ┼▀─▒▓┘░─-2
 		LD A,(BYTSSEC)
 		JR REALSE2
 
@@ -1165,13 +1170,13 @@ REALSE3		SLA E
 		RL L
 		RL H
 REALSE2		RRCA
-		JR NC,REALSE3		;слмнфхкх мю пюглеп йкюярепю
+		JR NC,REALSE3		;⌠▄█▌├┬▀┬ █─ ░─┤▄┘░ ┼▀─▒▓┘░─
 		LD B,H
 		LD C,L
 		LD HL,STARTRZ
-		CALL BCDEHLP		;опхаюбхкх ялеыемхе нр мювюкю дхяйю
+		CALL BCDEHLP		;▐░┬│─┌┬▀┬ ▒▄┘≥┘█┬┘ ▌▓ █─≈─▀─ └┬▒┼─
 		LD HL,FRSTDAT
-		JP BCDEHLP		;опхаюбхкх ялеыемхе нр мювюкю пюгдекю
+		JP BCDEHLP		;▐░┬│─┌┬▀┬ ▒▄┘≥┘█┬┘ ▌▓ █─≈─▀─ ░─┤└┘▀─
 
 BCDE200		LD E,D
 		LD D,C
@@ -1233,13 +1238,11 @@ HLDEPBC		EX DE,HL
 		ADC HL,BC
 		RET
 
-F_EXT		DB "$C ",0
-
 CP_EXT		PUSH BC
 		PUSH DE
 		PUSH HL
 		LD C,0
-		LD DE,F_EXT
+		LD DE,(ADR_MASK_EXT)
 CPETR2		LD A,(DE)
 		AND A
 		JR Z,CPETR1+1
@@ -1274,32 +1277,170 @@ COMPARF1	LD A,(DE)
 		DJNZ COMPARF1
 		RET
 
-;онхяй тюикнб он пюяьхпемхч х яйкюдхпнбюмхе хлем
-;мю бунде: DE-юдпея йсдю яйкюдхпнбюрэ
-FHOBETA		LD HL,0
-		LD (KOLFIND),HL		;намскемхе йнкхвеярбю мюидеммшу тюикнб
-FHOB2		PUSH DE
-		CALL GETFZAP		;онксвемхе нохяюрекъ
-		LD DE,0X0B		;мсфем ткюцнбши аюир нохяюрекъ
-		EX DE,HL		;юдпея нохяюрекъ онпрхрэ ме асдел
-		ADD HL,DE		;онксвхкх юдпея ткюцнбнцн аюирю
-		LD L,(HL)		;бгъкх ткюцнбши аюир
-		EX DE,HL		;бепмскх юдпея онксвеммнцн нохяюрекъ
-		BIT 4,E			;опнбепйю щрн тюик хкх дхпю
-		JR Z,FHOB3		;еякх тюик, рн опнднкфемхе опнбепйх
-		POP HL			;дкъ дхпш опнбепърэ анкэье ме мюдн
+FIND_FILE	LD (ADR_MASK_EXT),HL
+		LD (ADR_SKLAD),DE
+		LD A,D
+		ADD A,0X10
+		LD (MAKS_ADR),A
+		LD HL,0
+		LD (KOLFIND),HL
+		XOR A
+NEXT_FIND	LD IX,(MAKS_ADR)
+		AND A
+		JR Z,FINDF2
+		LD HL,(ADR_SKLAD)
+		DEC HL
+		DEC HL
+		LD (ADR_SKLAD),HL	;-2 ─└░┘▒ ▒┼▀─└┬░▌┌─█┬÷
+		LD HL,(KOLFIND)
+		DEC HL			;-1 █─┴└┘██⌡∙ ■─┴▀▌┌
+		LD (KOLFIND),HL
+FINDF2		CALL GETFZAP		;▐▌▀⌠≈┘█┬┘ ▌▐┬▒─▓┘▀÷
+		LD A,(HL)
+		CP 0XE5			;┘▒▀┬ ⌠└─▀┘█▌ 
+		JR Z,FINDF1		;▓▌ ▐┘░┘∙▌└┬▄ █─ ▒▀┘└⌠·≥┬┴ ▌▐┬▒─▓┘▀°
+		LD DE,0X0B		;█⌠├┘█ ■▀─┐▌┌⌡┴ │─┴▓ ▌▐┬▒─▓┘▀÷
+		EX DE,HL		;─└░┘▒ ▌▐┬▒─▓┘▀÷ ▐▌░▓┬▓° █┘ │⌠└┘▄
+		ADD HL,DE		;▐▌▀⌠≈┬▀┬ ─└░┘▒ ■▀─┐▌┌▌┐▌ │─┴▓─
+		LD L,(HL)		;┌┤÷▀┬ ■▀─┐▌┌⌡┴ │─┴▓
+		EX DE,HL		;┌┘░█⌠▀┬ ─└░┘▒ ▐▌▀⌠≈┘██▌┐▌ ▌▐┬▒─▓┘▀÷
+		BIT 4,E			;▐░▌┌┘░┼─ ²▓▌ ■─┴▀ ┬▀┬ └┬░─
+		JR Z,FINDF3		;┘▒▀┬ ■─┴▀, ▓▌ ▐░▌└▌▀├┘█┬┘ ▐░▌┌┘░┼┬
+		LD HL,(ADR_SKLAD)	;└▀÷ └┬░⌡ ▐░▌┌┘░÷▓° │▌▀°≤┘ █┘ █─└▌
 		LD (HL),C
 		INC HL
-		LD (HL),B		;онкнфхкх мнлеп дхпш б рюакхвйс
+		LD (HL),B		;▐▌▀▌├┬▀┬ █▌▄┘░ └┬░⌡ ┌ ▓─│▀┬≈┼⌠
 		INC HL
-		JR FHOB4		;онеуюкх й якедсчыелс нохяюрекч
-
-FHOB3		CALL CP_EXT		;опнбепйю он пюяьхпемхч
+		LD (ADR_SKLAD),HL
+		EX DE,HL
+		LD HL,(KOLFIND)
+		INC HL			;+1 █─┴└┘██⌡∙ ■─┴▀▌┌
+		LD (KOLFIND),HL
+		LD A,IXL
+		CP D			;▐░▌┌┘░┼─ ┤─ ┌⌡∙▌└ ┌⌡└┘▀┘██▌┐▌ │⌠■┘░─
+		JR C,END_FINDF		;█┘ │▌▀┘┘ 2048 └┬░▌┌/■─┴▀▌┌ ┌ ▓┘┼⌠≥┘┴ └┬░┘┼▓▌░┬┬
+FINDF1		LD HL,(TEK_ZAP)
+		PUSH HL			;▒▌∙░─█┬▀┬ █─ ▒▓┘┼┘ ▓┘┼⌠≥┬┴ █▌▄┘░ ■─┴▀─
+		CALL NXTLEGZ		;┬≥┘▄ ▒▀┘└⌠·≥┬┴ ▌▐┬▒─▓┘▀°
+		LD BC,(TEK_ZAP)		;┌┤÷▀┬ █▌┌⌡┴ █▌▄┘░ ■─┴▀─
+		POP HL			;┌┘░█⌠▀┬ ▒▌ ▒▓┘┼─ ▒▓─░⌡┴ █▌▄┘░ ■─┴▀─
 		AND A
+		SBC HL,BC		;▐░▌┌┘░┼─ █─ ┬┤▄┘█┘█┬┘ █▌▄┘░─ ▌▐┬▒─▓┘▀÷
+		JR NZ,FINDF2		;█▌▄┘░ █┘ ┬┤▄┘█┬▀▒÷, ┌⌡∙▌└┬▄
+END_FINDF	LD BC,(KOLFIND)		;┼▌▀┬≈┘▒▓┌▌ █─┴└┘█⌡∙ ■─┴▀▌┌
+		XOR A
+		RET
+
+FINDF3		CALL CP_EXT		;▐░▌┌┘░┼─ ▐▌ ░─▒≤┬░┘█┬·
+		AND A
+		JR Z,FINDF1		;█┘ ▒▌▌▓┌┘▒▓┌⌠┘▓ ┤─└─██▌┴ ▄─▒┼┘ ▐▌ ░─▒≤┬░┘█┬·
+		PUSH AF
+		LD DE,0X1C
+		ADD HL,DE
+		LD E,(HL)
+		INC HL
+		LD D,(HL)
+		INC HL
+		PUSH DE
+		LD E,(HL)
+		INC HL
+		LD D,(HL)
+		PUSH DE
+		CALL READ0SECTOR
+		EXX
+		LD HL,(ADR_SKLAD)
+		LD DE,(TEK_ZAP)
+		LD (HL),E
+		INC HL
+		LD (HL),D		;▐▌▀▌├┬▀┬ █▌▄┘░ └┬░⌡ ┌ ▓─│▀┬≈┼⌠
+		INC HL
+		LD (ADR_SKLAD),HL
+		LD HL,(TEK_ZAP)
+		INC HL
+		LD (TEK_ZAP),HL
+		LD HL,(KOLFIND)
+		INC HL			;+1 █─┴└┘██⌡∙ ■─┴▀▌┌
+		LD (KOLFIND),HL
+		POP BC
 		POP DE
-		JP Z,FHOB1
-		PUSH DE			;еярэ янбоюдемхе я люяйни
-		LD DE,0X14		;мюдн опнбепхрэ, ю пеюкэмн кх щрн унаерю?
+		EXX
+		POP AF
+		RET
+
+;IXL-┼▌▀┬≈┘▒▓┌▌ ▒┘┼▓▌░▌┌ └▀÷ ┤─┐░⌠┤┼┬
+;IXH-░─┤▄┘░ ┼▀─▒▓┘░─
+;IYL-
+;IYH-▒▄┘≥┘█┬┘ ┌ ┼▀─▒▓┘░┘
+LD_FILE		PUSH HL
+		LD HL,LD_FILE6
+		EX (SP),HL
+		LD IY,(SAVE_IY)
+		LD A,(BYTSSEC)
+		LD IXH,A
+		LD A,IXL
+		AND A
+		JR NZ,LD_FILE0
+		LD (AFILCLS),DE
+		LD (AFILCLS+2),BC
+		LD IYH,0			;┬┤█─≈─▀°█▌┘ ▒▄┘≥┘█┬┘ ┌ ┼▀─▒▓┘░┘
+		RET
+
+LD_FILE6	LD (SAVE_IY),IY
+		RET
+
+LD_FILE0	LD DE,(AFILCLS)
+		LD BC,(AFILCLS+2)	;▓┘┼⌠≥┬┴ █▌▄┘░ ┼▀─▒▓┘░─
+		PUSH BC
+		PUSH DE
+		PUSH HL
+		CALL REALSEC		;▐┘░┘┌┘▀┬ █▌▄┘░ ┼▀─▒▓┘░─ ┌ █▌▄┘░ ▒┘┼▓▌░─
+		LD A,IYH
+		LD L,A
+		LD H,0
+		ADD HL,DE
+		EX DE,HL
+		JR NC,LD_FILE1
+		INC BC			;BCDE=█▌▄┘░ ▒┘┼▓▌░─ ▌▓┼⌠└─ ┐░⌠┤┬▓°
+LD_FILE1	LD A,IXL
+		CP IXH
+		JP C,LD_FILE2
+		LD A,IXH
+LD_FILE2	ADD A,IYH
+		CP IXH
+		LD A,IXL
+		JP C,LD_FILE5
+		LD A,IXH
+		SUB IYH
+LD_FILE5	LD IYL,A		;▒┼▌▀°┼▌ ▒┘┼▓▌░▌┌ ▒┘┴≈─▒ ┐░⌠┤┬▄
+		POP HL			;┌▌▒▒▓─█▌┌┬▀┬ ─└░┘▒ ┤─┐░⌠┤┼┬
+		CALL TO_DRV
+		DB 3			;┤─┐░⌠┤┬▀┬ ▒┘┼▓▌░─
+		POP DE
+		POP BC			;┌▌▒▒▓─█▌┌┬▀┬ █▌▄┘░ ┼▀─▒▓┘░─
+		LD A,IYH
+		ADD A,IYL
+		CP IXH
+		JP C,LD_FILE3
+		SUB IXH
+LD_FILE3	LD IYH,A
+		JP C,LD_FILE4
+		PUSH HL			;▒▌∙░─█┬▀┬ ─└░┘▒ ┤─┐░⌠┤┼┬
+		CALL RDFATZP		;▐░▌≈┬▓─▀┬ █▌▄┘░ ▒▀┘└⌠·≥┘┐▌ ┼▀─▒▓┘░─
+		LD (AFILCLS),DE
+		LD (AFILCLS+2),BC
+		CALL LST_CLS		;▐░▌┌┘░┬▀┬, ─ ▄▌├┘▓ ²▓▌ ▐▌▒▀┘└█┬┴ ┼▀─▒▓┘░?
+		POP HL			;┌▌▒▒▓─█▌┌┬▀┬ ─└░┘▒ ┤─┐░⌠┤┼┬
+		RET C			;┘▒▀┬ ▐▌▒▀┘└█┬┴, ┌⌡∙▌└┬▄
+LD_FILE4	LD A,IXL
+		SUB IYL
+		RET Z
+		LD IXL,A
+		JP NZ,LD_FILE0
+		RET
+
+;≈▓┘█┬┘ 0 ▒┘┼▓▌░─ ▓┘┼⌠≥┘┐▌ ■─┴▀─
+READ0SECTOR	CALL GETFZAP
+		LD DE,0X14
 		ADD HL,DE
 		LD C,(HL)
 		INC HL
@@ -1308,92 +1449,6 @@ FHOB3		CALL CP_EXT		;опнбепйю он пюяьхпемхч
 		ADD HL,DE
 		LD E,(HL)
 		INC HL
-		LD D,(HL)		;BCDE=мнлеп йкюярепю тюикю хг нохяюрекъ
-		CALL REALSEC		;оепебндхл б пеюкэмши мнлеп яейрнпю
-		CALL LOADLST		;цпсгхл б оюлърэ оепбши яейрнп
-		POP DE			;бепмскх юдпея яйкюдхпнбюмхъ
-		CALL CP_HOBETA
-		JR C,FHOB1
-		LD HL,(TEK_ZAP)
-		EX DE,HL
-		LD (HL),E
-		INC HL
-		LD (HL),D		;онкнфхкх мнлеп дхпш б рюакхвйс
-		INC HL
-FHOB4		EX DE,HL
-		LD HL,(KOLFIND)
-		INC HL			;+1 мюидеммшу тюикнб
-		LD (KOLFIND),HL
-		LD A,D
-		CP HIGH (ADR_CAT)+0X10	;опнбепйю гю бшунд бшдекеммнцн астепю
-		JR NC,END_HOB		;ме анкее 2048 дхпнб/тюикнб б рейсыеи дхпейрнпхх
-FHOB1		PUSH DE
-		LD HL,(TEK_ZAP)
-		PUSH HL
-		CALL NXTLEGZ		;хыел якедсчыхи нохяюрекэ
-		LD BC,(TEK_ZAP)
-		POP HL
-		AND A
-		SBC HL,BC		;опнбепйю мю хглемемхе мнлепю нохяюрекъ
-		POP DE
-		JP NZ,FHOB2		;мнлеп ме хглемхкяъ, бшундхл
-END_HOB		LD BC,(KOLFIND)		;йнкхвеярбн мюидемшу тюикнб
-		RET
-
-CP_HOBETA	LD A,(BUF_512+8)
-		CP "C"			;опнбепйю врн щрн йнднбши акнй, ю ме врн-рн дпсцне
-		SCF
-		RET NZ
-		PUSH DE			;янупюмхкх юдпея яйкюдхпнбюмхъ дкъ дюкэмеиьеи опнбепйх
-		LD B,H
-		LD C,L			;бнгбпюыюеляъ б мювюкн яейрнпю
-		CALL HOB_CRC		;явхрюел CRC HOBETA гюцнкнбйю
-		LD A,(BC)
-		INC BC
-		LD E,A
-		LD A,(BC)
-		LD D,A			;б "DE" пюяявхрюммне CRC унаерю гюцнкнбйю
-		AND A			;б "HL" бгърне хг ялеыемхъ +0X0F нр мювюкю тюикю
-		SBC HL,DE		;япюбмхбюел 
-		POP DE			;еякх ме янбоюкн рн бнглнфмн щрн ме унаерю
-		SCF
-		RET NZ			;опносяйюел тюик
-		EXX
-		LD HL,(BUF_512+9)	;бгъкх юдпея гюцпсгйх
-		DEC HL			;дкъ гюцпсгйх люяхлсл 40960 аюир (160 яейрнпнб)
-		LD DE,(BUF_512+0X0B)	;бгъкх дкхмс йнднбнцн акнйю
-		ADD HL,DE		;опнбепъел бшунд гю опедекш нгс
-		EXX			;еякх бшкер гю опедек нгс
-		RET C			;опносяйюел тюик
-		EXX
-		LD HL,(BUF_512+9)
-		LD DE,0X6000		;опнбепъел юдпея гюцпсгйх
-		AND A			;юдпея гюцпсгйх ме днкфем ашрэ мхфе 0X6000
-		SBC HL,DE
-		EXX			;еякх юдпея гюцпсгйх мхфе 0X6000
-		RET
-
-;мю бунде: BC-юдпея гюцнкнбйю
-;мю бшунде: HL-HOBETA CRC
-HOB_CRC		LD A,0X0F
-		LD HL,0
-		EXX
-		LD E,0
-		EXX
-HOBCRC1		EX AF,AF'
-		LD A,(BC)
-		LD E,A
-		LD D,A
-		ADD HL,DE
-		EXX
-		LD A,E
-		INC E
-		EXX
-		LD E,A
-		LD D,0
-		ADD HL,DE
-		EX AF,AF'
-		INC BC
-		DEC A
-		JR NZ,HOBCRC1
-		RET
+		LD D,(HL)
+		CALL REALSEC
+		JP LOADLST

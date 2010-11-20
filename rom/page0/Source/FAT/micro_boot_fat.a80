@@ -1,5 +1,6 @@
 
 ;€ ‚•Ž„…: A-ŽŒ… ‚›€ŽƒŽ “‘’Ž‰‘’‚€
+;	BCDE-ŽŒ… Š‹€‘’…€ ‡€“‘Š€…ŒŽƒŽ ”€‰‹€
 		DI
 		AND A
 		LD HL,READ_SD
@@ -23,11 +24,12 @@ SETMASL		LD (MASSLAN),A
 		CALL LOADLST		;‡€ƒ“‡ˆ‹ˆ ‚ “”…
 		EXX
 		LD HL,(BUF_512+9)
-		LD (ASTART),HL		;“‘’€Ž‚Š€ €„…‘€ ‡€ƒ“‡Šˆ
+;		LD (ASTART),HL		;“‘’€Ž‚Š€ €„…‘€ ‡€ƒ“‡Šˆ
+		LD (0X5D45),HL
 		LD HL,(BUF_512+0X0B)
 		LD (LENGHT),HL		;“‘’€Ž‚Š€ „‹ˆ› ”€‰‹€ ‚ €‰’€•
 		LD DE,0X11
-		ADD HL,DE
+		ADD HL,DE		;Ž“‘Š HOBETA ‡€ƒŽ‹Ž‚Š€
 		LD A,L
 		AND A
 		JR Z,READ01		;…‘‹ˆ Œ‹€„˜ˆ‰ €‰’ … 0
@@ -110,8 +112,9 @@ RUNLOAD		LD HL,0X2758
 		EXX
 		LD IY,0X5C3A
 		EI
-		JP 0
-ASTART		EQU $-2
+		JP 0X1B7D			;‡€“‘Š ………‘…Ž‰ …‰‘ˆŠ Žƒˆ
+;		JP 0
+;ASTART		EQU $-2
 
 LDIRBUF		LD HL,0X200-0X11
 		LD DE,(BUF_512+0X0B)

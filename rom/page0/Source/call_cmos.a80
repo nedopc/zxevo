@@ -121,15 +121,15 @@ SCD1		EX DE,HL
 ;€‘…—€’Š€ € Š€… ‚…Œ…ˆ, „€’› ˆ „Ÿ …„…‹ˆ
 PRINTTIME	LD A,(FLAGS)
 		AND 4
-		RET Z			;—€‘› … Ž€“†…›, ‚›•Ž„ˆŒ ˆ—…ƒŽ … ‚›‚Ž„Ÿ
+		RET Z				;—€‘› … Ž€“†…›, ‚›•Ž„ˆŒ ˆ—…ƒŽ … ‚›‚Ž„Ÿ
 		LD H,0X0C
 		CALL READCMOS
 		AND 0X10
-		RET Z			;…‘‹ˆ ‚…ŒŸ …™… … ŽŽ‚ˆ‹Ž‘œ, ‚›•Ž„ˆŒ ˆ—…ƒŽ … ‚›‚Ž„Ÿ
+		RET Z				;…‘‹ˆ ‚…ŒŸ …™… … ŽŽ‚ˆ‹Ž‘œ, ‚›•Ž„ˆŒ ˆ—…ƒŽ … ‚›‚Ž„Ÿ
 		LD H,0X11
 		CALL READCMOS
 		CP 0X55
-		RET Z			;Ž’Ž€†…ˆ… ‚›Š‹ž—…Ž, ‚›•Ž„ˆŒ ˆ—…ƒŽ … ‚›‚Ž„Ÿ
+		RET Z				;Ž’Ž€†…ˆ… ‚›Š‹ž—…Ž, ‚›•Ž„ˆŒ ˆ—…ƒŽ … ‚›‚Ž„Ÿ
 		DI
 		EXX
 		LD BC,TXT_TIME			;—’…ˆ… ˆ …Ž€‡Ž‚€ˆ… ‚…Œ…ˆ
