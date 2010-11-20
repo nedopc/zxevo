@@ -786,7 +786,7 @@ TCMOSMSGS
 	DW T_G
 
 THELP	   ;12345678901234567890123456789012
-	DB "Reset+key:     Space=TRDOS      "
+	DB "Key+RESET:     Space=TRDOS      "
 	DB "         CS=Basic128 SS=Basic48 "
 ;	DB "     CS+SS=Basic128 Space=TRDOS "
 	DB "D=Grass!512b(PSB^Halloween CC04)"
@@ -795,6 +795,7 @@ THELP	   ;12345678901234567890123456789012
 	DB "                                "
 	DB " In Gluk main menu: 1-4=drive,  "
 	DB " M=memory mode, W=on/off turbo  "
+	DB "Y=Virtual drive, V=TR-DOS drive "
 	DB " 8=on/off mouse, 9=on/off time  "
 	DB "    & uppercased option keys.   "
 	DB 0

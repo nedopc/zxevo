@@ -1,6 +1,6 @@
 
-K_P_P		EQU 0X505C		;€„…‘ ‚›‚Ž„€ ŒŽŽ•ŽŒ€
-K_P_A		EQU 0X5A5C		;€„…‘ ‚›‚Ž„€ €’ˆ“’Ž‚
+K_P_P		EQU 0X50BD		;€„…‘ ‚›‚Ž„€ ŒŽŽ•ŽŒ€
+K_P_A		EQU 0X5ABD		;€„…‘ ‚›‚Ž„€ €’ˆ“’Ž‚
 
 DRAW_KOSHAK	PUSH AF
 		ADD A,A
