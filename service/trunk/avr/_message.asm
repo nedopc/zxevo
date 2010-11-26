@@ -7,12 +7,8 @@
 ;
 ;------------------------------------------------------------------------------
 ;
-MLMSG_TITLE1:
-        .DW     MSG_TITLE1_RUS*2, MSG_TITLE1_ENG*2
-MSG_TITLE1_RUS:
-        .DB     "      Сервисная прошивка ZX Evolution "               ,0,0
-MSG_TITLE1_ENG:
-        .DB     "            ZX Evolution Service "                    ,0
+MSG_TITLE1:
+        .DB     "          ZX Evolution Test&Service "                 ,0,0
 ;width limited! "01234567890123456789012345678901234567890123456789012"
 ;
 ;------------------------------------------------------------------------------

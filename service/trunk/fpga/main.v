@@ -457,6 +457,7 @@ module main(
  reg flash_cs;              initial flash_cs = 1'b0;
  reg flash_oe;              initial flash_oe = 1'b0;
  reg flash_we;              initial flash_we = 1'b0;
+ reg flash_postinc;         initial flash_postinc = 1'b0;
  reg [7:0] flash_data_out;
  reg [10:0] scr_addr;       initial scr_addr = 11'h000;
  reg [7:0] scr_attr;        initial scr_attr = 8'h0f;
@@ -500,11 +501,15 @@ module main(
       FLASH_LOADDR:  flash_addr[7:0] <= indata;
       FLASH_MIDADDR: flash_addr[15:8] <= indata;
       FLASH_HIADDR:  flash_addr[18:16] <= indata[2:0];
-      FLASH_DATA:    flash_data_out <= indata;
+      FLASH_DATA:    begin
+                      flash_data_out <= indata;
+                      if (flash_postinc) flash_addr[13:0] <= flash_addr[13:0] + 14'd1;
+                     end
       FLASH_CTRL:    begin
                       flash_cs <= indata[0];
                       flash_oe <= indata[1];
                       flash_we <= indata[2];
+                      flash_postinc <= indata[3];
                      end
       SCR_LOADDR:    scr_addr[7:0] <= indata;
       SCR_HIADDR:    scr_addr[10:8] <= indata[2:0];

@@ -33,6 +33,13 @@ UARTDIRECT_INIT:
         RET
 ;
 ;--------------------------------------
+;
+UARTDIRECT_CRLF:
+        LDI     DATA,$0D
+        RCALL   UARTDIRECT_PUTCHAR
+        LDI     DATA,$0A
+;
+;--------------------------------------
 ;in:    DATA == передаваемый байт
 UARTDIRECT_PUTCHAR:
 UD_PCHR:INPORT  R0,UCSR1A

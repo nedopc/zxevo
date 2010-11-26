@@ -7,7 +7,7 @@ SCR_FADE:
         LDI     XH,1
         RCALL   SCR_SET_CURSOR
         LDI     TEMP,$77
-        LDIW    1219
+        LDIW    53*23
         RJMP    SCR_FILLLONG_ATTR
 ;
 ;--------------------------------------
@@ -33,8 +33,8 @@ SCR_BACKGND:
         LDI     XL,0
         LDI     XH,0
         RCALL   SCR_SET_CURSOR
-        LDIZ    MLMSG_TITLE1*2
-        RCALL   SCR_PRINTMLSTR
+        LDIZ    MSG_TITLE1*2
+        RCALL   SCR_PRINTSTRZ
         CALL    PRINT_SHORT_VERS
         LDIZ    MSG_TITLE2*2
         RJMP    SCR_PRINTSTRZ
@@ -154,7 +154,8 @@ WIND_4:
 ;
 ;--------------------------------------
 ;                        ┌──┬────────────────────── коорд.лев.верхн угола окна
-;                        │  │   ┌────────────────── ширина +2 (без учёта рамки и тени)
+;                        │  │   ┌────────────────── длина_строки + 2 =
+;                        │  │   │                   = ширина без учёта рамки и тени
 ;                        │  │   │    ┌───────────── количество пунктов меню
 ;                        │  │   │    │    ┌──────── атрибут для окна
 ;MENU_DESCRIPTOR:        │  │   │    │    │    ┌─── атрибут для курсора
@@ -172,7 +173,7 @@ WIND_4:
 ;               .DB     " Header of window "        \
 ;               .DB     "It's first item   "         > язык 1
 ;               .DB     "It's second item  "        /
-;                       ;123456789012345678 (ширина=18)
+;                       ;123456789012345678 (длина_строки=18)
 ;
 ; ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒   ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
 ; ▒▒▒▒┌── Заголовок окна ──┐▒▒▒▒▒   ▒▒▒▒┌─ Header of window ─┐▒▒▒▒▒
