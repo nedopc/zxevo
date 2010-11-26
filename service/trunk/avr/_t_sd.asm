@@ -123,8 +123,8 @@ T_SD10:
         SBR     FLAGS1,0B00000010
         RCALL   T_SD_CRLF_DC
         RCALL   T_SD_CRLF_DC
-        LDIZ    MLMSG_TITLE1*2
-        CALL    PRINTMLSTR
+        LDIZ    MSG_TITLE1*2
+        CALL    PRINTSTRZ
         CALL    PRINT_SHORT_VERS
         RCALL   T_SD_CRLF_DC
         SBR     FLAGS1,0B00000110

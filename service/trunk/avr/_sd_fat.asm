@@ -23,6 +23,7 @@ FAT_MPHWOST:    .BYTE   1       ;кол-во секторов в последнем кластере
 FAT_KOL_CLS:    .BYTE   4       ;кол-во кластеров файла минус 1
 FAT_LASTSECFLAG:.BYTE   1
 FAT_ERRHANDLER: .BYTE   2
+FAT_LST0ZAP:    .BYTE   4
 .CSEG
 ;
 CMD00:  .DB     $40,$00,$00,$00,$00,$95
@@ -104,7 +105,12 @@ SDINIT9:STS     SD_CARDTYPE,TEMP
 ;
 ; - - - - - - - - - - - - - - - - - - -
 ;поиск FAT, инициализация переменных
-WC_FAT: LDIW    0
+WC_FAT: LDIZ    FAT_LST0ZAP
+        ST      Z+,FF
+        ST      Z+,FF
+        ST      Z+,FF
+        ST      Z,FF
+        LDIW    0
         LDIX    0
         RCALL   LOADLST
         RCALL   FAT_CHKSIGN
@@ -117,30 +123,26 @@ WC_FAT1:LDI     ZL,$BE
         BRNE    RDFAT05
         LDI     ZL,$C2
         LD      DATA,Z
-        LDI     TEMP,0
         CPI     DATA,$01
         BREQ    RDFAT06
-        LDI     TEMP,2
-        CPI     DATA,$0B
-        BREQ    RDFAT06
-        CPI     DATA,$0C
-        BREQ    RDFAT06
-        LDI     TEMP,1
         CPI     DATA,$04
         BREQ    RDFAT06
         CPI     DATA,$06
         BREQ    RDFAT06
+        CPI     DATA,$0B
+        BREQ    RDFAT06
+        CPI     DATA,$0C
+        BREQ    RDFAT06
         CPI     DATA,$0E
         BRNE    RDFAT05
-RDFAT06:STS     FAT_CAL_FAT,TEMP
-        LDI     ZL,$C6
+RDFAT06:LDI     ZL,$C6
         LD      WL,Z+
         LD      WH,Z+
         LD      XL,Z+
         LD      XH,Z
         RJMP    RDFAT00
 RDFAT05:LDIZ    BUF4FAT
-        LDD     BITS,Z+$0D
+        LDD     BITS,Z+13       ;BPB_SecPerClus
         LDI     DATA,0
         LDI     TEMP,0
         LDI     COUNT,8
@@ -151,26 +153,26 @@ RDF051: ROR     BITS
         DEC     DATA
         BRNE    RDF052
         INC     TEMP
-RDF052: LDD     DATA,Z+$0E
-        LDD     R0,Z+$0F
+RDF052: LDD     DATA,Z+14       ;BPB_RsvdSecCnt
+        LDD     R0,Z+15         ;BPB_RsvdSecCnt
         OR      DATA,R0
         BREQ    RDF053
         INC     TEMP
-RDF053: LDD     DATA,Z+$13
-        LDD     R0,Z+$14
+RDF053: LDD     DATA,Z+19       ;BPB_TotSec16
+        LDD     R0,Z+20         ;BPB_TotSec16
         OR      DATA,R0
         BRNE    RDF054
         INC     TEMP
-RDF054: LDD     DATA,Z+$20
-        LDD     R0,Z+$21
+RDF054: LDD     DATA,Z+32       ;BPB_TotSec32
+        LDD     R0,Z+33         ;BPB_TotSec32
         OR      DATA,R0
-        LDD     R0,Z+$22
+        LDD     R0,Z+34         ;BPB_TotSec32
         OR      DATA,R0
-        LDD     R0,Z+$23
+        LDD     R0,Z+35         ;BPB_TotSec32
         OR      DATA,R0
         BRNE    RDF055
         INC     TEMP
-RDF055: LDD     DATA,Z+$15
+RDF055: LDD     DATA,Z+21       ;BPB_Media
         ANDI    DATA,$F0
         CPI     DATA,$F0
         BRNE    RDF056
@@ -178,8 +180,8 @@ RDF055: LDD     DATA,Z+$15
 RDF056: CPI     TEMP,4
         BREQ    RDF057
         RJMP    SDERR3
-RDF057: STS     FAT_CAL_FAT,FF
-        LDIW    0
+;
+RDF057: LDIW    0
         LDIX    0
 RDFAT00:STSW    FAT_STARTRZ+0
         STSX    FAT_STARTRZ+2
@@ -188,54 +190,51 @@ RDFAT00:STSW    FAT_STARTRZ+0
         BREQ    RDF011
         RJMP    SDERR3
 RDF011: LDIZ    BUF4FAT
-        LDD     DATA,Z+11
+        LDD     DATA,Z+11       ;BPB_BytsPerSec
         TST     DATA
         BRNE    SDERR4
-        LDD     DATA,Z+12
+        LDD     DATA,Z+12       ;BPB_BytsPerSec
         CPI     DATA,$02
         BREQ    RDF012
 SDERR4: LDI     DATA,4  ;ошибка FAT (сектор не 512 байт)
         RJMP    SD_ERROR
 RDF012: LDIX    0
-        LDD     WL,Z+22
-        LDD     WH,Z+23         ;bpb_fatsz16
+        LDD     WL,Z+22         ;BPB_FATSz16
+        LDD     WH,Z+23         ;BPB_FATSz16
         MOV     DATA,WH
         OR      DATA,WL
-        BRNE    RDFAT01         ;если не fat12/16 (bpb_fatsz16=0)
-        LDD     WL,Z+36         ;то берем bpb_fatsz32 из смещения +36
-        LDD     WH,Z+37
-        LDD     XL,Z+38
-        LDD     XH,Z+39
+        BRNE    RDFAT01         ;если BPB_FATSz16==0 то берем BPB_FATSz32
+        LDD     WL,Z+36         ;BPB_FATSz32
+        LDD     WH,Z+37         ;BPB_FATSz32
+        LDD     XL,Z+38         ;BPB_FATSz32
+        LDD     XH,Z+39         ;BPB_FATSz32
 RDFAT01:STSW    FAT_SEC_FAT+0
-        STSX    FAT_SEC_FAT+2   ;число секторов на fat-таблицу
+        STSX    FAT_SEC_FAT+2   ;число секторов на FAT-таблицу
         LDIX    0
-        LDD     WL,Z+19
-        LDD     WH,Z+20         ;bpb_totsec16
+        LDD     WL,Z+19         ;BPB_TotSec16
+        LDD     WH,Z+20         ;BPB_TotSec16
         MOV     DATA,WH
         OR      DATA,WL
-        BRNE    RDFAT02         ;если не fat12/16 (bpb_totsec16=0)
-        LDD     WL,Z+32         ;то берем из bpb_totsec32 смещения +32
-        LDD     WH,Z+33
-        LDD     XL,Z+34
-        LDD     XH,Z+35
+        BRNE    RDFAT02         ;если BPB_TotSec16==0 то берем из BPB_TotSec32
+        LDD     WL,Z+32         ;BPB_TotSec32
+        LDD     WH,Z+33         ;BPB_TotSec32
+        LDD     XL,Z+34         ;BPB_TotSec32
+        LDD     XH,Z+35         ;BPB_TotSec32
 RDFAT02:STSW    FAT_SEC_DSC+0
         STSX    FAT_SEC_DSC+2   ;к-во секторов на диске/разделе
 ;вычисляем rootdirsectors
-        LDD     WL,Z+17
-        LDD     WH,Z+18         ;bpb_rootentcnt
+        LDD     WL,Z+17         ;BPB_RootEntCnt
+        LDD     WH,Z+18         ;BPB_RootEntCnt
         LDIX    0
         MOV     DATA,WH
-        OR      DATA,WL
-        BREQ    RDFAT03
+        OR      DATA,WL         ;в FAT32 поле BPB_RootEntCnt всегда 0
+        BREQ    RDFAT03         ;поэтому для FAT32 RootDirSectors всегда 0
         LDI     DATA,$10
         RCALL   BCDE_A
-        MOVW    XL,WL           ;это реализована формула
-                                ;rootdirsectors = ( (bpb_rootentcnt*32)+(bpb_bytspersec-1) )/bpb_bytspersec
-                                ;в X rootdirsectors
-                                ;если fat32, то X=0 всегда
-RDFAT03:PUSH    XH
+        MOVW    XL,WL
+RDFAT03:PUSH    XH              ;RootDirSectors в X
         PUSH    XL
-        LDD     DATA,Z+16       ;bpb_numfats
+        LDD     DATA,Z+16       ;BPB_NumFATs
         STS     FAT_MANYFAT,DATA
         LDSW    FAT_SEC_FAT+0
         LDSX    FAT_SEC_FAT+2
@@ -248,59 +247,71 @@ RDF031: LSL     WL
         BRNE    RDF031
         POP     TMP2
         POP     TMP3
-                                ;полный размер fat-области в секторах
-        RCALL   HLDEPBC         ;прибавили rootdirsectors
-        LDD     TMP2,Z+14
-        LDD     TMP3,Z+15       ;bpb_rsvdseccnt
+                                ;полный размер FAT-области в секторах
+        RCALL   HLDEPBC         ;прибавили RootDirSectors
+        LDD     TMP2,Z+14       ;BPB_RsvdSecCnt
+        LDD     TMP3,Z+15       ;BPB_RsvdSecCnt
         STS     FAT_RSVDSEC+0,TMP2
         STS     FAT_RSVDSEC+1,TMP3
-        RCALL   HLDEPBC         ;прибавили bpb_resvdseccnt
+        RCALL   HLDEPBC         ;прибавили BPB_RsvdSecCnt
         STSW    FAT_FRSTDAT+0
         STSX    FAT_FRSTDAT+2   ;положили номер первого сектора данных
         LDIZ    FAT_SEC_DSC
         RCALL   BCDEHLM         ;вычли из полного к-ва секторов раздела
         LDIZ    BUF4FAT
-        LDD     DATA,Z+13
+        LDD     DATA,Z+13       ;BPB_SecPerClus
         CPI     DATA,65
         BRCS    RDF032
-        RJMP    SDERR4  ;ошибка FAT (кластер>32Kb)
+        RJMP    SDERR4  ;ошибка FAT (кластер>32Kb, ограничения флешера)
 RDF032: STS     FAT_BYTSSEC,DATA
         RCALL   BCDE_A          ;разделили на к-во секторов в кластере
         STSW    FAT_CLS_DSC+0
         STSX    FAT_CLS_DSC+2   ;положили кол-во кластеров на разделе
 
-        LDS     DATA,FAT_CAL_FAT
-        CPI     DATA,$FF
-        BRNE    RDFAT04
-        LDSW    FAT_CLS_DSC+0
-        LDSX    FAT_CLS_DSC+2
-        PUSHX
-        PUSHW
-        LSL     WL
-        ROL     WH
-        ROL     XL
-        ROL     XH
-        RCALL   RASCHET
-        LDI     DATA,1
-        POPW
-        POPX
-        BREQ    RDFAT04
-        LSL     WL
-        ROL     WH
-        ROL     XL
-        ROL     XH
-        LSL     WL
-        ROL     WH
-        ROL     XL
-        ROL     XH
-        RCALL   RASCHET
+;microsoft-recommended FAT type determination (FAT12 <4085; FAT16 <65525; else FAT32)
         LDI     DATA,2
-        BREQ    RDFAT04
-        CLR     DATA
+        TST     XH
+        BRNE    RDFAT04
+        TST     XL
+        BRNE    RDFAT04
+        CPI     WL,$F5
+        CPC     WH,FF
+        BRCC    RDFAT04
+        LDI     DATA,1
+        LDI     TEMP,$0F
+        CPI     WL,$F5
+        CPC     WH,TEMP
+        BRCC    RDFAT04
+        LDI     DATA,0
+;alternative FAT type determination
+;        PUSHX
+;        PUSHW
+;        LSL     WL
+;        ROL     WH
+;        ROL     XL
+;        ROL     XH
+;        RCALL   RASCHET
+;        LDI     DATA,1
+;        POPW
+;        POPX
+;        BREQ    RDFAT04
+;        LSL     WL
+;        ROL     WH
+;        ROL     XL
+;        ROL     XH
+;        LSL     WL
+;        ROL     WH
+;        ROL     XL
+;        ROL     XH
+;        RCALL   RASCHET
+;        LDI     DATA,2
+;        BREQ    RDFAT04
+;        CLR     DATA
 RDFAT04:STS     FAT_CAL_FAT,DATA
-;для fat12/16 вычисляем адрес первого сектора директории
-;для fat32 берем по смещемию +44
-;на выходе XW == сектор rootdir
+
+;для FAT12/16 вычисляем адрес первого сектора директории
+;для FAT32 берем по смещемию +44
+;на выходе XW == кластер rootdir
         LDIW    0
         LDIX    0
         TST     DATA
@@ -315,7 +326,7 @@ FSRROO2:STSW    FAT_ROOTCLS+0
         STSX    FAT_ROOTCLS+2   ;КЛАСТЕР root директории
         STSW    FAT_TEK_DIR+0
         STSX    FAT_TEK_DIR+2
-;FSRR121:
+
         PUSHW
         PUSHX
         LDSW    FAT_RSVDSEC
@@ -330,22 +341,24 @@ FSRROO2:STSW    FAT_ROOTCLS+0
         STSX    FAT_FATSTR1+2
         POPX
         POPW
-
+;
+;--------------------------------------
+;
+CALCKCLSDIR:
         LDI     TEMP,1
-        MOV     R0,WL                   
-        OR      R0,WH                   
-        OR      R0,XL                   
-        OR      R0,XH                   
-        BREQ    LASTCLS                 
-NEXTCLS:PUSH    TEMP                    
-        RCALL   RDFATZP                 
-        RCALL   LST_CLS                 
-        POP     TEMP                    
-        BRCC    LASTCLS                 
-        INC     TEMP                    
-        RJMP    NEXTCLS                 
-LASTCLS:STS     FAT_KCLSDIR,TEMP        
-
+        MOV     R0,WL
+        OR      R0,WH
+        OR      R0,XL
+        OR      R0,XH
+        BREQ    LASTCLS
+NEXTCLS:PUSH    TEMP
+        RCALL   RDFATZP
+        RCALL   LST_CLS
+        POP     TEMP
+        BRCC    LASTCLS
+        INC     TEMP
+        RJMP    NEXTCLS
+LASTCLS:STS     FAT_KCLSDIR,TEMP
         RET
 ;
 ;--------------------------------------
@@ -409,8 +422,30 @@ LOAD_DAT1:
 ;        RET
 ;
 ;--------------------------------------
+SDERR2: LDI     DATA,2  ;ошибка при чтении сектора
+SD_ERROR:
+        LDSZ    FAT_ERRHANDLER
+        IJMP
+;
+;--------------------------------------
 ;чтение сектора служ.инф. (FAT/DIR/...)
 LOADLST:
+        LDIZ    FAT_LST0ZAP
+        LD      DATA,Z+
+        CP      DATA,WL
+        BRNE    LOADLST2
+        LD      DATA,Z+
+        CP      DATA,WH
+        BRNE    LOADLST2
+        LD      DATA,Z+
+        CP      DATA,XL
+        BRNE    LOADLST2
+        LD      DATA,Z+
+        CP      DATA,XH
+        BREQ    LOADLST9
+LOADLST2:
+        STSW    FAT_LST0ZAP+0
+        STSX    FAT_LST0ZAP+2
         SBRS    FLAGS1,3
         RJMP    LOADLST1
         PUSH    FLAGS1
@@ -435,14 +470,9 @@ LOADLST1:
         SBRS    FLAGS1,3
         RET
         CALL    UART_DUMP512
+LOADLST9:
         LDIZ    BUF4FAT
         RET
-;
-;--------------------------------------
-SDERR2: LDI     DATA,2  ;ошибка при чтении сектора
-SD_ERROR:
-        LDSZ    FAT_ERRHANDLER
-        IJMP
 ;
 ;--------------------------------------
 ;чтение сектора dir по номеру описателя (W)

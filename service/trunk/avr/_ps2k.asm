@@ -17,7 +17,7 @@
 .EQU    PS2K_BIT_PARITY =0
 .EQU    PS2K_BIT_EXTKEY =1      ; расш.код
 .EQU    PS2K_BIT_RELEASE=2      ; отпускание
-.EQU    PS2K_BIT_ACKBIT =3      ; принят ACK-бит
+.EQU    PS2K_BIT_ACKBIT =3      ; окончание передачи
 .EQU    PS2K_BIT_TX     =7      ; передача
 .EQU    PS2K_BIT_READY  =7
 
@@ -250,9 +250,10 @@ INT4TXP:PS2K_DATALINE_UP
 INT4TXS:PS2K_DATALINE_UP
         INC     COUNT
         RJMP    INT4_EXIT
-;ack-bit
-INT4TXA:CLR     TEMP
-        SBIS    PIND,6   ; data line
+;здесь раньше проверялся ack-bit, но CHRV знает ;)
+; где есть такие клавиатуры, которые не выдают этот бит.
+INT4TXA:;CLR     TEMP
+        ;SBIS    PIND,6   ; data line
         LDI     TEMP,(1<<PS2K_BIT_ACKBIT)
         CLR     DATA
         CLR     COUNT
@@ -317,6 +318,7 @@ PS2K_SEND0:
 
         CLI
         PS2K_CLOCKLINE_DOWN
+        PS2K_DATALINE_DOWN
         STS     PS2K_DATA,DATA
         LDI     TEMP,(1<<PS2K_BIT_TX)
         STS     PS2K_FLAGS,TEMP
@@ -327,7 +329,7 @@ PS2K_SEND0:
         SEI
         DELAY_US 100
         PS2K_DATALINE_DOWN
-        DELAY_US 50
+        DELAY_US 500
         LDIZ    PS2K_TIMEOUT
         LDIW    15
         CALL    SET_TIMEOUT_MS

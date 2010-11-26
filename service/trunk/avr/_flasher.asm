@@ -266,9 +266,14 @@ F_IN2:  LDI     TEMP,FLASH_MIDADDR
 ;       Z - куда (в ОЗУ AVR-а)
 ;       X - сколько байт
 F_READFLASH:; + ещё посчитать crc32, + ещё ...
+        LDI     TEMP,FLASH_CTRL
+        LDI     DATA,0B00001011
+        RCALL   FPGA_REG
         CLR     WL
-F_RDFL1:RCALL   F_IN
-        ST      Z+,DATA
+        RCALL   F_IN
+        RJMP    F_RDFL2
+F_RDFL1:RCALL   FPGA_SAME_REG
+F_RDFL2:ST      Z+,DATA
         AND     COUNT,DATA
         CALL    CRC32_UPDATE
         ADIW    WL,1
@@ -446,9 +451,15 @@ FL_DET_ROM_2:
         ADDI    WH,$04
         LDH     TMP2,FLSH_ADR2
         LDIX    $3800
+        LDI     TEMP,FLASH_CTRL
+        LDI     DATA,0B00001011
+        RCALL   FPGA_REG
         LDS     COUNT,FL_TMP2
-FL_CHKEMPT1:
         RCALL   F_IN
+        RJMP    FL_CHKEMPT2
+FL_CHKEMPT1:
+        RCALL   FPGA_SAME_REG
+FL_CHKEMPT2:
         AND     COUNT,DATA
         RCALL   CRC32_UPDATE
         ADIW    WL,1
@@ -940,8 +951,13 @@ FL_EX45:STH     FLSH_TEMP0,XL
 
         LDIZ    BUFSECT
         LDIX    512
-FL_EX47:RCALL   F_IN2
-        LD      TEMP,Z+
+        LDI     TEMP,FLASH_CTRL
+        LDI     DATA,0B00001011
+        CALL    FPGA_REG
+        RCALL   F_IN2
+        RJMP    FL_EX48
+FL_EX47:CALL    FPGA_SAME_REG
+FL_EX48:LD      TEMP,Z+
         CP      DATA,TEMP
         BREQ    FL_EX46
         STH     FLSH_TEMP2,ONE
@@ -1489,6 +1505,7 @@ FP_RD_DIR:
         STH     FLFP_TOP,NULL
         STH     FLFP_SELECT,NULL
 
+        CALL    CALCKCLSDIR
         LDIW    0
         CALL    RDDIRSC
 ;поиск файла в директории

@@ -1,6 +1,6 @@
 .NOLIST
-.INCLUDE "M128DEF.INC"
-.INCLUDE "_MACROS.ASM"
+.INCLUDE "m128def.inc"
+.INCLUDE "_macros.asm"
 .LIST
 .LISTMAC
 
@@ -156,16 +156,16 @@ EE_LANG:        .DB     $00
 ;
 ;--------------------------------------
 ;
-.INCLUDE "_MESSAGE.INC"
-.INCLUDE "_T_SD.ASM"
-.INCLUDE "_UART.ASM"
-.INCLUDE "_TIMERS.ASM"
-.INCLUDE "_PINTEST.ASM"
-.INCLUDE "_PS2K.ASM"
-.INCLUDE "_T_PS2K.ASM"
-.INCLUDE "_T_PS2M.ASM"
-.INCLUDE "_OUTPUT.ASM"
-.INCLUDE "_SCREEN.ASM"
+.INCLUDE "_message.inc"
+.INCLUDE "_t_sd.asm"
+.INCLUDE "_uart.asm"
+.INCLUDE "_timers.asm"
+.INCLUDE "_pintest.asm"
+.INCLUDE "_ps2k.asm"
+.INCLUDE "_t_ps2k.asm"
+.INCLUDE "_t_ps2m.asm"
+.INCLUDE "_output.asm"
+.INCLUDE "_screen.asm"
 ;
 ;--------------------------------------
 ;обмен с регистрами в FPGA
@@ -211,15 +211,15 @@ EXT_INT6:
 ;
 ;--------------------------------------
 ;
-.INCLUDE "_SD_LOWL.ASM"
-.INCLUDE "_T_ZXKBD.ASM"
-.INCLUDE "_T_BEEP.ASM"
-.INCLUDE "_SD_FAT.ASM"
-.INCLUDE "_DEPACK.ASM"
-.INCLUDE "_FLASHER.ASM"
-.INCLUDE "_T_VIDEO.ASM"
-.INCLUDE "_T_DRAM.ASM"
-.INCLUDE "_MISC.ASM"
+.INCLUDE "_sd_lowl.asm"
+.INCLUDE "_t_zxkbd.asm"
+.INCLUDE "_t_beep.asm"
+.INCLUDE "_sd_fat.asm"
+.INCLUDE "_depack.asm"
+.INCLUDE "_flasher.asm"
+.INCLUDE "_t_video.asm"
+.INCLUDE "_t_dram.asm"
+.INCLUDE "_misc.asm"
 ;
 ;--------------------------------------
 ;
@@ -267,9 +267,9 @@ RDE1:   LSL     DATA
         OUTPORT PORTF,TEMP
         OUTPORT DDRF,TEMP
 
-        LDI     TEMP,      0B11101111
+        LDI     TEMP,      0B11111111
         OUT     PORTE,TEMP
-        LDI     TEMP,      0B00010000
+        LDI     TEMP,      0B00000000
         OUT     DDRE,TEMP
 
         LDI     TEMP,      0B11111111
@@ -427,10 +427,10 @@ POWER_STATUS:
 .NOLIST
         .ORG    $7F80
 TABL_SINUS:
-.INCLUDE "SIN256.INC"
+.INCLUDE "sin256.inc"
         .ORG    $8000
 PACKED_FPGA:
-.INCLUDE "FPGA.INC"
+.INCLUDE "fpga.inc"
 ;
 ;--------------------------------------
 ;
