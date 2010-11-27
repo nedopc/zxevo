@@ -8,10 +8,15 @@
  *
  * @subsection current Current version.
  *
+ * - "NumLock" switch mode to beeper/pwm or tapeout ("NumLock" led light on tapeout mode).
+ * - Create full translation map (0x00-0x7f for extended scan codes).
+ *
+ * @subsection ver_2010_10_17 Version 17.10.2010
+ *
  * - "F9","F10","F11" on PS/2 keyboard not used for reset function.
  * - "F12" on PS/2 keyboard soft/hard reset. Short press (<5sec) - soft reset, long press (5sec) - hard reset.
  * - "Ctrl-Alt-Del" on PS/2 keyboard reset ZX (hard reset). If all keys is mapped to ZX keyboard - function not work.
- * - Create translating map (PS/2 to ZX keyboard) in eeprom (default in progmem).
+ * - Create translation map (PS/2 to ZX keyboard) in eeprom (default in progmem).
  * - Fix PS/2 mouse and keyboard send mode (without 'delay' function).
  * - Support load from tape input.
  *
@@ -74,6 +79,8 @@ extern volatile UBYTE flags_register;
 extern volatile UBYTE modes_register;
 /** VGA mode (0 - not set/1 - set). */
 #define MODE_VGA 0x01
+/** Tapeout mode (0 - beeper or pwm mode/1 - tapeout). */
+#define MODE_TAPEOUT 0x02
 
 /** Data buffer. */
 extern UBYTE dbuf[];

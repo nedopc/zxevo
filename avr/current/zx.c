@@ -298,9 +298,9 @@ void to_zx(UBYTE scancode, UBYTE was_E0, UBYTE was_release)
 
 	if( was_E0 )
 	{
-		if( (scancode>=0x60) && (scancode<=0x7F) )
+		if( scancode <= 0x7F )
 		{
-			tbldisp = (scancode-0x60)*2;
+			tbldisp = scancode*2;
 			tblptr = kbmap_E0 + tbldisp;
 			tbl1 = *( tblptr++ );
 			tbl2 = *( tblptr );
@@ -309,15 +309,6 @@ void to_zx(UBYTE scancode, UBYTE was_E0, UBYTE was_release)
 		//additional functionality from ps/2 keyboard
 		switch( scancode )
 		{
-			// keypad /
-			case 0x4A:
-				tbl1 = KEY_SS;
-				tbl2 = KEY_V;
-				break;
-			// keypad enter
-			case 0x5A:
-				tbl1 = KEY_EN;
-				break;
 			//Print Screen
 			case 0x7C:
 				//set/reset NMI
@@ -339,7 +330,10 @@ void to_zx(UBYTE scancode, UBYTE was_E0, UBYTE was_release)
 	}
 	else
 	{
-		if( scancode<=0x7F )
+		//F7 code (0x83) converted to 0x7F
+		if( scancode == 0x83 ) scancode = 0x7F;
+
+		if( scancode <= 0x7F )
 		{
 			tbldisp = scancode*2;
 			tblptr = kbmap + tbldisp;
@@ -353,7 +347,12 @@ void to_zx(UBYTE scancode, UBYTE was_E0, UBYTE was_release)
 			//Scroll Lock
 			case 0x7E:
 				//check key of vga mode switcher
-				if ( !was_release ) zx_vga_switcher();
+				if ( !was_release ) zx_mode_switcher(MODE_VGA);
+				break;
+			//Num Lock
+			case 0x77:
+				//check key of tapeout mode switcher
+				if ( !was_release ) zx_mode_switcher(MODE_TAPEOUT);
 				break;
 		   	//Left Shift
 		   	case  0x12:
@@ -407,11 +406,11 @@ void update_keys(UBYTE zxcode, UBYTE was_release)
 		if( !zx_fifo_isfull() )
 			zx_fifo_put(CLRKYS);
 	}
-	else if( zxcode>=RSTSYS ) // resets - press and release
-	{
-		if( !zx_fifo_isfull() )
-			zx_fifo_put( (was_release ? 0 : PRESS_MASK) | zxcode );
-	}
+//	else if( zxcode>=RSTSYS ) // resets - press and release
+//	{
+//		if( !zx_fifo_isfull() )
+//			zx_fifo_put( (was_release ? 0 : PRESS_MASK) | zxcode );
+//	}
 	else if( zxcode < 40 ); // ordinary keys too
 	{
 		if( was_release )
@@ -559,13 +558,13 @@ void zx_wait_task(UBYTE status)
 #endif	 */
 }
 
-void zx_vga_switcher(void)
+void zx_mode_switcher(UBYTE mode)
 {
-	//invert VGA mode
-	modes_register ^= MODE_VGA;
+	//invert mode
+	modes_register ^= mode;
 
 	//send configuration to FPGA
-	zx_spi_send(SPI_CONFIG_REG, modes_register&MODE_VGA, 0x7F);
+	zx_set_config((flags_register&FLAG_LAST_TAPE_VALUE)?SPI_TAPE_FLAG:0);
 
 	//save mode register to RTC NVRAM
 	rtc_write(RTC_COMMON_MODE_REG, modes_register);
@@ -577,5 +576,9 @@ void zx_vga_switcher(void)
 void zx_set_config(UBYTE flags)
 {
 	//send configuration to FPGA
-	zx_spi_send(SPI_CONFIG_REG, (modes_register&MODE_VGA) | (flags & ~MODE_VGA), 0x7F);
+	zx_spi_send(SPI_CONFIG_REG,
+		(modes_register&MODE_VGA) |
+		((modes_register&MODE_TAPEOUT)?SPI_TAPEOUT_MODE_FLAG:0) |
+		(flags & ~(MODE_VGA|SPI_TAPEOUT_MODE_FLAG)),
+		0x7F);
 }

@@ -57,10 +57,10 @@
 #define KEY_V  39
 //
 #define NO_KEY 0x7F
-#define RST_48 0x7E
-#define RST128 0x7D
-#define RSTRDS 0x7C
-#define RSTSYS 0x7B
+//#define RST_48 0x7E
+//#define RST128 0x7D
+//#define RSTRDS 0x7C
+//#define RSTSYS 0x7B
 #define CLRKYS 0x7A
 //
 

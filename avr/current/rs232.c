@@ -7,7 +7,7 @@
 
 //if want Log than comment next string
 #undef LOGENABLE
-#define LOGENABLE
+//#define LOGENABLE
 
 #define FOSC 11059200// Clock Speed
 #define BAUD115200 115200
@@ -79,7 +79,7 @@ void rs232_transmit( UBYTE data )
 	UDR1 = data;
 }
 
-#ifdef LOGENABLE
+//#ifdef LOGENABLE
 void to_log(char* ptr)
 {
 	while( (*ptr)!=0 )
@@ -88,7 +88,7 @@ void to_log(char* ptr)
 		ptr++;
 	}
 }
-#endif
+//#endif
 
 
 //after DLL or DLM changing
