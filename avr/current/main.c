@@ -19,6 +19,9 @@
 #include "tape.h"
 #include "kbmap.h"
 
+//if want Log than comment next string
+#undef LOGENABLE
+
 /** FPGA data pointer [far address] (linker symbol). */
 extern ULONG fpga PROGMEM;
 

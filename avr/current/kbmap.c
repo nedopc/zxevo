@@ -13,27 +13,27 @@
 const UBYTE default_kbmap[] PROGMEM =
 {
 NO_KEY,NO_KEY, // 00
-NO_KEY,NO_KEY, //RST_48,NO_KEY, // 01  F9
+NO_KEY,NO_KEY, // 01 F9
 NO_KEY,NO_KEY, // 02
-NO_KEY,NO_KEY, // 03
-NO_KEY,NO_KEY, // 04
-NO_KEY,NO_KEY, // 05
-NO_KEY,NO_KEY, // 06
-NO_KEY,NO_KEY, //RSTSYS,NO_KEY, // 07 F12
+NO_KEY,NO_KEY, // 03 F5
+NO_KEY,NO_KEY, // 04 F3
+NO_KEY,NO_KEY, // 05 F1
+NO_KEY,NO_KEY, // 06 F2
+NO_KEY,NO_KEY, // 07 F12
 NO_KEY,NO_KEY, // 08
-NO_KEY,NO_KEY, //RST128,NO_KEY, // 09 F10
-NO_KEY,NO_KEY, // 0A
-NO_KEY,NO_KEY, // 0B
-NO_KEY,NO_KEY, // 0C
+NO_KEY,NO_KEY, // 09 F10
+NO_KEY,NO_KEY, // 0A F8
+NO_KEY,NO_KEY, // 0B F6
+NO_KEY,NO_KEY, // 0C F4
 KEY_CS,KEY_SP, // 0D TAB
 KEY_CS,KEY_1 , // 0E ~
 NO_KEY,NO_KEY, // 0F
 
 NO_KEY,NO_KEY, // 10
-NO_KEY,NO_KEY, // 11
+NO_KEY,NO_KEY, // 11 ALT
 KEY_CS,NO_KEY, // 12 LSHIFT
 NO_KEY,NO_KEY, // 13
-NO_KEY,NO_KEY, // 14
+NO_KEY,NO_KEY, // 14 LCTRL
 KEY_Q ,NO_KEY, // 15 Q
 KEY_1 ,NO_KEY, // 16 1
 NO_KEY,NO_KEY, // 17
@@ -138,19 +138,121 @@ KEY_5 ,NO_KEY, // 73 keypad 5
 KEY_6 ,NO_KEY, // 74 keypad 6
 KEY_8 ,NO_KEY, // 75 keypad 8
 CLRKYS,NO_KEY, // 76 ESC
-NO_KEY,NO_KEY, // 77
-NO_KEY,NO_KEY, //RSTRDS,NO_KEY, // 78 F11
+NO_KEY,NO_KEY, // 77 Num Lock
+NO_KEY,NO_KEY, // 78 F11
 KEY_SS,KEY_K , // 79 keypad +
 KEY_3 ,NO_KEY, // 7A keypad 3
 KEY_SS,KEY_J , // 7B keypad -
 KEY_SS,KEY_B , // 7C keypad *
 KEY_9 ,NO_KEY, // 7D keypad 9
 NO_KEY,NO_KEY, // 7E Scroll Lock
-NO_KEY,NO_KEY  // 7F
+NO_KEY,NO_KEY  // 7F F7 !!!Warning real code is 0x83 is (converted to 0x7F)
 };
 
 const UBYTE default_kbmap_E0[] PROGMEM =
 {
+NO_KEY,NO_KEY, // 00
+NO_KEY,NO_KEY, // 01
+NO_KEY,NO_KEY, // 02
+NO_KEY,NO_KEY, // 03
+NO_KEY,NO_KEY, // 04
+NO_KEY,NO_KEY, // 05
+NO_KEY,NO_KEY, // 06
+NO_KEY,NO_KEY, // 07
+NO_KEY,NO_KEY, // 08
+NO_KEY,NO_KEY, // 09
+NO_KEY,NO_KEY, // 0A
+NO_KEY,NO_KEY, // 0B
+NO_KEY,NO_KEY, // 0C
+NO_KEY,NO_KEY, // 0D
+NO_KEY,NO_KEY, // 0E
+NO_KEY,NO_KEY, // 0F
+
+NO_KEY,NO_KEY, // 10
+NO_KEY,NO_KEY, // 11 ALT GR
+NO_KEY,NO_KEY, // 12
+NO_KEY,NO_KEY, // 13
+NO_KEY,NO_KEY, // 14 RCTRL
+NO_KEY,NO_KEY, // 15
+NO_KEY,NO_KEY, // 16
+NO_KEY,NO_KEY, // 17
+NO_KEY,NO_KEY, // 18
+NO_KEY,NO_KEY, // 19
+NO_KEY,NO_KEY, // 1A
+NO_KEY,NO_KEY, // 1B
+NO_KEY,NO_KEY, // 1C
+NO_KEY,NO_KEY, // 1D
+NO_KEY,NO_KEY, // 1E
+NO_KEY,NO_KEY, // 1F LEFT WINDOWS
+
+NO_KEY,NO_KEY, // 20
+NO_KEY,NO_KEY, // 21 multimedia Volume -
+NO_KEY,NO_KEY, // 22
+NO_KEY,NO_KEY, // 23
+NO_KEY,NO_KEY, // 24
+NO_KEY,NO_KEY, // 25
+NO_KEY,NO_KEY, // 26
+NO_KEY,NO_KEY, // 27 RIGHT WINDOWS
+NO_KEY,NO_KEY, // 28
+NO_KEY,NO_KEY, // 29
+NO_KEY,NO_KEY, // 2A
+NO_KEY,NO_KEY, // 2B
+NO_KEY,NO_KEY, // 2C
+NO_KEY,NO_KEY, // 2D
+NO_KEY,NO_KEY, // 2E
+NO_KEY,NO_KEY, // 2F APPLICATION
+
+NO_KEY,NO_KEY, // 30
+NO_KEY,NO_KEY, // 31
+NO_KEY,NO_KEY, // 32 multimedia Volume +
+NO_KEY,NO_KEY, // 33
+NO_KEY,NO_KEY, // 34 multimedia Play/Pause
+NO_KEY,NO_KEY, // 35
+NO_KEY,NO_KEY, // 36
+NO_KEY,NO_KEY, // 37 POWER
+NO_KEY,NO_KEY, // 38
+NO_KEY,NO_KEY, // 39
+NO_KEY,NO_KEY, // 3A
+NO_KEY,NO_KEY, // 3B multimedia Stop
+NO_KEY,NO_KEY, // 3C
+NO_KEY,NO_KEY, // 3D
+NO_KEY,NO_KEY, // 3E
+NO_KEY,NO_KEY, // 3F SLEEP
+
+NO_KEY,NO_KEY, // 40
+NO_KEY,NO_KEY, // 41
+NO_KEY,NO_KEY, // 42
+NO_KEY,NO_KEY, // 43
+NO_KEY,NO_KEY, // 44
+NO_KEY,NO_KEY, // 45
+NO_KEY,NO_KEY, // 46
+NO_KEY,NO_KEY, // 47
+NO_KEY,NO_KEY, // 48
+NO_KEY,NO_KEY, // 49
+KEY_SS,KEY_V , // 4A keypad /
+NO_KEY,NO_KEY, // 4B
+NO_KEY,NO_KEY, // 4C
+NO_KEY,NO_KEY, // 4D
+NO_KEY,NO_KEY, // 4E
+NO_KEY,NO_KEY, // 4F
+
+NO_KEY,NO_KEY, // 50 multimedia Active
+NO_KEY,NO_KEY, // 51
+NO_KEY,NO_KEY, // 52
+NO_KEY,NO_KEY, // 53
+NO_KEY,NO_KEY, // 54
+NO_KEY,NO_KEY, // 55
+NO_KEY,NO_KEY, // 56
+NO_KEY,NO_KEY, // 57
+NO_KEY,NO_KEY, // 58
+NO_KEY,NO_KEY, // 59
+KEY_EN,NO_KEY, // 5A keypad ENTER
+NO_KEY,NO_KEY, // 5B
+NO_KEY,NO_KEY, // 5C
+NO_KEY,NO_KEY, // 5D
+NO_KEY,NO_KEY, // 5E WAKE
+NO_KEY,NO_KEY, // 5F
+
 NO_KEY,NO_KEY, // 60
 NO_KEY,NO_KEY, // 61
 NO_KEY,NO_KEY, // 62
@@ -187,7 +289,7 @@ NO_KEY,NO_KEY  // 7F
 };
 
 //for saving modified kmap (2bytes for signature 'KB')
-UBYTE saved_kbmap[2 + sizeof(default_kbmap) + sizeof(default_kbmap_E0)] EEMEM;
+UBYTE saved_kbmap[sizeof(default_kbmap) + sizeof(default_kbmap_E0)] EEMEM;
 
 //pointers to map
 UBYTE* kbmap;
@@ -238,7 +340,9 @@ void kbmap_init(void)
 	if ( (dbuf[0]=='K') && (dbuf[1]=='B') )
 	{
 		//read from eeprom
-		eeprom_read_block(kbmap, saved_kbmap+2, sizeof(saved_kbmap)-2);
+		eeprom_read_block(kbmap, saved_kbmap, sizeof(saved_kbmap));
+		kbmap[0] = NO_KEY ;
+		kbmap[1] = NO_KEY ;
 #ifdef LOGENABLE
 		to_log("KBMAP:EEPROM\r\n");
 #endif
