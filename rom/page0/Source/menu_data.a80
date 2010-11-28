@@ -275,14 +275,33 @@ TXT_ERRVIRTUAL	DB 0X0D,3,"Virtual drive not formatted"
 
 ;==============================UPDATE ROM=============================
 UPDATE_WIN	;X,Y,V,H,C,C,ADR_CODE*2,F,X,Y,V,H,ADR_TXT*2,TEK_WIN,KOL_NUM*2,TEK_NUMF*2
-		DB 0X0A,0X08,0X05,0X12,0X17,0X00
+		DB 0X0A,0X08,0X0B,0X12,0X17,0X00
 		DW 0
-		DB 0,0,0,0,0
+		DB %00100000,0,0,0,0
 		DW TXT_UPDATEWIN
 		DB 0
 		DW 0,0,0
-TXT_UPDATEWIN	DB 0X0D,3,"Update FLASH ROM",0
+TXT_UPDATEWIN	DB 0X14,1,"Update FLASH ROM",0X14,0,0X0D
+		DB 0X0D,3,"Page 0"
+		DB 0X0D,3,"Page 1"
+		DB 0X0D,3,"Page 2"
+		DB 0X0D,3,"Page 3"
+		DB 0X0D,3,"Page 4"
+		DB 0X0D,3,"Page 5"
+		DB 0X0D,3,"Page 6"
+		DB 0X0D,3,"Page 7",0
 ;==============================UPDATE ROM=============================
+
+;===============================ERASE ROM=============================
+ERASE_ROM	;X,Y,V,H,C,C,ADR_CODE*2,F,X,Y,V,H,ADR_TXT*2,TEK_WIN,KOL_NUM*2,TEK_NUMF*2
+		DB 0X0C,0X0A,0X05,0X0A,0X17,0X00
+		DW 0
+		DB 0,0,0,0,0
+		DW TXT_ERASEROM
+		DB 0
+		DW 0,0,0
+TXT_ERASEROM	DB 0X0D,3,"Erase FLASH",0
+;===============================ERASE ROM=============================
 
 ;============================ëíêÄçàñÄ èéåéôà==========================
 WIN_HELP	;X,Y,V,H,C,C,ADR_CODE*2,F,X,Y,V,H,ADR_TXT*2,TEK_WIN,KOL_NUM*2,TEK_NUMF*2

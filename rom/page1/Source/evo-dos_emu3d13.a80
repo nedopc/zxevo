@@ -1,0 +1,7 @@
+
+;ŠŽŒˆ‹Ÿ–ˆŸ ’Ž‹œŠŽ ‘ ……•‚€’ŽŒ 3D13 ˆ €Œ„ˆ‘ŠŽŒ
+
+EMU3D2F		EQU 0
+PEREHVATFF	EQU 0
+
+		include evo-dos.a80
