@@ -1,5 +1,5 @@
 
-DD		EQU 20				;„€’€
+DD		EQU 28				;„€’€
 MM		EQU 11				;Œ…‘Ÿ–
 YY		EQU 10				;ƒŽ„
 DATA		EQU DD+(MM<<5)+(YY<<9)+0X8000	;“†… “€ŠŽ‚€Ž
