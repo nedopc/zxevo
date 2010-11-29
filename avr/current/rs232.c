@@ -9,7 +9,7 @@
 #undef LOGENABLE
 //#define LOGENABLE
 
-#define FOSC 11059200// Clock Speed
+#define FOSC 11059200 // Clock Speed
 #define BAUD115200 115200
 #define UBRR115200 (((FOSC/16)/BAUD115200)-1)
 
