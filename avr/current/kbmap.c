@@ -288,8 +288,8 @@ NO_KEY,NO_KEY, // 7E
 NO_KEY,NO_KEY  // 7F
 };
 
-//for saving modified kmap (2bytes for signature 'KB')
-UBYTE saved_kbmap[sizeof(default_kbmap) + sizeof(default_kbmap_E0)] EEMEM;
+//for loading user map (pointer to start eeprom)
+const void* saved_kbmap = (void*)0;
 
 //pointers to map
 UBYTE* kbmap;
@@ -313,25 +313,6 @@ void kbmap_init(void)
 #ifdef LOGENABLE
 	to_log("eeprom OK\r\n");
 #endif
-#ifdef LOGENABLE
-	{
-	char log_kb[]="K........\r\n";
-	ULONG curFpga = GET_FAR_ADDRESS(saved_kbmap);
-	UBYTE b = (UBYTE)((curFpga>>24)&0xFF);
-	log_kb[1] = ((b >> 4) <= 9 )?'0'+(b >> 4):'A'+(b >> 4)-10;
-	log_kb[2] = ((b & 0x0F) <= 9 )?'0'+(b & 0x0F):'A'+(b & 0x0F)-10;
-	b = (UBYTE)((curFpga>>16)&0xFF);
-	log_kb[3] = ((b >> 4) <= 9 )?'0'+(b >> 4):'A'+(b >> 4)-10;
-	log_kb[4] = ((b & 0x0F) <= 9 )?'0'+(b & 0x0F):'A'+(b & 0x0F)-10;
-	b = (UBYTE)((curFpga>>8)&0xFF);
-	log_kb[5] = ((b >> 4) <= 9 )?'0'+(b >> 4):'A'+(b >> 4)-10;
-	log_kb[6] = ((b & 0x0F) <= 9 )?'0'+(b & 0x0F):'A'+(b & 0x0F)-10;
-	b = (UBYTE)(curFpga&0xFF);
-	log_kb[7] = ((b >> 4) <= 9 )?'0'+(b >> 4):'A'+(b >> 4)-10;
-	log_kb[8] = ((b & 0x0F) <= 9 )?'0'+(b & 0x0F):'A'+(b & 0x0F)-10;
- 	to_log(log_kb);
-	}
-#endif
 
 	//read signature from eeprom
 	eeprom_read_block(dbuf, saved_kbmap, 2);
@@ -340,7 +321,7 @@ void kbmap_init(void)
 	if ( (dbuf[0]=='K') && (dbuf[1]=='B') )
 	{
 		//read from eeprom
-		eeprom_read_block(kbmap, saved_kbmap, sizeof(saved_kbmap));
+		eeprom_read_block(kbmap, saved_kbmap, sizeof(default_kbmap)+sizeof(default_kbmap_E0));
 		kbmap[0] = NO_KEY ;
 		kbmap[1] = NO_KEY ;
 #ifdef LOGENABLE
