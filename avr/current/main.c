@@ -30,6 +30,7 @@ volatile ULONG curFpga;
 
 // Common flag register.
 volatile UBYTE flags_register;
+volatile UBYTE flags_ex_register;
 
 // Common modes register.
 volatile UBYTE modes_register;
@@ -182,7 +183,9 @@ start:
 	ps2mouse_count = 12;
 	ps2mouse_initstep = 0;
 	ps2mouse_resp_count = 0;
+	ps2mouse_cmd = PS2MOUSE_CMD_SET_RESOLUTION;
 	flags_register = 0;
+	flags_ex_register = 0;
 	modes_register = 0;
 
 	//enable mouse

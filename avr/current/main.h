@@ -8,6 +8,13 @@
  *
  * @subsection current Current version.
  *
+ * - Keyboard mapping without using RAM.
+ * - Add setting resolution for PS/2 mouse [1..4]
+ *   (left and right mouse buttons and pad'*' - default [1], pad'+' - increment, pad'-' - decrement).
+ * - Add PS/2 mouse resolution saving to RTC register.
+ *
+ * @subsection ver_2010_11_29 Version 29.11.2010
+ *
  * - "NumLock" switch mode to beeper/pwm or tapeout ("NumLock" led light on tapeout mode).
  * - Create full translation map (0x00-0x7f for extended scan codes).
  *
@@ -74,6 +81,13 @@ extern volatile UBYTE flags_register;
 #define FLAG_LAST_TAPE_VALUE    0x40
 /** Hard reset flag (1 - enable hard reset). */
 #define FLAG_HARD_RESET         0x80
+
+/** Common flag register. */
+extern volatile UBYTE flags_ex_register;
+/** Ps2 mouse command (0 - not/1 - process). */
+#define FLAG_EX_PS2MOUSE_CMD    0x01
+/** Ps2 keyboard map (0 - default/1 - user). */
+#define FLAG_EX_PS2KEYBOARD_MAP 0x02
 
 /** Common modes register. */
 extern volatile UBYTE modes_register;
