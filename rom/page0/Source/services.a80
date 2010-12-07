@@ -1,7 +1,7 @@
 
-;LAST UPDATE: 06.12.2010 savelij
+;LAST UPDATE: 07.12.2010 savelij
 
-DD		EQU 6				;„€’€
+DD		EQU 7				;„€’€
 MM		EQU 12				;Œ…‘Ÿ–
 YY		EQU 10				;ƒŽ„
 DATA		EQU DD+(MM<<5)+(YY<<9)+0X8000	;“†… “€ŠŽ‚€Ž
@@ -199,12 +199,16 @@ CMPCFG2		JP (HL)
 RAM_CODE	LD BC,0X7FFD
 		XOR A
 		OUT (C),A
+		INC A
+		OUT (0XBF),A
 		LD BC,0X3FF7
 		LD A,0X81			;‘’€ˆ–€ …‰‘ˆŠ128
 		OUT (C),A
 		LD BC,0XFF77
 		LD A,0XAB
 		OUT (C),A
+		XOR A
+		OUT (0XBF),A
 NOATM_CODE	EXX
 		LD BC,0XEFF7
 		LD A,E
