@@ -85,9 +85,12 @@ void zx_task(UBYTE operation) // zx task, tracks when there is need to send new 
 		zx_clr_kb();
 
 		//detect if CTRL-ALT-DEL keys mapped
-		if ( ((kbmap[0x14*2] == NO_KEY) && (kbmap[0x14*2+1] == NO_KEY)) ||
-			 ((kbmap[0x11*2] == NO_KEY) && (kbmap[0x11*2+1] == NO_KEY)) ||
-			 ((kbmap_E0[0x11*2] == NO_KEY) && (kbmap[0x11*2+1] == NO_KEY)) )
+//		if ( ((kbmap[0x14*2] == NO_KEY) && (kbmap[0x14*2+1] == NO_KEY)) ||
+//			 ((kbmap[0x11*2] == NO_KEY) && (kbmap[0x11*2+1] == NO_KEY)) ||
+//			 ((kbmap_E0[0x11*2] == NO_KEY) && (kbmap[0x11*2+1] == NO_KEY)) )
+		if( (kbmap_get(0x14,0).tw == (UWORD)NO_KEY+(((UWORD)NO_KEY)<<8)) ||
+		    (kbmap_get(0x11,0).tw == (UWORD)NO_KEY+(((UWORD)NO_KEY)<<8)) ||
+			(kbmap_get(0x11,1).tw == (UWORD)NO_KEY+(((UWORD)NO_KEY)<<8)) )
 		{
 			//not mapped
 			kb_status &= ~KB_CTRL_ALT_DEL_MAPPED_MASK;
@@ -290,25 +293,24 @@ void zx_clr_kb(void)
 
 void to_zx(UBYTE scancode, UBYTE was_E0, UBYTE was_release)
 {
-	ULONG tbldisp;
-	UBYTE* tblptr;
-	UBYTE tbl1,tbl2;
+	KBMAP_VALUE t;
 
-	tbl1=tbl2=NO_KEY;
+	//F7 code (0x83) converted to 0x7F
+	if( !was_E0 && (scancode == 0x83) ) scancode = 0x7F;
+
+	//get zx map values
+	t = kbmap_get(scancode,was_E0);
 
 	if( was_E0 )
 	{
-		if( scancode <= 0x7F )
-		{
-			tbldisp = scancode*2;
-			tblptr = kbmap_E0 + tbldisp;
-			tbl1 = *( tblptr++ );
-			tbl2 = *( tblptr );
-		}
-
 		//additional functionality from ps/2 keyboard
 		switch( scancode )
 		{
+		   	//Alt Gr
+		   	case  0x11:
+				if ( !was_release ) kb_status |= KB_ALT_MASK;
+				else kb_status &= ~KB_ALT_MASK;
+				break;
 			//Print Screen
 			case 0x7C:
 				//set/reset NMI
@@ -323,24 +325,13 @@ void to_zx(UBYTE scancode, UBYTE was_E0, UBYTE was_release)
 				{
 					//hard reset
 					flags_register |= FLAG_HARD_RESET;
-					tbl1=tbl2=NO_KEY;
+					t.tb.b1=t.tb.b1=NO_KEY;
 				}
 				break;
-		}
+		}//switch
 	}
 	else
 	{
-		//F7 code (0x83) converted to 0x7F
-		if( scancode == 0x83 ) scancode = 0x7F;
-
-		if( scancode <= 0x7F )
-		{
-			tbldisp = scancode*2;
-			tblptr = kbmap + tbldisp;
-			tbl1 = *( tblptr++ );
-			tbl2 = *( tblptr );
-		}
-
 		//additional functionality from ps/2 keyboard
 		switch( scancode )
 		{
@@ -379,14 +370,20 @@ void to_zx(UBYTE scancode, UBYTE was_E0, UBYTE was_release)
 				if ( !was_release ) kb_status |= KB_F12_MASK;
 				else kb_status &= ~KB_F12_MASK;
 				break;
-		}
+			//keypad '+','-','*' - set ps2mouse resolution
+			case  0x79:
+			case  0x7B:
+			case  0x7C:
+				if ( !was_release ) ps2mouse_set_resolution(scancode);
+				break;
+		}//switch
 	}
 
-	if( tbl1!=NO_KEY )
+	if( t.tb.b1!=NO_KEY )
 	{
-		update_keys(tbl1,was_release);
+		update_keys(t.tb.b1,was_release);
 
-		if( tbl2!=NO_KEY ) update_keys(tbl2,was_release);
+		if( t.tb.b2!=NO_KEY ) update_keys(t.tb.b2,was_release);
 	}
 }
 

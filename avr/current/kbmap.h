@@ -65,12 +65,36 @@
 //
 
 /** Pointer to map. */
-extern UBYTE* kbmap;
+//extern UBYTE* kbmap;
 /** Pointer to map (extent E0). */
-extern UBYTE* kbmap_E0;
+//extern UBYTE* kbmap_E0;
+
+/** Pointer to default map. */
+//extern const UBYTE default_kbmap[];
+/** Pointer to default map (extent E0). */
+//extern const UBYTE default_kbmap_E0[];
 
 /** Init keyboard mapping. */
 void kbmap_init(void);
 
+/** Data type for map values. */
+typedef union
+{
+	struct
+	{
+		UBYTE b1;
+		UBYTE b2;
+	} tb;
+	UWORD tw;
+}
+KBMAP_VALUE;
+
+/**
+ * Get keyboard map value.
+ * @return map values
+ * @param scancode [in] - code from PS/2 keyboard
+ * @param was_E0 [in] - 0: code without prefix, >0: code with prefix E0
+ */
+KBMAP_VALUE kbmap_get(UBYTE scancode, UBYTE was_E0);
 
 #endif //__KB_MAP_H__

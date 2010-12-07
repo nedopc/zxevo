@@ -288,12 +288,17 @@ NO_KEY,NO_KEY, // 7E
 NO_KEY,NO_KEY  // 7F
 };
 
+/** User map offset in EEPROM */
+#define user_kbmap 0
+/** User map (extent E0) offset in EEPROM */
+#define user_kbmap_E0 512
+
 //for loading user map (pointer to start eeprom)
-const void* saved_kbmap = (void*)0;
+//const void* saved_kbmap = (void*)0;
 
 //pointers to map
-UBYTE* kbmap;
-UBYTE* kbmap_E0;
+//UBYTE* kbmap;
+//UBYTE* kbmap_E0;
 
 //if want Log than comment next string
 #undef LOGENABLE
@@ -301,8 +306,8 @@ UBYTE* kbmap_E0;
 void kbmap_init(void)
 {
 	//set pointers
-	kbmap = dbuf;
-	kbmap_E0 = dbuf + sizeof(default_kbmap);
+//	kbmap = dbuf;
+//	kbmap_E0 = dbuf + sizeof(default_kbmap);
 
 #ifdef LOGENABLE
 	to_log("kbmap_init start\r\n");
@@ -315,15 +320,17 @@ void kbmap_init(void)
 #endif
 
 	//read signature from eeprom
-	eeprom_read_block(dbuf, saved_kbmap, 2);
+//	eeprom_read_block(dbuf, saved_kbmap, 2);
 
 	//check signature
-	if ( (dbuf[0]=='K') && (dbuf[1]=='B') )
+	if ( (eeprom_read_byte((UBYTE*)user_kbmap)=='K') &&
+	     (eeprom_read_byte((UBYTE*)user_kbmap+1)=='B') )
 	{
 		//read from eeprom
-		eeprom_read_block(kbmap, saved_kbmap, sizeof(default_kbmap)+sizeof(default_kbmap_E0));
-		kbmap[0] = NO_KEY ;
-		kbmap[1] = NO_KEY ;
+//		eeprom_read_block(kbmap, saved_kbmap, sizeof(default_kbmap)+sizeof(default_kbmap_E0));
+//		kbmap[0] = NO_KEY ;
+//		kbmap[1] = NO_KEY ;
+		flags_ex_register |= FLAG_EX_PS2KEYBOARD_MAP;
 #ifdef LOGENABLE
 		to_log("KBMAP:EEPROM\r\n");
 #endif
@@ -331,10 +338,60 @@ void kbmap_init(void)
 	else
 	{
 		//set default
-		memcpy_P(kbmap, default_kbmap, sizeof(default_kbmap));
-		memcpy_P(kbmap_E0, default_kbmap_E0, sizeof(default_kbmap_E0));
+//		memcpy_P(kbmap, default_kbmap, sizeof(default_kbmap));
+//		memcpy_P(kbmap_E0, default_kbmap_E0, sizeof(default_kbmap_E0));
 #ifdef LOGENABLE
 		to_log("KBMAP:DEFAULT\r\n");
 #endif
 	}
+}
+
+KBMAP_VALUE kbmap_get(UBYTE scancode, UBYTE was_E0)
+{
+	KBMAP_VALUE ret = {{NO_KEY,NO_KEY}};
+
+	if( scancode < 0x7F )
+	{
+		if( flags_ex_register&FLAG_EX_PS2KEYBOARD_MAP )
+		{
+			//user map
+			if ( scancode )
+			{
+				UWORD tblptr = scancode*2 + (was_E0)?user_kbmap_E0:user_kbmap;
+				ret.tb.b1 = eeprom_read_byte((UBYTE*)tblptr++ );
+				ret.tb.b2 = eeprom_read_byte((UBYTE*)tblptr );
+			}
+		}
+		else
+		{
+			//default map
+			ULONG tblptr = scancode*2;
+			if( was_E0 )
+			{
+				tblptr += GET_FAR_ADDRESS(default_kbmap_E0);
+			}
+			else
+			{
+				tblptr += GET_FAR_ADDRESS(default_kbmap);
+			}
+			ret.tb.b1 = pgm_read_byte_far( tblptr++ );
+			ret.tb.b2 = pgm_read_byte_far( tblptr );
+		}
+	}
+#ifdef LOGENABLE
+{
+	char log_map[] = "MP..:..,..\r\n";
+	UBYTE b = scancode;
+	log_map[2] = ((b >> 4) <= 9 )?'0'+(b >> 4):'A'+(b >> 4)-10;
+	log_map[3] = ((b & 0x0F) <= 9 )?'0'+(b & 0x0F):'A'+(b & 0x0F)-10;
+	b = ret.tb.b1;
+	log_map[5] = ((b >> 4) <= 9 )?'0'+(b >> 4):'A'+(b >> 4)-10;
+	log_map[6] = ((b & 0x0F) <= 9 )?'0'+(b & 0x0F):'A'+(b & 0x0F)-10;
+	b = ret.tb.b2;
+	log_map[8] = ((b >> 4) <= 9 )?'0'+(b >> 4):'A'+(b >> 4)-10;
+	log_map[9] = ((b & 0x0F) <= 9 )?'0'+(b & 0x0F):'A'+(b & 0x0F)-10;
+	to_log(log_map);
+}
+#endif
+	return ret;
 }
