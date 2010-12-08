@@ -101,10 +101,10 @@ MKILLSTXT	DB 0X14,1,"Services",0X14,0
 		DB 0X0D," K.Format ramdisk 640k"	;k
 		DB 0X0D," D.Format ramdisk 768k"	;d
 		DB 0X0D," I.Format ramdisk 896k"	;i
-		DB 0X0D," Y.Copy diskette"		;y
+;		DB 0X0D," Y.Copy diskette"		;y
 		DB 0X0D," F.Fast update ROM"		;f
 		DB 0X0D," C.Image to RAMDISK",0		;c
-		DB LOW (KILL1-$-1),"rpgskdiyfc"
+		DB LOW (KILL1-$-1),"rpgskdifc"
 
 KILL1		DW RESETNGS
 		DW KIPGS		
@@ -113,7 +113,7 @@ KILL1		DW RESETNGS
 		DW RAM_640
 		DW RAM_764
 		DW RAM_892
-		DW COPYDISK
+;		DW COPYDISK
 		DW LOAD4FLASH
 		DW COPYIMAGE
 KILL2
