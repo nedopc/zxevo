@@ -1,14 +1,6 @@
 	
-;		DEVICE ZXSPECTRUM48
-
 		include ../../macros.a80
+		include ../../global_vars.a80
 
-Start_Code	equ 0X6000
-	
-		org Start_Code	;#5fe4
-Start_Cod	;incbin "stek.bin"
-	
+		ORG 0X6000
 		include main.a80
-End_Cod
-	
-;		SAVEBIN "main.rom",Start_Cod,End_Cod-Start_Cod
