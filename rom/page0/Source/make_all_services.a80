@@ -1,7 +1,4 @@
 
-;		DEVICE ZXSPECTRUM48
 		include ../../macros.a80
-
+		include ../../global_vars.a80
 		include services.a80
-	
-;		SAVEBIN "..\services.rom",0,16384

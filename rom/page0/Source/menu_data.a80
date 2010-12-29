@@ -250,6 +250,17 @@ HDDBOOT_ERROR	;X,Y,V,H,C,C,ADR_CODE*2,F,X,Y,V,H,ADR_TXT*2,TEK_WIN,KOL_NUM*2,TEK_
 TXT_HDDBOOTERR	DB 0X0D,3,"HDD not found",0X0D,3,"Press any key",0
 ;=========================HDD çÖ çÄâÑÖç===============================
 
+;=========================IMAGE FDI ERROR=============================
+LDFDIERROR	;X,Y,V,H,C,C,ADR_CODE*2,F,X,Y,V,H,ADR_TXT*2,TEK_WIN,KOL_NUM*2,TEK_NUMF*2
+		DB  0X08,0X08,0X04,0X10,0X17,0X00
+		DW 0
+		DB 0,0,0,0,0
+		DW TXT_LDFDIERR
+		DB 0
+		DW 0,0,0
+TXT_LDFDIERR	DB 0X0D,3,"FDI image error",0X0D,3,"Press any key",0
+;=========================IMAGE FDI ERROR=============================
+
 ;=========================FILE NOT FOUND==============================
 FILENONE	;X,Y,V,H,C,C,ADR_CODE*2,F,X,Y,V,H,ADR_TXT*2,TEK_WIN,KOL_NUM*2,TEK_NUMF*2
 		DB 0X08,0X08,0X04,0X10,0X17,0X00
@@ -365,7 +376,7 @@ HOT_KEYS	DB 0X0D,8,3," .",0
 HOT_KEY		EQU $-3
 
 ;ëèàëéä äãÄÇàò èêéÇÖêüÖåõï ÇëÖÉÑÄ
-MAIN_KEYS	DB LOW (EMAIN_KEYS-$-1),"qaop ",0x07,0X08,0X09,0x0A,0x0B,0X0D
+MAIN_KEYS	DB LOW (EMAIN_KEYS-$-1),"qaop ",0X07,0X08,0X09,0X0A,0X0B,0X0D
 EMAIN_KEYS
 
 MAIN_ZONE	DB 0,0X00,0X06,0X01,0X10,"v"
@@ -388,7 +399,7 @@ ADREXEKEYS	DW UP		;q
 EADREXEKEYS
 
 SIGN_SCL	DB "SINCLAIR"
-IMAGES		DB "TRDSCL",0
+IMAGES		DB "TRDSCLFDI",0
 HOBETA		DB "$C ",0
 ROMS		DB "ROM",0
 
