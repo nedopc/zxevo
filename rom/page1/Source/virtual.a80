@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 18.12.2010 savelij
+;LAST UPDATE: 30.12.2010 savelij
 
 STEK		EQU 0X3CD0			;2 ‘Ž•€…ˆ… Ž‘Ž‚ŽƒŽ ‘’…Š€ ˆ „Ž ‚“’……ƒŽ ‘’…Š€
 WR_1F		EQU STEK+2			;1 ŠŽˆŸ ‡€ˆ‘€ŽƒŽ ‚ Ž’ 1F (…ƒˆ‘’ ŠŽŒ€„)
@@ -680,14 +680,93 @@ SET_DRIVENAME	LD H,0X10
 
 FORMAT_RAM	CALL CP_TYPEDRIVE
 		RET NZ
-		LD A,1
-		LD BC,WIN_P2;0XB7F7
+		LD A,PAGE_RAMDISK+1
+		LD BC,WIN_P1
+		PUSH BC
 		OUT (C),A
-		LD HL,0X8000
-		LD DE,0X8001
+		LD HL,0X4000
+		LD DE,0X4001
 		LD BC,0XFFF
 		LD (HL),L
 		LDIR
-		CALL ECOPY_BLOCK
+		POP BC
+		LD A,0XFA
+		OUT (C),A
 		XOR A
+		RET
+
+CREATE_TRDTABL	LD A,PAGE_RAMDISK+1		;“†€ ‘’€ˆ–€ Ž’Š“„€ €—ˆ€…’‘Ÿ ‡€ƒ“†…›‰ Ž€‡
+		CALL SET4MBPAGE
+		LD HL,(0X48E1)			;…‚›‰ ‘‚ŽŽ„›‰ ’…Š ‘…Š’Ž
+		LD A,L
+		LD L,H
+		LD H,0
+		ADD HL,HL
+		ADD HL,HL
+		ADD HL,HL
+		ADD HL,HL
+		OR L
+		LD L,A				;ŠŽ‹ˆ—…‘’‚Ž ‡€Ÿ’›• ‘…Š’ŽŽ‚ ‘ „ˆ…Š’Žˆ…‰
+		LD DE,(0X48E5)			;ŠŽ‹ˆ—…‘’‚Ž ‘‚ŽŽ„›• ‘…Š’ŽŽ‚
+		ADD HL,DE
+		ADD HL,HL
+		ADD HL,HL
+		ADD HL,HL
+		ADD HL,HL			;H=ŠŽ‹ˆ—…‘’‚Ž „ŽŽ†…Š
+		LD A,H
+		EX AF,AF'
+		LD A,PAGE_RAMDISK		;“†€ ‘’€ˆ–€ €—€‹€ €Œ„ˆ‘Š€, ƒ„… “„…’ ’€‹ˆ–€ Žˆ‘€’…‹…‰
+		CALL SET4MBPAGE
+		LD HL,0X4000
+		PUSH HL
+		LD DE,0X4001
+		LD BC,0X3FFF
+		LD (HL),L
+		LDIR				;Ž—ˆ‘’ˆ‹ˆ ‘’€ˆ–“
+		POP DE				;€„…‘ €—€‹€ 
+		LD HL,0				;‘Œ…™…ˆ… ‚ ‹ŽŠ€• ˆ ‘’€ˆ–€•
+		EX AF,AF'
+ELT2		EX AF,AF'
+		LD BC,0X1000			;‘—…’—ˆŠ ŽŒ…Ž‚ ‘…Š’ŽŽ‚ ˆ ˆ• ŽŒ…€
+		LD A,L
+		RRCA
+		RRCA
+		LD (DE),A			;‘Œ…™…ˆ… ‚ ‹ŽŠ€• „ŽŽ†Šˆ ‚ ‘’€ˆ–…
+		INC D
+		LD A,H
+		LD (DE),A			;‘Œ…™…ˆ… ‚ ‘’€ˆ–€• „Ž „ŽŽ†Šˆ
+		INC D
+ELT1		INC C
+		LD A,C
+		LD (DE),A			;ŽŒ… ‘…Š’Ž€
+		INC D
+		LD A,2
+		LD (DE),A			;€‡Œ… ‘…Š’Ž€
+		INC D
+		DJNZ ELT1			;‚Ž‘ˆŒ ‚ ’€‹ˆ–“ ‚‘… ŽŒ…€ ‘…Š’ŽŽ‚ ‘ €‡Œ…€Œˆ
+		LD D,0X40			;‚…“‹ˆ “Š€‡€’…‹œ ‚ €—€‹Ž
+		INC E				;„‹Ÿ ‘‹…„“ž™…‰ „ŽŽ†Šˆ
+		LD BC,0X40
+		ADD HL,BC			;……•Ž„ Š ‘‹…„“ž™…‰ „ŽŽ†Š…
+		EX AF,AF'
+		DEC A
+		JR NZ,ELT2			;Ž‚’ŽŸ…Œ „‹Ÿ ‚‘…• „ŽŽ†…Š
+		LD HL,0X7FFF
+		LD (HL),"R"			;‚Ž‘ˆŒ Œ€Š… €Œ„ˆ‘Š€
+		DEC H
+		LD (HL),"D"
+		LD A,0XFA
+;‚Š‹ž—…ˆ… ‚ 1 ŽŠŽ Ž…–ˆŽ‚€ˆŸ ‡€„€Ž‰ ‘’€ˆ–›
+SET4MBPAGE	PUSH BC
+		LD B,A
+		LD A,1
+		OUT (PEVO_CONF),A
+		LD A,B
+		LD BC,WIN_P1
+		OUT (C),A
+		LD B,A
+		XOR A
+		OUT (PEVO_CONF),A
+		LD A,B
+		POP BC
 		RET

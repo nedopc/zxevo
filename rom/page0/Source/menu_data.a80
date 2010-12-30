@@ -1,4 +1,6 @@
 
+;LAST UPDATE: 30.12.2010 savelij
+
 ;”Œ€’ ”‹€ƒ‚ƒ €‰’€ Š€
 ;X,Y,V,H,C,C
 ;IX+8
@@ -95,23 +97,23 @@ MKILLS		;X,Y,V,H,C,C,ADR_CODE*2,F,X,Y,V,H,ADR_TXT*2,TEK_WIN,KOL_NUM*2,TEK_NUMF*2
 		DW ((KILL2-KILL1)/2),0,0
 MKILLSTXT	DB 0X14,1,"Services",0X14,0
 		DB 0X0D," R.Reset NeoGS"		;r
-		DB 0X0D," P.Reset pages 128K"		;p
-		DB 0X0D," G.Reset all pages"		;g
-		DB 0X0D," S.Format ramdisk 512k"	;s
+;		DB 0X0D," P.Reset pages 128K"		;p
+;		DB 0X0D," G.Reset all pages"		;g
+;		DB 0X0D," S.Format ramdisk 512k"	;s
 		DB 0X0D," K.Format ramdisk 640k"	;k
-		DB 0X0D," D.Format ramdisk 768k"	;d
+;		DB 0X0D," D.Format ramdisk 768k"	;d
 		DB 0X0D," I.Format ramdisk 896k"	;i
 ;		DB 0X0D," Y.Copy diskette"		;y
 		DB 0X0D," F.Fast update ROM"		;f
 		DB 0X0D," C.Image to RAMDISK",0		;c
-		DB LOW (KILL1-$-1),"rpgskdifc"
+		DB LOW (KILL1-$-1),"rkifc"
 
 KILL1		DW RESETNGS
-		DW KIPGS		
-		DW KIALPGS
-		DW RAM_508
+;		DW KIPGS		
+;		DW KIALPGS
+;		DW RAM_508
 		DW RAM_640
-		DW RAM_764
+;		DW RAM_764
 		DW RAM_892
 ;		DW COPYDISK
 		DW LOAD4FLASH
@@ -160,7 +162,7 @@ MAIN1		DW GLUBOOT			;z „ˆ‘Š…’‡€ƒ“‡—ˆŠ
 		DW DOS128			;s ……•„ ‚ TR-DOS
 		DW BAS48			;i ……•„ ‚ …‰‘ˆŠ 48
 		DW BAS128			;u ……•„ ‚ …‰‘ˆŠ 128
-		DW _KILLS			;r Œ… —ˆ‘’Šˆ ‘’€ˆ–, €Œ „ˆ‘Š ˆ „ˆ‘ŠŠˆ
+		DW _KILLS			;r ‘…‚ˆ‘ Œ…
 MAIN2		DW CHNGTURBO			;w
 		DW CHNGMODE			;m
 		DW SELDRV			;1
