@@ -1,11 +1,11 @@
 
-;LAST UPDATE: 29.12.2010 savelij
+;LAST UPDATE: 30.12.2010 savelij
 
 		include ../../macros.a80
 		include ../../global_vars.a80
 		include bas_trd_vars.a80
 
-DD		EQU 29				;„€’€
+DD		EQU 30				;„€’€
 MM		EQU 12				;Œ…‘Ÿ–
 YY		EQU 10				;ƒŽ„
 DATA		EQU DD+(MM<<5)+(YY<<9)+0X8000	;“†… “€ŠŽ‚€Ž
@@ -16,7 +16,7 @@ RD_ADDR		EQU 0XC0
 WH		EQU 4
 
 ;		     0123456789012345678
-NUMBER_VERS	EQU " EVO-DOS Ver 0.16  "
+NUMBER_VERS	EQU " EVO-DOS Ver 0.17  "
 ZASTV_X		EQU 7					;ŠŽŽ„ˆ€’€ X …—€’ˆ €„ˆ‘ˆ BETA128
 ZASTV_Y		EQU 6					;ŠŽŽ„ˆ€’€ Y …—€’ˆ €„ˆ‘ˆ BETA128
 ZASTV_PIX	EQU ZASTV_Y*0X20+0X4000+ZASTV_X+9	;€„…‘ ‚›‚Ž„€ ‘ŠŽ˜…›• “ƒŽ‹ŠŽ‚
@@ -3009,7 +3009,9 @@ LOC_1EE8	LD (TRD_5CD7),A		; ŽŒ…†“’Ž—›‰	‘’€’ ”€‰‹€ ˆ‹ˆ	ŠŽ‹-‚Ž ’…ŠŽ‚
 		LD A,0X80
 		LD (TRD_5CDA), A
 LOC_1F1B	CALL FORMAT_DISK
-END_FORMAT	CALL CLEAR_DOWN_SCR
+END_FORMAT	CALL CP_TYPEDRIVE
+		CALL Z,CREATE_TRDTABL
+		CALL CLEAR_DOWN_SCR
 		LD HL,TRD_5D25
 		LD DE,TRD_5D26
 		LD BC,0XFF

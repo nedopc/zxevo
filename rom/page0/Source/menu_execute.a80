@@ -1,4 +1,6 @@
 
+;LAST UPDATE: 30.12.2010 savelij
+
 ;‡€ƒ“‡€ ‘ ‹…’›
 TAPELOAD	LD IX,TAPE_LDT
 		CALL WINW		;€‘‚€‹   ‡€ƒ“‡“ ‘ ‹…’›
@@ -49,16 +51,16 @@ ERROR_TAPE	LD HL,BAS_VAR
 		JP RESTART		;……‡€“‘ HE GLUK
 
 ;‘‡„€… € „‘€ € 512 ‹
-RAM_508		LD HL,508*4		;RAM DISK € 512 ‹€‰’
-		JR KILRAMd
+;RAM_508		LD HL,508*4		;RAM DISK € 512 ‹€‰’
+;		JR KILRAMd
 
 ;‘‡„€… € „‘€ € 640 ‹
 RAM_640		LD HL,636*4		;RAM DISK € 640 ‹€‰’
 		JR KILRAMd
 
 ;‘‡„€… € „‘€ € 768 ‹
-RAM_764		LD HL,764*4		;RAM DISK € 768 ‹€‰’
-		JR KILRAMd
+;RAM_764		LD HL,764*4		;RAM DISK € 768 ‹€‰’
+;		JR KILRAMd
 
 ;‘‡„€… € „‘€ € 896 ‹
 RAM_892		LD HL,892*4		;RAM DISK € 896 ‹€‰’
@@ -68,8 +70,9 @@ KILRAMd		LD (SECFREE),HL		;‚›‘’€‚‹ ………“ ‹—…‘’‚€ ‘…’‚ € RAM DISK
 ;		CALL SET_7FFD		;‚‹—‹ ‘’€–“ ƒ„… €‘‹€ƒ€…’‘ „€ RAM DISK
 
 		LD A,1
-		OUT (0XBF),A
-		LD BC,0XB7F7
+		OUT (PEVO_CONF),A
+		LD A,PAGE_RAMDISK+1
+		LD BC,WIN_P2;0XB7F7
 		OUT (C),A
 
 		LD HL,0X8000
@@ -85,11 +88,11 @@ KILRAMd		LD (SECFREE),HL		;‚›‘’€‚‹ ………“ ‹—…‘’‚€ ‘…’‚ € RAM DISK
 		LDIR			;………‘‹ €‹ „‹ 9 ‘…’€ „›
 
 		LD A,0XFD
-		LD BC,0XB7F7
+		LD BC,WIN_P2;0XB7F7
 		OUT (C),A
 		XOR A
-		OUT (0XBF),A
-
+		OUT (PEVO_CONF),A
+		CALL CREATE_RAMTABL
 		JP RESTART		;……‘‚€ ƒ‹€‚ƒ …
 
 RESETNGS	LD A,0X80
@@ -160,45 +163,45 @@ _KILLS		LD IX,MKILLS
 		JP _RULILKA
 
 ;‡€“‹…… ‚‘… €’
-KIALPGS		LD A,0XD7	;―ΰ Άλ¥ 512K
-		CALL KIPGSU
-		LD A,0XF7	;«¥Άλ¥ 512K
-		JR KIPGS3
+;KIALPGS		LD A,0XD7	;―ΰ Άλ¥ 512K
+;		CALL KIPGSU
+;		LD A,0XF7	;«¥Άλ¥ 512K
+;		JR KIPGS3
 
 ;‡€“‹…… 128 €’
-KIPGS		LD A,0X17
-KIPGS3		CALL KIPGSU
-		JP RESTART
+;KIPGS		LD A,0X17
+;KIPGS3		CALL KIPGSU
+;		JP RESTART
 
 ;‘‘’‚… ‡€“‹’
-KIPGSU		DI
-		LD DE,0
-		LD HL,0
-		ADD HL,SP
-KIPGS0		CP 0X15
-		JR Z,KIPGS2
-		CP 0X12
-		JR Z,KIPGS2
-		CP 0X10
-		JR Z,KIPGS2
-		LD BC,0X7FFD
-		OUT (C),A
-		LD SP,0
-		LD B,D
-KIPGS1		REPT 32
-		PUSH DE
-		ENDM
-		DJNZ KIPGS1
-		LD SP,HL
-KIPGS2		LD C,A
-		AND 0XC7
-		RET Z
-		AND 7
-		LD A,C
-		JR NZ,$+4
-		SUB 0X38
-		DEC A
-		JR KIPGS0
+;KIPGSU		DI
+;		LD DE,0
+;		LD HL,0
+;		ADD HL,SP
+;KIPGS0		CP 0X15
+;		JR Z,KIPGS2
+;		CP 0X12
+;		JR Z,KIPGS2
+;		CP 0X10
+;		JR Z,KIPGS2
+;		LD BC,0X7FFD
+;		OUT (C),A
+;		LD SP,0
+;		LD B,D
+;KIPGS1		REPT 32
+;		PUSH DE
+;		ENDM
+;		DJNZ KIPGS1
+;		LD SP,HL
+;KIPGS2		LD C,A
+;		AND 0XC7
+;		RET Z
+;		AND 7
+;		LD A,C
+;		JR NZ,$+4
+;		SUB 0X38
+;		DEC A
+;		JR KIPGS0
 
 HDD_BOOT	LD HL,BUFFSEC
 		PUSH HL
