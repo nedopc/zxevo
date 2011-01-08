@@ -274,17 +274,22 @@ LOAD_FDI	LD A,PAGE_RAMDISK		;‘’€ˆ–€ €—€‹€ €Œ„ˆ‘Š€
 		LD BC,0X3FFF
 		LD (HL),0
 		LDIR				;Ž—ˆ‘’Š€ ‘’€ˆ–› ‘ Žˆ‘€’…‹ŸŒˆ „ŽŽ†…Š
+		LD IXH,0XFF
 		CALL LOAD1SECFDI		;ˆ“„ˆ’…‹œ€Ÿ ‡€ƒ“‡Š€ …‚ŽƒŽ ‘…Š’Ž€
 		LD A,(0XC006)			;‚‡Ÿ‹ˆ ŠŽ‹ˆ—…‘’‚Ž ‘’ŽŽ
 		DEC A
 		LD A,(0XC004)			;‚‡Ÿ‹ˆ ŠŽˆ—…‘’‚Ž „ŽŽ†…Š
 		JR Z,LOADFDI1
-		ADD A,A				;…‘‹ˆ ‘’ŽŽ 2, ’Ž “Ž†ˆ‹ˆ ŠŽ‹ˆ—…‘’‚Ž „ŽŽ†…Š € 2
+		ADD A,A				;…‘‹ˆ ‘’ŽŽ 2, ’Ž “ŒŽ†ˆ‹ˆ ŠŽ‹ˆ—…‘’‚Ž „ŽŽ†…Š € 2
 LOADFDI1	LD C,A				;ŠŽ‹ˆ—…‘’‚Ž „ŽŽ†…Š
 		LD HL,(0XC00A)
-		LD DE,(0XC008)
-		AND A
-		SBC HL,DE
+;		LD A,H
+;		SRL A
+;		ADC A,0
+;		LD H,A
+;		LD DE,(0XC008)
+;		AND A
+;		SBC HL,DE
 		LD (START_DATA),HL
 		LD DE,0X4000			;€„…‘ “”…€ €—€‹€ Žˆ‘€’…‹…‰ „ŽŽ†…Š
 		LD HL,0XC00F			;€„…‘ €—€‹€ ‚›ŽŠˆ Žˆ‘€’…‹…‰ „ŽŽ†…Š ‚ FDI ‡€ƒŽ‹Ž‚Š…
@@ -351,15 +356,32 @@ LOADFDI2	EX DE,HL
 		DEC HL
 		BIT 1,H
 		CALL NZ,LOAD1SECFDI		;…‘‹ˆ ‚›˜‹ˆ ‡€ …„…‹› ‘…Š’Ž€ Œ…Ÿ…Œ “Š€‡€’…‹œ ˆ ƒ“‡ˆŒ ‘‹…„“ž™ˆ‰ ‘…Š’Ž ‚ “”…
-		LD BC,0
+		PUSH HL
+		LD A,H
+		AND 1
+		LD B,A
+		LD C,L
+		LD A,IXH
+		ADD A,A
+		ADD A,B
+		LD B,A
+		LD HL,0
 START_DATA	EQU $-2
-LOADFDI6	DEC BC
-		INC HL
+		AND A
+		SBC HL,BC
+		EX DE,HL
+		POP HL
+		LD A,D
+		AND A
+		JR Z,LOADFDI7
+LOADFDI8	INC H
 		BIT 1,H
 		CALL NZ,LOAD1SECFDI		;…‘‹ˆ ‚›˜‹ˆ ‡€ …„…‹› ‘…Š’Ž€ Œ…Ÿ…Œ “Š€‡€’…‹œ ˆ ƒ“‡ˆŒ ‘‹…„“ž™ˆ‰ ‘…Š’Ž ‚ “”…
-		LD A,B
-		OR C
-		JR NZ,LOADFDI6
+		DEC D
+		JR NZ,LOADFDI8
+LOADFDI7	ADD HL,DE
+		BIT 1,H
+		CALL NZ,LOAD1SECFDI		;…‘‹ˆ ‚›˜‹ˆ ‡€ …„…‹› ‘…Š’Ž€ Œ…Ÿ…Œ “Š€‡€’…‹œ ˆ ƒ“‡ˆŒ ‘‹…„“ž™ˆ‰ ‘…Š’Ž ‚ “”…
 		PUSH HL				;‘Ž•€ˆ‹ˆ €„…‘ € €—€‹Ž €—€‹€ ‘…Š’ŽŽ‚
 		LD DE,0XC000
 		AND A
@@ -500,6 +522,7 @@ LOAD1SECFDI	PUSH HL
 		LD IXL,1
 		CALL COM_FAT
 		DB Load_file
+		INC IXH
 		POP AF
 		POP DE
 		POP BC
