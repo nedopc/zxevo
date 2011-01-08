@@ -131,11 +131,11 @@ TEK_SP		EQU $-2
 		EI
 		CALL RESET_VG
 		CALL EXIT4ERROR
-		LD A,0XFF
-		LD (gFenv),A
-		CALL GLUDIN		;HL
-		LD A,1
-		LD (gFenv),A
+;		LD A,0XFF
+;		LD (gFenv),A
+;		CALL GLUDIN		;HL
+;		LD A,1
+;		LD (gFenv),A
 		JP RESTART
 
 ;……•Ž„ˆ‹Š€ ‚ €‘ˆŠ128
