@@ -1,22 +1,21 @@
 
-;LAST UPDATE: 30.12.2010 savelij
+;LAST UPDATE: 21.01.2011 savelij
 
 		include ../../macros.a80
 		include ../../global_vars.a80
 		include bas_trd_vars.a80
 
-DD		EQU 30				;„€’€
-MM		EQU 12				;Œ…‘Ÿ–
-YY		EQU 10				;ƒŽ„
+DD		EQU 21				;„€’€
+MM		EQU 01				;Œ…‘Ÿ–
+YY		EQU 11				;ƒŽ„
 DATA		EQU DD+(MM<<5)+(YY<<9)+0X8000	;“†… “€ŠŽ‚€Ž
 
 RD_SECT		EQU 0X80
 WR_SECT		EQU 0XA0
 RD_ADDR		EQU 0XC0
-WH		EQU 4
 
 ;		     0123456789012345678
-NUMBER_VERS	EQU " EVO-DOS Ver 0.17  "
+NUMBER_VERS	EQU " EVO-DOS Ver 0.18  "
 ZASTV_X		EQU 7					;ŠŽŽ„ˆ€’€ X …—€’ˆ €„ˆ‘ˆ BETA128
 ZASTV_Y		EQU 6					;ŠŽŽ„ˆ€’€ Y …—€’ˆ €„ˆ‘ˆ BETA128
 ZASTV_PIX	EQU ZASTV_Y*0X20+0X4000+ZASTV_X+9	;€„…‘ ‚›‚Ž„€ ‘ŠŽ˜…›• “ƒŽ‹ŠŽ‚
@@ -28,33 +27,33 @@ ZASTV_ATR	EQU ZASTV_Y*0X20+0X5800+ZASTV_X		;€„…‘ ‚›‚Ž„€ –‚…’€ „‹Ÿ ‘ŠŽ˜…›• “ƒŽ
 		OUT (0XFE),A
 		JR LOC_09
 
-		DB 1			;‡€ƒ‹“˜Š€ „‹Ÿ DCU
+		DB 1				;‡€ƒ‹“˜Š€ „‹Ÿ DCU
 
-		ORG 0X0008		;RST 08
+		ORG 0X0008			;RST 08
 		JP RST08_WORK
 
 LOC_09		LD A,0X3F
 		JR LOC_13
 
 		DUPL 0X0010-$,0XFF
-		ORG 0X0010		;RST 10 …—€’œ ‘ˆŒ‚Ž‹€
+		ORG 0X0010			;RST 10 …—€’œ ‘ˆŒ‚Ž‹€
 		JP PRINT_A_
 
 LOC_13		LD I,A
 		JR LOC_24
 
 		DUPL 0X0018-$,0XFF
-		ORG 0X0018		;RST 18 …—€’œ ’…Š‘’Ž‚ŽƒŽ ‘ŽŽ™…ˆŸ
+		ORG 0X0018			;RST 18 …—€’œ ’…Š‘’Ž‚ŽƒŽ ‘ŽŽ™…ˆŸ
 		JP PRINT_MSG
 
 		DUPL 0X0020-$,0XFF
-		ORG 0X0020		;RST 20 ‚›‡Ž‚ Ž„Žƒ€ŒŒ ˆ‡ €‘ˆŠ€ 48
+		ORG 0X0020			;RST 20 ‚›‡Ž‚ Ž„Žƒ€ŒŒ ˆ‡ €‘ˆŠ€ 48
 		JP CALL2BASIC
 
 LOC_24		LD HL,0XFFFF
 		JR LOC_2B
 
-		ORG 0X0028		;RST 28
+		ORG 0X0028			;RST 28
 		JP SUB_2323
 
 LOC_2B		XOR A
@@ -69,7 +68,7 @@ LOC_33		LD SP,HL
 		JR LOC_3A
 
 		DUPL 0X0038-$,0XFF
-		ORG 0X0038		;RST 38
+		ORG 0X0038			;RST 38
 		EI
 		RET
 
@@ -90,11 +89,11 @@ LOC_3A		REPT 8
 		PUSH HL
 		LD HL,LOC_3D2F
 		PUSH HL
-		LD HL,0XB8ED		;ŠŽŒ€„€ LDDR
+		LD HL,0XB8ED			;ŠŽŒ€„€ LDDR
 		JR EXECUTECOM2HL
 
 		ORG 0X0066
-JPMAGIC		EI			;Ž€Ž’—ˆŠ NMI-Ž’‘“‘’‚“…’
+JPMAGIC		EI				;Ž€Ž’—ˆŠ NMI-Ž’‘“‘’‚“…’
 		RETN
 
 EXECUTECOM2HL	LD (TRD_5F10),HL
@@ -2016,8 +2015,9 @@ LOC_17F7	ADD A,0X10
 		OR A
 		JR Z,LOC_180D
 		EX DE,HL
-LOC_180D	LDIR
-		RET
+LOC_180D	JP EMU_LDIR
+;		LDIR
+;		RET
 
 WORK4ERROR	LD HL,(TRD_5D1C)	; ‘Ž•€…ˆ… …ƒˆ‘’€ SP
 		DEC HL
@@ -2027,8 +2027,9 @@ WORK4ERROR	LD HL,(TRD_5D1C)	; ‘Ž•€…ˆ… …ƒˆ‘’€ SP
 
 		DUPL 0X180D-$,0XFF
 		ORG 0X180D;FIX
-		LDIR
-		RET
+		JP EMU_LDIR
+;		LDIR
+;		RET
 
 VERIFY		LD A,0XFF
 		LD (TRD_5CF9),A		; „ˆ‘ŠŽ‚Ž„ ˆ Ž…€–ˆˆ	‘ 2 ”€‰‹€Œˆ
@@ -2603,9 +2604,10 @@ LOC_1C73	LD A,(HL)
 		JP C,SINTAX_ERROR
 		LD DE,TRD_5CDD		; ˆŒŸ ”€‰‹€
 		PUSH BC;FIX 0X1C7C
-		LDIR
-		POP BC
-		RET
+		JP EMU_LDIR_RBC
+;		LDIR
+;		POP BC
+;		RET
 
 ;‚›Ž „ˆ‘Š€ „‹Ÿ ”ŽŒ€’ˆŽ‚€ˆŸ
 SETUP_DSK	INC HL
@@ -2890,6 +2892,8 @@ WR_NUM_TRACK	CALL GET_NUM_TRACK;FIX
 		OUT (0X3F),A
 		RET
 
+		DUPL 0X1E52-$,0XFF
+		ORG 0X1E52
 ;—’…ˆ… ‘…Š’ŽŽ‚
 COM_05		XOR A
 		JR LOC_1E64
@@ -3574,9 +3578,10 @@ LOC_2304	INC HL
 		EX DE,HL
 		LD HL,TRD_5CDD		; ˆŒŸ ”€‰‹€
 		LD BC,0X10
-		LDIR
-		POP HL
-		RET
+		JP EMU_LDIR_RHL
+;		LDIR
+;		POP HL
+;		RET
 
 GET_ADRTEKSYM	LD C,0X0D
 		RST 0X28
@@ -4332,8 +4337,9 @@ LOC_28E5	LD DE,TRD_5CDD		; ˆŒŸ ”€‰‹€
 		OR A
 		JR Z,LOC_28EF
 		EX DE,HL
-LOC_28EF	LDIR;FIX
-		RET
+LOC_28EF	JP EMU_LDIR
+;		LDIR;FIX
+;		RET
 
 ;‡€ˆ‘œ …‰‘ˆŠ Žƒ€ŒŒ› € „ˆ‘Š
 COM_0C		CALL COM_18		; €‘’Ž‰Š€ € „ˆ‘Š…’“
@@ -4434,6 +4440,8 @@ LOC_2992	POP AF
 ;COM_80		LD A,0X80
 ;		JR LOC_2998
 
+		DUPL 0X29B2-$,0XFF
+		ORG 0X29B2
 TXT_ERROR_	DB 0X0D,"*ERROR*",0X8D
 TXT_NOSPACE_	DB 0X0D,"No Space",0X8D
 TXT_FILEEXISTS_	DB 0X0D,"File exists",0X8D
@@ -4457,11 +4465,13 @@ TXT_NOFILES	DB "No File(s)",0X8D
 ;============DELETED MAGIC & GOTO===============
 		DUPL 0X2A3B-$,0XFF
 		ORG 0X2A3B;FIX
-		LDIR
-		RET
+		JP EMU_LDIR
+;		LDIR
+;		RET
 
 		DUPL 0X2A53-$,0XFF
 		ORG 0X2A53;FIX
+LOC_2A53
 ;		INC C
 ;		JR Z,LOC2A53
 ;		DEC C
@@ -4664,8 +4674,9 @@ LOAD_END_FILE	PUSH HL
 		RET Z
 		LD C,A
 		LD HL,TRD_5D25
-		LDIR;FIX
-		RET
+		JP EMU_LDIR
+;		LDIR;FIX
+;		RET
 
 SAE2E_LINE	LD HL,(E_LINE)		; €„…‘	€—€‹€ …„€Š’ˆ“…ŒŽ‰ ‘’ŽŠˆ
 		LD (TRD_5D11),HL	; €„…‘	‘’ŽŠˆ ŠŽŒ€„› TR_DOS
@@ -4920,7 +4931,7 @@ BYTES_COM	DW 0XF8F8	;SAVE
 
 		DUPL 0X3BFF-$,0XFF
 		ORG 0X3BFF
-		DW 0X0038		;‡€ƒ‹“˜Š€ …›‚€ˆ‰ € ‚…ŒŸ €Ž’› DOS
+		DW 0X0038			;‡€ƒ‹“˜Š€ …›‚€ˆ‰ € ‚…ŒŸ €Ž’› DOS
 
 ;		DUPL 0X3C01-$,0XFF
 ;		ORG 0X3C01
@@ -4934,70 +4945,6 @@ LOC_3C06	JP LOC_3D00
 LOC_3C09	JP LOC_3D03
 
 ;===============FREE SPACE 3============
-BREAK4WRPORTFF	OUT (0XFF),A		;‡€ˆ‘€‹ˆ ‚ Ž’ ‚ …‚“ž Ž—……„œ „‹Ÿ €Ž’› ‘ …€‹œŽ‰ „ˆ‘Š…’Ž‰
-		PUSH HL
-		PUSH BC
-		EX AF,AF'		;‘Ÿ’€‹ˆ ‚…Œ…Ž ‡€ˆ‘€Ž… ‚ Ž’ FF
-		LD H,0X0F
-		CALL READCMOS		;Ž—ˆ’€‹ˆ ˆ‡ CMOS ŽŒ… “‘’€Ž‚‹…ŽƒŽ „ˆ‘ŠŽ‚Ž„€
-		EX AF,AF'		;‚…“‹ˆ ‘Ÿ’€Ž… ‡€—…ˆ… Ž’€ FF
-		LD H,A			;‘Ž•€ˆ‹ˆ …ƒŽ, …™… ˆƒŽ„ˆ’‘Ÿ
-		AND 3			;ˆ’……‘“…’ ŽŒ… ‡€ˆ‘€ŽƒŽ „ˆ‘ŠŽ‚Ž„€
-		CP L			;‘€‚ˆ‹ˆ ‘ ŽŒ…ŽŒ ‚ˆ’“€‹œŽƒŽ „ˆ‘ŠŽ‚Ž„€
-		LD A,H			;‚…“‹ˆ ‡€—…ˆ… Ž’€ FF
-		LD HL,DOS_NOEMUL	;‘’€ˆ–€ „‹Ÿ …€‹œŽƒŽ „ˆ‘Š€
-		JR NZ,B4WRPFF1
-		INC HL			;‘’€ˆ–€ ‘ Ž‹Ž‰ Œ“‹Ÿ–ˆ…‰
-B4WRPFF1	LD BC,WIN_A0+0X100;0X40F7
-		EX AF,AF'		;‚…Œ…Ž ‘Ÿ’€‹ˆ ”‹€ƒ …€‹/Œ“‹œ
-		CALL WRPORT_RET		;‚Š‹ž—ˆ‹ˆ ‚›€“ž ‘’€ˆ–“
-		EX AF,AF'		;‚…“‹ˆ ”‹€ƒ …€‹/Œ“‹œ
-		POP BC
-		POP HL
-		RET NZ
-		RST 0X08		;„‹Ÿ Œ“‹Ÿ–ˆˆ ‘Ž•€ˆ‹ˆ ‡€ˆ‘€Ž… ‚ Ž’ FF
-		DB WOUTFF
-		RET
-
-DOS_NOEMUL	DB 0X83			;‘’€ˆ–€ DOS ‘ Œ“‹Ÿ–ˆ…‰ ’Ž‹œŠŽ „‹Ÿ 3D13
-DOS_EMUL	DB 0X87			;‘’€ˆ–€ DOS ‘ Ž‹›Œ ……•‚€’ŽŒ Ž’Ž‚
-
-;WRITED_SEC	LD B,4
-;WRITED_SEC1	IN A,(0XFF)
-;		AND 0XC0
-;		JR NZ,WRITED_SEC3
-;		INC DE
-;		LD A,E
-;		OR D
-;		JR NZ,WRITED_SEC1
-;		DJNZ WRITED_SEC1
-;		RET
-
-;WRITED_SEC2	IN A,(0XFF)
-;		AND 0XC0
-;		JR Z,WRITED_SEC2
-;		RET M
-;WRITED_SEC3	OUTI
-;		JR WRITED_SEC2
-
-;READD_SEC	LD B,4
-;READD_SEC1	IN A,(0XFF)
-;		AND 0XC0
-;		JR NZ,READD_SEC3
-;		INC DE
-;		LD A,E
-;		OR D
-;		JR NZ,READD_SEC1
-;		DJNZ READD_SEC1
-;		RET
-
-;READD_SEC2	IN A,(0XFF)
-;		AND 0XC0
-;		JR Z,READD_SEC2
-;		RET M
-;READD_SEC3	INI
-;		JR READD_SEC2
-
 ;===============FREE SPACE 3============
 
 		DUPL 0X3CFA-$,0XFF
@@ -5051,7 +4998,7 @@ IN_DOS_15616	CALL CREATE_VARS_TRD
 
 		DUPL 0X3D5A-$,0XFF
 		ORG 0X3D5A
-		LDIR			;ADS
+		LDIR				;ADS
 		LD HL,0X3D2F
 		PUSH HL
 		PUSH HL
@@ -5065,7 +5012,7 @@ CREATE_VARS	LD HL,SET_VARS
 		PUSH HL
 		LD HL,0X1655
 		PUSH HL
-		LD HL,TRD_5CC2;BYTE_5BFF
+		LD HL,TRD_5CC2
 		PUSH HL
 		LD (HL),0XC9
 		LD HL,P_RAMT+1
@@ -5149,22 +5096,22 @@ COM_01		LD (TRD_5CF6),A		; €‘’Ž‰Š€ € „ˆ‘ŠŽ‚Ž„
 ;		ELSE
 ;		OUT (0XFF),A
 ;		ENDIF
-;		CALL CP_TYPEDRIVE	;Ž‚…Š€ € ‘Ž‚€„…ˆ… …€‹œŽƒŽ ˆ ‚ˆ’“€‹œŽƒŽ „ˆ‘ŠŽ‚Ž„€
-;		RET Z			;…‘‹ˆ ‚ˆ’“€‹œ›‰, ’Ž ‚›•Ž„
+;		CALL CP_TYPEDRIVE		;Ž‚…Š€ € ‘Ž‚€„…ˆ… …€‹œŽƒŽ ˆ ‚ˆ’“€‹œŽƒŽ „ˆ‘ŠŽ‚Ž„€
+;		RET Z				;…‘‹ˆ ‚ˆ’“€‹œ›‰, ’Ž ‚›•Ž„
 ;		CALL GET_TIME_HEAD	; Ž‹“—…ˆ… ‚…Œ…ˆ ……Œ…™…ˆŸ	ƒŽ‹Ž‚Šˆ
 ;		AND 0X80
 ;		JR Z,LOC_3DFA
 		LD B,0
 		IN A,(0X3F)
 		OUT (0X7F),A
-		LD A,%00011000		;…‡ Ž‚…Šˆ ŽŒ…€ „ŽŽ†Šˆ
+		LD A,%00011000			;…‡ Ž‚…Šˆ ŽŒ…€ „ŽŽ†Šˆ
 		IF EMU3D2F
 		RST 0X08
 		DB WOUT1F
 		ELSE
 		OUT (0X1F),A
 		ENDIF
-		DJNZ $			;€“‡€
+		DJNZ $				;€“‡€
 COM_011		IF EMU3D2F
 		RST 0X08
 		DB WIN1F
@@ -5240,7 +5187,10 @@ GET_TYPE_DSK	LD DE,TRD_5CC8		; …†ˆŒ	€Ž’€ „ˆ‘ŠŽ‚Ž„€ A
 		DUPL 0X3E44-$,0XFF
 		ORG 0X3E44
 HEAD_POSITION	OUT (0X7F),A
-		LD A,B
+		PUSH HL
+		CALL GET_TIME_HEAD
+		POP HL
+;		LD A,B
 		OR 0X18
 		JP COM2VG_WAIT
 
@@ -5388,7 +5338,9 @@ LOC_3EF5	IF EMU3D2F
 		ENDIF
 		AND 0XC0
 		JR Z,LOC_3EF5
-		JP M,0X0038
+		EI
+		RET M
+		DI
 		IN A,(0X7F)
 		JR LOC_3EF5
 
