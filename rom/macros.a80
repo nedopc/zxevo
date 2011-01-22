@@ -24,13 +24,21 @@ $$I := 0
 $$S := 0
 		REPT 9
 $$N := CHARFROMSTR (STR,STRLEN(STR)+$$S-9)
-$$I := $$I+$$N+($$N*256)
+$$I := ($$I+$$S+$$N+($$N*256))&0XFFFF
 $$S := $$S+1
 		ENDM
-$$I := ($$I+(AA&0XFF)+((AA&0XFF)*256)+(AA>>8)+((AA>>8)*256))&0XFFFF
-$$I := ($$I+(BB&0XFF)+((BB&0XFF)*256)+(BB>>8)+((BB>>8)*256))&0XFFFF
-$$I := ($$I+(CC&0XFF)+((CC&0XFF)*256)+(CC>>8)+((CC>>8)*256))&0XFFFF
-$$I := ($$I+105)&0XFFFF
+$$I := ($$I+$$S+LOW (AA)+(LOW (AA)*0X100))&0XFFFF
+$$S := $$S+1
+$$I := ($$I+$$S+HIGH (AA)+(HIGH (AA)*0X100))&0XFFFF
+$$S := $$S+1
+$$I := ($$I+$$S+LOW (BB)+(LOW (BB)*0X100))&0XFFFF
+$$S := $$S+1
+$$I := ($$I+$$S+HIGH (BB)+(HIGH (BB)*0X100))&0XFFFF
+$$S := $$S+1
+$$I := ($$I+$$S+LOW (CC)+(LOW (CC)*0X100))&0XFFFF
+$$S := $$S+1
+$$I := ($$I+$$S+HIGH (CC)+(HIGH (CC)*0X100))&0XFFFF
+$$S := $$S+1
 		DW $$I
 		ENDM
 

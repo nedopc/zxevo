@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 30.12.2010 savelij
+;LAST UPDATE: 22.01.2011 savelij
 
 ;”ŽŒ€’ ”‹€ƒŽ‚ŽƒŽ €‰’€ ŽŠ€
 ;X,Y,V,H,C,C
@@ -83,7 +83,7 @@ SIDE_DISK	DB " "				;r
 
 D_ERR1		DW _RETRY
 		DW _IGNORE
-DSTUPID		DW _STUPID
+		DW _STUPID
 D_ERR2
 ;=========================Œ…ž „ˆ‘ŠŽ‚Ž‰ Ž˜ˆŠˆ========================
 
@@ -443,6 +443,9 @@ mINSOUT		DB 7-WIDE,0X0C
 		DB 7+32
 		DC "INSERT OUTPUT 1-4"
 		DB 0XFF
+
+		DUPL 0X10,0
+DSTUPID		DW _STUPID
 
 MSTUPID		DB 3,8,3,26,0XEA
 		DC "GO SLEEP,STUPID USER!!!"

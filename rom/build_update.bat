@@ -7,7 +7,7 @@ ren crc.bin crc_pen.bin
 ..\tools\addcrc\addcrc zxevo_atm.rom
 ren crc.bin crc_atm.bin
 
-..\tools\sjasmplus\sjasmplus -isrc build_update.a80
+..\tools\sjasmplus\sjasmplus --sym=sym.log --lst=dump.log -isrc build_update.a80
 ..\tools\addcrc\addcrc header.rom
 
 copy /B /Y header.rom+crc.bin+zxevo_pen.rom+zxevo_atm.rom zxevo_rom.upd
