@@ -394,7 +394,7 @@ T_SD35: LD      DATA,X+
         PUSH    DATA
         CALL    PRINTSTRZ
         POP     DATA
-        CALL    HEXBYTE
+        CALL    DECBYTE
         RJMP    T_SD38
 T_SD36: ANDI    DATA,$0F
         SUBI    DATA,3
