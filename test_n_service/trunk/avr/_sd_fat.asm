@@ -570,6 +570,7 @@ RDFATZP:
         ADIW    ZL,1
         LD      XL,Z+
         LD      XH,Z
+        ANDI    XH,$0F  ;
         RET
 ;FAT16
 RDFATS1:LDIX    0
