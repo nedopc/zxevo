@@ -327,8 +327,6 @@ FSRROO2:STSW    FAT_ROOTCLS+0
         STSW    FAT_TEK_DIR+0
         STSX    FAT_TEK_DIR+2
 
-        PUSHW
-        PUSHX
         LDSW    FAT_RSVDSEC
         LDIX    0
         LDIZ    FAT_STARTRZ
@@ -339,12 +337,15 @@ FSRROO2:STSW    FAT_ROOTCLS+0
         RCALL   BCDEHLP
         STSW    FAT_FATSTR1+0
         STSX    FAT_FATSTR1+2
-        POPX
-        POPW
+
+        LDSW    FAT_ROOTCLS+0
+        LDSX    FAT_ROOTCLS+2
 ;
 ;--------------------------------------
 ;
 CALCKCLSDIR:
+        PUSHW
+        PUSHX
         LDI     TEMP,1
         MOV     R0,WL
         OR      R0,WH
@@ -359,6 +360,8 @@ NEXTCLS:PUSH    TEMP
         INC     TEMP
         RJMP    NEXTCLS
 LASTCLS:STS     FAT_KCLSDIR,TEMP
+        POPX
+        POPW
         RET
 ;
 ;--------------------------------------
