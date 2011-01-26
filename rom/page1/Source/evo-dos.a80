@@ -1,11 +1,11 @@
 
-;LAST UPDATE: 21.01.2011 savelij
+;LAST UPDATE: 26.01.2011 savelij
 
 		include ../../macros.a80
 		include ../../global_vars.a80
 		include bas_trd_vars.a80
 
-DD		EQU 21				;„€’€
+DD		EQU 26				;„€’€
 MM		EQU 01				;Œ…‘Ÿ–
 YY		EQU 11				;ƒŽ„
 DATA		EQU DD+(MM<<5)+(YY<<9)+0X8000	;“†… “€ŠŽ‚€Ž
@@ -15,7 +15,7 @@ WR_SECT		EQU 0XA0
 RD_ADDR		EQU 0XC0
 
 ;		     0123456789012345678
-NUMBER_VERS	EQU " EVO-DOS Ver 0.18  "
+NUMBER_VERS	EQU " EVO-DOS Ver 0.19  "
 ZASTV_X		EQU 7					;ŠŽŽ„ˆ€’€ X …—€’ˆ €„ˆ‘ˆ BETA128
 ZASTV_Y		EQU 6					;ŠŽŽ„ˆ€’€ Y …—€’ˆ €„ˆ‘ˆ BETA128
 ZASTV_PIX	EQU ZASTV_Y*0X20+0X4000+ZASTV_X+9	;€„…‘ ‚›‚Ž„€ ‘ŠŽ˜…›• “ƒŽ‹ŠŽ‚
@@ -4696,8 +4696,7 @@ SAE2_HL_	LD (TRD_5D11),HL	; €„…‘	‘’ŽŠˆ ŠŽŒ€„› TR_DOS
 		INC HL
 		LD (TRD_5CD7),HL	; ŽŒ…†“’Ž—›‰	‘’€’ ”€‰‹€ ˆ‹ˆ	ŠŽ‹-‚Ž ’…ŠŽ‚
 					; Ž‘‹…	Ž‚…Šˆ ’ˆ€ „ˆ‘ŠŽ‚Ž„€
-LOC_3057
-		CALL FIND_KEYWORD
+LOC_3057	CALL FIND_KEYWORD
 		JR NZ,LOC_3087
 		EX DE,HL
 		INC DE
@@ -5149,13 +5148,16 @@ LOC_3E01	DEC C
 ;		DUPL 0X3E08-$,0XFF
 ;		ORG 0X3E08
 ; Ž‹“—…ˆ… ‚…Œ…ˆ ……Œ…™…ˆŸ	ƒŽ‹Ž‚Šˆ
-GET_TIME_HEAD	LD DE,TRD_5CFA		; ‚…ŒŸ	……Œ…™…ˆŸ „ˆ‘ŠŽ‚Ž„€ A
+GET_TIME_HEAD	PUSH DE
+		LD DE,TRD_5CFA		; ‚…ŒŸ	……Œ…™…ˆŸ „ˆ‘ŠŽ‚Ž„€ A
 LOC_3E0B	LD HL,(TRD_5CF6)	; „ˆ‘ŠŽ‚Ž„ „‹Ÿ ‚…Œ…Ž‰ Ž…€–ˆˆ
 		ADD HL,DE
+		POP DE
 		LD A,(HL)
 		RET
 
-GET_TYPE_DSK	LD DE,TRD_5CC8		; …†ˆŒ	€Ž’€ „ˆ‘ŠŽ‚Ž„€ A
+GET_TYPE_DSK	PUSH DE
+		LD DE,TRD_5CC8		; …†ˆŒ	€Ž’€ „ˆ‘ŠŽ‚Ž„€ A
 		JR LOC_3E0B
 
 ; Ž…„…‹…ˆ… ‚…Œ…ˆ ……Œ…™…ˆŸ ƒŽ‹Ž‚Šˆ
