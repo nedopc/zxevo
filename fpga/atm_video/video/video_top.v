@@ -1,6 +1,6 @@
 `include "../include/tune.v"
 
-// Pentevo project (c) NedoPC 2010
+// Pentevo project (c) NedoPC 2010-2011
 //
 // top module for video output.
 
@@ -65,6 +65,25 @@ module video_top(
 
 
 
+	// synchronization
+	wire hsync_start;
+	wire line_start;
+	wire hint_start;
+
+	wire vblank;
+	wire hblank;
+	wire vsync;
+	wire hsync;
+	wire int_start;
+	wire scanin_start;
+	wire vpix;
+	wire hpix;
+
+
+
+
+
+
 
 
 
@@ -96,8 +115,52 @@ module video_top(
 
 
 
+	// vertical sync generator
+	video_sync_v video_sync_v(
+
+		.clk(clk),
+
+		.mode_atm_n_pent(mode_atm_n_pent),
 
 
+		.hsync_start(hsync_start),
+		.line_start(line_start),
+		.hint_start(hint_start),
+
+		.vblank(vblank),
+		.vsync(vsync),
+		.vpix(vpix),
+
+		.int_start(int_start)
+	);
+
+
+	// horizontal sync generator
+	video_sync_h video_sync_h(
+
+		.clk(clk),
+
+		.mode_atm_n_pent(mode_atm_n_pent),
+
+
+		.init(1'b0),
+
+		.cend(cend),
+		.pre_cend(pre_cend),
+
+
+		.hblank(hblank),
+		.hsync(hsync),
+		.hpix(hpix),
+
+		.line_start(line_start),
+		.hsync_start(hsync_start),
+
+		.hint_start(hint_start),
+
+		.scanin_start(scanin_start)
+	
+	);
 
 
 
