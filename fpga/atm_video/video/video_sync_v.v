@@ -1,6 +1,6 @@
 `include "../include/tune.v"
 
-// PentEvo project (c) NedoPC 2008-2010
+// PentEvo project (c) NedoPC 2008-2011
 //
 // vertical blank, sync and window. H is period of horizontal sync;
 // from the last non-blanked line:
@@ -8,7 +8,7 @@
 // 2.xxH is vertical sync (slightly more than 2H, all hsync edges preserved)
 // vblank is total of 25H
 
-module syncv(
+module video_sync_v(
 
 	input  wire        clk,
 

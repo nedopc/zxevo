@@ -1,6 +1,6 @@
 `include "../include/tune.v"
 
-// PentEvo project (c) NedoPC 2008-2010
+// PentEvo project (c) NedoPC 2008-2011
 //
 // generates horizontal sync, blank and video start strobe, horizontal window
 //
@@ -20,7 +20,7 @@
 // repetition period = 448 clocks
 
 
-module synch(
+module video_sync_h(
 
 	input  wire        clk,
 
