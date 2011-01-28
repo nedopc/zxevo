@@ -3,6 +3,9 @@
 // Pentevo project (c) NedoPC 2010-2011
 //
 // top module for video output.
+//
+//
+// note: the only bandwidths currently in use are 1/8 and 1/4.
 
 module video_top(
 
@@ -33,6 +36,8 @@ module video_top(
 	                               // 3'b000 - 320x200 16 colors
 	                               // 3'b110 - 80x25 text mode
 	                               // 3'b??? (others) - not defined yet
+
+
 
 	input  wire        scr_page,   // screen page (bit 3 of 7FFD)
 
@@ -78,6 +83,9 @@ module video_top(
 	wire scanin_start;
 	wire vpix;
 	wire hpix;
+
+	wire fetch_start;
+	wire fetch_end;
 
 
 
@@ -158,7 +166,10 @@ module video_top(
 
 		.hint_start(hint_start),
 
-		.scanin_start(scanin_start)
+		.scanin_start(scanin_start),
+
+		.fetch_start(fetch_start),
+		.fetch_end  (fetch_end  )
 	
 	);
 

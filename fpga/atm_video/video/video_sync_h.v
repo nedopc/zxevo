@@ -47,7 +47,11 @@ module video_sync_h(
 
 	output reg         scanin_start,
 
-	output reg         hpix // marks gate during which pixels are outting
+	output reg         hpix, // marks gate during which pixels are outting
+
+	                                // these signals turn on and turn off 'go' signal
+	output reg         fetch_start, // 18 cycles earlier than hpix, coincide with cend
+	output reg         fetch_end    // --//--
 
 );
 
@@ -66,6 +70,12 @@ module video_sync_h(
 	localparam HPIX_END_ATM = 9'd428;
 
 
+	localparam FETCH_FOREGO = 9'd18; // consistent with older go_start in older fetch.v:
+	                                 // actual data starts fetching 2 dram cycles after
+					 // 'go' goes to 1, screen output starts another
+					 // 16 cycles after 1st data bundle is fetched
+
+
 	localparam SCANIN_BEG = 9'd88; // when scan-doubler starts pixel storing
 
 	localparam HINT_BEG = 9'd443;
@@ -78,7 +88,8 @@ module video_sync_h(
 
 
 
-
+	// for simulation only
+	//
 	initial
 	begin
 		hcount = 9'd0;
@@ -88,6 +99,9 @@ module video_sync_h(
 		hsync_start = 1'b0;
 		hpix = 1'b0;
 	end
+
+
+
 
 	always @(posedge clk) if( cend )
 	begin
@@ -126,12 +140,25 @@ module video_sync_h(
 
 			if( hcount==SCANIN_BEG )
 				scanin_start <= 1'b1;
+
+
+			if( hcount == (  mode_atm_n_pent             ?
+			                (HPIX_BEG_ATM -FETCH_FOREGO) :
+			                (HPIX_BEG_PENT-FETCH_FOREGO) ) )
+				fetch_start <= 1'b1;
+
+			if( hcount == (  mode_atm_n_pent             ?
+			                (HPIX_END_ATM -FETCH_FOREGO) :
+			                (HPIX_END_PENT-FETCH_FOREGO) ) )
+				fetch_end <= 1'b1;
 		end
 		else
 		begin
-			hsync_start <= 1'b0;
-			line_start <= 1'b0;
+			hsync_start  <= 1'b0;
+			line_start   <= 1'b0;
 			scanin_start <= 1'b0;
+			fetch_start  <= 1'b0;
+			fetch_end    <= 1'b0;
 		end
 	end
 
@@ -152,6 +179,9 @@ module video_sync_h(
 		else if( hcount==(mode_atm_n_pent ? HPIX_END_ATM : HPIX_END_PENT) )
 			hpix <= 1'b0;
 	end
+
+
+
 
 
 endmodule
