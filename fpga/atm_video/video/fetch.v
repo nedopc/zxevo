@@ -37,7 +37,7 @@ module fetch(
 
 
 
-	output [5:0] pixel
+	output [3:0] pixel
 );
 
 
@@ -288,13 +288,13 @@ module fetch(
 		end
 	end
 
-	// red
-	assign pixel[5:4] = zxcolor[1] ? ( zxcolor[3] ? 2'b11 : 2'b10 ) : 2'b00;
-	// green
-	assign pixel[3:2] = zxcolor[2] ? ( zxcolor[3] ? 2'b11 : 2'b10 ) : 2'b00;
-	// blue
-	assign pixel[1:0] = zxcolor[0] ? ( zxcolor[3] ? 2'b11 : 2'b10 ) : 2'b00;
-
+//	// red
+//	assign pixel[5:4] = zxcolor[1] ? ( zxcolor[3] ? 2'b11 : 2'b10 ) : 2'b00;
+//	// green
+//	assign pixel[3:2] = zxcolor[2] ? ( zxcolor[3] ? 2'b11 : 2'b10 ) : 2'b00;
+//	// blue
+//	assign pixel[1:0] = zxcolor[0] ? ( zxcolor[3] ? 2'b11 : 2'b10 ) : 2'b00;
+        assign pixel = zxcolor;
 
 
 
