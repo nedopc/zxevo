@@ -50,12 +50,12 @@ module video_top(
 
 
 	// memory arbiter video port connection
-	input  wire        varb_strobe,
-	input  wire        varb_next,
-	input  wire [20:0] varb_addr,
-	input  wire [15:0] varb_data,
-	output wire [ 1:0] varb_bw,
-	output wire        varb_go
+	input  wire        video_strobe,
+	input  wire        video_next,
+	output wire [20:0] video_addr,
+	input  wire [15:0] video_data,
+	output wire [ 1:0] video_bw,
+	output wire        video_go
 );
 
 	// these decoded in video_modedecode.v
@@ -115,7 +115,9 @@ module video_top(
 		.mode_a_16c  (mode_a_16c),
 		.mode_a_text (mode_a_text),
 		
-		.mode_pixf_14(mode_pixf_14)
+		.mode_pixf_14(mode_pixf_14),
+
+		.mode_bw(video_bw)
 	);
 
 
@@ -173,6 +175,30 @@ module video_top(
 	
 	);
 
+
+	// address generation
+	video_addrgen video_addrgen(
+
+		.clk(clk),
+
+		.video_addr(video_addr),
+		.video_next(video_next),
+
+		.fetch_start(fetch_start),
+		.line_start(line_start),
+		.int_start(int_start),
+
+		.scr_page(scr_page),
+
+
+		.mode_atm_n_pent(mode_atm_n_pent),
+		.mode_zx        (mode_zx        ),
+		.mode_p_16c     (mode_p_16c     ),
+		.mode_p_hmclr   (mode_p_hmclr   ),
+		.mode_a_hmclr   (mode_a_hmclr   ),
+		.mode_a_16c     (mode_a_16c     ),
+		.mode_a_text    (mode_a_text    )
+	);
 
 
 

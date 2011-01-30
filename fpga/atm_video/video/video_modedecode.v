@@ -20,11 +20,17 @@ module video_modedecode(
 	output reg         mode_p_16c,   // pentagon 16 colors
 	output reg         mode_p_hmclr, // pentagon hardware multicolor
 
+
 	output reg         mode_a_hmclr, // 640x200 atm hardware multicolor
 	output reg         mode_a_16c,   // 320x200 atm 16 colors
 	output reg         mode_a_text,  // 640x200 (80x25 symbols) atm text mode
 
+
 	output reg         mode_pixf_14, // =1: 14MHz pixelclock on (default is 7MHz).
+
+
+	output reg  [ 1:0] mode_bw // required bandwidth: 2'b00 - 1/8, 2'b01 - 1/4,
+	                           //                     2'b10 - 1/2, 2'b11 - 1
 );
 
 // values for pent_vmode and atm_vmode:
@@ -108,7 +114,15 @@ module video_modedecode(
 		else
 			mode_pixf_14 <= 1'b0;
 
-		
+
+
+
+		if( (atm_vmode==3'b011) && (pent_vmode!=2'b10) )
+			mode_bw <= 2'b00; // 1/8
+		else
+			mode_bw <= 2'b01; // 1/4
+
+
 	end
 
 endmodule
