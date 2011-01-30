@@ -52,14 +52,20 @@ module video_render(
 
 
 
-	wire [3:0] pix0,pix1;
+	wire [3:0] pix0, pix1, zxcolor;
 	wire [7:0] pixbyte, attrbyte;
 
+	assign attrbyte = bits[ { 2'b01, pixnum[3] } ];
+
+	assign pix0 = { attrbyte[6], attrbyte[5:3] };
+	assign pix1 = { attrbyte[6], attrbyte[2:0] };
+
+	assign pixbyte = bits[ { 2'b00, pixnum[3] } ];
+
+	assign zxcolor = ( pixbyte[~pixnum[2:0]] ^ (flash & attrbyte[7]) ) & pix1 : pix0;
 
 
-
-
-
+	assign pixel
 
 
 
