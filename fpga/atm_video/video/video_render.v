@@ -14,7 +14,7 @@ module video_render(
 	input  wire        fetch_sync, // synchronizes pixel rendering
 
 
-	output wire [ 3:0] zxcolor, // output pixel
+	output wire [ 3:0] pixels, // output pixels
 
 
 	input  wire        mode_atm_n_pent, // decoded modes
@@ -62,7 +62,7 @@ module video_render(
 
 	assign pixbyte = bits[ { 2'b00, pixnum[3] } ];
 
-	assign zxcolor = ( pixbyte[~pixnum[2:0]] ^ (flash & attrbyte[7]) ) ? pix1 : pix0;
+	assign pixels = ( pixbyte[~pixnum[2:0]] ^ (flash & attrbyte[7]) ) ? pix1 : pix0;
 
 
 
