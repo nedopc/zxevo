@@ -80,14 +80,24 @@ module video_top(
 	wire line_start;
 	wire hint_start;
 
+
 	wire vblank;
 	wire hblank;
-	wire vsync;
-	wire hsync;
-	wire int_start;
-	wire scanin_start;
+	
 	wire vpix;
 	wire hpix;
+	
+	wire vsync;
+	wire hsync;
+	
+	wire vga_hsync;
+
+	wire int_start;
+
+	wire scanin_start;
+	wire scanout_start;
+
+
 
 	wire fetch_start;
 	wire fetch_end;
@@ -97,8 +107,11 @@ module video_top(
 	wire [63:0] pic_bits;
 
 
-	wire [3:0] zxcolor;
+	wire [3:0] pixels;
 
+
+	wire [5:0] color;
+	wire [5:0] vga_color;
 
 
 
@@ -247,8 +260,82 @@ module video_top(
 		.mode_a_text    (mode_a_text    ),
 
 
-		.zxcolor(zxcolor)
+		.pixels(pixels)
 	);
+
+
+	// combine border and pixels, apply palette
+	video_palframe video_palframe(
+
+		.clk(clk),
+
+		.hblank(hblank),
+		.vblank(vblank),
+
+		.hpix(hpix),
+		.vpix(vpix),
+
+		.pixels(pixels),
+		.border(border),
+
+		.atm_palwr  (atm_palwr  ),
+		.atm_paldata(atm_paldata),
+
+		.color(color)
+	);
+
+
+	// VGA hsync doubling
+	video_vga_sync_h video_vga_sync_h(
+	
+		.clk(clk),
+
+		.hsync_start(hsync_start),
+
+		.scanout_start(scanout_start),
+
+		.vga_hsync(vga_hsync)
+	);
+
+
+	// VGA scandoubling
+	video_vga_double(
+
+		.clk(clk),
+
+		.hsync_start  (hsync_start  ),
+		.scanout_start(scanout_start),
+		.scanin_start (scanin_start ),
+
+		.pix_in(color),
+
+		.pix_out(vgacolor)
+	);
+
+
+	// final MUXing of VGA and TV signals
+	video_outmux video_outmux(
+
+		.clk(clk),
+
+		
+		.tvcolor(color),
+		.vgacolor(vgacolor),
+
+		.vga_hsync(vga_hsync),
+		.hsync    (hsync    ),
+		.vsync    (vsync    ),
+
+		.vred(vred),
+		.vgrn(vgrn),
+		.vblu(vblu),
+
+		.vhsync(vhsync),
+		.vvsync(vvsync),
+		.vcsync(vcsync)
+	);
+
+
 
 
 
