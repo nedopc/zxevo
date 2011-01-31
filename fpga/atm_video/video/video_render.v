@@ -14,7 +14,7 @@ module video_render(
 	input  wire        fetch_sync, // synchronizes pixel rendering
 
 
-	output wire [ 5:0] pixel, // output pixel
+	output wire [ 3:0] zxcolor, // output pixel
 
 
 	input  wire        mode_atm_n_pent, // decoded modes
@@ -28,7 +28,7 @@ module video_render(
 );
 
 	// fetched data divided in bytes
-	wire [7:0] bits[7:0];
+	wire [7:0] bits [0:7];
 
 	assign bits[0] = pic_bits[ 7:0 ];
 	assign bits[1] = pic_bits[15:8 ];
@@ -48,10 +48,10 @@ module video_render(
 		if( fetch_sync )
 			pixnum <= 0;
 		else
-			pixnum <= pixnum + 1; 
+			pixnum <= pixnum + 1;
 
 
-
+	// currently only zx-6912 mode is supported!
 	wire [3:0] pix0, pix1, zxcolor;
 	wire [7:0] pixbyte, attrbyte;
 
@@ -62,10 +62,7 @@ module video_render(
 
 	assign pixbyte = bits[ { 2'b00, pixnum[3] } ];
 
-	assign zxcolor = ( pixbyte[~pixnum[2:0]] ^ (flash & attrbyte[7]) ) & pix1 : pix0;
-
-
-	assign pixel
+	assign zxcolor = ( pixbyte[~pixnum[2:0]] ^ (flash & attrbyte[7]) ) ? pix1 : pix0;
 
 
 

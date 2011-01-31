@@ -316,6 +316,9 @@ module top(
 	wire drive_ff;
 
 
+	wire       atm_palwr;
+	wire [5:0] atm_paldata;
+
 
 
 
@@ -617,7 +620,7 @@ module top(
 	               .tape_read(tape_read),
 
 	               .gluclock_addr(gluclock_addr),
-		       .comport_addr (comport_addr),
+	               .comport_addr (comport_addr),
 	               .wait_start_gluclock(wait_start_gluclock),
 	               .wait_start_comport (wait_start_comport),
 	               .wait_rnw(wait_rnw),
@@ -637,7 +640,10 @@ module top(
 	               .pent1m_ram0_0(pent1m_ram0_0),
 	               .pent1m_1m_on (pent1m_1m_on),
 	               .pent1m_page  (pent1m_page),
-	               .pent1m_ROM   (pent1m_ROM)
+	               .pent1m_ROM   (pent1m_ROM),
+
+	               .atm_palwr  (atm_palwr  ),
+	               .atm_paldata(atm_paldata)
 
 	             );
 

@@ -22,7 +22,7 @@ module video_top(
 
 
 	// aux video inputs
-	input  wire [ 5:0] border, // border color, RrGgBb
+	input  wire [ 3:0] zxborder, // border zxcolor
 
 
 	// config inputs
@@ -55,7 +55,12 @@ module video_top(
 	output wire [20:0] video_addr,
 	input  wire [15:0] video_data,
 	output wire [ 1:0] video_bw,
-	output wire        video_go
+	output wire        video_go,
+
+
+	// atm palette write strobe adn data
+	input  wire        atm_palwr,
+	input  wire [ 5:0] atm_paldata
 );
 
 	// these decoded in video_modedecode.v
@@ -64,8 +69,8 @@ module video_top(
 	wire mode_p_16c;
 	wire mode_p_hmclr;
 	wire mode_a_hmclr;
-	wire mode_a_16c;  
-	wire mode_a_text; 
+	wire mode_a_16c;
+	wire mode_a_text;
 	wire mode_pixf_14;
 
 
@@ -86,11 +91,13 @@ module video_top(
 
 	wire fetch_start;
 	wire fetch_end;
+	wire fetch_sync;
 
 
+	wire [63:0] pic_bits;
 
 
-
+	wire [3:0] zxcolor;
 
 
 
@@ -114,7 +121,7 @@ module video_top(
 		.mode_a_hmclr(mode_a_hmclr),
 		.mode_a_16c  (mode_a_16c),
 		.mode_a_text (mode_a_text),
-		
+
 		.mode_pixf_14(mode_pixf_14),
 
 		.mode_bw(video_bw)
@@ -172,7 +179,7 @@ module video_top(
 
 		.fetch_start(fetch_start),
 		.fetch_end  (fetch_end  )
-	
+
 	);
 
 
@@ -199,6 +206,50 @@ module video_top(
 		.mode_a_16c     (mode_a_16c     ),
 		.mode_a_text    (mode_a_text    )
 	);
+
+
+	// data fetch
+	video_fetch video_fetch(
+
+		.clk(clk),
+
+		.cend(cend),
+		.pre_cend(pre_cend),
+
+		.fetch_start(fetch_start),
+		.fetch_end  (fetch_end  ),
+
+		.fetch_sync (fetch_sync ),
+
+		.video_data  (video_data  ),
+		.video_strobe(video_strobe),
+		.video_go    (video_go    ),
+
+		.pic_bits(pic_bits)
+	);
+
+
+	// render fetched data to pixels
+	video_render video_render(
+
+		.clk(clk),
+
+		.pic_bits(pic_bits),
+
+		.fetch_sync (fetch_sync ),
+
+		.mode_atm_n_pent(mode_atm_n_pent),
+		.mode_zx        (mode_zx        ),
+		.mode_p_16c     (mode_p_16c     ),
+		.mode_p_hmclr   (mode_p_hmclr   ),
+		.mode_a_hmclr   (mode_a_hmclr   ),
+		.mode_a_16c     (mode_a_16c     ),
+		.mode_a_text    (mode_a_text    ),
+
+
+		.zxcolor(zxcolor)
+	);
+
 
 
 
