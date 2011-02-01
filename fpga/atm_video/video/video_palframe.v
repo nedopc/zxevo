@@ -24,7 +24,7 @@ module video_palframe(
 	input  wire [ 5:0] atm_paldata,
 
 
-	output reg  [ 5:0] color
+	output wire [ 5:0] color
 );
 
 

@@ -12,6 +12,10 @@ module video_render(
 	input  wire [63:0] pic_bits, // video data from fetcher
 
 	input  wire        fetch_sync, // synchronizes pixel rendering
+	
+	input  wire        cend, // general sync
+	
+	input  wire        int_start, // for flash gen
 
 
 	output wire [ 3:0] pixels, // output pixels
@@ -26,6 +30,25 @@ module video_render(
 	input  wire        mode_a_16c,      //
 	input  wire        mode_a_text      //
 );
+
+
+	reg [4:0] flash_ctr;
+	wire flash;
+	
+	initial
+	begin
+		flash_ctr = 0;
+	end
+	
+	always @(posedge clk) if( int_start )
+	begin
+		flash_ctr <= flash_ctr + 1;
+	end
+	assign flash = flash_ctr[4];
+	
+
+
+
 
 	// fetched data divided in bytes
 	wire [7:0] bits [0:7];
