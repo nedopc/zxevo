@@ -529,7 +529,7 @@ module top(
 	                 .cpu_rddata(cpu_rddata),
 	                 .cpu_strobe(cpu_strobe) );
 
-
+/*
 	wire vga_hsync,hsync,hblank,hpix,hsync_start,line_start,hint_start,scanin_start,scanout_start;
 
 	synch horiz_sync( .clk(fclk), .init(1'b0), .cend(cend), .pre_cend(pre_cend),
@@ -565,8 +565,42 @@ module top(
 					.rst_n(rst_n), .wr_pal64(vg_wrFF&atm_pen2),
 					.newrealcolor({~d[4],~d[7],~d[1],~d[6],~d[0],~d[5]})
 	);
+*/
 
+	video_top video_top(
 
+		.clk(fclk),
+
+		.vred(vred),
+		.vgrn(vgrn),
+		.vblu(vblu),
+		.vhsync(vhsync),
+		.vvsync(vvsync),
+		.vcsync(vcsync),
+
+		.zxborder(border),
+
+		.pent_vmode(2'b00),
+		.atm_vmode(3'b011),
+
+		.scr_page(p7ffd[3]),
+
+		.vga_on(cfg_vga_on),
+
+		.cend(cend),
+		.pre_cend(pre_cend),
+
+		.video_go    (go          ),
+		.video_bw    (bw          ),
+		.video_addr  (video_addr  ),
+		.video_data  (video_data  ),
+		.video_strobe(video_strobe),
+		.video_next  (video_next  ),
+
+		.atm_palwr(atm_palwr),
+		.atm_paldata(atm_paldata)
+
+	);
 
 
 
