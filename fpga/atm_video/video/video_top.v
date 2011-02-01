@@ -250,6 +250,8 @@ module video_top(
 		.pic_bits(pic_bits),
 
 		.fetch_sync (fetch_sync ),
+		
+		.int_start(int_start),
 
 		.mode_atm_n_pent(mode_atm_n_pent),
 		.mode_zx        (mode_zx        ),
@@ -299,7 +301,7 @@ module video_top(
 
 
 	// VGA scandoubling
-	video_vga_double(
+	video_vga_double video_vga_double(
 
 		.clk(clk),
 
