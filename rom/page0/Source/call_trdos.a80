@@ -499,19 +499,41 @@ RESET_VG	LD C,0XFF
 DOSIX		PUSH IX
 		JP TO_DOS
 
-FormTR	SRL A
-	LD (_phystr),A
-	RLA
-	LD C,2			;позиционир-е на лог.tr A
-	CALL TO_DOS4BAS
-	LD A,0XFF
-	LD (0X5CD8),A
-	LD HL,SeCS
-	LD (0X5CE6),HL
-	LD E,0
-_phystr	EQU $-1
-	LD IX,0X1FFD		;format track
-	JR DOSIX
+;ПРОВЕРКА НАЛИЧИЯ МАРКЕРА РАМДИСКА, ПРИ ОТСУСТВИИ СОЗДАНИЕ ДИСКА НА 640КБ
+DISK_NONE	LD A,1
+		OUT (PEVO_CONF),A
+		LD A,PAGE_RAMDISK
+		LD BC,WIN_P1
+		OUT (C),A
+		LD HL,0X7FFF
+		LD A,(HL)
+		DEC H
+		CP "R"
+		JR NZ,DISK_NONE1
+		LD A,(HL)
+		CP "D"
+DISK_NONE1	EX AF,AF'
+		LD A,0XFA
+		OUT (C),A
+		XOR A
+		OUT (PEVO_CONF),A
+		EX AF,AF'
+		JP NZ,CREATE_TRDRAM		;МАРКЕР НЕ ОБНАРУЖЕН, СОЗДАТЬ
+		RET
+
+;FormTR	SRL A
+;	LD (_phystr),A
+;	RLA
+;	LD C,2			;позиционир-е на лог.tr A
+;	CALL TO_DOS4BAS
+;	LD A,0XFF
+;	LD (0X5CD8),A
+;	LD HL,SeCS
+;	LD (0X5CE6),HL
+;	LD E,0
+;_phystr	EQU $-1
+;	LD IX,0X1FFD		;format track
+;	JR DOSIX
 
 DIV10	LD D,0X30-1
 	INC D
