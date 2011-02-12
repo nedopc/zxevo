@@ -1,12 +1,12 @@
 
-;LAST UPDATE: 07.02.2011 savelij
+;LAST UPDATE: 12.02.2011 savelij
 
 		include ../../macros.a80
 		include ../../global_vars.a80
 		include bas_trd_vars.a80
 
-DD		EQU 7				;„€’€
-MM		EQU 01				;Œ…‘Ÿ–
+DD		EQU 12				;„€’€
+MM		EQU 02				;Œ…‘Ÿ–
 YY		EQU 11				;ƒŽ„
 DATA		EQU DD+(MM<<5)+(YY<<9)+0X8000	;“†… “€ŠŽ‚€Ž
 
@@ -15,7 +15,7 @@ WR_SECT		EQU 0XA0
 RD_ADDR		EQU 0XC0
 
 ;		     0123456789012345678
-NUMBER_VERS	EQU " EVO-DOS Ver 0.2  "
+NUMBER_VERS	EQU " EVO-DOS Ver 0.21 "
 ZASTV_X		EQU 7					;ŠŽŽ„ˆ€’€ X …—€’ˆ €„ˆ‘ˆ BETA128
 ZASTV_Y		EQU 6					;ŠŽŽ„ˆ€’€ Y …—€’ˆ €„ˆ‘ˆ BETA128
 ZASTV_PIX	EQU ZASTV_Y*0X20+0X4000+ZASTV_X+9	;€„…‘ ‚›‚Ž„€ ‘ŠŽ˜…›• “ƒŽ‹ŠŽ‚
@@ -4980,6 +4980,11 @@ WRPORT_RET	OUTI
 		NOP
 		NOP
 		RET		
+
+		DUPL 0X3D46-$,0XFF
+		ORG 0X3D46
+		LD A,1
+		RET
 
 		DUPL 0X3D5A-$,0XFF
 		ORG 0X3D5A
