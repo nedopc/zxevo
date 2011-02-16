@@ -60,7 +60,10 @@ module video_top(
 
 	// atm palette write strobe adn data
 	input  wire        atm_palwr,
-	input  wire [ 5:0] atm_paldata
+	input  wire [ 5:0] atm_paldata,
+
+
+	output wire        int_start
 );
 
 	// these decoded in video_modedecode.v
@@ -83,16 +86,14 @@ module video_top(
 
 	wire vblank;
 	wire hblank;
-	
+
 	wire vpix;
 	wire hpix;
-	
+
 	wire vsync;
 	wire hsync;
-	
-	wire vga_hsync;
 
-	wire int_start;
+	wire vga_hsync;
 
 	wire scanin_start;
 	wire scanout_start;
@@ -250,7 +251,7 @@ module video_top(
 		.pic_bits(pic_bits),
 
 		.fetch_sync (fetch_sync ),
-		
+
 		.int_start(int_start),
 
 		.mode_atm_n_pent(mode_atm_n_pent),
@@ -289,7 +290,7 @@ module video_top(
 
 	// VGA hsync doubling
 	video_vga_sync_h video_vga_sync_h(
-	
+
 		.clk(clk),
 
 		.hsync_start(hsync_start),
@@ -320,7 +321,7 @@ module video_top(
 
 		.clk(clk),
 
-		
+
 		.tvcolor(color),
 		.vgacolor(vgacolor),
 
