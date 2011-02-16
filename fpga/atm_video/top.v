@@ -319,7 +319,7 @@ module top(
 	wire       atm_palwr;
 	wire [5:0] atm_paldata;
 
-
+	wire int_start;
 
 
 	// data bus out: either RAM data or internal ports data or 0xFF with unused ports
@@ -511,10 +511,10 @@ module top(
 	                 .cend(cend),
 	                 .pre_cend(pre_cend),
 
-	                 .go(go),
-	                 .bw(bw),
+	                 .go(1'b0/*go*/),
+	                 .bw(2'b00/*bw*/),
 
-	                 .video_addr(video_addr),
+	                 .video_addr(0/*video_addr*/),
 	                 .video_data(video_data),
 	                 .video_strobe(video_strobe),
 	                 .video_next(video_next),
@@ -567,6 +567,8 @@ module top(
 	);
 */
 
+
+
 	video_top video_top(
 
 		.clk(fclk),
@@ -598,10 +600,11 @@ module top(
 		.video_next  (video_next  ),
 
 		.atm_palwr(atm_palwr),
-		.atm_paldata(atm_paldata)
+		.atm_paldata(atm_paldata),
+
+		.int_start(int_start)
 
 	);
-
 
 
 
