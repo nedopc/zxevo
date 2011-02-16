@@ -511,10 +511,10 @@ module top(
 	                 .cend(cend),
 	                 .pre_cend(pre_cend),
 
-	                 .go(1'b0/*go*/),
-	                 .bw(2'b00/*bw*/),
+	                 .go(go),
+	                 .bw(bw),
 
-	                 .video_addr(0/*video_addr*/),
+	                 .video_addr(video_addr),
 	                 .video_data(video_data),
 	                 .video_strobe(video_strobe),
 	                 .video_next(video_next),

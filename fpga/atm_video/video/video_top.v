@@ -279,7 +279,7 @@ module video_top(
 		.vpix(vpix),
 
 		.pixels(pixels),
-		.border(border),
+		.border(zxborder),
 
 		.atm_palwr  (atm_palwr  ),
 		.atm_paldata(atm_paldata),
@@ -312,7 +312,7 @@ module video_top(
 
 		.pix_in(color),
 
-		.pix_out(vgacolor)
+		.pix_out(vga_color)
 	);
 
 
@@ -323,7 +323,7 @@ module video_top(
 
 
 		.tvcolor(color),
-		.vgacolor(vgacolor),
+		.vgacolor(vga_color),
 
 		.vga_hsync(vga_hsync),
 		.hsync    (hsync    ),
