@@ -323,6 +323,8 @@ module video_top(
 
 		.clk(clk),
 
+		.vga_on(vga_on),
+
 
 		.tvcolor(color),
 		.vgacolor(vga_color),
