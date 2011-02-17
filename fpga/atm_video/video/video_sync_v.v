@@ -108,9 +108,9 @@ module video_sync_v(
 
 	always @(posedge clk) if( hsync_start )
 	begin
-		if( vcount==(mode_atm_n_pent ? VPIX_BEG_PENT : VPIX_BEG_ATM) )
+		if( vcount==(mode_atm_n_pent ? VPIX_BEG_ATM : VPIX_BEG_PENT) )
 			vpix <= 1'b1;
-		else if( vcount==(mode_atm_n_pent ? VPIX_END_PENT : VPIX_END_ATM) )
+		else if( vcount==(mode_atm_n_pent ? VPIX_END_ATM : VPIX_END_PENT) )
 			vpix <= 1'b0;
 	end
 

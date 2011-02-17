@@ -230,6 +230,8 @@ module video_top(
 		.cend    (cend    ),
 		.pre_cend(pre_cend),
 
+		.vpix(vpix),
+
 		.fetch_start(fetch_start),
 		.fetch_end  (fetch_end  ),
 
