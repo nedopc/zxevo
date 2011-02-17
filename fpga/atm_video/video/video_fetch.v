@@ -12,6 +12,7 @@ module video_fetch(
 	input  wire        cend,     // general
 	input  wire        pre_cend, //        synchronization
 
+	input  wire        vpix, // vertical window
 
 	input  wire        fetch_start, // fetching start and stop
 	input  wire        fetch_end,   //
@@ -19,7 +20,7 @@ module video_fetch(
 	output reg         fetch_sync,     // coincides with cend
 
 
-	
+
 	input  wire [15:0] video_data,   // video data receiving from dram arbiter
 	input  wire        video_strobe, //
 	output reg         video_go, // indicates need for data
@@ -47,14 +48,14 @@ module video_fetch(
 
 	// fetch window
 	always @(posedge clk)
-		if( fetch_start )
+		if( fetch_start && vpix )
 			video_go <= 1'b1;
 		else if( fetch_end )
 			video_go <= 1'b0;
 
 
 
-	// fetch sync counter		
+	// fetch sync counter
 	always @(posedge clk) if( cend )
 	begin
 		if( fetch_start )
@@ -78,8 +79,8 @@ module video_fetch(
 			fetch_ptr_clr <= 1'b1;
 		else
 			fetch_ptr_clr <= 1'b0;
-		
-		
+
+
 	// buffer fill pointer
 	always @(posedge clk)
 		if( fetch_ptr_clr )
@@ -87,14 +88,14 @@ module video_fetch(
 		else if( video_strobe )
 			fetch_ptr <= fetch_ptr + 1;
 
-		
-		
-		
+
+
+
 	// store fetched data
 	always @(posedge clk) if( video_strobe )
 		fetch_data[fetch_ptr] <= video_data;
-		
-		
+
+
 
 	// pass fetched data to renderer
 	always @(posedge clk) if( fetch_sync )
@@ -108,15 +109,15 @@ module video_fetch(
 		pic_bits[55:48] <= fetch_data[3][15:8 ];
 		pic_bits[63:56] <= fetch_data[3][ 7:0 ];
 	end
-		
-		
-		
-		
-		
-		
-		
-		
-		
+
+
+
+
+
+
+
+
+
 endmodule
 
 
