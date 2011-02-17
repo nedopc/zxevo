@@ -35,10 +35,13 @@ module video_addrgen(
 
 
 
-	wire next, line_init, frame_init;
+	wire line_init, frame_init;
+
+	wire next_addr, next_count;
 
 
-	assign next = video_next | fetch_start; // to let addresses propagate from counter to video_addr register
+	assign next_addr = video_next | fetch_start;
+	assign next_count = video_next;// | fetch_start; // to let addresses propagate from counter to video_addr register
 
 	assign line_init  = line_start;
 	assign frame_init = int_start;
@@ -57,9 +60,9 @@ module video_addrgen(
 	always @(posedge clk)
 	if( frame_init )
 	begin
-		ctr <= 0;
+		ctr <= 1;
 	end
-	else if( next )
+	else if( next_count )
 	begin
 		ctr <= ctr + 1;
 	end
@@ -81,7 +84,7 @@ module video_addrgen(
 	assign addr_zx = { 6'b000001, scr_page, 2'b10, ( ctr[0] ? addr_zx_attr : addr_zx_pix ) };
 
 
-	always @(posedge clk) if( next )
+	always @(posedge clk) if( next_addr )
 	begin
 		video_addr <= addr_zx;
 	end
