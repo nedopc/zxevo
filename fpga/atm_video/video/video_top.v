@@ -227,7 +227,7 @@ module video_top(
 
 		.clk(clk),
 
-		.cend(cend),
+		.cend    (cend    ),
 		.pre_cend(pre_cend),
 
 		.fetch_start(fetch_start),
@@ -250,7 +250,9 @@ module video_top(
 
 		.pic_bits(pic_bits),
 
-		.fetch_sync (fetch_sync ),
+		.fetch_sync(fetch_sync),
+
+		.cend(cend),
 
 		.int_start(int_start),
 

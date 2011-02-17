@@ -56,10 +56,12 @@ module video_fetch(
 
 	// fetch sync counter		
 	always @(posedge clk) if( cend )
+	begin
 		if( fetch_start )
 			fetch_sync_ctr <= 0;
 		else
 			fetch_sync_ctr <= fetch_sync_ctr + 1;
+	end
 
 
 	// fetch sync signal
