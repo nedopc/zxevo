@@ -9,7 +9,7 @@ module video_outmux(
 	input  wire        clk,
 
 
-	input  wire vga_on,
+	input  wire        vga_on,
 
 
 	input  wire [ 5:0] tvcolor,
