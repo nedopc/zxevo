@@ -70,9 +70,9 @@ module video_modedecode(
 
 			default: begin
 				if( (pent_vmode==2'b00) || (pent_vmode==2'b11) )
-					mode_zx <= 1'b0;
-				else
 					mode_zx <= 1'b1;
+				else
+					mode_zx <= 1'b0;
 			end
 		endcase
 
