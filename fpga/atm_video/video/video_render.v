@@ -68,10 +68,12 @@ module video_render(
 	reg [3:0] pixnum;
 
 	always @(posedge clk) if( cend )
+	begin
 		if( fetch_sync )
 			pixnum <= 0;
 		else
 			pixnum <= pixnum + 1;
+	end
 
 
 	// currently only zx-6912 mode is supported!
