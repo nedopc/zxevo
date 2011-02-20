@@ -45,8 +45,10 @@ module video_top(
 
 
 	// memory synchronization inputs
-	input  wire        cend,
+	input  wire        cbeg,
+	input  wire        post_cbeg,
 	input  wire        pre_cend,
+	input  wire        cend,
 
 
 	// memory arbiter video port connection
@@ -176,8 +178,8 @@ module video_top(
 
 		.init(1'b0),
 
-		.cend(cend),
 		.pre_cend(pre_cend),
+		.cend    (cend    ),
 
 
 		.hblank(hblank),
@@ -205,9 +207,9 @@ module video_top(
 		.video_addr(video_addr),
 		.video_next(video_next),
 
-		.fetch_start(fetch_start),
 		.line_start(line_start),
-		.int_start(int_start),
+		.int_start (int_start ),
+		.vpix      (vpix      ),
 
 		.scr_page(scr_page),
 
@@ -227,8 +229,8 @@ module video_top(
 
 		.clk(clk),
 
-		.cend    (cend    ),
-		.pre_cend(pre_cend),
+		.pre_cend (pre_cend),
+		.cend     (cend    ),
 
 		.vpix(vpix),
 
@@ -254,7 +256,8 @@ module video_top(
 
 		.fetch_sync(fetch_sync),
 
-		.cend(cend),
+		.post_cbeg(post_cbeg),
+		.cend     (cend     ),
 
 		.int_start(int_start),
 
@@ -265,6 +268,7 @@ module video_top(
 		.mode_a_hmclr   (mode_a_hmclr   ),
 		.mode_a_16c     (mode_a_16c     ),
 		.mode_a_text    (mode_a_text    ),
+		.mode_pixf_14   (mode_pixf_14   ),
 
 
 		.pixels(pixels)
