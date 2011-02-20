@@ -61,12 +61,16 @@ odd  syms: #B0E0, #B100, #B120, ..., #B3E0
 even attr: #30E0, #3100, #3120, ..., #33E0
 odd  attr: #20E0, #2100, #2120, ..., #23E0
 
+read sequence: evenattr, evensyms, oddattr, oddsyms
+0011, 1010, 0010, 1011
+
 absolute addrs, alt. screen:
 even syms: #E0E0, #E100, #E120, ..., #E3E0
 odd  syms: #F0E0, #F100, #F120, ..., #F3E0
 even attr: #70E0, #7100, #7120, ..., #73E0
 odd  attr: #60E0, #6100, #6120, ..., #63E0
 
+0111, 1110, 0110, 1111
 
 
 
@@ -91,6 +95,9 @@ odd  pixs: #B000, #B014, #B028, ..., #BF8C
 even attr: #2000, #2014, #2028, ..., #2F8C
 odd  attr: #3000, #3014, #3028, ..., #3F8C
 
+read sequence: evenattr, evenpix, oddattr, oddpix
+0010, 1010, 0011, 1011
+
 abs. word addrs, sec. screen:
 
 even pixs: #E000, #E014, #E028, ..., #EF8C
@@ -98,7 +105,7 @@ odd  pixs: #F000, #F014, #F028, ..., #FF8C
 even attr: #6000, #6014, #6028, ..., #6F8C
 odd  attr: #7000, #7014, #7028, ..., #7F8C
 
-
+0110, 1110, 0111, 1111
 
 
 x320 mode:
@@ -122,6 +129,8 @@ abs. word addrs, pri. screen:
 3rd lane: #3000, #3014, #3028, ..., #3F8C
 4th lane: #B000, #B014, #B028, ..., #BF8C
 
+0010, 1010, 0011, 1011
+
 abs. word addrs, sec. screen:
 
 1st lane: #6000, #6014, #6028, ..., #6F8C
@@ -129,3 +138,4 @@ abs. word addrs, sec. screen:
 3rd lane: #7000, #7014, #7028, ..., #7F8C
 4th lane: #F000, #F014, #F028, ..., #FF8C
 
+0110, 1110, 0111, 1111

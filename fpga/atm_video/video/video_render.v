@@ -13,7 +13,8 @@ module video_render(
 
 	input  wire        fetch_sync, // synchronizes pixel rendering
 	
-	input  wire        cend, // general sync
+	input  wire        post_cbeg, // pixel strobed and
+	input  wire        cend,      // general sync
 	
 	input  wire        int_start, // for flash gen
 
@@ -28,7 +29,8 @@ module video_render(
 	                                    //
 	input  wire        mode_a_hmclr,    //
 	input  wire        mode_a_16c,      //
-	input  wire        mode_a_text      //
+	input  wire        mode_a_text,     //
+	input  wire        mode_pixf_14     //
 );
 
 
@@ -64,12 +66,15 @@ module video_render(
 
 
 
-	// !!WARNING!! - currently for 7mhz pixels only
-	reg [3:0] pixnum;
+	reg [4:0] pixnum;
 
-	always @(posedge clk) if( cend )
+
+	wire   ena_pix;
+	assign ena_pix = cend | (mode_pixf_14 & post_cbeg);
+
+	always @(posedge clk) if( ena_pix )
 	begin
-		if( fetch_sync )
+		if( fetch_sync ) // fetch_sync coincides with cend
 			pixnum <= 0;
 		else
 			pixnum <= pixnum + 1;
