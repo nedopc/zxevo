@@ -117,6 +117,8 @@ module video_top(
 	wire [5:0] vga_color;
 
 
+	wire [2:0] typos;
+
 
 
 	// decode video modes
@@ -213,6 +215,7 @@ module video_top(
 
 		.scr_page(scr_page),
 
+		.typos(typos),
 
 		.mode_atm_n_pent(mode_atm_n_pent),
 		.mode_zx        (mode_zx        ),
@@ -233,6 +236,8 @@ module video_top(
 		.cend     (cend    ),
 
 		.vpix(vpix),
+
+		.typos(typos),
 
 		.fetch_start(fetch_start),
 		.fetch_end  (fetch_end  ),
