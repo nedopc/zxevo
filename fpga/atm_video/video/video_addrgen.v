@@ -27,8 +27,9 @@ module video_addrgen(
 	                                    //
 	input  wire        mode_a_hmclr,    //
 	input  wire        mode_a_16c,      //
-	input  wire        mode_a_text      //
+	input  wire        mode_a_text,     //
 
+	output wire [ 2:0] typos // Y position in text mode symbols
 );
 
 	wire mode_ag;
@@ -86,6 +87,8 @@ module video_addrgen(
 		txctr <= txctr + 1;
 
 
+	assign typos = tyctr[2:0];
+
 
 // zx mode:
 // [0] - attr or pix
@@ -116,12 +119,12 @@ module video_addrgen(
 
 	assign addr_phm =  { 6'b000001, scr_page, 1'b1, gctr[0], addr_zx_pix };
 
-	assign addr_p16c = { 6'b000001, scr_page, gctr[0], gctr[1], addr_zx_p16c };  
+	assign addr_p16c = { 6'b000001, scr_page, ~gctr[0], gctr[1], addr_zx_p16c };
 
 
-	assign addr_ag = { 5'b00000, gctr[0], scr_page, 1'b1, gctr[1], gctr[13:2] };
+	assign addr_ag = { 5'b00000, ~gctr[0], scr_page, 1'b1, gctr[1], gctr[13:2] };
 
-	assign addr_at = { 5'b00000, txctr[0], scr_page, 1'b1, (~^txctr[1:0]), 2'b00, tyctr[7:3], txctr[6:2] };
+	assign addr_at = { 5'b00000, ~txctr[0], scr_page, 1'b1, (^txctr[1:0]), 2'b00, tyctr[7:3], txctr[6:2] };
 
 
 	always @(posedge clk) if( ldaddr )

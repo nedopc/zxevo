@@ -24,20 +24,20 @@ module video_fetch(
 	output reg         fetch_sync,     // coincides with cend
 
 
-
 	input  wire [15:0] video_data,   // video data receiving from dram arbiter
 	input  wire        video_strobe, //
 	output reg         video_go, // indicates need for data
 
-	output reg  [63:0] pic_bits // picture bits -- data for renderer
+	output reg  [63:0] pic_bits, // picture bits -- data for renderer
 
+	output reg  [31:0] font_bits // fetched from fontrom
 
 	// currently, video_fetch assigns that there are only 1/8 and 1/4
 	// bandwidth. !!needs correction for higher bandwidths!!
 
 
 );
-
+	reg fetch_sync_r;
 
 	reg [3:0] fetch_sync_ctr; // generates fetch_sync to synchronize
 	                          // fetch cycles (each 16 dram cycles long)
@@ -48,7 +48,6 @@ module video_fetch(
 
 
 	reg [15:0] fetch_data [0:3]; // stores data fetched from memory
-
 
 	// fetch window
 	always @(posedge clk)
@@ -75,6 +74,11 @@ module video_fetch(
 			fetch_sync <= 1'b1;
 		else
 			fetch_sync <= 1'b0;
+
+	always @(posedge clk)
+		fetch_sync_r <= fetch_sync; // later, remove _r and have cend instead of pre_cend in fetch_sync
+
+
 
 
 	// fetch_ptr clear signal
@@ -111,15 +115,18 @@ module video_fetch(
 	// one more fix:
 	//  let pic_bits load 1 28MHz clock cycle later,
 	//  so that fetch_data is correctly updated at that moment.
-	//  this fix is OK only for <=14MHz-pixelclock modes and 
+	//  this fix is OK only for <=14MHz-pixelclock modes and
 	//  will require more shifting of signals in 'video_palframe'
+	//
+	// last fix is preferable
+
 
 	// store fetched data
 	always @(posedge clk) if( video_strobe )
 		fetch_data[fetch_ptr] <= video_data;
 
 	// pass fetched data to renderer
-	always @(posedge clk) if( fetch_sync )
+	always @(posedge clk) if( fetch_sync_r )
 	begin
 		pic_bits[ 7:0 ] <= fetch_data[0][15:8 ];
 		pic_bits[15:8 ] <= fetch_data[0][ 7:0 ];
@@ -130,14 +137,6 @@ module video_fetch(
 		pic_bits[55:48] <= fetch_data[3][15:8 ];
 		pic_bits[63:56] <= fetch_data[3][ 7:0 ];
 	end
-
-
-
-
-
-
-
-
 
 endmodule
 
