@@ -80,7 +80,7 @@ module video_render(
 	wire ginc;
 
 	wire modes_16c;
-
+	
 
 	wire   ena_pix;
 	assign ena_pix = cbeg | (mode_pixf_14 & pre_cend);
@@ -116,6 +116,9 @@ module video_render(
 	wire pixbit; // pixel bit, for attr modes
 	wire [3:0] pix0, pix1; // colors for bit=0 and bit=1, for attr modes
 
+	wire [3:0] apix, c16pix;
+
+
 	assign pgroup = { bits[ {gnum[0], 1'b0, gnum[1]} ] ,
 	                  bits[ {gnum[0], 1'b1, gnum[1]} ] };
 
@@ -132,8 +135,19 @@ module video_render(
 	assign pix16[3] = { pix16_2[1][7], pix16_2[1][5:3] };
 
 
-	pixbit = mode_a_text ? symbyte[pnum] : pixbyte[pnum];
+	assign pixbit = mode_a_text ? symbyte[pnum] : pixbyte[pnum];
 
+	assign pix0 = { (mode_zx ? attrbyte[6] : attrbyte[7]), attrbyte[5:3] }; // paper
+	assign pix1 = { attrbyte[6], attrbyte[2:0] }; // ink
+
+	
+	assign apix = ( pixbit^(flash&mode_zx) ) ? pix1 : pix0;
+
+	assign c16pix = pix16[ pnum[2:1] ];
+
+
+
+	assign pixels = modes_16c ? c16pix : apix;
 
 
 
