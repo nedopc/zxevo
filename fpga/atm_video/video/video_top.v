@@ -237,8 +237,6 @@ module video_top(
 
 		.vpix(vpix),
 
-		.typos(typos),
-
 		.fetch_start(fetch_start),
 		.fetch_end  (fetch_end  ),
 
@@ -261,7 +259,9 @@ module video_top(
 
 		.fetch_sync(fetch_sync),
 
+		.cbeg     (cbeg     ),
 		.post_cbeg(post_cbeg),
+		.pre_cend (pre_cend ),
 		.cend     (cend     ),
 
 		.int_start(int_start),
@@ -275,6 +275,7 @@ module video_top(
 		.mode_a_text    (mode_a_text    ),
 		.mode_pixf_14   (mode_pixf_14   ),
 
+		.typos(typos),
 
 		.pixels(pixels)
 	);
