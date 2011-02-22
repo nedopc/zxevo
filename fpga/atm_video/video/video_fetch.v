@@ -21,24 +21,20 @@ module video_fetch(
 	input  wire        fetch_start, // fetching start and stop
 	input  wire        fetch_end,   //
 
-	output reg         fetch_sync,     // coincides with cend
+	output reg         fetch_sync,     // 1 cycle after cend
 
 
 	input  wire [15:0] video_data,   // video data receiving from dram arbiter
 	input  wire        video_strobe, //
 	output reg         video_go, // indicates need for data
 
-	output reg  [63:0] pic_bits, // picture bits -- data for renderer
-
-	output reg  [31:0] font_bits // fetched from fontrom
+	output reg  [63:0] pic_bits // picture bits -- data for renderer
 
 	// currently, video_fetch assigns that there are only 1/8 and 1/4
 	// bandwidth. !!needs correction for higher bandwidths!!
 
 
 );
-	reg fetch_sync_r;
-
 	reg [3:0] fetch_sync_ctr; // generates fetch_sync to synchronize
 	                          // fetch cycles (each 16 dram cycles long)
 	                          // fetch_sync coincides with cend
@@ -70,14 +66,10 @@ module video_fetch(
 
 	// fetch sync signal
 	always @(posedge clk)
-		if( (fetch_sync_ctr==1) && pre_cend )
+		if( (fetch_sync_ctr==1) && cend )
 			fetch_sync <= 1'b1;
 		else
 			fetch_sync <= 1'b0;
-
-	always @(posedge clk)
-		fetch_sync_r <= fetch_sync; // later, remove _r and have cend instead of pre_cend in fetch_sync
-
 
 
 
@@ -118,7 +110,7 @@ module video_fetch(
 	//  this fix is OK only for <=14MHz-pixelclock modes and
 	//  will require more shifting of signals in 'video_palframe'
 	//
-	// last fix is preferable
+	// last fix is preferable - doing it
 
 
 	// store fetched data
@@ -126,7 +118,7 @@ module video_fetch(
 		fetch_data[fetch_ptr] <= video_data;
 
 	// pass fetched data to renderer
-	always @(posedge clk) if( fetch_sync_r )
+	always @(posedge clk) if( fetch_sync )
 	begin
 		pic_bits[ 7:0 ] <= fetch_data[0][15:8 ];
 		pic_bits[15:8 ] <= fetch_data[0][ 7:0 ];

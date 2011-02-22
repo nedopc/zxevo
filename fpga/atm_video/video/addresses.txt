@@ -11,6 +11,7 @@ pixaddr = { vcnt[7:6],vcnt[2:0],vcnt[5:3],hcnt[3:0] } + disp
 attraddr= { vcnt[7:3],hcnt[3:0] } + disp + $0C00
 
 fetch sequence: pix, attr.
+render sequence: {pix[0],attr[2]}, {pix[1],attr[3]} (buffer is byte-addressable)
 
 
 p16c mode (pentagon 16 colors):
@@ -28,6 +29,8 @@ read sequence: lane2, lane1, lane4, lane3 (same as x320 mode)
 
 screen1: disp0 = $C000, disp1 = $E000, disp2 = $D000, disp3 = $F000
 1110, 1100, 1111, 1101
+
+render sequence: {2pix[2], 2pix[0], 2pix[6], 2pix[4], 2pix[3], 2pix[1], 2pix[7], 2pix[5]}
 
 
 8 adjacent pixels: a b c d e f g h
@@ -77,6 +80,8 @@ odd  attr: #60E0, #6100, #6120, ..., #63E0
 
 1110, 0111, 1111, 0110
 
+render sequence: {sym[0],attr[2]}, {sym[4],attr[6]}, {sym[1],attr[3]}, {sym[5],attr[7]}
+
 
 
 x640 mode:
@@ -112,6 +117,8 @@ odd  attr: #7000, #7014, #7028, ..., #7F8C
 
 1110, 0110, 1111, 0111
 
+render sequence: {pix[0],attr[2]}, {pix[4],attr[6]}, {pix[1],attr[3]}, {pix[5],attr[7]}
+
 
 x320 mode:
 
@@ -145,5 +152,21 @@ abs. word addrs, sec. screen:
 4th lane: #F000, #F014, #F028, ..., #FF8C
 
 1110, 0110, 1111, 0111
+
+render sequence: {2pix[2],2pix[0],2pix[6],2pix[4],2pix[3],2pix[1],2pix[7],2pix[5]}
+
+
+
+group numbers:
+
+0 - buf[0], buf[2] : 000, 010
+1 - buf[4], buf[6] : 100, 110
+2 - buf[1], buf[3] : 001, 011
+3 - buf[5], buf[7] : 101, 111
+
+zx mode: only 0 and 2 used
+
+pix numbers: 0..7 for bit modes (zx, phm, ahm, txt),
+0..3 for 16c modes (p16c, a16c)
 
 
