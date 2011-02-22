@@ -101,7 +101,7 @@ module video_addrgen(
 
 	wire [20:0] addr_ag; // atm gfx: 16c (x320) or hard multicolor (x640) - same sequence!
 
-	wire [20:0] addr_at: // atm text
+	wire [20:0] addr_at; // atm text
 
 	wire [11:0] addr_zx_pix;
 	wire [11:0] addr_zx_attr;
@@ -134,7 +134,7 @@ module video_addrgen(
 			( {21{mode_p_16c  }} & addr_p16c)  |
 			( {21{mode_p_hmclr}} & addr_phm )  |
 			( {21{mode_ag     }} & addr_ag  )  |
-			( {21{mode_text   }} & addr_at  )  ;
+			( {21{mode_a_text }} & addr_at  )  ;
 
 	end
 
