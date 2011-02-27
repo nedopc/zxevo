@@ -123,7 +123,6 @@ module top(
 	wire rst_n; // global reset
 
 	wire rrdy;
-	wire cbeg;
 	wire [15:0] rddata;
 
 	wire [4:0] rompg;
@@ -240,8 +239,9 @@ module top(
 	wire [15:0] cpu_rddata;
 	wire [7:0] cpu_wrdata;
 
+	wire cbeg,post_cbeg,pre_cend,cend;
 
-	wire cend,pre_cend,go;
+	wire go;
 
 
 	wire sd_start;
@@ -253,6 +253,10 @@ module top(
 	wire beeper_mux; // what is mixed to FPGA beeper output - beeper (0) or tapeout (1)
 
 	wire beeper, tapeout; // actual outs
+
+
+	wire [2:0] atm_scr_mode;
+
 
 
 
@@ -316,7 +320,10 @@ module top(
 	wire drive_ff;
 
 
+	wire       atm_palwr;
+	wire [5:0] atm_paldata;
 
+	wire int_start;
 
 
 	// data bus out: either RAM data or internal ports data or 0xFF with unused ports
@@ -505,8 +512,9 @@ module top(
 	                 .dram_rddata(drddata),
 	                 .dram_wrdata(dwrdata),
 
-	                 .cend(cend),
-	                 .pre_cend(pre_cend),
+	                 .post_cbeg(post_cbeg),
+	                 .pre_cend (pre_cend ),
+	                 .cend     (cend     ),
 
 	                 .go(go),
 	                 .bw(bw),
@@ -526,7 +534,7 @@ module top(
 	                 .cpu_rddata(cpu_rddata),
 	                 .cpu_strobe(cpu_strobe) );
 
-
+/*
 	wire vga_hsync,hsync,hblank,hpix,hsync_start,line_start,hint_start,scanin_start,scanout_start;
 
 	synch horiz_sync( .clk(fclk), .init(1'b0), .cend(cend), .pre_cend(pre_cend),
@@ -562,9 +570,48 @@ module top(
 					.rst_n(rst_n), .wr_pal64(vg_wrFF&atm_pen2),
 					.newrealcolor({~d[4],~d[7],~d[1],~d[6],~d[0],~d[5]})
 	);
+*/
 
 
 
+	video_top video_top(
+
+		.clk(fclk),
+
+		.vred(vred),
+		.vgrn(vgrn),
+		.vblu(vblu),
+		.vhsync(vhsync),
+		.vvsync(vvsync),
+		.vcsync(vcsync),
+
+		.zxborder(border),
+
+		.pent_vmode( {peff7[0],peff7[5]} ),
+		.atm_vmode (atm_scr_mode),
+
+		.scr_page(p7ffd[3]),
+
+		.vga_on(cfg_vga_on),
+
+		.cbeg     (cbeg     ),
+		.post_cbeg(post_cbeg),
+		.pre_cend (pre_cend ),
+		.cend     (cend     ),
+
+		.video_go    (go          ),
+		.video_bw    (bw          ),
+		.video_addr  (video_addr  ),
+		.video_data  (video_data  ),
+		.video_strobe(video_strobe),
+		.video_next  (video_next  ),
+
+		.atm_palwr  (atm_palwr  ),
+		.atm_paldata(atm_paldata),
+
+		.int_start(int_start)
+
+	);
 
 
 
@@ -611,22 +658,22 @@ module top(
 	               .ide_wr_n(ide_wr_n), .ide_rd_n(ide_rd_n),
 
 	               .keys_in(kbd_port_data),
-	               .mus_in(mus_port_data),
-	               .kj_in(kj_port_data),
+	               .mus_in (mus_port_data),
+	               .kj_in  (kj_port_data ),
 
 	               .tape_read(tape_read),
 
 	               .gluclock_addr(gluclock_addr),
-		       .comport_addr (comport_addr),
+	               .comport_addr (comport_addr ),
 	               .wait_start_gluclock(wait_start_gluclock),
-	               .wait_start_comport (wait_start_comport),
-	               .wait_rnw(wait_rnw),
+	               .wait_start_comport (wait_start_comport ),
+	               .wait_rnw  (wait_rnw  ),
 	               .wait_write(wait_write),
-	               .wait_read(wait_read),
+	               .wait_read (wait_read ),
 
 	               .atmF7_wr_fclk(atmF7_wr_fclk),
 
-	               .atm_scr_mode(),
+	               .atm_scr_mode(atm_scr_mode),
 	               .atm_turbo   (),
 	               .atm_pen     (pager_off),
 	               .atm_cpm_n   (cpm_n),
@@ -637,7 +684,10 @@ module top(
 	               .pent1m_ram0_0(pent1m_ram0_0),
 	               .pent1m_1m_on (pent1m_1m_on),
 	               .pent1m_page  (pent1m_page),
-	               .pent1m_ROM   (pent1m_ROM)
+	               .pent1m_ROM   (pent1m_ROM),
+
+	               .atm_palwr  (atm_palwr  ),
+	               .atm_paldata(atm_paldata)
 
 	             );
 

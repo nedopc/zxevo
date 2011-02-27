@@ -98,7 +98,12 @@ module zports(
 	output wire        pent1m_ram0_0, // d3.eff7
 	output wire        pent1m_1m_on,  // d2.eff7
 	output wire [ 5:0] pent1m_page,   // full 1 meg page number
-	output wire        pent1m_ROM     // d4.7ffd
+	output wire        pent1m_ROM,     // d4.7ffd
+
+
+	output wire        atm_palwr,  // palette write strobe
+	output wire [ 5:0] atm_paldata // palette write data
+
 
 );
 
@@ -754,6 +759,10 @@ module zports(
 	end
 
 
+	// atm palette strobe and data
+	assign atm_palwr = vg_wrFF & atm_pen2;
+
+	assign atm_paldata = { ~din[4], ~din[7], ~din[1], ~din[6], ~din[0], ~din[5] };
 
 endmodule
 

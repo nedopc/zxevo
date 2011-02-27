@@ -1,6 +1,6 @@
 `include "../include/tune.v"
 
-// PentEvo project (c) NedoPC 2008-2009
+// PentEvo project (c) NedoPC 2008-2011
 //
 // vertical blank, sync and window. H is period of horizontal sync;
 // from the last non-blanked line:
@@ -8,22 +8,28 @@
 // 2.xxH is vertical sync (slightly more than 2H, all hsync edges preserved)
 // vblank is total of 25H
 
-module syncv(
+module video_sync_v(
 
-	input clk,
+	input  wire        clk,
 
-	input hsync_start, // synchronizing signal
-	input line_start,  // to end vsync some time after hsync has ended
+	input  wire        hsync_start, // synchronizing signal
+	input  wire        line_start,  // to end vsync some time after hsync has ended
 
-	input hint_start,
+	input  wire        hint_start,
 
 
-	output reg vblank,
-	output reg vsync,
 
-	output reg int_start, // one-shot positive pulse marking beginning of INT for Z80
+	// atm video mode input
+	input  wire        mode_atm_n_pent,
 
-	output reg vpix // vertical picture marker: active when there is line with pixels in it, not just a border. changes with hsync edge
+
+
+	output reg         vblank,
+	output reg         vsync,
+
+	output reg         int_start, // one-shot positive pulse marking beginning of INT for Z80
+
+	output reg         vpix // vertical picture marker: active when there is line with pixels in it, not just a border. changes with hsync edge
 );
 
 
@@ -37,8 +43,13 @@ module syncv(
 
 	localparam INT_BEG = 9'd0;
 
-	localparam VPIX_BEG = 9'd080;//9'd064;
-	localparam VPIX_END = 9'd272;//9'd256;
+	// pentagon (x192)
+	localparam VPIX_BEG_PENT = 9'd080;//9'd064;
+	localparam VPIX_END_PENT = 9'd272;//9'd256;
+
+	// ATM (x200)
+	localparam VPIX_BEG_ATM = 9'd076;//9'd060;
+	localparam VPIX_END_ATM = 9'd276;//9'd260;
 
 	localparam VPERIOD = 9'd320; // pentagono foreva!
 
@@ -97,9 +108,9 @@ module syncv(
 
 	always @(posedge clk) if( hsync_start )
 	begin
-		if( vcount==VPIX_BEG )
+		if( vcount==(mode_atm_n_pent ? VPIX_BEG_ATM : VPIX_BEG_PENT) )
 			vpix <= 1'b1;
-		else if( vcount==VPIX_END )
+		else if( vcount==(mode_atm_n_pent ? VPIX_END_ATM : VPIX_END_PENT) )
 			vpix <= 1'b0;
 	end
 
