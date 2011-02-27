@@ -209,31 +209,27 @@ set_global_assignment -name FLEX10K_DEVICE_IO_STANDARD LVTTL/LVCMOS
 set_global_assignment -name RESERVE_ALL_UNUSED_PINS_NO_OUTPUT_GND "AS INPUT TRI-STATED"
 set_global_assignment -name MESSAGE_SUPPRESSION_RULE_FILE top.srf
 set_global_assignment -name SMART_RECOMPILE OFF
-set_global_assignment -name EDA_SIMULATION_TOOL "<None>"
-set_global_assignment -name EDA_INCLUDE_VHDL_CONFIGURATION_DECLARATION OFF -section_id eda_simulation
-set_global_assignment -name EDA_TIME_SCALE "1 ps" -section_id eda_simulation
-set_global_assignment -name EDA_OUTPUT_DATA_FORMAT NONE -section_id eda_simulation
-set_global_assignment -name EDA_MAINTAIN_DESIGN_HIERARCHY ON -section_id eda_simulation
-set_global_assignment -name OPTIMIZE_HOLD_TIMING OFF
-set_global_assignment -name FITTER_EFFORT "STANDARD FIT"
-set_global_assignment -name FINAL_PLACEMENT_OPTIMIZATION AUTOMATICALLY
-set_global_assignment -name FITTER_AGGRESSIVE_ROUTABILITY_OPTIMIZATION AUTOMATICALLY
-set_global_assignment -name ALLOW_ANY_RAM_SIZE_FOR_RECOGNITION OFF
+set_global_assignment -name VERILOG_FILE ../video/video_fontrom.v
+set_global_assignment -name VERILOG_FILE ../video/video_vga_sync_h.v
+set_global_assignment -name VERILOG_FILE ../video/video_addrgen.v
+set_global_assignment -name VERILOG_FILE ../video/video_fetch.v
+set_global_assignment -name VERILOG_FILE ../video/video_modedecode.v
+set_global_assignment -name VERILOG_FILE ../video/video_outmux.v
+set_global_assignment -name VERILOG_FILE ../video/video_palframe.v
+set_global_assignment -name VERILOG_FILE ../video/video_render.v
+set_global_assignment -name VERILOG_FILE ../video/video_sync_h.v
+set_global_assignment -name VERILOG_FILE ../video/video_sync_v.v
+set_global_assignment -name VERILOG_FILE ../video/video_top.v
+set_global_assignment -name VERILOG_FILE ../video/video_vga_double.v
 set_global_assignment -name VERILOG_FILE ../z80/zdos.v
 set_global_assignment -name VERILOG_FILE ../mem/atm_pager.v
-set_global_assignment -name VERILOG_FILE ../vga/vga_double.v
 set_global_assignment -name VERILOG_FILE ../z80/zwait.v
-set_global_assignment -name VERILOG_FILE ../vga/vga_synch.v
 set_global_assignment -name VERILOG_FILE ../z80/zkbdmus.v
 set_global_assignment -name VERILOG_FILE ../z80/zports.v
 set_global_assignment -name VERILOG_FILE ../z80/zclock.v
 set_global_assignment -name VERILOG_FILE ../z80/zint.v
 set_global_assignment -name VERILOG_FILE ../z80/zmem.v
 set_global_assignment -name VERILOG_FILE ../z80/zbus.v
-set_global_assignment -name VERILOG_FILE ../video/videoout.v
-set_global_assignment -name VERILOG_FILE ../video/synch.v
-set_global_assignment -name VERILOG_FILE ../video/syncv.v
-set_global_assignment -name VERILOG_FILE ../video/fetch.v
 set_global_assignment -name VERILOG_FILE ../vg93/vg93.v
 set_global_assignment -name VERILOG_FILE ../slave/slavespi.v
 set_global_assignment -name VERILOG_FILE ../dram/dram.v
