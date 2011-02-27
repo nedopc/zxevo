@@ -267,7 +267,8 @@ W_OUTFF 	LD A,(REG_A)
 W_OUTCA 	LD A,(REG_C)
 		CP 0XFD
 		JR NZ,W_OUTC1F
-		LD BC,(REG_C)			;…‘‹ˆ Ž’ … TR-DOS
+W_OUTCA1	LD BC,(REG_C)			;…‘‹ˆ Ž’ … TR-DOS
+		LD A,(REG_A)
 		OUT (C),A
 		RET
 
@@ -280,7 +281,9 @@ W_OUTC1F	CP 0X1F
 		JR Z,W_OUT5F
 		CP 0X7F
 		JR Z,W_OUT7F
-		JR W_OUTFF
+		CP 0XFF
+		JR Z,W_OUTFF
+		JR W_OUTCA1
 
 ;‡€ˆ‘œ "D" ‚ Ž’ (C)
 W_OUTCD		LD A,(REG_C)
@@ -799,30 +802,32 @@ DISK_NONE1	EX AF,AF'
 		POP HL
 		RET
 
-BREAK4WRPORTFF	OUT (0XFF),A			;‡€ˆ‘€‹ˆ ‚ Ž’ ‚ …‚“ž Ž—……„œ „‹Ÿ €Ž’› ‘ …€‹œŽ‰ „ˆ‘Š…’Ž‰
-		PUSH HL
-		PUSH BC
-		EX AF,AF'			;‘Ÿ’€‹ˆ ‚…Œ…Ž ‡€ˆ‘€Ž… ‚ Ž’ FF
-		LD H,0X0F
-		CALL READCMOS			;Ž—ˆ’€‹ˆ ˆ‡ CMOS ŽŒ… “‘’€Ž‚‹…ŽƒŽ „ˆ‘ŠŽ‚Ž„€
-		EX AF,AF'			;‚…“‹ˆ ‘Ÿ’€Ž… ‡€—…ˆ… Ž’€ FF
-		LD H,A				;‘Ž•€ˆ‹ˆ …ƒŽ, …™… ˆƒŽ„ˆ’‘Ÿ
-		AND 3				;ˆ’……‘“…’ ŽŒ… ‡€ˆ‘€ŽƒŽ „ˆ‘ŠŽ‚Ž„€
-		CP L				;‘€‚ˆ‹ˆ ‘ ŽŒ…ŽŒ ‚ˆ’“€‹œŽƒŽ „ˆ‘ŠŽ‚Ž„€
-		LD A,H				;‚…“‹ˆ ‡€—…ˆ… Ž’€ FF
-		LD HL,DOS_NOEMUL		;‘’€ˆ–€ „‹Ÿ …€‹œŽƒŽ „ˆ‘Š€
-		JR NZ,B4WRPFF1
-		INC HL				;‘’€ˆ–€ ‘ Ž‹Ž‰ Œ“‹Ÿ–ˆ…‰
-B4WRPFF1	LD BC,WIN_A0+0X100
-		EX AF,AF'			;‚…Œ…Ž ‘Ÿ’€‹ˆ ”‹€ƒ …€‹/Œ“‹œ
-		CALL WRPORT_RET			;‚Š‹ž—ˆ‹ˆ ‚›€“ž ‘’€ˆ–“
-		EX AF,AF'			;‚…“‹ˆ ”‹€ƒ …€‹/Œ“‹œ
-		POP BC
-		POP HL
-		RET NZ
-		RST 0X08			;„‹Ÿ Œ“‹Ÿ–ˆˆ ‘Ž•€ˆ‹ˆ ‡€ˆ‘€Ž… ‚ Ž’ FF
-		DB WOUTFF
-		RET
+;BREAK4WRPORTFF	
+;		RST 0X08
+;		DB WOUTFF
+;		RET
+;		OUT (0XFF),A			;‡€ˆ‘€‹ˆ ‚ Ž’ ‚ …‚“ž Ž—……„œ „‹Ÿ €Ž’› ‘ …€‹œŽ‰ „ˆ‘Š…’Ž‰
+;		PUSH HL
+;		PUSH BC
+;		PUSH AF
+;		LD H,0X0F
+;		CALL READCMOS			;Ž—ˆ’€‹ˆ ˆ‡ CMOS ŽŒ… “‘’€Ž‚‹…ŽƒŽ „ˆ‘ŠŽ‚Ž„€
+;		POP AF
+;		PUSH AF
+;		AND 3				;ˆ’……‘“…’ ŽŒ… ‡€ˆ‘€ŽƒŽ „ˆ‘ŠŽ‚Ž„€
+;		CP L				;‘€‚ˆ‹ˆ ‘ ŽŒ…ŽŒ ‚ˆ’“€‹œŽƒŽ „ˆ‘ŠŽ‚Ž„€
+;		LD HL,DOS_NOEMUL		;‘’€ˆ–€ „‹Ÿ …€‹œŽƒŽ „ˆ‘Š€
+;		JR NZ,B4WRPFF1
+;		INC HL				;‘’€ˆ–€ ‘ Ž‹Ž‰ Œ“‹Ÿ–ˆ…‰
+;B4WRPFF1	LD BC,WIN_A0+0X100
+;		CALL WRPORT_RET			;‚Š‹ž—ˆ‹ˆ ‚›€“ž ‘’€ˆ–“
+;		POP AF
+;		POP BC
+;		POP HL
+;		RET NZ
+;		RST 0X08			;„‹Ÿ Œ“‹Ÿ–ˆˆ ‘Ž•€ˆ‹ˆ ‡€ˆ‘€Ž… ‚ Ž’ FF
+;		DB WOUTFF
+;		RET
 
 DOS_NOEMUL	DB 0X83				;‘’€ˆ–€ DOS ‘ Œ“‹Ÿ–ˆ…‰ ’Ž‹œŠŽ „‹Ÿ 3D13
 DOS_EMUL	DB 0X87				;‘’€ˆ–€ DOS ‘ Ž‹›Œ ……•‚€’ŽŒ Ž’Ž‚
