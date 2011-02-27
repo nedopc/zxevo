@@ -66,7 +66,7 @@ module video_fetch(
 
 	// fetch sync signal
 	always @(posedge clk)
-		if( (fetch_sync_ctr==1) && cend )
+		if( (fetch_sync_ctr==1) && pre_cend )
 			fetch_sync <= 1'b1;
 		else
 			fetch_sync <= 1'b0;
@@ -116,6 +116,7 @@ module video_fetch(
 	// store fetched data
 	always @(posedge clk) if( video_strobe )
 		fetch_data[fetch_ptr] <= video_data;
+
 
 	// pass fetched data to renderer
 	always @(posedge clk) if( fetch_sync )

@@ -38,14 +38,16 @@ module video_palframe(
 
 
 
-	always @(posedge clk)
-		win <= hpix & vpix;
+//	always @(posedge clk)
+//		win <= hpix & vpix;
+//
+//	always @(posedge clk)
+//		border_r <= border;
+//
+//	assign zxcolor = win ? pixels : border_r;
 
-	always @(posedge clk)
-		border_r <= border;
+	assign zxcolor = (hpix&vpix) ? pixels : border;
 
-
-	assign zxcolor = win ? pixels : border_r;
 
 	// palette
 	reg [5:0] palette [0:15]; // let quartus instantiate it as RAM if needed
@@ -54,7 +56,7 @@ module video_palframe(
 	begin
 		if( atm_palwr )
 			palette[zxcolor] <= atm_paldata;
-		
+
 		palcolor <= palette[zxcolor];
 	end
 
