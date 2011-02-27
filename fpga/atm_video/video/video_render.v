@@ -81,12 +81,17 @@ module video_render(
 
 	wire modes_16c;
 
+	wire modes_zxattr;
+
 
 	wire   ena_pix;
-	assign ena_pix = cbeg | (mode_pixf_14 & pre_cend);
+//	assign ena_pix = cbeg | (mode_pixf_14 & pre_cend);
+	assign ena_pix = cend | (mode_pixf_14 & post_cbeg);
 
 
 	assign modes_16c = mode_p_16c | mode_a_16c;
+
+	assign modes_zxattr = mode_zx | mode_p_hmclr;
 
 	assign {ginc, padd} = {1'b0, pnum} + {2'b00, modes_16c, ~modes_16c};
 
@@ -97,7 +102,7 @@ module video_render(
 		pnum <= padd;
 
 
-	assign gadd = gnum + ( {mode_zx,~mode_zx} & {2{ginc}} );
+	assign gadd = gnum + ( {modes_zxattr,~modes_zxattr} & {2{ginc}} );
 
 	always @(posedge clk) if( ena_pix )
 	if( fetch_sync )
@@ -137,11 +142,11 @@ module video_render(
 
 	assign pixbit = mode_a_text ? symbyte[~pnum] : pixbyte[~pnum];
 
-	assign pix0 = { (mode_zx ? attrbyte[6] : attrbyte[7]), attrbyte[5:3] }; // paper
+	assign pix0 = { (modes_zxattr ? attrbyte[6] : attrbyte[7]), attrbyte[5:3] }; // paper
 	assign pix1 = { attrbyte[6], attrbyte[2:0] }; // ink
 
 
-	assign apix = ( pixbit^(mode_zx & flash & attrbyte[7]) ) ? pix1 : pix0;
+	assign apix = ( pixbit^(modes_zxattr & flash & attrbyte[7]) ) ? pix1 : pix0;
 
 	assign c16pix = pix16[ pnum[2:1] ];
 
