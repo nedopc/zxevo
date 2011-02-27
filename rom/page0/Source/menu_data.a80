@@ -142,7 +142,7 @@ MAINMENU	;X,Y,V,H,C,C,ADR_CODE*2,F,X,Y,V,H,ADR_TXT*2,TEK_WIN,KOL_NUM*2,TEK_NUMF*
 		DB 0
 		DW ((MAIN2-MAIN1)/2),0,MAIN_ZONE
 
-MAINTXT		DB 0X14,1,"Main menu",0X14,0
+MAINTXT		DB 0X17,0XFF,0X14,1,"Main menu",0X14,0
 		DB 0X0D," Z.TR-DOS boot"	;z
 		DB 0X0D," F.FAT boot"		;f
 		DB 0X0D," T.Tape load"		;t
@@ -316,6 +316,18 @@ ERASE_ROM	;X,Y,V,H,C,C,ADR_CODE*2,F,X,Y,V,H,ADR_TXT*2,TEK_WIN,KOL_NUM*2,TEK_NUMF
 TXT_ERASEROM	DB 0X0D,3,"Erase FLASH",0
 ;===============================ERASE ROM=============================
 
+;=============================PRESSED MAGIC KEY=======================
+PRESSED_NMI	;X,Y,V,H,C,C,ADR_CODE*2,F,X,Y,V,H,ADR_TXT*2,TEK_WIN,KOL_NUM*2,TEK_NUMF*2
+		DB 0X06,0X08,0X03,0X14,0X17,0X00
+		DW 0
+		DB 0,0,0,0,0
+		DW TXTPRESSNMI
+		DB 0
+		DW 0,0,0
+TXTPRESSNMI	DB 0X0D,3,"Pressed MAGIC!!! Code:  ",0
+CODE_NMI	EQU $-2
+;=============================PRESSED MAGIC KEY=======================
+
 ;============================ëíêÄçàñÄ èéåéôà==========================
 WIN_HELP	;X,Y,V,H,C,C,ADR_CODE*2,F,X,Y,V,H,ADR_TXT*2,TEK_WIN,KOL_NUM*2,TEK_NUMF*2
 		DB 0X01,0X03,0X013,0X1A,0X0F,0X00
@@ -346,7 +358,7 @@ TXT_WINHELP	DB 0X14,1,"Help",0X14,0
 
 ;***************íÖäëíõ à èêéóÄü îàÉçü********************
 
-TXTFULLSCR	DB 0X16,0X00,0X00,0X17,4,"EVO Reset Service v",VERSBIOS
+TXTFULLSCR	DB 0X14,0,0X16,0X00,0X00,0X17,4,"EVO Reset Service v",VERSBIOS
 		DB 0X16,0X08,0X00,0X17,6,"ZX-Evolution 4096 Kb "
 		DB 0X16,0X10,0X00,0x17,0X45,"www.nedopc.com "	;forum.nedopc.com "
 		DB 0X16,0X18,0X00,0X17,5,"Baseconf: ",0X17,0XFF
