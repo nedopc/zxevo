@@ -160,7 +160,7 @@ module video_render(
 
 	video_fontrom video_fontrom(
 
-		.address( {typos, pixbyte} ),
+		.address( {pixbyte, typos} ),
 
 		.q( symbyte )
 	);
