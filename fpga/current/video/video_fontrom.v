@@ -58,7 +58,7 @@ module video_fontrom (
 `ifdef NO_PLI
 		lpm_rom_component.lpm_file = "../video/r0bat_font.rif"
 `else
-		lpm_rom_component.lpm_file = "../video/r0bat_font.hex"
+		lpm_rom_component.lpm_file = "../video/r0bat_font.mif"
 `endif
 ,
 		lpm_rom_component.lpm_outdata = "UNREGISTERED",
@@ -89,7 +89,7 @@ endmodule
 // Retrieval info: PRIVATE: JTAG_ENABLED NUMERIC "0"
 // Retrieval info: PRIVATE: JTAG_ID STRING "NONE"
 // Retrieval info: PRIVATE: MAXIMUM_DEPTH NUMERIC "0"
-// Retrieval info: PRIVATE: MIFfilename STRING "../video/r0bat_font.hex"
+// Retrieval info: PRIVATE: MIFfilename STRING "../video/r0bat_font.mif"
 // Retrieval info: PRIVATE: NUMWORDS_A NUMERIC "2048"
 // Retrieval info: PRIVATE: OutputRegistered NUMERIC "0"
 // Retrieval info: PRIVATE: RAM_BLOCK_TYPE NUMERIC "0"
@@ -104,7 +104,7 @@ endmodule
 // Retrieval info: PRIVATE: rden NUMERIC "0"
 // Retrieval info: CONSTANT: INTENDED_DEVICE_FAMILY STRING "ACEX1K"
 // Retrieval info: CONSTANT: LPM_ADDRESS_CONTROL STRING "UNREGISTERED"
-// Retrieval info: CONSTANT: LPM_FILE STRING "../video/r0bat_font.hex"
+// Retrieval info: CONSTANT: LPM_FILE STRING "../video/r0bat_font.mif"
 // Retrieval info: CONSTANT: LPM_OUTDATA STRING "UNREGISTERED"
 // Retrieval info: CONSTANT: LPM_TYPE STRING "LPM_ROM"
 // Retrieval info: CONSTANT: LPM_WIDTH NUMERIC "8"
