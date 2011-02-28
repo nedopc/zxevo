@@ -155,8 +155,6 @@ module video_render(
 
 
 
-
-
 	video_fontrom video_fontrom(
 
 		.address( {pixbyte, typos} ),
