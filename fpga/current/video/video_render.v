@@ -158,7 +158,7 @@ module video_render(
 
 	wire rom_ena;
 
-	assign rom_ena = ena_pix;
+	assign rom_ena = ena_pix & ginc;
 
 	video_fontrom video_fontrom(
 
