@@ -83,6 +83,11 @@ odd  attr: #60E0, #6100, #6120, ..., #63E0
 render sequence: {sym[0],attr[2]}, {sym[4],attr[6]}, {sym[1],attr[3]}, {sym[5],attr[7]}
 
 
+achtung!!! FUCK ATM! wrong textmode fetch! etcetcetc...
+
+
+
+
 
 x640 mode:
 
