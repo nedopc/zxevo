@@ -155,10 +155,22 @@ module video_render(
 
 
 
+
+	wire rom_ena;
+
+	assign rom_ena = ena_pix;
+
 	video_fontrom video_fontrom(
 
-		.address( {pixbyte, typos} ),
+		.clock(clk),
+		.enable(rom_ena),
 
+		.data(8'd0),
+		.wraddress(11'd0),
+		.wren(1'b0),
+
+		.rdaddress( {pixbyte, typos} ),
+		.rden(1'b1),
 		.q( symbyte )
 	);
 
