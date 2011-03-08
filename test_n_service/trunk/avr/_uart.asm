@@ -16,9 +16,9 @@ UART_RX_HD:     .BYTE   1
 UART_RX_TL:     .BYTE   1
 UART_RX_LN:     .BYTE   1
 ;        .ORG    $0300                   ;см. SERVICE.ASM
-;.EQU    UART_TXBSIZE    =128            ;размер буфера д.б. равен СТЕПЕНЬ_ДВОЙКИ байт (...32,64,128,256)
+;.EQU    UART_TXBSIZE    =128            ;размер буфера д.б. равен СТЕПЕНЬ_ДВОЙКИ байт (32,64,128 или 256)
 ;UART_TX_BUFF:   .BYTE   UART_TXBSIZE    ;адрес д.б. кратен UART_TXBSIZE
-;.EQU    UART_RXBSIZE    =128            ;размер буфера д.б. равен СТЕПЕНЬ_ДВОЙКИ байт
+;.EQU    UART_RXBSIZE    =128            ;размер буфера д.б. равен СТЕПЕНЬ_ДВОЙКИ байт (32,64,128 или 256)
 ;UART_RX_BUFF:   .BYTE   UART_RXBSIZE    ;адрес д.б. кратен UART_RXBSIZE
 .CSEG
 ;
@@ -105,8 +105,9 @@ USART1_RXC:
         POPX
         INC     TEMP
         STS     UART_RX_LN,TEMP
-        CPI     TEMP,UART_RXBSIZE-16
+        CPI     TEMP,UART_RXBSIZE-20
         BRCS    U1RX9
+        SBRC    FLAGS1,4
         RTS_SET
 U1RX9:
         POP     DATA
@@ -125,8 +126,12 @@ USART1_DRE:
         LDS     TEMP,UART_TX_LN
         TST     TEMP ;есть что в буфере?
         BREQ    U1TX1
+        SBRS    FLAGS1,4
+        RJMP    U1TX2
+        SBIC    PINB,6
+        RJMP    U1TX1
 
-        PUSHX
+U1TX2:  PUSHX
         PUSH    DATA
         LDI     XH,HIGH(UART_TX_BUFF)
         LDS     XL,UART_TX_TL
@@ -140,10 +145,11 @@ USART1_DRE:
         POP     DATA
         POPX
         RJMP    U1TX9
-U1TX1:
-        INPORT  TEMP,UCSR1B
+
+U1TX1:  INPORT  TEMP,UCSR1B
         CBR     TEMP,(1<<UDRIE) ;Запрещаем прерывания Empty Data Register
         OUTPORT UCSR1B,TEMP
+
 U1TX9:  POP     TEMP
         OUT     SREG,TEMP
         POP     TEMP
@@ -155,9 +161,13 @@ U1TX9:  POP     TEMP
 UART_PUTCHAR:
         PUSH    TEMP
         PUSHX
-U_PCHR1:LDS     TEMP,UART_TX_LN
+
+U_PCHR1:SBRC    FLAGS1,4
+        RCALL   UART_CHK_CTS
+        LDS     TEMP,UART_TX_LN
         CPI     TEMP,UART_TXBSIZE ;буфер полный?
         BRCC    U_PCHR1
+
         LDI     XH,HIGH(UART_TX_BUFF)
         LDS     XL,UART_TX_HD
         ST      X+,DATA
@@ -170,13 +180,15 @@ U_PCHR1:LDS     TEMP,UART_TX_LN
         ORI     XL,LOW(UART_TX_BUFF)
         STS     UART_TX_HD,XL
 
-        INPORT  TEMP,UCSR1B
-        SBRC    TEMP,UDRIE      ;Проверяем запрет прерывания Empty Data Register
+        SBRS    FLAGS1,4
+        RJMP    U_PCHR8
+        SBIC    PINB,6
         RJMP    U_PCHR9
+U_PCHR8:INPORT  TEMP,UCSR1B
         SBR     TEMP,(1<<UDRIE) ;Разрешаем прерывания Empty Data Register
         OUTPORT UCSR1B,TEMP
-U_PCHR9:
-        POPX
+
+U_PCHR9:POPX
         POP     TEMP
         RET
 ;
@@ -198,7 +210,7 @@ UART_GETCHAR:
         DEC     TEMP
         STS     UART_RX_LN,TEMP
         SEI
-        CPI     TEMP,UART_RXBSIZE-17
+        CPI     TEMP,UART_RXBSIZE-21
         BRCC    U_GCHR1
         RTS_CLR
 U_GCHR1:ANDI    XL,UART_RXBSIZE-1
@@ -257,6 +269,22 @@ UDUMP2: LD      DATA,Z+
         RET
 MSG_DUMPHEAD:
         .DB     $0D,$0A,$3B,"     .0 .1 .2 .3 .4 .5 .6 .7 .8 .9 .A .B .C .D .E .F",0
+;
+;--------------------------------------
+;
+UART_CHK_CTS:
+        SBIC    PINB,6
+        RET
+        PUSH    TEMP
+        LDS     TEMP,UART_TX_LN
+        TST     TEMP
+        BREQ    UART_CHKCTS9
+        INPORT  TEMP,UCSR1B
+        SBR     TEMP,(1<<UDRIE) ;Разрешаем прерывания Empty Data Register
+        OUTPORT UCSR1B,TEMP
+UART_CHKCTS9:
+        POP     TEMP
+        RET
 ;
 ;--------------------------------------
 ;

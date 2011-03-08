@@ -18,7 +18,8 @@
                         ;.0 - PUTCHAR вызывает UARTDIRECT_PUTCHAR
                         ;.1 - PUTCHAR вызывает UART_PUTCHAR
                         ;.2 - PUTCHAR вызывает SCR_PUTCHAR
-                        ;.3 - лог обмена SD в RS232
+                        ;.3 - лог обмена SD в RS-232
+                        ;.4 - RS-232 RTS/CTS flow control
 .DEF    TMP2    =R22
 .DEF    TMP3    =R23
 .DEF    WL      =R24
@@ -96,7 +97,7 @@ MEGABUFFER:
                 .ORG    RAMEND
 HSTACK:
                 .ORG    $0100
-RND:            .BYTE   3
+RND:            .BYTE   4
 NEWFRAME:       .BYTE   1
 GLB_STACK:      .BYTE   2
 GLB_Y:          .BYTE   2
@@ -105,7 +106,7 @@ GLB_Y:          .BYTE   2
 ;
 .ESEG
                 .ORG    $0000
-EE_DUMMY:       .DB     $FF
+EE_DUMMY:       .DB     $FF,$FF
 EE_MODE1:       .DB     $FF
 EE_LANG:        .DB     $00
 ;
@@ -151,7 +152,7 @@ EE_LANG:        .DB     $00
 
         .DW     0,0
         .DB     "================"
-        .DB     " ZX Evo Service "
+        .DB     "  Test&Service  "
         .DB     "================"
 ;
 ;--------------------------------------
@@ -220,6 +221,7 @@ EXT_INT6:
 .INCLUDE "_t_video.asm"
 .INCLUDE "_t_dram.asm"
 .INCLUDE "_misc.asm"
+.INCLUDE "_t_rs232.asm"
 ;
 ;--------------------------------------
 ;
@@ -244,6 +246,7 @@ CLRALL2:ST      Z+,NULL
         ST      X+,TEMP
         ST      X+,FF
         ST      X+,ONE
+        ST      X+,FF
 ;
         LDIW    EE_MODE1
         CALL    EEPROM_READ
@@ -350,20 +353,33 @@ LDFPGA_DONE:
         SBIS    PINF,CONF_DONE
         RJMP    LDFPGA_DONE
 
-        LDIZ    $0100
-CLRRAM: ST      Z+,NULL
-        CPI     ZH,$11
-        BRNE    CLRRAM
-
 ;SPI reinit
         LDI     TEMP,(1<<SPE)|(0<<DORD)|(1<<MSTR)|(0<<CPOL)|(0<<CPHA)
         OUT     SPCR,TEMP
 ; - - - - - - - - - - - - - - -
-        LDIZ    MLMSG_DONE*2
-        CALL    PRINTMLSTR
-        DELAY_US 200
         LDIY    DSTACK
+        LDIZ    MLMSG_DONE1*2
+        CALL    PRINTMLSTR
 ;
+        LDI     COUNT,0
+        CALL    RANDOM ;note: используются особенности
+        LDI     TEMP,COVOX
+        CALL    FPGA_REG
+SPITST1:CALL    RANDOM ;note: используются особенности
+        CALL    FPGA_SAME_REG
+        COM     DATA
+        LDS     TEMP,RND+1 ;предыдущее результат RANDOM
+        CP      DATA,TEMP
+        BREQ    SPITST2
+        RJMP    SPI_ERROR
+SPITST2:DEC     COUNT
+        BRNE    SPITST1
+        LDI     DATA,$7F
+        CALL    FPGA_SAME_REG
+        LDIZ    MSG_OK*2
+        CALL    PRINTSTRZ
+;
+        DELAY_US 200
         CALL    UART_INIT
         CALL    PS2K_INIT
         CALL    TIMERS_INIT
@@ -417,6 +433,29 @@ POWER_STATUS:
         SBIC    PINF,0 ;VCC5
         LDI     DATA,$31 ;"1"
         JMP     HEXHALF
+;
+;--------------------------------------
+;
+SPI_ERROR:
+        LDIZ    MLMSG_SOMEERRORS*2
+        CALL    PRINTMLSTR
+SPITST5:LDIW    50000
+        LDIX    0
+SPITST3:CALL    RANDOM ;note: используются особенности
+        CALL    FPGA_SAME_REG
+        COM     DATA
+        LDS     TEMP,RND+1 ;предыдущее результат RANDOM
+        CP      DATA,TEMP
+        BREQ    SPITST4
+        ADIW    XL,1
+SPITST4:SBIW    WL,1
+        BRNE    SPITST3
+        ;PUSHX
+        LDIZ    MLMSG_SPI_TEST*2
+        CALL    PRINTMLSTR
+        ;POPX
+        CALL    DECWORD
+        RJMP    SPITST5
 ;
 ;--------------------------------------
 ;

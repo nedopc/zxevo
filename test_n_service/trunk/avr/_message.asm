@@ -7,7 +7,7 @@
 ;
 ;------------------------------------------------------------------------------
 ;
-MSG_TITLE1:
+MSG_TITLE1:     ;          ZX Evolution Test&Service (110203)         ;
         .DB     "          ZX Evolution Test&Service "                 ,0,0
 ;width limited! "01234567890123456789012345678901234567890123456789012"
 ;
@@ -104,12 +104,35 @@ MSG_CFGFPGA_ENG:
 ;
 ;------------------------------------------------------------------------------
 ;
-MLMSG_DONE:
-        .DW     MSG_DONE_RUS*2, MSG_DONE_ENG*2
-MSG_DONE_RUS:
-        .DB     "Завершено.",0,0
-MSG_DONE_ENG:
-        .DB     "Done.",0
+MLMSG_DONE1:
+        .DW     MSG_DONE1_RUS*2, MSG_DONE1_ENG*2
+MSG_DONE1_RUS:
+        .DB     "Завершено.",$0D,$0A
+        .DB     "Проверка обмена с FPGA... ",0,0
+MSG_DONE1_ENG:
+        .DB     "Done.",$0D,$0A,"FPGA data exchange test... ",0,0
+;
+;------------------------------------------------------------------------------
+;
+MSG_OK: .DB     "Ok.",0
+;
+;------------------------------------------------------------------------------
+;
+MLMSG_SOMEERRORS:
+        .DW     MSG_SOMEERRORS_RUS*2, MSG_SOMEERRORS_ENG*2
+MSG_SOMEERRORS_RUS:
+        .DB     "Есть ошибки!",0,0
+MSG_SOMEERRORS_ENG:
+        .DB     "We have some errors!",0,0
+;
+;------------------------------------------------------------------------------
+;
+MLMSG_SPI_TEST:
+        .DW     MSG_SPITEST_RUS*2, MSG_SPITEST_ENG*2
+MSG_SPITEST_RUS:
+        .DB     $0D,$0A,"Количество неправильных байт из 50000 -",0
+MSG_SPITEST_ENG:
+        .DB     $0D,$0A,"Quantity wrong byte from 50000 -",0,0
 ;
 ;------------------------------------------------------------------------------
 ;
@@ -150,7 +173,7 @@ MSG_TXFAIL_ENG:
 ;------------------------------------------------------------------------------
 ;
 MENU_MAIN:
-        .DB     6,3,26+2,7,$9F,$F0
+        .DB     6,3,26+2,8,$9F,$F0
         .DW     MTST_SHOW_REPORT,1000
         ;handlers
         .DW     TESTPS2KEYB
@@ -158,6 +181,7 @@ MENU_MAIN:
         .DW     TESTMOUSE
         .DW     TESTBEEP
         .DW     TESTVIDEO
+        .DW     TESTRS232
         .DW     TESTSD
         .DW     FLASHER
         ;lang0
@@ -167,6 +191,7 @@ MENU_MAIN:
         .DB     "Тест мыши                 "
         .DB     "Тест BEEP/TAPEOUT/COVOX   "
         .DB     "Тест видео                "
+        .DB     "Тест RS-232               "
         .DB     "Диагностика SD/MMC        "
         .DB     "Программирование Flash-ROM"
         ;lang1
@@ -176,6 +201,7 @@ MENU_MAIN:
         .DB     "Mouse test                "
         .DB     "BEEP/TAPEOUT/COVOX test   "
         .DB     "Video test                "
+        .DB     "RS-232 test               "
         .DB     "SD/MMC diagnostic         "
         .DB     "Write Flash-ROM           "
 ;width fixed!   "12345678901234567890123456"

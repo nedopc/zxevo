@@ -1,24 +1,60 @@
 ;
 ;--------------------------------------
+;деление целочисл. без знака  32 бит на 16 бит
+;in:    ZX - делимое
+;       W  - делитель
+;out:   ZX - результат
+;       TEMPDATA - остаток
+;chng:  COUNT
+DIV3216U:
+        LDI     COUNT,33
+        CLR     DATA
+        SUB     TEMP,TEMP
+D3216U_1:
+        ROL     XL
+        ROL     XH
+        ROL     ZL
+        ROL     ZH
+        DEC     COUNT
+        BREQ    D3216U_3
+        ROL     DATA
+        ROL     TEMP
+        SUB     DATA,WL
+        SBC     TEMP,WH
+        BRCC    D3216U_2
+        ADD     DATA,WL
+        ADC     TEMP,WH
+        CLC
+        RJMP    D3216U_1
+D3216U_2:
+        SEC
+        RJMP    D3216U_1
+D3216U_3:
+        RET
+;
+;--------------------------------------
 ;out:   DATA == п.случайное число
 RANDOM: PUSHW
-        LDS     DATA,RND+0
-        LDS     WL,RND+1
-        LDS     WH,RND+2
-        LSL     DATA
+        PUSH    TEMP
+        LDS     WL,RND+2
+        LDS     WH,RND+3
+        STS     RND+3,WL
         ROL     WL
         ROL     WH
-        BRCC    RAND1
-        EOR     DATA,ONE
-RAND1:  SBRC    WH,7
-        EOR     DATA,ONE
-        SBRC    WH,6
-        EOR     DATA,ONE
-        SBRC    WH,1
-        EOR     DATA,ONE
-        STS     RND+0,DATA
+        MOV     DATA,WH
+        ROL     WL
+        ROL     WH
+        ROL     WL
+        ROL     WH
+        ROL     WL
+        ROL     WH
+        EOR     DATA,WH
+        LDS     WL,RND+1
+        STS     RND+2,WL
+        LDS     WL,RND+0
         STS     RND+1,WL
-        STS     RND+2,WH
+        STS     RND+0,DATA
+        POP     TEMP
         POPW
         RET
 ;
