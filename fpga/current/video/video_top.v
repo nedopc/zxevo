@@ -156,7 +156,6 @@ module video_top(
 		.clk(clk),
 
 		.mode_atm_n_pent(mode_atm_n_pent),
-		.mode_a_text    (mode_a_text),
 
 		.hsync_start(hsync_start),
 		.line_start(line_start),
@@ -176,6 +175,7 @@ module video_top(
 		.clk(clk),
 
 		.mode_atm_n_pent(mode_atm_n_pent),
+		.mode_a_text    (mode_a_text),
 
 
 		.init(1'b0),
@@ -209,7 +209,7 @@ module video_top(
 		.video_addr(video_addr),
 		.video_next(video_next),
 
-		.line_start(line_start),
+		.line_start(hsync_start),
 		.int_start (int_start ),
 		.vpix      (vpix      ),
 
