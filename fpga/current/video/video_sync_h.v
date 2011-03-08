@@ -147,10 +147,10 @@ module video_sync_h(
 //			                (HPIX_BEG_PENT-FETCH_FOREGO) ) )
 //				fetch_start <= 1'b1;
 
-			if( hcount == (  mode_atm_n_pent             ?
-			                (HPIX_END_ATM -FETCH_FOREGO) :
-			                (HPIX_END_PENT-FETCH_FOREGO) ) )
-				fetch_end <= 1'b1;
+//			if( hcount == (  mode_atm_n_pent             ?
+//			                (HPIX_END_ATM -FETCH_FOREGO) :
+//			                (HPIX_END_PENT-FETCH_FOREGO) ) )
+//				fetch_end <= 1'b1;
 		end
 		else
 		begin
@@ -158,32 +158,45 @@ module video_sync_h(
 			line_start   <= 1'b0;
 			scanin_start <= 1'b0;
 //			fetch_start  <= 1'b0;
-			fetch_end    <= 1'b0;
+//			fetch_end    <= 1'b0;
 		end
 	end
 
 
 
 	wire fetch_start_time, fetch_start_condition;
+	wire fetch_end_condition;
 
 	reg [3:0] fetch_start_wait;
 
-	assign fetch_start_time =  mode_atm_n_pent                  ?
+
+	assign fetch_start_time = (mode_atm_n_pent                  ?
 	                          (HPIX_BEG_ATM -FETCH_FOREGO-9'd4) :
-	                          (HPIX_BEG_PENT-FETCH_FOREGO-9'd4) ;
+	                          (HPIX_BEG_PENT-FETCH_FOREGO-9'd4) ) == hcount;
 
 	always @(posedge clk) if( cend )
 		fetch_start_wait[3:0] <= { fetch_start_wait[2:0], fetch_start_time };
-	
 
-
-	assign fetch_start_condition = mode_a_text ? fetch_start_time : fetch_start_wait[3];
+	assign fetch_start_condition = mode_a_text ? fetch_start_time  : fetch_start_wait[3];
 
 	always @(posedge clk)
 	if( pre_cend && fetch_start_condition )
 		fetch_start <= 1'b1;
 	else
 		fetch_start <= 1'b0;
+
+
+
+
+	assign fetch_end_time = (mode_atm_n_pent             ?
+	                        (HPIX_END_ATM -FETCH_FOREGO) :
+	                        (HPIX_END_PENT-FETCH_FOREGO) ) == hcount;
+
+	always @(posedge clk)
+	if( pre_cend && fetch_end_time )
+		fetch_end <= 1'b1;
+	else
+		fetch_end <= 1'b0;
 
 
 
