@@ -8,6 +8,7 @@
 .EQU    KEY_PAGEDOWN    =$7A
 .EQU    KEY_HOME        =$6C
 .EQU    KEY_END         =$69
+.EQU    KEY_SPACE       =$29
 .EQU    KEY_F1          =$05
 .EQU    KEY_NUMLOCK     =$77
 .EQU    KEY_CAPSLOCK    =$58

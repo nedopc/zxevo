@@ -1229,6 +1229,14 @@ FP_ENTER0:
         LDD     WH,Z+27
         LDD     XL,Z+20
         LDD     XH,Z+21
+        MOV     TEMP,WL
+        OR      TEMP,WH
+        OR      TEMP,XL
+        OR      TEMP,XH
+        BRNE    FP_ENTER1
+        LDSW    FAT_ROOTCLS+0
+        LDSX    FAT_ROOTCLS+2
+FP_ENTER1:
         STSW    FAT_TEK_DIR+0
         STSX    FAT_TEK_DIR+2
         RCALL   FP_RD_DIR
