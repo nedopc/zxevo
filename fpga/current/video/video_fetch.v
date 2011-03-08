@@ -4,10 +4,6 @@
 //
 // fetches video data for renderer
 
-// a special case here is to prefetch text symbol images from fontrom.
-//  requires text attrs to be fetched last so that there are 4 cycles
-//  to re-fetch fontrom
-
 module video_fetch(
 
 	input  wire        clk, // 28 MHz clock
@@ -88,29 +84,6 @@ module video_fetch(
 		else if( video_strobe )
 			fetch_ptr <= fetch_ptr + 1;
 
-
-
-
-	// ACHTUNG-NAEBACHTUNG!!!!
-	// video_strobe coincides with cend,
-	// fetch_sync ALSO coincides with cend!!!
-	// so if last word is read during last dram cycle of 8,
-	// it will be fucked!!!111
-	//
-	// fix:
-	//  requires extra MUXes and conditions in pic_bits, loading
-	//  last portion directly into pic_bits from video_data
-	// alterantive fix:
-	//  make two fetch buffers with rotation:
-	//  while one is filled with data, second goes to renderer.
-	//  requires extra MUXes as well.
-	// one more fix:
-	//  let pic_bits load 1 28MHz clock cycle later,
-	//  so that fetch_data is correctly updated at that moment.
-	//  this fix is OK only for <=14MHz-pixelclock modes and
-	//  will require more shifting of signals in 'video_palframe'
-	//
-	// last fix is preferable - doing it
 
 
 	// store fetched data
