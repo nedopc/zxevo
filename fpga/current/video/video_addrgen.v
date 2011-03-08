@@ -76,7 +76,7 @@ module video_addrgen(
 	// text counters
 	always @(posedge clk)
 	if( frame_init )
-		tyctr <= 8'b0011_0111;
+		tyctr <= 8'b0011_1000;
 	else if( line_init )
 		tyctr <= tyctr + 1;
 
