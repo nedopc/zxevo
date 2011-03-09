@@ -27,13 +27,13 @@ static UBYTE tw_send_start(void)
 	//wait for flag
 	while (!(TWCR & (1<<TWINT)));
 
-#ifdef LOGENABLE
-	char log_reset_type[] = "TWS..\r\n";
-	UBYTE b = TWSR;
-	log_reset_type[3] = ((b >> 4) <= 9 )?'0'+(b >> 4):'A'+(b >> 4)-10;
-	log_reset_type[4] = ((b & 0x0F) <= 9 )?'0'+(b & 0x0F):'A'+(b & 0x0F)-10;
-	to_log(log_reset_type);
-#endif
+//#ifdef LOGENABLE
+//	char log_reset_type[] = "TWS..\r\n";
+//	UBYTE b = TWSR;
+//	log_reset_type[3] = ((b >> 4) <= 9 )?'0'+(b >> 4):'A'+(b >> 4)-10;
+//	log_reset_type[4] = ((b & 0x0F) <= 9 )?'0'+(b & 0x0F):'A'+(b & 0x0F)-10;
+//	to_log(log_reset_type);
+//#endif
 	//return status
    return TWSR&0xF8;
 }
@@ -217,7 +217,9 @@ void gluk_init(void)
 	//read month and day of week
 	tmp = rtc_read(6);
 	gluk_regs[GLUK_REG_MONTH] = bcd_to_hex(0x1F&tmp);
-	gluk_regs[GLUK_REG_DAY_WEEK] = tmp>>5;
+	tmp = (tmp>>5);
+	//PC8583 dayweek 0..6 => DS12788 dayweek 1..7
+	gluk_regs[GLUK_REG_DAY_WEEK] = (tmp>6)?1:tmp+1;
 
 	//read year and day of month
 	tmp = rtc_read(5);
@@ -350,7 +352,8 @@ void gluk_set_reg(UBYTE index, UBYTE data)
 					break;
 				case GLUK_REG_MONTH:
 				case GLUK_REG_DAY_WEEK:
-					rtc_write(6, (hex_to_bcd(gluk_regs[GLUK_REG_DAY_WEEK])<<5)+(0x1F&hex_to_bcd(gluk_regs[GLUK_REG_MONTH])));
+					//DS12788 dayweek 1..7 => PC8583 dayweek 0..6
+					rtc_write(6, ((gluk_regs[GLUK_REG_DAY_WEEK]-1)<<5)+(0x1F&hex_to_bcd(gluk_regs[GLUK_REG_MONTH])));
 					break;
 				case GLUK_REG_YEAR:
 					rtc_write(RTC_YEAR_ADD_REG, gluk_regs[GLUK_REG_YEAR]);

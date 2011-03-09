@@ -8,6 +8,10 @@
  *
  * @subsection current Current version.
  *
+ * - Fix RTC PC8583 dayweek 0..6 convert to DS12788 dayweek 1..7 and vice versa.
+ *
+ * @subsection ver_2010_12_07 Version 07.12.2010
+ *
  * - Keyboard mapping without using RAM.
  * - Add setting resolution for PS/2 mouse [1..4]
  *   (left and right mouse buttons and pad'*' - default [1], pad'+' - increment, pad'-' - decrement).
