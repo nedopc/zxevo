@@ -209,6 +209,7 @@ set_global_assignment -name FLEX10K_DEVICE_IO_STANDARD LVTTL/LVCMOS
 set_global_assignment -name RESERVE_ALL_UNUSED_PINS_NO_OUTPUT_GND "AS INPUT TRI-STATED"
 set_global_assignment -name MESSAGE_SUPPRESSION_RULE_FILE top.srf
 set_global_assignment -name SMART_RECOMPILE OFF
+set_global_assignment -name VERILOG_FILE ../sound/sound.v
 set_global_assignment -name VERILOG_FILE ../video/video_fontrom.v
 set_global_assignment -name VERILOG_FILE ../video/video_vga_sync_h.v
 set_global_assignment -name VERILOG_FILE ../video/video_addrgen.v

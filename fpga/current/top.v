@@ -1,5 +1,9 @@
 `include "../include/tune.v"
 
+// Pentevo project (c) NedoPC 2008-2011
+//
+// top-level
+
 module top(
 
 	// clocks
@@ -252,18 +256,10 @@ module top(
 
 	wire beeper_mux; // what is mixed to FPGA beeper output - beeper (0) or tapeout (1)
 
-	wire beeper, tapeout; // actual outs
-
-
 	wire [2:0] atm_scr_mode;
 
 
-
-
-	// BEEPER
-
-	assign beep = beeper_mux ? tapeout : beeper;
-
+	wire beeper_wr, covox_wr;
 
 
 
@@ -534,44 +530,6 @@ module top(
 	                 .cpu_rddata(cpu_rddata),
 	                 .cpu_strobe(cpu_strobe) );
 
-/*
-	wire vga_hsync,hsync,hblank,hpix,hsync_start,line_start,hint_start,scanin_start,scanout_start;
-
-	synch horiz_sync( .clk(fclk), .init(1'b0), .cend(cend), .pre_cend(pre_cend),
-	                  .hsync(hsync), .hblank(hblank), .hpix(hpix), .hsync_start(hsync_start),
-	                  .line_start(line_start), .hint_start(hint_start), .scanin_start(scanin_start) );
-
-
-	wire vblank,vsync,int_start,vpix;
-
-	syncv vert_sync( .clk(fclk), .hsync_start(hsync_start), .line_start(line_start),
-	                 .vblank(vblank), .vsync(vsync), .int_start(int_start),
-	                 .vpix(vpix), .hint_start(hint_start) );
-
-	vga_synch vga_synch( .clk(fclk), .hsync_start(hsync_start), .vga_hsync(vga_hsync), .scanout_start(scanout_start) );
-
-
-
-	wire [3:0] pixel;
-
-	fetch fecher( .clk(fclk), .cend(cend), .line_start(line_start), .vpix(vpix), .int_start(int_start),
-	              .vmode( {peff7[0],peff7[5]} ), .screen(p7ffd[3]), .video_addr(video_addr), .video_data(video_data),
-	              .video_strobe(video_strobe), .video_next(video_next), .go(go), .bw(bw), .pixel(pixel) );
-
-
-
-	wire atm_pen2;
-
-	videoout vidia( .clk(fclk), .pixel(pixel), .border(border),
-	                .hblank(hblank), .vblank(vblank), .hpix(hpix), .vpix(vpix), .hsync(hsync), .vsync(vsync),
-	                .vred(vred), .vgrn(vgrn), .vga_hsync(vga_hsync), .vblu(vblu),
-	                .vhsync(vhsync), .vvsync(vvsync), .vcsync(vcsync), .hsync_start(hsync_start),
-	                .scanin_start(scanin_start), .scanout_start(scanout_start), .cfg_vga_on(cfg_vga_on),
-					.rst_n(rst_n), .wr_pal64(vg_wrFF&atm_pen2),
-					.newrealcolor({~d[4],~d[7],~d[1],~d[6],~d[0],~d[5]})
-	);
-*/
-
 
 
 	video_top video_top(
@@ -648,7 +606,7 @@ module top(
 	zports zports( .zclk(zclk), .fclk(fclk), .rst_n(rst_n), .zpos(zpos), .zneg(zneg),
 	               .din(d), .dout(dout_ports), .dataout(ena_ports),
 	               .a(a), .iorq_n(iorq_n), .rd_n(rd_n), .wr_n(wr_n), .porthit(porthit),
-	               .ay_bdir(ay_bdir), .ay_bc1(ay_bc1), .border(border), .beeper(beeper), .tapeout(tapeout),
+	               .ay_bdir(ay_bdir), .ay_bc1(ay_bc1), .border(border),
 	               .p7ffd(p7ffd), .peff7(peff7), .mreq_n(mreq_n), .m1_n(m1_n), .dos(dos),
 	               .rstrom(rstrom), .vg_intrq(intrq), .vg_drq(drq), .vg_wrFF(vg_wrFF),
 	               .vg_cs_n(vg_cs_n), .sd_start(sd_start), .sd_dataout(sd_dataout),
@@ -687,7 +645,10 @@ module top(
 	               .pent1m_ROM   (pent1m_ROM),
 
 	               .atm_palwr  (atm_palwr  ),
-	               .atm_paldata(atm_paldata)
+	               .atm_paldata(atm_paldata),
+
+	               .beeper_wr(beeper_wr),
+	               .covox_wr (covox_wr )
 
 	             );
 
@@ -704,8 +665,6 @@ module top(
 	             .wait_n(wait_n),
 	             .waits(waits),
 	             .spiint_n(spiint_n) );
-
-//	assign wait_n = 1'bZ; // WTF??? FIXME,FIXME,FIXME,FIXME,FIXME,FIXME,FIXME,FIXME,FIXME,FIXME,FIXME,FIXME,FIXME
 
 
 
@@ -726,6 +685,29 @@ module top(
 
 	spi2 zspi( .clock(fclk), .sck(sdclk), .sdo(sddo), .sdi(sddi), .start(sd_start),
 	           .speed(2'b00), .din(sd_datain), .dout(sd_dataout) );
+
+
+
+
+
+	  //////////////////////////////////////
+	 // sound: beeper, tapeout and covox //
+	//////////////////////////////////////
+
+	sound sound(
+
+		.clk(fclk),
+
+		.din(d),
+
+		.beeper_wr(beeper_wr),
+		.covox_wr (covox_wr ),
+
+		.beeper_mux(beeper_mux),
+
+		.sound_bit(beep)
+	);
+
 
 endmodule
 
