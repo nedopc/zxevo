@@ -163,14 +163,14 @@ module video_render(
 	video_fontrom video_fontrom(
 
 		.clock(clk),
-		.enable(1'b1),
+		.enable(rom_ena),
 
 		.data(8'd0),
 		.wraddress(11'd0),
 		.wren(1'b0),
 
 		.rdaddress( {pixbyte, typos} ),
-		.rden(rom_ena),
+		.rden(1'b1),
 		.q( symbyte )
 	);
 

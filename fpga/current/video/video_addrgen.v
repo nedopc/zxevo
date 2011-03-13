@@ -42,10 +42,14 @@ module video_addrgen(
 
 	wire gnext,tnext,ldaddr;
 
+	reg line_start_r;
 	reg frame_init_r;
 	reg line_init_r;
 
-	assign line_init  = line_start & vpix;
+	always @(posedge clk)
+		line_start_r <= line_start;
+
+	assign line_init  = line_start_r & vpix;
 	assign frame_init = int_start;
 
 	reg [13:0] gctr;
@@ -76,7 +80,7 @@ module video_addrgen(
 	// text counters
 	always @(posedge clk)
 	if( frame_init )
-		tyctr <= 8'b0011_1000;
+		tyctr <= 8'b0011_0111;
 	else if( line_init )
 		tyctr <= tyctr + 1;
 

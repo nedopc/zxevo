@@ -43,8 +43,6 @@ module zports(
 
 	output reg  [ 3:0] border,
 
-	output reg         beeper,
-	output reg         tapeout,
 
 	input  wire        dos,
 
@@ -101,10 +99,11 @@ module zports(
 	output wire        pent1m_ROM,     // d4.7ffd
 
 
-	output wire        atm_palwr,  // palette write strobe
-	output wire [ 5:0] atm_paldata // palette write data
+	output wire        atm_palwr,   // palette write strobe
+	output wire [ 5:0] atm_paldata, // palette write data
 
-
+	output wire        covox_wr,
+	output wire        beeper_wr
 );
 
 
@@ -146,6 +145,11 @@ module zports(
 	localparam ZXEVBF = 8'hBF; // xxBF config port
 
 	localparam COMPORT = 8'hEF; // F8EF..FFEF - rs232 ports
+
+
+	localparam COVOX   = 8'hFB;
+
+
 
 
 	reg external_port;
@@ -371,16 +375,14 @@ module zports(
 
 
 
-	//port FE beep/border bit
-	always @(posedge zclk)
-	begin
-		if( portfe_wr )
-		begin
-			tapeout <= din[3];
-			beeper  <= din[4];
-			border <= { ~a[3], din[2:0] };
-		end
-	end
+	//border port FE
+	wire portwe_wr_fclk;
+
+	assign portfe_wr_fclk = (((loa==PORTFE) || (loa==PORTF6)) && port_wr_fclk);
+
+	always @(posedge fclk)
+	if( portfe_wr_fclk )
+		border <= { ~a[3], din[2:0] };
 
 
 
@@ -760,9 +762,25 @@ module zports(
 
 
 	// atm palette strobe and data
-	assign atm_palwr = vg_wrFF & atm_pen2;
+	wire vg_wrFF_fclk;
+
+	assign vg_wrFF_fclk = ( ( (loa==VGSYS)&&shadow ) && port_wr_fclk);
+
+
+	assign atm_palwr = vg_wrFF_fclk & atm_pen2;
 
 	assign atm_paldata = { ~din[4], ~din[7], ~din[1], ~din[6], ~din[0], ~din[5] };
+
+
+
+
+
+
+	// covox/beeper writes
+
+	assign beeper_wr = (loa==PORTFE) && portfe_wr_fclk;
+	assign covox_wr  = (loa==COVOX) && port_wr_fclk;
+
 
 endmodule
 
