@@ -1,16 +1,12 @@
 
-;LAST UPDATE: 27.02.2011 savelij
+;LAST UPDATE: 17.03.2011 savelij
 
-DD		EQU 27				;„€’€
-MM		EQU 2				;Œ…‘Ÿ–
+DD		EQU 17				;„€’€
+MM		EQU 3				;Œ…‘Ÿ–
 YY		EQU 11				;ƒŽ„
 DATA		EQU DD+(MM<<5)+(YY<<9)+0X8000	;“†… “€ŠŽ‚€Ž
 
 DEPKADR		EQU 0X6000
-
-;SYSREG_EFF7	EQU 0XEEF7
-;SET_ADR_CMOS	EQU 0XDEF7
-;RD_WR_CMOS	EQU 0XBEF7
 
 		ORG 0X0000
 		DI
@@ -49,27 +45,7 @@ CMPROM1		LD A,(BC)
 ;€ …‚ŽŒ Ž•Ž„… ‚ ‚ˆ„…Ž …†ˆŒ… 640•200
 ;€ ‚’ŽŽŒ Ž•Ž„… ‚ ’…Š‘’Ž‚ŽŒ …†ˆŒ…
 
-RSTRAM
-;		LD DE,0X1002
-;RSRAMP0		LD BC,0X0077
-;		OUT (C),E			;‚›“€…Œ „ˆ‘…’—…€ €ŒŸ’ˆ
-;		LD HL,TRSTRAM
-;RSRAMP1		LD BC,0X7FFD
-;		OUT (C),D			;‚“€…Œ ŠŽ”ˆƒ 48Š € …‚ŽŒ Ž•Ž„…, 128Š € ‚’ŽŽŒ
-;		LD BC,0X3FF7
-;RSRAMP2		LD A,(HL)
-;		OUT (C),A			;ˆ˜…Œ ŽŒ… ‘’€ˆ–› „‹Ÿ ’…Š“™…ƒŽ ŽŠ€ Ž…–ˆŽ‚€ˆŸ
-;		INC HL
-;		LD A,B
-;		ADD A,0X40			;‘‹…„“ž™…… ŽŠŽ Ž…–ˆŽ‚€ˆŸ
-;		LD B,A
-;		JR NC,RSRAMP2			;…‘‹ˆ … ŠŽ—ˆ‹Ž‘œ ……•Ž„ˆŒ Š ‡€ˆ‘ˆ ‚ ‘‹…„“™…… ŽŠŽ
-;		LD A,D
-;		XOR 0X10			;‘Œ…ˆ‹ˆ …†ˆŒ € 128Š
-;		LD D,A
-;		JR Z,RSRAMP1			;ˆ ……Š‹ž—…ˆˆ ‚ 128Š Ž‚’ŽŸ…Œ
-
-		LD BC,0X77|0XBC00
+RSTRAM		LD BC,0XBC77
 		LD A,2
 		OUT (C),A
 		LD HL,PAGES_CONF
@@ -91,15 +67,10 @@ LOOP1		OUTI
 
 		DUPL 0X0066-$,0XFF
 		ORG 0X0066
-		PUSH AF
-		LD A,R
-		JP PO,EXIT_NMI
-		EI
-EXIT_NMI	POP AF
-		RET
+		RETN
 
 RSTPAL		LD A,%10101011			;ZX SCREEN MODE, TURBO ON („‹Ÿ €’Œ)
-		LD BC,0X4177|0XBC00		;ˆ „Ž‘’“ Š €‹ˆ’…
+		LD BC,0XFD77			;ˆ „Ž‘’“ Š €‹ˆ’…
 		OUT (C),A
 ;¯ «¨âà 
 		EI
@@ -107,7 +78,7 @@ RSTPAL		LD A,%10101011			;ZX SCREEN MODE, TURBO ON („‹Ÿ €’Œ)
 		DI
 		LD HL,TRSTPAL			;+15
 		LD DE,0XAB0F
-		LD BC,0X0177|0XBC00
+		LD BC,0XBD77
 		OUT (C),D			;¢ª«.PAL
 RSTPAL0		LD A,E
 		BIT 3,E
@@ -120,7 +91,7 @@ RSTPAL0		LD A,E
 		DEC E
 		JP P,RSTPAL0
 END_INIT	LD A,%10101011
-		LD BC,0X4177|0XBC00
+		LD BC,0XFD77
 		OUT (C),A			;¢ëª«.PAL
 ;~¯ «¨âà 
 
@@ -142,36 +113,6 @@ RSTKEYS		LD BC,WIN_P2
 		LD DE,0X8013
 		LD BC,ERAM_SEL-RAM_SEL
 		LDIR
-;		LD B,0X18
-;		LD DE,0X4000
-;		LD HL,0X9C00
-;ADRTSC2		LD C,8
-;ADRTSC1		LD (HL),E
-;		INC HL
-;		LD (HL),D
-;		INC HL
-;		INC D
-;		DEC C
-;		JR NZ,ADRTSC1
-;		LD A,0X20
-;		ADD A,E
-;		LD E,A
-;		JR C,ADRTSC3
-;		LD A,D
-;		SUB 8
-;		LD D,A
-;ADRTSC3		DJNZ ADRTSC2
-;		LD (HL),0X18
-;		INC HL
-;		LD (HL),0
-;		INC HL
-;		LD B,0X20
-;LDI_BLOCK	LD (HL),0XED
-;		INC HL
-;		LD (HL),0XA0
-;		INC HL
-;		DJNZ LDI_BLOCK
-;		LD (HL),0XC9
 		LD HL,0X9C33
 		XOR A
 		LD (HL),0XFF
@@ -238,7 +179,7 @@ RSTKEYS1	LD A,B
 
 CMPCFG1		LD A,0XFD
 		IN A,(0XFE)
-		AND 4				;‡€“‘Š „…ŒŠˆ
+		AND 4				;€†€’Ž "D" ‡€“‘Š „…ŒŠˆ
 		JP Z,GDEMO
 		LD HL,DEPKADR
 		LD SP,HL
@@ -410,9 +351,6 @@ szdemoini	EQU $-DEMO
 
 PAGES_CONF	DB 0XFF,0X7D,0X7A,0X83
 		DB 0XFF,0X7D,0X7A,0X00
-
-;TRSTRAM		DB 0X83,0X7A,0X7D,0XFF		;BASIC 48
-;		DB 0X00,0X7A,0X7D,0XFF		;BASIC 128
 
 TRSTPAL		DB 0X00,0X21,0X42,0X63,0X90,0XB1,0XD2,0XF3
 		DB 0XE0,0XE1,0XE2,0XE3,0XF0,0XF1,0XF2,0XF3
