@@ -440,8 +440,9 @@ SECFREE		DW 2544		;+0XE5-ŠŽ‹ˆ—…‘’‚Ž ‘‚ŽŽ„›• ‘…Š’ŽŽ‚
 		DB "RAMDISKO"	;+0XF5-ˆŒŸ „ˆ‘Š…’›
 DSK_END
 
-TXT_EDITCMOS1	DB "Press ",0X1B,0X18,0X19,0X1A," keys,  0..9, A..F for edit",0   
-TXT_EDITCMOS2	DB "L.Load CMOS   S.Save CMOS   X.Exit",0
+TXT_EDITCMOS1	DB "Press ",0X1B,0X18,0X19,0X1A," keys, 0..9,A..F for edit,  "
+		DB "L.Load CMOS, S.Save CMOS, X.Exit",0
+TXT_EDITCMOS2	DB "CMOS Editor",0
 
 ;„‹Ÿ Œ…ž ‚›Ž€ ŠŽˆŽ‚€ˆŸ „ˆ‘Š…’
 ;mINSOUT		DB 7-WIDE,0X0C
