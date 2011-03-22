@@ -8,6 +8,7 @@
  *
  * @subsection current Current version.
  *
+ * - Add access to 0..EF cells of PC8583.
  * - Fix RTC PC8583 dayweek 0..6 convert to DS12788 dayweek 1..7 and vice versa.
  *
  * @subsection ver_2010_12_07 Version 07.12.2010

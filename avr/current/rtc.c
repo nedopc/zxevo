@@ -316,11 +316,13 @@ UBYTE gluk_get_reg(UBYTE index)
 			//read version
 			return GetVersionByte( index&0x0F );
 		}
-
-		//other from nvram
-		//- on PCF8583 nvram started from #10
-		//- on 512vi1[DS12887] nvram started from #0E
-		return rtc_read( (index&0x3F)+2 );
+		else
+		{
+			//other from nvram
+			//- on PCF8583 nvram started from #10
+			//- on 512vi1[DS12887] nvram started from #0E
+			return rtc_read( (index/*&0x3F*/)+2 );
+		}
 	}
 }
 
@@ -375,7 +377,7 @@ void gluk_set_reg(UBYTE index, UBYTE data)
 			//write to nvram
 			//- on PCF8583 nvram started from #10
 			//- on 512vi1[DS12887] nvram started from #0E
-			rtc_write( (index&0x3F)+2, data);
+			rtc_write( (index/*&0x3F*/)+2, data);
 		}
 	}
 }
