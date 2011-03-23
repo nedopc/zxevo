@@ -444,6 +444,27 @@ TXT_EDITCMOS1	DB "Press ",0X1B,0X18,0X19,0X1A," keys, 0..9,A..F for edit,  "
 		DB "L.Load CMOS, S.Save CMOS, X.Exit",0
 TXT_EDITCMOS2	DB "CMOS Editor",0
 
+;		    0123456789ABCDEF0123456789ABCDEF
+TXT_HELPREG	DB "SECOND                         ",0		;00
+		DB "SECOND ALARM                   ",0		;01
+		DB "MINUTE                         ",0		;02
+		DB "MINUTE ALARM                   ",0		;03
+		DB "HOUR                           ",0		;04
+		DB "HOUR ALARM                     ",0		;05
+		DB "DAY OF WEEK                    ",0		;06
+		DB "DAY                            ",0		;07
+		DB "MONTH                          ",0		;08
+		DB "YEAR                           ",0		;09
+		DB "#20                            ",0		;0A
+		DB "#02                            ",0		;0B
+		DB "#00                            ",0		;0C
+		DB "#80                            ",0		;0D
+		DB "BIT 7=TURBO,BIT 2-0=MEMORY MODE",0		;0E
+		DB "NUMBER VIRTUAL DRIVE           ",0		;0F
+		DB "NUMBER TR-DOS DRIVE            ",0		;10
+		DB "#AA OR #55                     ",0		;11
+EMPTY_STROKA	DB "                               ",0
+
 ;Ñãü åÖçû ÇõÅéêÄ äéèàêéÇÄçàü ÑàëäÖí
 ;mINSOUT		DB 7-WIDE,0X0C
 ;		DB 1+2
@@ -496,11 +517,7 @@ ERUN_CODE
 ;ÅìåäÄãäÄ Ç AY
 DIN		DW 0X10
 		DUPL 4,0
-		DB 0X0F
-		DB 0X36
-		DB 0XF0
-		DB 0
-		DB 0
+		DB 0X0F,0X36,0XF0,0,0
 		DW 0X100
 gFenv		EQU $-1
 		DB 9
