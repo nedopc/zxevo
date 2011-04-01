@@ -165,7 +165,7 @@ void rtc_init(void)
 	//SCL frequency = CPU clk/ ( 16 + 2* (TWBR) * 4^(TWPS) )
 	// 11052000 / (16 + 2*48 ) = 98678,5Hz (100000Hz recommended for PCF8583)
 	TWSR = 0;
-	TWBR = 255;//48;
+	TWBR = 48;
 	TWAR = 0; //disable address match unit
 
 	//reset RTC
