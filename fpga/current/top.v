@@ -579,7 +579,7 @@ module top(
 
 		.spics_n(spics_n), .spidi(spidi),
 		.spido(spido), .spick(spick),
-		.status_in({wait_rnw, waits[6:0]}), .genrst(genrst),
+		.status_in({/* wait_rnw */ wr_n, waits[6:0]}), .genrst(genrst),
 		.rstrom(rstrom), .kbd_out(kbd_data),
 		.kbd_stb(kbd_stb), .mus_out(mus_data),
 		.mus_xstb(mus_xstb), .mus_ystb(mus_ystb),
