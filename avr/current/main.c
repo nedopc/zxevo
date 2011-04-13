@@ -137,7 +137,7 @@ start:
 	spi_init();
 
 	DDRF |= (1<<nCONFIG); // pull low for a time
-	_delay_us(40);
+	_delay_ms(50);
 	DDRF &= ~(1<<nCONFIG);
 	while( !(PINF & (1<<nSTATUS)) ); // wait ready
 
@@ -222,6 +222,7 @@ start:
         zx_task(ZX_TASK_WORK);
 		zx_mouse_task();
 		joystick_task();
+		rs232_task();
 
 		//event from SPI
 		if ( flags_register&FLAG_SPI_INT )

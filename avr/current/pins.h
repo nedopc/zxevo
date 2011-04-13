@@ -149,5 +149,23 @@
 /** JOYSTICK direction register. */
 #define JOYSTICK_DDR   DDRC
 
+/** RS232 CTS pin number. */
+#define RS232CTS PB6
+/** RS232 CTS port register. */
+#define RS232CTS_PORT PORTB
+/** RS232 CTS pins register. */
+#define RS232CTS_PIN  PINB
+/** RS232 CTS direction register. */
+#define RS232CTS_DDR  DDRB
+
+/** RS232 RTS pin number. */
+#define RS232RTS PD5
+/** RS232 RTS port register. */
+#define RS232RTS_PORT PORTD
+/** RS232 RTS pins register. */
+#define RS232RTS_PIN  PIND
+/** RS232 RTS direction register. */
+#define RS232RTS_DDR  DDRD
+
 #endif
 
