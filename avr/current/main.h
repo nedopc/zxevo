@@ -8,6 +8,11 @@
  *
  * @subsection current Current version.
  *
+ * - Add RS232 supporting.
+ * - Increase delay for reset FPGA (nCONFIG pin) before download it.
+ *
+ * @subsection ver_2011_04_02 Version 02.04.2011
+ *
  * - Add access to 0..EF cells of PC8583.
  * - Fix RTC PC8583 dayweek 0..6 convert to DS12788 dayweek 1..7 and vice versa.
  *
