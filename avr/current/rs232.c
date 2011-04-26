@@ -57,6 +57,8 @@ void rs232_init(void)
 	UCSR1C = _BV(USBS)|_BV(UCSZ0)|_BV(UCSZ1);
 
 	//Set default values:
+	rs232_DLM = 0;
+	rs232_DLL = 0x01;
 	rs232_IER = 0;
 	rs232_FCR = 0x01; //FIFO always enable
 	rs232_ISR = 0x01;
