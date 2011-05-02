@@ -8,6 +8,10 @@
  *
  * @subsection current Current version.
  *
+ * - Control PLL (ICS501M) via PE2,PE3. Set it to 2X.
+ *
+ * @subsection ver_2011_04_26 Version 26.04.2011
+ *
  * - Add RS232 supporting.
  * - Increase delay for reset FPGA (nCONFIG pin) before download it.
  *
