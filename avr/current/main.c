@@ -60,16 +60,17 @@ void hardware_init(void)
 	// configure pins
 
 	PORTG = 0b11111111;
-	DDRG  = 0b00000000;
+	DDRG  = 0b00000000; // inputs pulled up
 
 //	PORTF = 0b11110000; // ATX off (zero output), fpga config/etc inputs
 	DDRF  = 0b00001000;
 
-	PORTE = 0b11111111;
-	DDRE  = 0b00000000; // inputs pulled up
+	PORTE = 0b11110011;
+	DDRE  = 0b00000000; // PLL to 2X [E2=Z,E3=Z], inputs pulled up
 
-	PORTD = 0b11111111;
-	DDRD  = 0b00000000; // same
+	PORTD = 0b11111111; // inputs pulled up
+	DDRD  = 0b00000000;
+
 
 	PORTC = 0b11011111;
 	DDRC  = 0b00000000; // PWRGOOD input, other pulled up
