@@ -126,8 +126,9 @@ REOUT_HOB	LD A,B
 		RES 2,(IY+55)			;…„Ž‹Ž†ˆ’…‹œŽ ”€‰‹Ž‚ Œ……… ‚›‘Ž’› ŽŠ€
 		LD A,B
 		AND A
+		LD A,H_FILE-2
+		JR NZ,FINDBAS2			;…‘‹ˆ Ž‹…… 256 ”€‰‹Ž‚, ’Ž Ž‹€Ÿ ‚›‘Ž’€ ŽŠ€
 		LD A,C
-		JR NZ,FINDBAS2
 		CP H_FILE-1
 		JR C,FINDBAS2
 		SET 2,(IY+55)			;”€‰‹Ž‚ Ž‹œ˜… ‚›‘Ž’› ŽŠ€
