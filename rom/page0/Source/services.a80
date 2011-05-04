@@ -1,8 +1,8 @@
 
-;LAST UPDATE: 23.03.2011 savelij
+;LAST UPDATE: 04.05.2011 savelij
 
-DD		EQU 23				;„€’€
-MM		EQU 3				;Œ…‘Ÿ–
+DD		EQU 4				;„€’€
+MM		EQU 5				;Œ…‘Ÿ–
 YY		EQU 11				;ƒŽ„
 DATA		EQU DD+(MM<<5)+(YY<<9)+0X8000	;“†… “€ŠŽ‚€Ž
 
@@ -87,6 +87,7 @@ RSTPAL0		LD A,E
 		OUT (0XF6),A
 		LD A,(HL)
 		INC HL
+		OR %00001100
 		OUT (0XFF),A
 		DEC E
 		JP P,RSTPAL0
@@ -94,8 +95,6 @@ END_INIT	LD A,%10101011
 		LD BC,0XFD77
 		OUT (C),A			;¢ëª«.PAL
 ;~¯ «¨âà 
-
-;¯à®¢¥àª  ­ ¦ â¨ï ¤¢ãå ª« ¢¨è (¯®àâ¨¬ â®«ìª® AF,BC)
 RSTKEYS		LD BC,WIN_P2
 		LD A,1
 		OUT (C),A			
@@ -105,7 +104,7 @@ RSTKEYS		LD BC,WIN_P2
 		LD HL,0XC000
 		LD DE,0X8000
 		LD BC,0X4000
-		LDIR
+		LDIR				;……Ž‘ DOS ‚ …„Ž‘‹…„žž ‘’€ˆ–“
 		LD BC,WIN_P2
 		XOR A
 		OUT (C),A
@@ -136,11 +135,21 @@ RSTKEYS		LD BC,WIN_P2
 		LD (HL),0X23
 		INC HL
 		LD (HL),2
-		LD BC,WIN_P2
-		LD A,0XFD
-		OUT (C),A
 		LD BC,WIN_A3
 		LD A,0XFF
+		OUT (C),A
+		LD BC,WIN_A2
+		LD A,5
+		OUT (C),A
+		LD HL,0XB7F8
+		LD DE,0XF800
+		LD BC,0X0800
+		LDIR
+		LD BC,WIN_A2
+		LD A,0X7D
+		OUT (C),A
+		LD BC,WIN_P2
+		LD A,0XFD
 		OUT (C),A
 		LD BC,0XFEFF
 RSTKEYS1	LD A,B
@@ -186,9 +195,9 @@ CMPCFG1		LD A,0XFD
 		EX DE,HL
 		LD HL,LOADADR			;€‘€ŠŽ‚Š€ … ƒ‹žŠ€
 		CALL DEC40
-		LD HL,CHARS
-		LD DE,0XF800
-		CALL DEC40
+;		LD HL,CHARS
+;		LD DE,0XF800
+;		CALL DEC40
 		XOR A
 		IN A,(0XFE)
 		CPL
@@ -274,16 +283,15 @@ ERAM_CODE
 
 BONUADR		BINCLUDE cmosset_pack.rom
 LOADADR		BINCLUDE main_pack.rom
-CHARS		BINCLUDE chars_pack.bin
+;CHARS		BINCLUDE chars_pack.bin
 
 RAM_SEL
 		PHASE 0X0013
 		OUT (C),A
 		NOP
 		LD (0X00FE),SP
-		LD SP,0X00F6
+		LD SP,0X00F4
 		PUSH DE
-		PUSH HL
 		EXX
 		PUSH BC
 		PUSH DE
@@ -291,11 +299,13 @@ RAM_SEL
 		EXX
 		PUSH IX
 		PUSH IY
-		LD A,I
+		EX AF,AF'
 		PUSH AF
+		EX AF,AF'
+		LD (DNO_SAVE_SP),SP
 		LD HL,(0X00FE)
-		LD DE,0X00F6
-		REPT 8
+		LD DE,0X00F4
+		REPT 10
 		LDI
 		ENDM
 		LD A,0XC9
@@ -309,24 +319,24 @@ RAM_SEL
 		LD BC,WIN_P2
 		LD A,0XFD
 		OUT (C),A
-		LD HL,0X00F6
+		LD HL,0X00F4
 		LD DE,(0X00FE)
-		REPT 8
+		REPT 10
 		LDI
 		ENDM
-		LD SP,0X00E6
+		LD SP,0
+DNO_SAVE_SP	EQU $-2
 		POP AF
-		LD I,A
+		EX AF,AF'
 		POP IY
 		POP IX
 		POP HL
 		POP DE
 		POP BC
 		EXX
-		POP HL
 		POP DE
 		LD SP,(0X00FE)
-		LD BC,0X3CD0
+		LD BC,0X3CC8			;€„…‘ ‚Ž‡‚€’€ ‚ …‰‘ˆŠ 48
 		PUSH BC
 		LD BC,WIN_A0
 		LD A,0X83
