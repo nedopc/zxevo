@@ -3,8 +3,11 @@
 
 ;LAST UPDATE: 04.05.2011 savelij
 
+		include rst8_equ.a80
+
 AY_PRINTER	EQU 0
 TAP_EMUL	EQU 1
+PRESS_MAGIC	EQU 1
 
 ; **************************************
 ; *** SPECTRUM 128 ROM 1 DISASSEMBLY ***
@@ -265,20 +268,30 @@ L0055:  LD      (IY+$00),L      ; store it in the system variable ERR_NR.
 ; On later Spectrums, and the Brazilian Spectrum, the logic of this
 ; routine was reversed.
 
+;===============================
+		IF PRESS_MAGIC
+		RST 0X08
+		DB EXEC_MAGIC
+		RETN
+		NOP
+		ELSE
 ;; RESET
-L0066:  PUSH    AF              ; save the
-        PUSH    HL              ; registers.
-        LD      HL,($5CB0)      ; fetch the system variable NMIADD.
-        LD      A,H             ; test address
-        OR      L               ; for zero.
-;        JR      NZ,L0070        ; skip to NO-RESET if NOT ZERO
+L0066		PUSH AF		; save the
+		PUSH HL		; registers.
+		LD HL,($5CB0)	; fetch the system variable NMIADD.
+		ENDIF
+;===============================
+
+		LD A,H		; test address
+		OR L		; for zero.
+;		JR NZ,L0070	; skip to NO-RESET if NOT ZERO
 		JR Z,L0070
-        JP      (HL)            ; jump to routine ( i.e. L0000 )
+		JP (HL)		; jump to routine ( i.e. L0000 )
 
 ;; NO-RESET
-L0070:  POP     HL              ; restore the
-        POP     AF              ; registers.
-        RETN                    ; return to previous interrupt state.
+L0070		POP HL		; restore the
+		POP AF		; registers.
+		RETN		; return to previous interrupt state.
 
 ; ---------------------------
 ; THE 'CH ADD + 1' SUBROUTINE
@@ -1778,7 +1791,7 @@ L0556:  INC     D               ; reset the zero flag without disturbing carry.
 ;===============================
 		IF TAP_EMUL
 		RST 0X08
-		DB 0X44
+		DB TAPE_EMUL
 		ELSE
 		LD C,A		; and store initial state long-term in C.
 		CP A		; set the zero flag.
@@ -4340,7 +4353,7 @@ L0EAC:  DI                      ; disable interrupts as this is time-critical.
 ;===============================
 		IF AY_PRINTER
 		RST 0X08
-		DB 0X43
+		DB AY_PRN_SCR
 		JP L0EDA
 		ELSE
 		LD B,$B0		; top 176 lines.
@@ -4462,13 +4475,13 @@ L0EE7:  LD      (HL),A          ; set addressed location to zero.
 L0EF4		IF AY_PRINTER
 		LD A,(HL)
 		RST 0X08
-		DB 0X41
+		DB AY_PRN_A_
 		RET
 
 PRN_TOKEN	RST 0X08
-		DB 0X42
+		DB AY_PRN_TOKEN
 		RET
-		RET
+		NOP
 		ELSE
 		LD A,B			; fetch the counter 1-8 or 1-176
 		CP $03			; is it 01 or 02 ?.
@@ -19300,7 +19313,7 @@ L3BDE:  JP      L3C01           ; This is not called from either ROM. It can be 
 ;===============================
 		IF TAP_EMUL
 INI_TAP		RST 0X08
-		DB 0X45
+		DB TAPE_INIT
 		SCF
 		SBC HL,DE
 		RET
@@ -19308,7 +19321,7 @@ INI_TAP		RST 0X08
 
 		IF AY_PRINTER
 PRINTER_INITER	RST 0X08
-		DB 0X40
+		DB AY_PRN_INIT
 		JP L0EDF
 		ENDIF
 

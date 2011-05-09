@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 14.03.2011 savelij
+;LAST UPDATE: 09.05.2011 savelij
 
 ;”ŽŒ€’ ”‹€ƒŽ‚ŽƒŽ €‰’€ ŽŠ€
 ;X,Y,V,H,C,C
@@ -138,7 +138,7 @@ MAINTXT		DB 0X17,0XFF,0X14,1,"Main menu",0X14,0
 		DB 0X0D," I.48k basic"		;i
 		DB 0X0D," U.128k menu"		;u
 		DB 0X0D," R.Service",0		;r
-		DB LOW (MAIN1-$-1),"zftbdsiurwml123489vyh"
+		DB LOW (MAIN1-$-1),"zftbdsiurwmlg123489vyh"
 	
 MAIN1		DW GLUBOOT			;z „ˆ‘Š…’Ž‡€ƒ“‡—ˆŠ
 		DW FATBOOT			;f ‡€ƒ“‡—ˆŠ ‘ ”€’€
@@ -152,6 +152,7 @@ MAIN1		DW GLUBOOT			;z „ˆ‘Š…’Ž‡€ƒ“‡—ˆŠ
 MAIN2		DW CHNGTURBO			;w
 		DW CHNGMODE			;m
 		DW CHNGTAPMODE			;l
+		DW CHNGGLUKMOD			;g
 		DW SELDRV			;1
 		DW SELDRV			;2
 		DW SELDRV			;3
@@ -317,7 +318,7 @@ CODE_NMI	EQU $-2
 
 ;============================‘’€ˆ–€ ŽŒŽ™ˆ==========================
 WIN_HELP	;X,Y,V,H,C,C,ADR_CODE*2,F,X,Y,V,H,ADR_TXT*2,TEK_WIN,KOL_NUM*2,TEK_NUMF*2
-		DB 0X01,0X03,0X013,0X1A,0X0F,0X00
+		DB 0X01,0X03,0X014,0X1A,0X0F,0X00
 		DW 0
 		DB %00100000,0,0,0,0
 		DW TXT_WINHELP
@@ -331,6 +332,7 @@ TXT_WINHELP	DB 0X14,1,"Help",0X14,0
 		DB 0X0D," D=Grass!512b(PSB^Halloween CC04)"
 		DB 0X0D," C=ColorTable+border keys+COVOX"
 		DB 0X0D," S=old CMOS SetUp"
+		DB 0X0D," 0=return to EVO Reset Service"
 		DB 0X0D,"----------------------------------"
 		DB 0X0D," In main menu:"
 		DB 0X0D," 1-4=TR-DOS drive"
@@ -365,6 +367,8 @@ VIRTUAL_DRIVE	DB 0X16,0X48,0X00,0X17,3,"Y.Virtual Drive:  ",0X17,0XFF," A",0
 VIRT_DRIVE	EQU $-2
 EMUTAPLOAD	DB 0X16,0X50,0X00,0X17,3,"L.Emu tape load: ",0X17,0XFF," off",0
 EMTAPLOAD	EQU $-3
+GLUKENABLE	DB 0X16,0X58,0X00,0X17,3,"G.GLUKROM enable:",0X17,0XFF," off",0
+EGLUKENABLE	EQU $-3
 
 BUFF_TIME	DB 0X16,0X00,0XD0,0X17,0X4E
 TXT_TIME	DB "00:00:00",0X16,0X08,0XD0
