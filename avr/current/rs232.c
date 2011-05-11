@@ -96,11 +96,21 @@ void rs232_set_baud(void)
 {
 	if ( rs232_DLM | rs232_DLL )
 	{
-		ULONG i = BAUD115200/ ((((UWORD)rs232_DLM)<<8) + rs232_DLL);
-		UWORD rate = ((F_CPU/16)/i)-1;
-		// Set baud rate
-		UBRR1H = (UBYTE)(rate>>8);
-		UBRR1L = (UBYTE)rate;
+		if( (rs232_DLM&0x80)!=0 )
+		{
+			//AVR mode - direct load UBRR
+			UBRR1H = 0x7F&rs232_DLM;
+			UBRR1L = rs232_DLL;
+		}
+		else
+		{
+			//default mode - like 16550
+			ULONG i = BAUD115200/ ((((UWORD)rs232_DLM)<<8) + rs232_DLL);
+			UWORD rate = ((F_CPU/16)/i)-1;
+			// Set baud rate
+			UBRR1H = (UBYTE)(rate>>8);
+			UBRR1L = (UBYTE)rate;
+		}
 	}
 	else
 	{

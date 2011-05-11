@@ -8,6 +8,7 @@
  *
  * @subsection current Current version.
  *
+ * - Direct load UBRR on RS232 mode [if (DLM&0x80)!=0 ]
  * - Control PLL (ICS501M) via PE2,PE3. Set it to 2X.
  *
  * @subsection ver_2011_04_26 Version 26.04.2011
