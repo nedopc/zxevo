@@ -64,14 +64,14 @@ module video_top(
 	input  wire        atm_palwr,
 	input  wire [ 5:0] atm_paldata,
 
-	// fontrom
-	output wire [ 2:0] typos,
-	output wire [ 7:0] pixbyte,
-	input  wire	[ 7:0] symbyte,
-	
+
 	output wire        int_start,
-	
-	output wire		   rom_ena
+
+
+
+	input  wire [10:0] fnt_a,
+	input  wire [ 7:0] fnt_d,
+	input  wire        fnt_wr
 );
 
 	// these decoded in video_modedecode.v
@@ -121,6 +121,9 @@ module video_top(
 
 	wire [5:0] color;
 	wire [5:0] vga_color;
+
+
+	wire [2:0] typos;
 
 
 
@@ -279,12 +282,13 @@ module video_top(
 		.mode_pixf_14   (mode_pixf_14   ),
 
 		.typos(typos),
-		.pixbyte(pixbyte),
-		.symbyte(symbyte),
-		
+
 		.pixels(pixels),
-		
-		.rom_ena(rom_ena)
+
+
+		.fnt_a (a[10:0]),
+		.fnt_d (d      ),
+		.fnt_wr(fnt_wr )
 	);
 
 
@@ -362,8 +366,7 @@ module video_top(
 	);
 
 
-	
-	
+
 
 
 
