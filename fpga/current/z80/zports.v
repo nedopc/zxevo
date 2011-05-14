@@ -103,7 +103,10 @@ module zports(
 	output wire [ 5:0] atm_paldata, // palette write data
 
 	output wire        covox_wr,
-	output wire        beeper_wr
+	output wire        beeper_wr,
+	
+	output wire        fntw_en		// write to font_ram enabled
+	
 );
 
 
@@ -204,6 +207,7 @@ module zports(
 
 	reg  shadow_en_reg; //bit0.xxBF
 	reg   romrw_en_reg; //bit1.xxBF
+	reg  fntw_en_reg; 	//bit2.xxBF
 
 	wire shadow;
 
@@ -727,14 +731,17 @@ module zports(
 	begin
 		shadow_en_reg = 1'b0;
 		romrw_en_reg  = 1'b0;
+		fntw_en_reg   = 1'b0;
 	end
 	else if( zxevbf_wr_fclk )
 	begin
 		shadow_en_reg <= din[0];
 		romrw_en_reg  <= din[1];
+		fntw_en_reg   <= din[2];
 	end
 
 	assign romrw_en = romrw_en_reg;
+	assign fntw_en = fntw_en_reg;
 
 
 

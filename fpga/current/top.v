@@ -235,6 +235,7 @@ module top(
 
 	wire romrw_en;
 	wire cpm_n;
+	wire fntw_en;
 
 
 
@@ -442,6 +443,7 @@ module top(
 	             .romoe_n(romoe_n),
 	             .romwe_n(romwe_n),
 	             .csrom(csrom),
+	             .romw(romw),
 
 	             .cpu_req   (cpu_req),
 	             .cpu_rnw   (cpu_rnw),
@@ -452,7 +454,7 @@ module top(
 	             .cpu_rddata(cpu_rddata)
 	           );
 
-
+	wire romw;
 
 
 
@@ -530,8 +532,9 @@ module top(
 	                 .cpu_rddata(cpu_rddata),
 	                 .cpu_strobe(cpu_strobe) );
 
-
-
+	wire [ 2:0] typos;
+    wire [ 7:0] pixbyte, symbyte;
+	
 	video_top video_top(
 
 		.clk(fclk),
@@ -567,11 +570,36 @@ module top(
 		.atm_palwr  (atm_palwr  ),
 		.atm_paldata(atm_paldata),
 
-		.int_start(int_start)
+		.typos(typos),
+		.pixbyte(pixbyte),
+		.symbyte(symbyte),
+
+		.int_start(int_start),
+		
+		.rom_ena(rom_ena)
 
 	);
 
+	wire rom_ena;
+	
+// textmode fontrom
 
+	video_fontrom video_fontrom(
+
+		.inclock(fclk),
+		.inclocken(romw),
+
+		.outclock(fclk),
+		.outclocken(rom_ena),
+
+		.data(d),
+		.wraddress(a[10:0]),
+		.wren(fntw_en),
+
+		.rdaddress( {pixbyte, typos} ),
+		.rden(1'b1),
+		.q( symbyte )
+	);
 
 
 	slavespi slavespi(
@@ -638,6 +666,7 @@ module top(
 	               .atm_pen2    (atm_pen2),
 
 	               .romrw_en(romrw_en),
+				   .fntw_en(fntw_en),
 
 	               .pent1m_ram0_0(pent1m_ram0_0),
 	               .pent1m_1m_on (pent1m_1m_on),

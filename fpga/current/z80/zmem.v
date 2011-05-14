@@ -59,6 +59,7 @@ module zmem(
 	output reg  [ 4:0] rompg, // output for ROM paging
 	output wire        romoe_n,
 	output wire        romwe_n,
+	output wire        romw,
 	output wire        csrom,
 
 
@@ -126,6 +127,7 @@ module zmem(
 
 	assign csrom = romnram; // positive polarity!
 
+	assign romw = ~wr_n & csrom & ~mreq_n;
 
 
 	// DRAM accesses
