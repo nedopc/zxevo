@@ -104,9 +104,9 @@ module zports(
 
 	output wire        covox_wr,
 	output wire        beeper_wr,
-	
-	output wire        fntw_en		// write to font_ram enabled
-	
+
+	output wire        fnt_wr		// write to font_ram enabled
+
 );
 
 
@@ -165,10 +165,13 @@ module zports(
 
 
 	reg port_wr_fclk,
-	    port_rd_fclk;
+	    port_rd_fclk,
+	    mem_wr_fclk;
 
 	reg [1:0] iowr_reg_fclk,
 	          iord_reg_fclk;
+
+	reg [1:0] memwr_reg_fclk;
 
 
 	wire [7:0] loa;
@@ -305,7 +308,11 @@ module zports(
 		port_rd_fclk <= iord_reg_fclk[0] && (!iord_reg_fclk[1]);
 	end
 
+	always @(posedge fclk)
+		memwr_reg_fclk[1:0] <= { memwr_reg_fclk[0], ~(mreq_n | wr_n) };
 
+	always @(posedge fclk)
+		mem_wr_fclk <= memwr_reg_fclk[0] && (!memwr_reg_fclk[1]);
 
 
 
@@ -741,7 +748,6 @@ module zports(
 	end
 
 	assign romrw_en = romrw_en_reg;
-	assign fntw_en = fntw_en_reg;
 
 
 
@@ -787,6 +793,11 @@ module zports(
 
 	assign beeper_wr = (loa==PORTFE) && portfe_wr_fclk;
 	assign covox_wr  = (loa==COVOX) && port_wr_fclk;
+
+
+
+	// font write enable
+	assign fnt_wr = fntw_en_reg && mem_wr_fclk;
 
 
 endmodule

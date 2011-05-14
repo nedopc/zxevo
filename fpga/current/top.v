@@ -235,7 +235,7 @@ module top(
 
 	wire romrw_en;
 	wire cpm_n;
-	wire fntw_en;
+	wire fnt_wr;
 
 
 
@@ -534,7 +534,7 @@ module top(
 
 	wire [ 2:0] typos;
     wire [ 7:0] pixbyte, symbyte;
-	
+
 	video_top video_top(
 
 		.clk(fclk),
@@ -575,30 +575,10 @@ module top(
 		.symbyte(symbyte),
 
 		.int_start(int_start),
-		
-		.rom_ena(rom_ena)
 
-	);
-
-	wire rom_ena;
-	
-// textmode fontrom
-
-	video_fontrom video_fontrom(
-
-		.inclock(fclk),
-		.inclocken(romw),
-
-		.outclock(fclk),
-		.outclocken(rom_ena),
-
-		.data(d),
-		.wraddress(a[10:0]),
-		.wren(fntw_en),
-
-		.rdaddress( {pixbyte, typos} ),
-		.rden(1'b1),
-		.q( symbyte )
+		.fnt_a (a[10:0]),
+		.fnt_d (d      ),
+		.fnt_wr(fnt_wr )
 	);
 
 
@@ -666,7 +646,6 @@ module top(
 	               .atm_pen2    (atm_pen2),
 
 	               .romrw_en(romrw_en),
-				   .fntw_en(fntw_en),
 
 	               .pent1m_ram0_0(pent1m_ram0_0),
 	               .pent1m_1m_on (pent1m_1m_on),
@@ -677,8 +656,9 @@ module top(
 	               .atm_paldata(atm_paldata),
 
 	               .beeper_wr(beeper_wr),
-	               .covox_wr (covox_wr )
+	               .covox_wr (covox_wr ),
 
+				   .fnt_wr(fnt_wr),
 	             );
 
 
