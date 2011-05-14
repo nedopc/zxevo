@@ -32,7 +32,7 @@ module top(
 	output romwe_n,
 
 	output rompg0_n,
-	output dos_n, // aka rompg1
+	output dos_n, 	// aka rompg1
 	output rompg2,
 	output rompg3,
 	output rompg4,
