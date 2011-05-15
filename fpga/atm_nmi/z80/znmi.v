@@ -6,15 +6,18 @@
 
 module znmi
 (
-	input  wire zclk,
 	input  wire rst_n,
+	input  wire fclk,
 
-	input  wire int_start_zclk, // when INT starts
-	input  wire set_nmi,        // NMI request from slavespi
+	input  wire zpos,
+	input  wire zneg,
+
+	input  wire int_start, // when INT starts
+	input  wire set_nmi,   // NMI request from slavespi
 
 	input  wire clr_nmi, // clear nmi: from zports, pulsed at out to #xxBE
 
-	
+
 	// some more signals like /RFSH....
 
 
@@ -25,25 +28,19 @@ module znmi
 );
 
 	reg set_nmi_r;
-	reg set_nmi_rr;
-	reg set_nmi_rrr;
 
 	wire set_nmi_now;
 
-	reg [3:0] nmi_count;
+	reg [4:0] nmi_count;
 
 
-	always @(posedge zclk)
-	begin
+	always @(posedge fclk)
 		set_nmi_r   <= set_nmi;
-		set_nmi_rr  <= set_nmi_r;
-		set_nmi_rrr <= set_nmi_rr;
-	end
 
-	assign set_nmi_now = (set_nmi_rrr != set_nmi_rr);
+	assign set_nmi_now = (set_nmi_r != set_nmi);
 
 
-	always @(posedge zclk, negedge rst_n)
+	always @(posedge fclk, negedge rst_n)
 	if( !rst_n )
 		in_nmi <= 1'b0;
 	else
@@ -57,16 +54,16 @@ module znmi
 
 
 
-	always @(posedge zclk, negedge rst_n)
+	always @(posedge fclk, negedge rst_n)
 	if( !rst_n )
-		nmi_count <= 4'b0000;
+		nmi_count <= 5'b0000;
 	else if( set_nmi_now && (!in_nmi) )
-		nmi_count <= 4'b1111;
+		nmi_count <= 5'b11111;
 	else if( nmi_count[4] )
-		nmi_count <= nmi_count - 4'd1;
+		nmi_count <= nmi_count - 5'd1;
 
 
-	assign gen_nmi <= nmi_count[3];
+	assign gen_nmi <= nmi_count[4];
 
 
 endmodule
