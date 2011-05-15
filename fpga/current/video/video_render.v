@@ -169,7 +169,7 @@ module video_render(
 	video_fontrom video_fontrom(
 
 		.clock (clk ),
-		.enable(1'b1),
+		/*.enable(1'b1),*/
 
 		.data     (fnt_d ),
 		.wraddress(fnt_a ),
