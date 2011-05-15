@@ -443,7 +443,6 @@ module top(
 	             .romoe_n(romoe_n),
 	             .romwe_n(romwe_n),
 	             .csrom(csrom),
-	             .romw(romw),
 
 	             .cpu_req   (cpu_req),
 	             .cpu_rnw   (cpu_rnw),
@@ -453,8 +452,6 @@ module top(
 	             .cpu_wrdata(cpu_wrdata),
 	             .cpu_rddata(cpu_rddata)
 	           );
-
-	wire romw;
 
 
 
@@ -532,9 +529,6 @@ module top(
 	                 .cpu_rddata(cpu_rddata),
 	                 .cpu_strobe(cpu_strobe) );
 
-	wire [ 2:0] typos;
-    wire [ 7:0] pixbyte, symbyte;
-
 	video_top video_top(
 
 		.clk(fclk),
@@ -569,10 +563,6 @@ module top(
 
 		.atm_palwr  (atm_palwr  ),
 		.atm_paldata(atm_paldata),
-
-		.typos(typos),
-		.pixbyte(pixbyte),
-		.symbyte(symbyte),
 
 		.int_start(int_start),
 

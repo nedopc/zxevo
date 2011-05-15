@@ -286,9 +286,9 @@ module video_top(
 		.pixels(pixels),
 
 
-		.fnt_a (a[10:0]),
-		.fnt_d (d      ),
-		.fnt_wr(fnt_wr )
+		.fnt_a (fnt_a ),
+		.fnt_d (fnt_d ),
+		.fnt_wr(fnt_wr)
 	);
 
 
