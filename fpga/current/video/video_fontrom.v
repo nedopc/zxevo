@@ -1,7 +1,7 @@
 // megafunction wizard: %RAM: 2-PORT%
 // GENERATION: STANDARD
 // VERSION: WM1.0
-// MODULE: altdpram 
+// MODULE: altdpram
 
 // ============================================================
 // File Name: video_fontrom.v
@@ -19,17 +19,17 @@
 
 
 //Copyright (C) 1991-2007 Altera Corporation
-//Your use of Altera Corporation's design tools, logic functions 
-//and other software and tools, and its AMPP partner logic 
-//functions, and any output files from any of the foregoing 
-//(including device programming or simulation files), and any 
-//associated documentation or information are expressly subject 
-//to the terms and conditions of the Altera Program License 
-//Subscription Agreement, Altera MegaCore Function License 
-//Agreement, or other applicable license agreement, including, 
-//without limitation, that your use is for the sole purpose of 
-//programming logic devices manufactured by Altera and sold by 
-//Altera or its authorized distributors.  Please refer to the 
+//Your use of Altera Corporation's design tools, logic functions
+//and other software and tools, and its AMPP partner logic
+//functions, and any output files from any of the foregoing
+//(including device programming or simulation files), and any
+//associated documentation or information are expressly subject
+//to the terms and conditions of the Altera Program License
+//Subscription Agreement, Altera MegaCore Function License
+//Agreement, or other applicable license agreement, including,
+//without limitation, that your use is for the sole purpose of
+//programming logic devices manufactured by Altera and sold by
+//Altera or its authorized distributors.  Please refer to the
 //applicable agreement for further details.
 
 
@@ -75,7 +75,7 @@ module video_fontrom (
 		altdpram_component.indata_aclr = "OFF",
 		altdpram_component.indata_reg = "INCLOCK",
 		altdpram_component.intended_device_family = "ACEX1K",
-		altdpram_component.lpm_file = "../video/r0bat_font.mif",
+		altdpram_component.lpm_file = "../video/atm.mif",
 		altdpram_component.lpm_type = "altdpram",
 		altdpram_component.outdata_aclr = "OFF",
 		altdpram_component.outdata_reg = "UNREGISTERED",
@@ -129,7 +129,7 @@ endmodule
 // Retrieval info: PRIVATE: MAXIMUM_DEPTH NUMERIC "0"
 // Retrieval info: PRIVATE: MEMSIZE NUMERIC "16384"
 // Retrieval info: PRIVATE: MEM_IN_BITS NUMERIC "0"
-// Retrieval info: PRIVATE: MIFfilename STRING "../video/r0bat_font.mif"
+// Retrieval info: PRIVATE: MIFfilename STRING "../video/atm.mif"
 // Retrieval info: PRIVATE: OPERATION_MODE NUMERIC "2"
 // Retrieval info: PRIVATE: OUTDATA_ACLR_B NUMERIC "0"
 // Retrieval info: PRIVATE: OUTDATA_REG_B NUMERIC "1"
@@ -159,7 +159,7 @@ endmodule
 // Retrieval info: CONSTANT: INDATA_ACLR STRING "OFF"
 // Retrieval info: CONSTANT: INDATA_REG STRING "INCLOCK"
 // Retrieval info: CONSTANT: INTENDED_DEVICE_FAMILY STRING "ACEX1K"
-// Retrieval info: CONSTANT: LPM_FILE STRING "../video/r0bat_font.mif"
+// Retrieval info: CONSTANT: LPM_FILE STRING "../video/atm.mif"
 // Retrieval info: CONSTANT: LPM_TYPE STRING "altdpram"
 // Retrieval info: CONSTANT: OUTDATA_ACLR STRING "OFF"
 // Retrieval info: CONSTANT: OUTDATA_REG STRING "UNREGISTERED"
