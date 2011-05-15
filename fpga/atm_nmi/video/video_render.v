@@ -27,6 +27,13 @@ module video_render(
 
 
 
+	input  wire [10:0] fnt_a,
+	input  wire [ 7:0] fnt_d,
+	input  wire        fnt_wr,
+
+
+
+
 	input  wire        mode_atm_n_pent, // decoded modes
 
 	input  wire        mode_zx,         //
@@ -157,21 +164,20 @@ module video_render(
 
 
 	wire rom_ena;
-
 	assign rom_ena = ena_pix & ginc;
 
 	video_fontrom video_fontrom(
 
-		.clock(clk),
-		.enable(rom_ena),
+		.clock (clk ),
+		/*.enable(1'b1),*/
 
-		.data(8'd0),
-		.wraddress(11'd0),
-		.wren(1'b0),
+		.data     (fnt_d ),
+		.wraddress(fnt_a ),
+		.wren     (fnt_wr),
 
 		.rdaddress( {pixbyte, typos} ),
-		.rden(1'b1),
-		.q( symbyte )
+		.rden     ( rom_ena          ),
+		.q        ( symbyte          )
 	);
 
 

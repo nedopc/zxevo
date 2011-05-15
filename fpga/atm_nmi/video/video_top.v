@@ -65,7 +65,13 @@ module video_top(
 	input  wire [ 5:0] atm_paldata,
 
 
-	output wire        int_start
+	output wire        int_start,
+
+
+
+	input  wire [10:0] fnt_a,
+	input  wire [ 7:0] fnt_d,
+	input  wire        fnt_wr
 );
 
 	// these decoded in video_modedecode.v
@@ -277,7 +283,12 @@ module video_top(
 
 		.typos(typos),
 
-		.pixels(pixels)
+		.pixels(pixels),
+
+
+		.fnt_a (fnt_a ),
+		.fnt_d (fnt_d ),
+		.fnt_wr(fnt_wr)
 	);
 
 

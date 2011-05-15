@@ -235,6 +235,7 @@ module top(
 
 	wire romrw_en;
 	wire cpm_n;
+	wire fnt_wr;
 
 
 
@@ -458,8 +459,6 @@ module top(
 
 
 
-
-
 	wire [20:0] daddr;
 	wire dreq;
 	wire drnw;
@@ -533,8 +532,6 @@ module top(
 	                 .cpu_rddata(cpu_rddata),
 	                 .cpu_strobe(cpu_strobe) );
 
-
-
 	video_top video_top(
 
 		.clk(fclk),
@@ -570,11 +567,12 @@ module top(
 		.atm_palwr  (atm_palwr  ),
 		.atm_paldata(atm_paldata),
 
-		.int_start(int_start)
+		.int_start(int_start),
 
+		.fnt_a (a[10:0]),
+		.fnt_d (d      ),
+		.fnt_wr(fnt_wr )
 	);
-
-
 
 
 	slavespi slavespi(
@@ -651,8 +649,9 @@ module top(
 	               .atm_paldata(atm_paldata),
 
 	               .beeper_wr(beeper_wr),
-	               .covox_wr (covox_wr )
+	               .covox_wr (covox_wr ),
 
+				   .fnt_wr(fnt_wr),
 	             );
 
 
