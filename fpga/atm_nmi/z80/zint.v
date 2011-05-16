@@ -50,7 +50,7 @@ module zint
 		if( int_start )
 			int_n <= 1'b0;
 		else if( intend )
-			int_n <= 1'b1;
+			int_n <= 1'bZ;
 	end
 
 

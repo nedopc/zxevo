@@ -789,7 +789,7 @@ module zports(
 
 
 	// port BE write
-	assign clr_nmi = ( (loa==ZXEVBE) && port_wr );
+	assign clr_nmi = ( (loa==ZXEVBE) && port_wr_fclk );
 
 
 
