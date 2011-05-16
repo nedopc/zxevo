@@ -164,6 +164,10 @@ module top(
 	wire cfg_vga_on;
 	wire set_nmi;
 
+	// nmi signals
+	wire gen_nmi;
+	wire clr_nmi;
+	wire in_nmi;
 
 
 
@@ -207,7 +211,7 @@ module top(
 
 
 
-	assign nmi_n=set_nmi ? 1'b0 : 1'bZ;
+	assign nmi_n=gen_nmi ? 1'b0 : 1'bZ;
 
 	assign res= ~rst_n;
 
@@ -382,7 +386,8 @@ module top(
 			                     .pent1m_ram0_0(pent1m_ram0_0),
 			                     .pent1m_1m_on (pent1m_1m_on),
 
-			                     .in_nmi(1'b0), // until everything is ready
+
+			                     .in_nmi(in_nmi),
 
 			                     .atmF7_wr(atmF7_wr_fclk),
 
@@ -652,22 +657,42 @@ module top(
 	               .covox_wr (covox_wr ),
 
 				   .fnt_wr(fnt_wr),
+
+				   .clr_nmi(clr_nmi)
 	             );
 
 
 	zint zint(
 		.fclk(fclk),
-		.zclk(zclk),
-		
+		.zpos(zpos),
+		.zneg(zneg),
+
 		.int_start(int_start),
-		
+
 		.iorq_n(iorq_n),
 		.m1_n  (m1_n  ),
 
-		.int_start_zclk(int_start_zclk),
-
 		.int_n(int_n)
 	);
+
+	znmi znmi
+	(
+		.rst_n(rst_n),
+		.fclk(fclk),
+		.zpos(zpos),
+		.zneg(zneg),
+
+		.rfsh_n(rfsh_n),
+
+		.int_start(int_start),
+
+		.set_nmi(set_nmi),
+		.clr_nmi(clr_nmi),
+
+		.in_nmi (in_nmi ),
+		.gen_nmi(gen_nmi)
+	);
+
 
 
 
