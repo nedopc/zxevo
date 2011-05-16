@@ -1,11 +1,11 @@
 
-;LAST UPDATE: 04.05.2011 savelij
+;LAST UPDATE: 13.05.2011 savelij
 
 		include ../../macros.a80
 		include ../../global_vars.a80
 		include bas_trd_vars.a80
 
-DD		EQU 4				;„€’€
+DD		EQU 13				;„€’€
 MM		EQU 5				;Œ…‘Ÿ–
 YY		EQU 11				;ƒŽ„
 DATA		EQU DD+(MM<<5)+(YY<<9)+0X8000	;“†… “€ŠŽ‚€Ž
@@ -32,13 +32,14 @@ ZASTV_ATR	EQU ZASTV_Y*0X20+0X5800+ZASTV_X		;€„…‘ ‚›‚Ž„€ –‚…’€ „‹Ÿ ‘ŠŽ˜…›• “ƒŽ
 		JP RST08_WORK			;RST 08
 
 LOC_09		LD A,0X3F
-		JR LOC_13
+		JR LOC_24
 
 		DUPL 0X0010-$,0XFF
 		JP PRINT_A_			;RST 10 …—€’œ ‘ˆŒ‚Ž‹€
 
-LOC_13		LD I,A
-		JR LOC_24
+LOC_13		OUT (C),A
+		NOP 
+		RET
 
 		DUPL 0X0018-$,0XFF
 		JP PRINT_MSG			;RST 18 …—€’œ ’…Š‘’Ž‚ŽƒŽ ‘ŽŽ™…ˆŸ
@@ -51,14 +52,15 @@ LOC_24		LD HL,0XFFFF
 
 		JP SUB_2323			;RST 28
 
-LOC_2B		XOR A
-		LD B,A
-		LD C,A
+LOC_2B		LD I,A
+		XOR A
 		JR LOC_33
 
 		JP $;BREAK4WRPORTFF		;RST 30
 
 LOC_33		LD SP,HL
+		LD B,A
+		LD C,A
 		JR LOC_3A
 
 		DUPL 0X0038-$,0XFF

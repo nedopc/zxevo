@@ -1,11 +1,11 @@
 
 ;www.fruitcake.plus.com
 
-;LAST UPDATE: 04.05.2011 savelij
+;LAST UPDATE: 16.05.2011 savelij
 
 		include rst8_equ.a80
 
-AY_PRINTER	EQU 0
+AY_PRINTER	EQU 1
 TAP_EMUL	EQU 1
 PRESS_MAGIC	EQU 1
 
@@ -4354,12 +4354,12 @@ L0EAC:  DI                      ; disable interrupts as this is time-critical.
 		IF AY_PRINTER
 		RST 0X08
 		DB AY_PRN_SCR
-		JP L0EDA
 		ELSE
 		LD B,$B0		; top 176 lines.
-L0EAF		LD HL,$4000		; address start of the display file.
 		ENDIF
 ;===============================
+
+L0EAF		LD HL,$4000		; address start of the display file.
 
 ; now enter a loop to handle each pixel line.
 
@@ -4415,16 +4415,10 @@ L0ED3:  PUSH    BC              ; save counter.
 ; Note. the COPY command rejoins here, essentially to execute the next
 ; three instructions.
 
-;===============================
 ;; COPY-END
-L0EDA		IF AY_PRINTER
-		DUPL 4,0
-		ELSE
-		LD A,$04		; output value 4 to port
+L0EDA		LD A,$04		; output value 4 to port
 		OUT ($FB),A		; to stop the slowed printer motor.
-		ENDIF
-		EI			; enable interrupts.
-;===============================
+L0EDE		EI			; enable interrupts.
 
 ; --------------------
 ; Clear Printer Buffer
@@ -4478,20 +4472,16 @@ L0EF4		IF AY_PRINTER
 		DB AY_PRN_A_
 		RET
 
-PRN_TOKEN	RST 0X08
-		DB AY_PRN_TOKEN
-		RET
-		NOP
 		ELSE
 		LD A,B			; fetch the counter 1-8 or 1-176
 		CP $03			; is it 01 or 02 ?.
 		SBC A,A			; result is $FF if so else $00.
+		ENDIF
+;===============================
 		AND $02			; result is 02 now else 00.
 					; bit 1 set slows the printer.
 		OUT ($FB),A		; slow the printer for the
 					; last two lines.
-		ENDIF
-;===============================
         LD      D,A             ; save the mask to control the printer later.
 
 ;; COPY-L-1
@@ -19324,6 +19314,10 @@ PRINTER_INITER	RST 0X08
 		DB AY_PRN_INIT
 		JP L0EDF
 		ENDIF
+
+PRN_TOKEN	RST 0X08
+		DB AY_PRN_TOKEN
+		RET
 
 		DUPL 0X3BFF-$,0
 		DW 0XFFFF
