@@ -360,12 +360,22 @@ module top(
 	wire [ 7:0] page [0:3];
 	wire [ 3:0] romnram;
 
+	// for reading back data via xxBE port
+	wire [ 7:0] rd_pages [0:7];
+	wire [ 7:0] rd_ramnrom;
+	wire [ 7:0] rd_dos7ffd;
+
 	generate
 
 		genvar i;
 
 		for(i=0;i<4;i=i+1)
 		begin : instantiate_atm_pagers
+
+			wire [7:0] tmp_pages [0:1];
+			wire [1:0] tmp_ramnrom;
+			wire [1:0] tmp_dos7ffd;
+
 
 			atm_pager #( .ADDR(i) )
 			          atm_pager( .rst_n(rst_n),
@@ -399,8 +409,21 @@ module top(
 			                     .zclk_stall(zclk_stall[i]),
 
 			                     .page   (page[i]),
-			                     .romnram(romnram[i])
+			                     .romnram(romnram[i]),
+
+			                     .rd_pages  (tmp_pages  ),
+			                     .rd_ramnrom(tmp_ramnrom),
+			                     .rd_dos7ffd(tmp_dos7ffd)
 			                   );
+
+			assign rd_pages[i  ] = tmp_pages[0];
+			assign rd_pages[i+4] = tmp_pages[1];
+
+			assign rd_ramnrom[i  ] = tmp_ramnrom[0];
+			assign rd_ramnrom[i+4] = tmp_ramnrom[1];
+
+			assign rd_dos7ffd[i  ] = tmp_dos7ffd[0];
+			assign rd_dos7ffd[i+4] = tmp_dos7ffd[1];
 		end
 
 	endgenerate

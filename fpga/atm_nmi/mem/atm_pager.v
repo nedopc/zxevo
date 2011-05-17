@@ -48,7 +48,12 @@ module atm_pager(
 	output wire        zclk_stall, // stall Z80 clock during DOS turning on
 
 	output reg  [ 7:0] page,
-	output reg         romnram
+	output reg         romnram,
+
+	// output for xxBE port read
+	output wire	[ 7:0] rd_pages [0:1],
+	output wire [ 1:0] rd_dos7ffd,
+	output wire [ 1:0] rd_ramnrom
 );
 	parameter ADDR = 2'b00;
 
@@ -64,6 +69,16 @@ module atm_pager(
 
 
 	reg [2:0] stall_count;
+
+
+
+	// output data for port xxBE
+	assign rd_pages[0] = pages[0];
+	assign rd_pages[1] = pages[1];
+	//
+	assign rd_dos7ffd = dos_7ffd;
+	assign rd_ramnrom = ramnrom;
+
 
 
 	// paging function, does not set pages, ramnrom, dos_7ffd
