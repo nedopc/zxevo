@@ -87,14 +87,14 @@ module znmi
 
 	always @(posedge fclk, negedge rst_n)
 	if( !rst_n )
-		nmi_count <= 5'b0000;
+		nmi_count <= 5'b00000;
 	else if( pending_nmi && int_start && (!in_nmi) )
 		nmi_count <= 5'b11111;
 	else if( nmi_count[4] )
 		nmi_count <= nmi_count - 5'd1;
 
 
-	assign gen_nmi <= nmi_count[4];
+	assign gen_nmi = nmi_count[4];
 
 
 endmodule
