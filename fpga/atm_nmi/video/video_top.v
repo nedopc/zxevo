@@ -71,7 +71,9 @@ module video_top(
 
 	input  wire [10:0] fnt_a,
 	input  wire [ 7:0] fnt_d,
-	input  wire        fnt_wr
+	input  wire        fnt_wr,
+
+	output wire [ 5:0] palcolor // for palette readback
 );
 
 	// these decoded in video_modedecode.v
@@ -309,7 +311,9 @@ module video_top(
 		.atm_palwr  (atm_palwr  ),
 		.atm_paldata(atm_paldata),
 
-		.color(color)
+		.color(color),
+
+		.palcolor(palcolor) // palette readback
 	);
 
 

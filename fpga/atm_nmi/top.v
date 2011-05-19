@@ -268,6 +268,8 @@ module top(
 
 
 
+	wire [5:0] palcolor; // palette readback
+
 
 
 
@@ -325,7 +327,6 @@ module top(
 	wire [5:0] atm_paldata;
 
 	wire int_start;
-	wire int_start_zclk;
 
 
 	// data bus out: either RAM data or internal ports data or 0xFF with unused ports
@@ -588,7 +589,9 @@ module top(
 
 		.fnt_a (a[10:0]),
 		.fnt_d (d      ),
-		.fnt_wr(fnt_wr )
+		.fnt_wr(fnt_wr ),
+
+		.palcolor(palcolor)
 	);
 
 
@@ -679,7 +682,9 @@ module top(
 				            rd_pages[1], rd_pages[0] }),
 
 				   .ramnroms( rd_ramnrom ),
-				   .dos7ffds( rd_dos7ffd )
+				   .dos7ffds( rd_dos7ffd ),
+
+				   .palcolor(palcolor)
 	             );
 
 

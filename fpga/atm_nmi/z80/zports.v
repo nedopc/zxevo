@@ -112,7 +112,9 @@ module zports(
 	// inputs from atm_pagers, to read back its config
 	input  wire [63:0] pages,
 	input  wire [ 7:0] ramnroms,
-	input  wire [ 7:0] dos7ffds
+	input  wire [ 7:0] dos7ffds,
+
+	input  wire [ 5:0] palcolor
 );
 
 
@@ -370,11 +372,11 @@ module zports(
 			dout = wait_read; // $F8EF..$FFEF
 		end
 
-		PORTBF: begin
+		ZXEVBF: begin
 			dout = { 5'b00000, fntw_en_reg, romrw_en_reg, shadow_en_reg };
 		end
 
-		PORTBE: begin
+		ZXEVBE: begin
 			dout = portbemux;
 		end
 
@@ -844,7 +846,11 @@ module zports(
 
 	4'hC: portbemux = { ~atm_pen2, atm_cpm_n, ~atm_pen, 1'bX, atm_turbo, atm_scr_mode };
 
-	4'hD: palette readback!
+	4'hD: portbemux = { ~palcolor[4], ~palcolor[2], ~palcolor[0], ~palcolor[5], 2'b11, ~palcolor[3], ~palcolor[1] };
+//	assign atm_paldata = { ~din[4], ~din[7], ~din[1], ~din[6], ~din[0], ~din[5] };
+//  {GgRrBb} -> {grbG11RB}
+// was: 76543210 -> 471605
+// now:             543210 -> 4205xx31
 
 	default: portbemux = 8'bXXXXXXXX;
 
