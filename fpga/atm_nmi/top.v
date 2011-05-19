@@ -372,11 +372,6 @@ module top(
 		for(i=0;i<4;i=i+1)
 		begin : instantiate_atm_pagers
 
-			wire [7:0] tmp_pages [0:1];
-			wire [1:0] tmp_ramnrom;
-			wire [1:0] tmp_dos7ffd;
-
-
 			atm_pager #( .ADDR(i) )
 			          atm_pager( .rst_n(rst_n),
 			                     .fclk (fclk),
@@ -411,19 +406,13 @@ module top(
 			                     .page   (page[i]),
 			                     .romnram(romnram[i]),
 
-			                     .rd_pages  (tmp_pages  ),
-			                     .rd_ramnrom(tmp_ramnrom),
-			                     .rd_dos7ffd(tmp_dos7ffd)
+
+			                     .rd_page0  (rd_pages[i  ]),
+			                     .rd_page1  (rd_pages[i+4]),
+
+			                     .rd_ramnrom( {rd_ramnrom[i+4], rd_ramnrom[i]} ),
+			                     .rd_dos7ffd( {rd_dos7ffd[i+4], rd_dos7ffd[i]} )
 			                   );
-
-			assign rd_pages[i  ] = tmp_pages[0];
-			assign rd_pages[i+4] = tmp_pages[1];
-
-			assign rd_ramnrom[i  ] = tmp_ramnrom[0];
-			assign rd_ramnrom[i+4] = tmp_ramnrom[1];
-
-			assign rd_dos7ffd[i  ] = tmp_dos7ffd[0];
-			assign rd_dos7ffd[i+4] = tmp_dos7ffd[1];
 		end
 
 	endgenerate
@@ -681,7 +670,16 @@ module top(
 
 				   .fnt_wr(fnt_wr),
 
-				   .clr_nmi(clr_nmi)
+				   .clr_nmi(clr_nmi),
+
+
+				   .pages({ rd_pages[7], rd_pages[6],
+				            rd_pages[5], rd_pages[4],
+				            rd_pages[3], rd_pages[2],
+				            rd_pages[1], rd_pages[0] }),
+
+				   .ramnroms( rd_ramnrom ),
+				   .dos7ffds( rd_dos7ffd )
 	             );
 
 

@@ -51,7 +51,8 @@ module atm_pager(
 	output reg         romnram,
 
 	// output for xxBE port read
-	output wire	[ 7:0] rd_pages [0:1],
+	output wire	[ 7:0] rd_page0,
+	output wire	[ 7:0] rd_page1,
 	output wire [ 1:0] rd_dos7ffd,
 	output wire [ 1:0] rd_ramnrom
 );
@@ -73,8 +74,8 @@ module atm_pager(
 
 
 	// output data for port xxBE
-	assign rd_pages[0] = pages[0];
-	assign rd_pages[1] = pages[1];
+	assign rd_page0 = pages[0];
+	assign rd_page1 = pages[1];
 	//
 	assign rd_dos7ffd = dos_7ffd;
 	assign rd_ramnrom = ramnrom;
