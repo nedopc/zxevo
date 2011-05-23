@@ -23,6 +23,8 @@ SCH:
 + Заменил CPU в DIP корпусе на в QFP корпусе, убрал Z80 в SOIC корпусе (D1*).
 
 LIB:
++ Заменил via на pad-mounting hole у ATXPOWER
++ Заменил via на pad-mounting hole у SDC09W4
 + Переименовал EP1K30Q208 в EP1K50Q208
 + Добавил элемент MINI-USB;
 + Добавил элемент CP2102;
