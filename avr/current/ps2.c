@@ -315,9 +315,6 @@ const UBYTE ps2mouse_init_sequence[] =
 	"\xF3\x64"  // set sample rate 100  |     scroll
 	"\xF3\x50"  // set sample rate 80   |         mode
 	"\xF2"      // get device type
-	"\xF3\x0A"  // set sample rate 10
-	"\xF2"      // get device type
-	"\xE8\x02"  // set resolution
 	"\xE6"      // set scaling 1:1
 	"\xF3\x64"  // set sample rate 100
 	"\xF4"      // enable
@@ -397,7 +394,7 @@ void ps2mouse_task(void)
 							_delay_us(200);
 
 							//send resolution
-							ps2mouse_send(rtc_read(RTC_PS2MOUSE_RES_REG));
+							ps2mouse_send(rtc_read(RTC_PS2MOUSE_RES_REG)&0x03);
 							ps2mouse_resp_count++;
 						}
 						break;
@@ -694,14 +691,10 @@ void ps2mouse_set_resolution(UBYTE code)
 			//keypad '+' - inc resolution
 			case 0x79:
 			{
-				UBYTE data = rtc_read(RTC_PS2MOUSE_RES_REG);
+				UBYTE data = rtc_read(RTC_PS2MOUSE_RES_REG)&0x03;
 				if( data < 0x03 )
 				{
 					data++;
-				}
-				else
-				{
-					data=0x03;
 				}
 				rtc_write(RTC_PS2MOUSE_RES_REG,data);
 				ps2mouse_cmd = PS2MOUSE_CMD_SET_RESOLUTION;
@@ -711,14 +704,10 @@ void ps2mouse_set_resolution(UBYTE code)
 			//keypad '-' - dec resolution
 			case 0x7B:
 			{
-				UBYTE data = rtc_read(RTC_PS2MOUSE_RES_REG);
-				if( ( data > 0 ) && (data <= 0x03 ) )
+				UBYTE data = rtc_read(RTC_PS2MOUSE_RES_REG)&0x03;
+				if (data)
 				{
 					data--;
-				}
-				else
-				{
-					data=0;
 				}
 				rtc_write(RTC_PS2MOUSE_RES_REG,data);
 				ps2mouse_cmd = PS2MOUSE_CMD_SET_RESOLUTION;
