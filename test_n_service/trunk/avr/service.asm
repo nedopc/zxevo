@@ -58,7 +58,7 @@
 .EQU    SCR_MOUSE_TEMP  =TEMP_REG
 .EQU    SCR_MOUSE_X     =$AD
 .EQU    SCR_MOUSE_Y     =$AE
-.EQU    SCR_MODE        =$AF    ; .0 - 0=VGAmode, 1=TVmode; .1 - 0=сетка 720x576;
+.EQU    SCR_MODE        =$AF    ; .7 - 0=VGAmode, 1=TVmode; .2.1.0 - режимы;
 
 .EQU    MTST_CONTROL    =$50
 .EQU    MTST_PASS_CNT0  =$51
@@ -119,7 +119,7 @@ GLB_Y:          .BYTE   2
                 .ORG    $0F00
 EE_DUMMY:       .DB     $54,$53
 EE_MODE1:       .DB     $FF
-EE_LANG:        .DB     $00 
+EE_LANG:        .DB     $00
 ;
 ;--------------------------------------
 ;
@@ -290,7 +290,7 @@ RDE1:   LSL     DATA
         OUTPORT PORTF,TEMP
         OUTPORT DDRF,TEMP
 
-        LDI     TEMP,      0B11111111
+        LDI     TEMP,      0B11110011
         OUT     PORTE,TEMP
         LDI     TEMP,      0B00000000
         OUT     DDRE,TEMP
