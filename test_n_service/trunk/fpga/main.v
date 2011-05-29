@@ -811,7 +811,6 @@ module main(
  reg [7:0] flash_data_out;
  reg [10:0] scr_addr;       initial scr_addr = 11'h000;
  reg [7:0] scr_attr;        initial scr_attr = 8'h0f;
-// reg scr_wren_x;            initial scr_wren_x = 1'b0; //DEBUG!!!
  reg scr_wren_c;            initial scr_wren_c = 1'b0;
  reg scr_wren_a;            initial scr_wren_a = 1'b0;
  reg [8:0] scr_mouse_x;     initial scr_mouse_x = 9'd0;
