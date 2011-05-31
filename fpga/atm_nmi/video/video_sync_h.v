@@ -79,7 +79,7 @@ module video_sync_h(
 
 	localparam SCANIN_BEG = 9'd88; // when scan-doubler starts pixel storing
 
-	localparam HINT_BEG = 9'd445;
+	localparam HINT_BEG = 9'd447;
 
 
 	localparam HPERIOD = 9'd448;
@@ -141,24 +141,12 @@ module video_sync_h(
 			if( hcount==SCANIN_BEG )
 				scanin_start <= 1'b1;
 
-
-//			if( hcount == (  mode_atm_n_pent             ?
-//			                (HPIX_BEG_ATM -FETCH_FOREGO) :
-//			                (HPIX_BEG_PENT-FETCH_FOREGO) ) )
-//				fetch_start <= 1'b1;
-
-//			if( hcount == (  mode_atm_n_pent             ?
-//			                (HPIX_END_ATM -FETCH_FOREGO) :
-//			                (HPIX_END_PENT-FETCH_FOREGO) ) )
-//				fetch_end <= 1'b1;
 		end
 		else
 		begin
 			hsync_start  <= 1'b0;
 			line_start   <= 1'b0;
 			scanin_start <= 1'b0;
-//			fetch_start  <= 1'b0;
-//			fetch_end    <= 1'b0;
 		end
 	end
 
