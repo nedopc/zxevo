@@ -52,7 +52,7 @@ module video_fontrom (
 	input	[10:0]  wraddress;
 	input	  wren;
 	output	[7:0]  q;
-
+`ifndef MODEL_TECH
 	wire [7:0] sub_wire0;
 	wire [7:0] q = sub_wire0[7:0];
 
@@ -89,7 +89,35 @@ module video_fontrom (
 		altdpram_component.wraddress_reg = "INCLOCK",
 		altdpram_component.wrcontrol_aclr = "OFF",
 		altdpram_component.wrcontrol_reg = "INCLOCK";
+`else
+	reg [7:0] q;
+	
+	integer fd;
 
+	reg [7:0] font [0:2047];
+
+	initial
+	begin
+		fd = $fopen("../video/atm.fnt","rb");
+
+		if( 2048!=$fread(font,fd) )
+		begin
+			$display("Couldn't load atm.fnt!\n");
+			$stop;
+		end
+
+		$fclose(fd);
+	end
+
+	always @(posedge clock)
+	if( wren )
+		font[wraddress] <= data;
+
+	always @(posedge clock)
+	if( rden )
+		q <= font[rdaddress];
+
+`endif
 
 endmodule
 
