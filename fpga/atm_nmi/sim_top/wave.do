@@ -35,23 +35,14 @@ add wave -noupdate /tb/DUT/zports/atm77_wr_fclk
 add wave -noupdate /tb/DUT/zports/zxevbf_wr_fclk
 add wave -noupdate /tb/DUT/zports/shadow
 add wave -noupdate -divider <NULL>
-add wave -noupdate -radix hexadecimal /tb/DUT/slavespi/gluclock_addr
-add wave -noupdate /tb/DUT/wait_n
-add wave -noupdate /tb/DUT/zwait/wait_start_gluclock
-add wave -noupdate /tb/DUT/zports/wait_start_gluclock
-add wave -noupdate /tb/DUT/zports/wait_rnw
-add wave -noupdate -divider <NULL>
-add wave -noupdate /tb/z80/clk_n
-add wave -noupdate /tb/z80/mreq_n
-add wave -noupdate /tb/z80/iorq_n
-add wave -noupdate /tb/z80/rd_n
-add wave -noupdate /tb/z80/wr_n
-add wave -noupdate /tb/mreq_wr_n
-add wave -noupdate /tb/iorq_wr_n
-add wave -noupdate /tb/full_wr_n
-add wave -noupdate /tb/wr_n
+add wave -noupdate /tb/DUT/video_top/int_start
+add wave -noupdate /tb/DUT/video_top/vhsync
+add wave -noupdate /tb/DUT/video_top/vvsync
+add wave -noupdate /tb/DUT/video_top/vred
+add wave -noupdate /tb/DUT/video_top/vgrn
+add wave -noupdate /tb/DUT/video_top/vblu
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {810192700 ps} 0} {{Cursor 2} {631252485400 ps} 0}
+WaveRestoreCursors {{Cursor 1} {7636363636 ps} 0} {{Cursor 2} {631252485400 ps} 0}
 configure wave -namecolwidth 340
 configure wave -valuecolwidth 40
 configure wave -justifyvalue left
@@ -66,4 +57,4 @@ configure wave -griddelta 8
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {810146300 ps} {810197500 ps}
+WaveRestoreZoom {52662530765 ps} {52676076086 ps}
