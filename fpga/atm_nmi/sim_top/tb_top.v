@@ -47,9 +47,18 @@ module tb;
 	tri1 [15:0] ide_d;
 
 
+	wire hsync,vsync;
+	wire [1:0] red,grn,blu;
+
+
+
 
 	assign zwait_n = (wait_n==1'b0) ? 1'b0 : 1'b1;
 	assign znmi_n = (nmi_n==1'b0) ? 1'b0 : 1'b1;
+
+
+
+
 
 
 
@@ -133,7 +142,13 @@ module tb;
 	         // ATmega SPI
 	         .spics_n(1'b1),
 	         .spick(1'b0),
-	         .spido(1'b1)
+	         .spido(1'b1),
+
+		 .vhsync(hsync),
+		 .vvsync(vsync),
+		 .vred(red),
+		 .vgrn(grn),
+		 .vblu(blu)
 
 	       );
 
@@ -299,7 +314,7 @@ module tb;
 
 
 	// emulate key presses
-	initial
+/*	initial
 	begin
 		tb.DUT.zkbdmus.kbd = 40'd0;
 		
@@ -316,7 +331,21 @@ module tb;
 		
 //		$stop;
 	end
+*/
 
+
+
+	// picture out
+	pixer pixer
+	(
+		.clk(fclk),
+
+		.vsync(vsync),
+		.hsync(hsync),
+		.red(red),
+		.grn(grn),
+		.blu(blu)
+	);
 
 
 `endif
