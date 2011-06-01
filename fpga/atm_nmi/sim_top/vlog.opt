@@ -35,5 +35,6 @@ tb_top.v
 ../sim_models/drammem.v
 rom_top.v		
 zxevo_rom.v
-//testrom.v
+pixer.v
+
 

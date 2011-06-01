@@ -27,6 +27,12 @@ module pixer
 
 	integer vcount;
 	integer vperiod;
+	integer vper1,vper2;
+
+	reg clr_vcnt;
+
+
+
 
 
 	always @(posedge clk)
@@ -39,7 +45,7 @@ module pixer
 	assign hbeg = ( (!r_hsync) && hsync );
 
 
-
+	// get horizontal period
 	always @(posedge clk)
 	if( hbeg )
 		hcount <= 0;
@@ -53,9 +59,55 @@ module pixer
 		hper1 <= hcount+1;
 	end
 
+
+	initial hperiod=0;
+
 	always @*
 	if( hper2===hper1 )
 		hperiod = hper2;
+
+
+
+
+	// get vertical period
+	initial clr_vcnt = 0;
+	
+	always @(posedge clk)
+	begin
+		if( vbeg )
+			clr_vcnt=1;
+
+		if( hbeg )
+		begin
+			if( clr_vcnt )
+			begin
+				clr_vcnt=0;
+
+				vper2 <= vper1;
+				vper1 <= vcount+1;
+				vcount <= 0;
+			end
+			else
+				vcount <= vcount+1;
+		end
+	end
+
+
+	initial vperiod = 0;
+
+	always @*
+	if( vper1===vper2 )
+		vperiod = vper2;
+
+
+
+
+	// display periods
+	always @*
+		$display("h period is %d",hperiod);
+	always @*
+		$display("v period is %d",vperiod);
+
 
 
 

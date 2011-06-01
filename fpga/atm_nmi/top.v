@@ -648,8 +648,11 @@ module top(
 	               .wait_start_comport (wait_start_comport ),
 	               .wait_rnw  (wait_rnw  ),
 	               .wait_write(wait_write),
+`ifndef SIMULATE
 	               .wait_read (wait_read ),
-
+`else
+	               .wait_read(8'hFF),
+`endif
 	               .atmF7_wr_fclk(atmF7_wr_fclk),
 
 	               .atm_scr_mode(atm_scr_mode),
