@@ -100,13 +100,31 @@ module pixer
 		vperiod = vper2;
 
 
-
-
 	// display periods
 	always @*
 		$display("h period is %d",hperiod);
 	always @*
 		$display("v period is %d",vperiod);
+
+
+
+	always @(posedge clk)
+	begin
+		sndpix(hcount,vcount,{26'd0,red,grn,blu},hperiod,vperiod);
+	end
+
+
+
+
+
+	import "DPI-C" task sndpix
+	(
+		input int hcoord,
+		input int vcoord,
+		input int rrggbb,
+		input int hperiod,
+		input int vperiod
+	);
 
 
 
