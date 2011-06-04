@@ -314,24 +314,24 @@ module tb;
 
 
 	// emulate key presses
-/*	initial
+	initial
 	begin
+		#1;
 		tb.DUT.zkbdmus.kbd = 40'd0;
-		
-		#600000000;
+		tb.DUT.zkbdmus.kbd[36] = 1'b1;
+		@(negedge int_n);
+		tb.DUT.zkbdmus.kbd[36] = 1'b0;
+
+//		tb.DUT.zkbdmus.kbd[13] = 1'b1;
 
 		@(negedge int_n);
-
-		tb.DUT.zkbdmus.kbd[13] = 1'b1;
-
-		@(negedge int_n);
 		@(negedge int_n);
 
-		tb.DUT.zkbdmus.kbd[13] = 1'b0;
+//		tb.DUT.zkbdmus.kbd[13] = 1'b0;
 		
 //		$stop;
 	end
-*/
+
 
 
 

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -16,6 +17,8 @@ sndpix(
     int hperiod,
     int vperiod)
 {
+	static int hsize=0,vsize=0;
+
 
 	static int need_init = 1;
 	static int sock_error=0;
@@ -24,6 +27,9 @@ sndpix(
 	char buf[256];
 
 
+	char * curbuf;
+	int tosend;
+	int socksent;
 
 
 
@@ -59,15 +65,54 @@ sndpix(
 	{
 //		sprintf(buf,"%08X<=%08X:%08X with %02X\n",adr,dat_hi,dat_lo,sel);
 
-		sprintf(buf,"%04X,%04X,%04X,%04X,%02X\n",hperiod,vperiod,hcoord,vcoord,rrggbb);
+		buf[0] = 0;
 
-		if( strlen(buf)!=send(mysocket, buf, strlen(buf), 0) )
-			sock_error++;
+		if( (hperiod>0) && (vperiod>0) )
+		{
+			if( (hperiod!=hsize) || (vperiod!=vsize) )
+			{
+				hsize = hperiod;
+				vsize = vperiod;
+
+				sprintf(buf,"s%04X,%04X\n",hsize,vsize);
+			}
+		}
+
+		if( (hsize>0) && (vsize>0) )
+			sprintf(buf+strlen(buf),"p%04X,%04X,%02X\n",hcoord,vcoord,rrggbb);
+
+		if( strlen(buf)>0 )
+		{
+			tosend = strlen(buf);
+			curbuf = buf;
+
+
+
+			while( tosend>0 )
+			{
+				socksent = send(mysocket, curbuf, tosend, 0);
+
+				if( socksent<=0 )
+				{
+					sock_error++;
+					break;
+				}
+
+				tosend -= socksent;
+				curbuf += socksent;
+			}
+			
+//			if( strlen(buf)!=socksent )
+//			{
+//				printf("send() sent %d bytes, errno=%d\n",socksent,errno);
+//				sock_error++;
+//			}
+		}
 	}
 	else
 	{
-		sock_error = 0;
-		need_init = 1;
+	//	sock_error = 0;
+	//	need_init = 1;
 
 		if( mysocket>=0 )
 			close(mysocket);
