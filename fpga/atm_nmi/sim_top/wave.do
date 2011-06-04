@@ -19,12 +19,17 @@ add wave -noupdate /tb/int_n
 add wave -noupdate /tb/nmi_n
 add wave -noupdate /tb/wait_n
 add wave -noupdate -radix hexadecimal /tb/za
-add wave -noupdate -radix hexadecimal /tb/zd
+add wave -noupdate -radix hexadecimal -subitemconfig {{/tb/zd[7]} {-radix hexadecimal} {/tb/zd[6]} {-radix hexadecimal} {/tb/zd[5]} {-radix hexadecimal} {/tb/zd[4]} {-radix hexadecimal} {/tb/zd[3]} {-radix hexadecimal} {/tb/zd[2]} {-radix hexadecimal} {/tb/zd[1]} {-radix hexadecimal} {/tb/zd[0]} {-radix hexadecimal}} /tb/zd
 add wave -noupdate /tb/csrom
 add wave -noupdate /tb/romoe_n
 add wave -noupdate /tb/romwe_n
 add wave -noupdate -divider <NULL>
-add wave -noupdate -radix hexadecimal /tb/z80/u0/dinst
+add wave -noupdate -radix hexadecimal {/tb/DUT/instantiate_atm_pagers[0]/atm_pager/page}
+add wave -noupdate {/tb/DUT/instantiate_atm_pagers[0]/atm_pager/romnram}
+add wave -noupdate -divider <NULL>
+add wave -noupdate -divider <NULL>
+add wave -noupdate -divider <NULL>
+add wave -noupdate -divider <NULL>
 add wave -noupdate -radix hexadecimal /tb/z80/u0/ir
 add wave -noupdate -divider <NULL>
 add wave -noupdate /tb/DUT/zports/atmF7_wr_fclk
@@ -42,8 +47,8 @@ add wave -noupdate /tb/DUT/video_top/vred
 add wave -noupdate /tb/DUT/video_top/vgrn
 add wave -noupdate /tb/DUT/video_top/vblu
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {7636363636 ps} 0} {{Cursor 2} {631252485400 ps} 0}
-configure wave -namecolwidth 340
+WaveRestoreCursors {{Cursor 1} {267699653665 ps} 0} {{Cursor 2} {10594973100 ps} 0}
+configure wave -namecolwidth 353
 configure wave -valuecolwidth 40
 configure wave -justifyvalue left
 configure wave -signalnamewidth 0
@@ -57,4 +62,4 @@ configure wave -griddelta 8
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {52662530765 ps} {52676076086 ps}
+WaveRestoreZoom {0 ps} {1050315 us}
