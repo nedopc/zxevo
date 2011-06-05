@@ -164,6 +164,10 @@ module top(
 	wire cfg_vga_on;
 	wire set_nmi;
 
+	// nmi signals
+	wire gen_nmi;
+	wire clr_nmi;
+	wire in_nmi;
 
 
 
@@ -207,7 +211,7 @@ module top(
 
 
 
-	assign nmi_n=set_nmi ? 1'b0 : 1'bZ;
+	assign nmi_n=gen_nmi ? 1'b0 : 1'bZ;
 
 	assign res= ~rst_n;
 
@@ -263,6 +267,8 @@ module top(
 	wire beeper_wr, covox_wr;
 
 
+
+	wire [5:0] palcolor; // palette readback
 
 
 
@@ -355,6 +361,11 @@ module top(
 	wire [ 7:0] page [0:3];
 	wire [ 3:0] romnram;
 
+	// for reading back data via xxBE port
+	wire [ 7:0] rd_pages [0:7];
+	wire [ 7:0] rd_ramnrom;
+	wire [ 7:0] rd_dos7ffd;
+
 	generate
 
 		genvar i;
@@ -381,6 +392,9 @@ module top(
 			                     .pent1m_ram0_0(pent1m_ram0_0),
 			                     .pent1m_1m_on (pent1m_1m_on),
 
+
+			                     .in_nmi(in_nmi),
+
 			                     .atmF7_wr(atmF7_wr_fclk),
 
 			                     .dos(dos),
@@ -391,7 +405,14 @@ module top(
 			                     .zclk_stall(zclk_stall[i]),
 
 			                     .page   (page[i]),
-			                     .romnram(romnram[i])
+			                     .romnram(romnram[i]),
+
+
+			                     .rd_page0  (rd_pages[i  ]),
+			                     .rd_page1  (rd_pages[i+4]),
+
+			                     .rd_ramnrom( {rd_ramnrom[i+4], rd_ramnrom[i]} ),
+			                     .rd_dos7ffd( {rd_dos7ffd[i+4], rd_dos7ffd[i]} )
 			                   );
 		end
 
@@ -568,7 +589,9 @@ module top(
 
 		.fnt_a (a[10:0]),
 		.fnt_d (d      ),
-		.fnt_wr(fnt_wr )
+		.fnt_wr(fnt_wr ),
+
+		.palcolor(palcolor)
 	);
 
 
@@ -625,8 +648,11 @@ module top(
 	               .wait_start_comport (wait_start_comport ),
 	               .wait_rnw  (wait_rnw  ),
 	               .wait_write(wait_write),
+`ifndef SIMULATE
 	               .wait_read (wait_read ),
-
+`else
+	               .wait_read(8'hFF),
+`endif
 	               .atmF7_wr_fclk(atmF7_wr_fclk),
 
 	               .atm_scr_mode(atm_scr_mode),
@@ -649,11 +675,53 @@ module top(
 	               .covox_wr (covox_wr ),
 
 				   .fnt_wr(fnt_wr),
+
+				   .clr_nmi(clr_nmi),
+
+
+				   .pages({ rd_pages[7], rd_pages[6],
+				            rd_pages[5], rd_pages[4],
+				            rd_pages[3], rd_pages[2],
+				            rd_pages[1], rd_pages[0] }),
+
+				   .ramnroms( rd_ramnrom ),
+				   .dos7ffds( rd_dos7ffd ),
+
+				   .palcolor(palcolor)
 	             );
 
 
-	zint preryv( .fclk(fclk), .zclk(zclk), .int_start(int_start), .iorq_n(iorq_n), .m1_n(m1_n),
-	             .int_n(int_n) );
+	zint zint(
+		.fclk(fclk),
+		.zpos(zpos),
+		.zneg(zneg),
+
+		.int_start(int_start),
+
+		.iorq_n(iorq_n),
+		.m1_n  (m1_n  ),
+
+		.int_n(int_n)
+	);
+
+	znmi znmi
+	(
+		.rst_n(rst_n),
+		.fclk(fclk),
+		.zpos(zpos),
+		.zneg(zneg),
+
+		.rfsh_n(rfsh_n),
+
+		.int_start(int_start),
+
+		.set_nmi(set_nmi),
+		.clr_nmi(clr_nmi),
+
+		.in_nmi (in_nmi ),
+		.gen_nmi(gen_nmi)
+	);
+
 
 
 
