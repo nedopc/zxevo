@@ -92,8 +92,8 @@ kbmap.o: ../kbmap.c ../kbmap.h
 $(TARGET): $(OBJECTS) $(FPGACORE)
 	 $(CC) $(LDFLAGS) $(OBJECTS) $(FPGACORE) $(LIBDIRS) $(LIBS) -o $(TARGET)
 
-top.rbf: ../../../fpga/current/quartus/top.rbf
-	cp ../../../fpga/current/quartus/top.rbf top.rbf
+top.rbf: ../../../fpga/atm_nmi/quartus/top.rbf
+	cp ../../../fpga/atm_nmi/quartus/top.rbf top.rbf
 
 $(FPGACORE): top.rbf
 	../../../tools/mhmt/mhmt -maxwin2048 top.rbf top.mlz
