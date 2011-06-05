@@ -24,13 +24,13 @@ module video_palframe(
 	input  wire [ 5:0] atm_paldata,
 
 
+	output reg  [ 5:0] palcolor, // just for palette readback
+
 	output wire [ 5:0] color
 );
 
 
 	wire [ 3:0] zxcolor;
-
-	reg  [ 5:0] palcolor;
 
 
 	reg       win;

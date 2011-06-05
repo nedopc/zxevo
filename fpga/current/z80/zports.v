@@ -105,8 +105,16 @@ module zports(
 	output wire        covox_wr,
 	output wire        beeper_wr,
 
-	output wire        fnt_wr		// write to font_ram enabled
+	output wire        clr_nmi,
 
+	output wire        fnt_wr,		// write to font_ram enabled
+
+	// inputs from atm_pagers, to read back its config
+	input  wire [63:0] pages,
+	input  wire [ 7:0] ramnroms,
+	input  wire [ 7:0] dos7ffds,
+
+	input  wire [ 5:0] palcolor
 );
 
 
@@ -145,6 +153,7 @@ module zports(
 	localparam ATMF7  = 8'hF7;
 	localparam ATM77  = 8'h77;
 
+	localparam ZXEVBE = 8'hBE; // xxBE config-read and nmi-end port
 	localparam ZXEVBF = 8'hBF; // xxBF config port
 
 	localparam COMPORT = 8'hEF; // F8EF..FFEF - rs232 ports
@@ -216,6 +225,10 @@ module zports(
 
 
 
+	reg [7:0] portbemux;
+
+
+
 
 
 	assign shadow = dos || shadow_en_reg;
@@ -244,7 +257,7 @@ module zports(
 
 		    ( (loa==ATMF7)&&shadow ) || ( (loa==ATM77)&&shadow ) ||
 
-		    ( loa==ZXEVBF ) || ( loa==COMPORT )
+		    ( loa==ZXEVBF ) || ( loa==ZXEVBE) || ( loa==COMPORT )
 		  )
 
 
@@ -359,6 +372,13 @@ module zports(
 			dout = wait_read; // $F8EF..$FFEF
 		end
 
+		ZXEVBF: begin
+			dout = { 5'b00000, fntw_en_reg, romrw_en_reg, shadow_en_reg };
+		end
+
+		ZXEVBE: begin
+			dout = portbemux;
+		end
 
 
 		default:
@@ -786,6 +806,9 @@ module zports(
 
 
 
+	// port BE write
+	assign clr_nmi = ( (loa==ZXEVBE) && port_wr_fclk );
+
 
 
 
@@ -798,6 +821,43 @@ module zports(
 
 	// font write enable
 	assign fnt_wr = fntw_en_reg && mem_wr_fclk;
+
+
+
+	// port BE read
+
+	always @*
+	case( a[11:8] )
+
+	4'h0: portbemux = pages[ 7:0 ];
+	4'h1: portbemux = pages[15:8 ];
+	4'h2: portbemux = pages[23:16];
+	4'h3: portbemux = pages[31:24];
+	4'h4: portbemux = pages[39:32];
+	4'h5: portbemux = pages[47:40];
+	4'h6: portbemux = pages[55:48];
+	4'h7: portbemux = pages[63:56];
+
+	4'h8: portbemux = ramnroms;
+	4'h9: portbemux = dos7ffds;
+
+	4'hA: portbemux = p7ffd_int;
+	4'hB: portbemux = peff7_int;
+
+	4'hC: portbemux = { ~atm_pen2, atm_cpm_n, ~atm_pen, 1'bX, atm_turbo, atm_scr_mode };
+
+	4'hD: portbemux = { ~palcolor[4], ~palcolor[2], ~palcolor[0], ~palcolor[5], 2'b11, ~palcolor[3], ~palcolor[1] };
+//	assign atm_paldata = { ~din[4], ~din[7], ~din[1], ~din[6], ~din[0], ~din[5] };
+//  {GgRrBb} -> {grbG11RB}
+// was: 76543210 -> 471605
+// now:             543210 -> 4205xx31
+
+	default: portbemux = 8'bXXXXXXXX;
+
+	endcase
+
+
+
 
 
 endmodule
