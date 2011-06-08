@@ -65,7 +65,16 @@ module zclock(
 
 
 
-	wire pre_zpos,pre_zneg;
+	wire pre_zpos_35,
+	     pre_zneg_35;
+
+	wire pre_zpos_70,
+	     pre_zneg_70;
+
+	wire pre_zpos_140,
+	     pre_zneg_140;
+
+
 
 
 `ifdef SIMULATE
@@ -96,21 +105,25 @@ module zclock(
 	assign h_precend_2 = !precend_cnt && pre_cend;
 
 
+	assign pre_zpos_35 = h_precend_2;
+	assign pre_zneg_35 = h_precend_1;
 
-	assign pre_zpos = (pre_cend && int_turbo[0]) || (h_precend_2 && !int_turbo[0]);
-	assign pre_zneg = (cbeg && int_turbo[0]) || (h_precend_1 && !int_turbo[0]);
+	assign pre_zpos_70 = pre_cend;
+	assign pre_zneg_70 = cbeg;
+
+
 
 
 	// probably have here fix for not pulsing again zneg,
 	// if zpos was blocked by zclk_stall, and vice versa
 	always @(posedge fclk)
 	begin
-		zpos <= (~zclk_stall) & pre_zpos;
+		zpos <= (~zclk_stall) & pre_zpos & zclk_out;
 	end
 
 	always @(posedge fclk)
 	begin
-		zneg <= (~zclk_stall) & pre_zneg;
+		zneg <= (~zclk_stall) & pre_zneg & (~zclk_out);
 	end
 
 
