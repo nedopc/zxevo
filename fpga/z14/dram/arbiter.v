@@ -43,9 +43,9 @@ module arbiter(
 	input rst_n,
 
 	// dram.v interface
-      output     [20:0] dram_addr,   // address for dram access
-      output reg        dram_req,    // dram request
-      output reg        dram_rnw,    // Read-NotWrite
+	output     [20:0] dram_addr,   // address for dram access
+	output reg        dram_req,    // dram request
+	output reg        dram_rnw,    // Read-NotWrite
 	input             dram_cbeg,   // cycle begin
 	input             dram_rrdy,   // read data ready (coincides with cend)
 	output      [1:0] dram_bsel,   // positive bytes select: bsel[1] for wrdata[15:8], bsel[0] for wrdata[7:0]

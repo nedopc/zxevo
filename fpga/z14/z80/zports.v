@@ -26,6 +26,7 @@ module zports(
 	input  wire        wr_n,
 
 	output reg         porthit, // when internal port hit occurs, this is 1, else 0; used for iorq1_n iorq2_n on zxbus
+	output reg         external_port, // asserts for AY and VG93 accesses
 
 	output wire [15:0] ideout,
 	input  wire [15:0] idein,
@@ -163,8 +164,6 @@ module zports(
 
 
 
-
-	reg external_port;
 
 	reg port_wr;
 	reg port_rd;

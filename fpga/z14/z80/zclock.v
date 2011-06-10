@@ -20,6 +20,15 @@
 // CURRENTLY ONLY 3.5 and 7 MHz!!!! FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME
 //    FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME
 
+
+
+// 14MHz rulez:
+// 1. do variable stalls for memory access.
+// 2. do fallback on 7mhz for external IO accesses
+// 3. clock switch 14-7-3.5 only at RFSH
+
+
+
 `include "../include/tune.v"
 
 module zclock(
@@ -112,10 +121,11 @@ module zclock(
 	assign pre_zneg_70 = cbeg;
 
 
+	assign pre_zpos = int_turbo[1] ? pre_zpos_140 : ( int_turbo[0] ? pre_zpos_70 : pre_zpos_35 );
+	assign pre_zneg = int_turbo[1] ? pre_zneg_140 : ( int_turbo[0] ? pre_zneg_70 : pre_zneg_35 );
 
 
-	// probably have here fix for not pulsing again zneg,
-	// if zpos was blocked by zclk_stall, and vice versa
+
 	always @(posedge fclk)
 	begin
 		zpos <= (~zclk_stall) & pre_zpos & zclk_out;
