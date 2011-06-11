@@ -130,6 +130,15 @@
 /** SOFT RESET direction register. */
 #define SOFTRES_DDR  DDRC
 
+/** NMI pin number*/
+#define NMI          PC6
+/** NMI port register. */
+#define NMI_PORT     PORTC
+/** NMI pins register. */
+#define NMI_PIN  PINC
+/** NMI direction register. */
+#define NMI_DDR  DDRC
+
 /** JOYSTICK RIGHT pin number. */
 #define JOYSTICK_RIGHT PG0
 /** JOYSTICK LEFT pin number. */

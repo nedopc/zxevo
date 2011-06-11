@@ -8,6 +8,11 @@
  *
  * @subsection current Current version.
  *
+ *  - Add NMI button supporting.
+ *  - Fix PS/2 mouse initialization.
+ *
+ * @subsection ver_2011_05_11 Version 11.05.2011
+ *
  * - Direct load UBRR on RS232 mode [if (DLM&0x80)!=0 ]
  * - Control PLL (ICS501M) via PE2,PE3. Set it to 2X.
  *
@@ -97,12 +102,14 @@ extern volatile UBYTE flags_register;
 /** Hard reset flag (1 - enable hard reset). */
 #define FLAG_HARD_RESET         0x80
 
-/** Common flag register. */
+/** Common extension flag register. */
 extern volatile UBYTE flags_ex_register;
 /** Ps2 mouse command (0 - not/1 - process). */
 #define FLAG_EX_PS2MOUSE_CMD    0x01
 /** Ps2 keyboard map (0 - default/1 - user). */
 #define FLAG_EX_PS2KEYBOARD_MAP 0x02
+/** NMI interrupt set (0 - not/1 - set). */
+#define FLAG_EX_NMI             0x04
 
 /** Common modes register. */
 extern volatile UBYTE modes_register;
