@@ -21,14 +21,14 @@ module zint
 
 	wire intend;
 
-	reg [7:0] intctr;
+	reg [9:0] intctr;
 
 
 
 `ifdef SIMULATE
 	initial
 	begin
-		intctr = 8'b10000000;
+		intctr = 10'b1100000000;
 	end
 `endif
 
@@ -36,13 +36,13 @@ module zint
 	always @(posedge fclk)
 	begin
 		if( int_start )
-			intctr <= 8'd0;
-		else if( !intctr[7] )
-			intctr <= intctr + 8'd1;
+			intctr <= 10'd0;
+		else if( !intctr[9:8] )
+			intctr <= intctr + 10'd1;
 	end
 
 
-	assign intend = intctr[7] || ( (!iorq_n) && (!m1_n) && zneg );
+	assign intend = intctr[9:8] || ( (!iorq_n) && (!m1_n) && zneg );
 
 
 	always @(posedge fclk)
