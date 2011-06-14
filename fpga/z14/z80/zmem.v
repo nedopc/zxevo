@@ -15,30 +15,36 @@
 
 module zmem(
 
-	input fclk,
-	input rst_n,
+	input  wire fclk,
+	input  wire rst_n,
 
-	input zpos, //
-	input zneg, // strobes which show positive and negative edges of zclk; this is to stay in single clock domain
+	input  wire zpos, //
+	input  wire zneg, // strobes which show positive and negative edges of zclk
 
-	input cend,  // DRAM cycle end
-	input pre_cend, // pre cycle end
+	input  wire cbeg,      // DRAM synchronization
+	input  wire post_cbeg, //
+	input  wire pre_cend,  //
+	input  wire cend,      //
 
 
-	input [15:0] za,
+	input  wire [15:0] za,
 
-	input [7:0] zd_in, // won't emit anything to Z80 bus, data bus mux is another module
-	output reg [7:0] zd_out, // output to Z80 bus
+	input  wire [ 7:0] zd_in, // won't emit anything to Z80 bus, data bus mux is another module
+	output reg  [ 7:0] zd_out, // output to Z80 bus
 
-	output zd_ena, // out bus to the Z80
+	output wire zd_ena, // out bus to the Z80
 
-	input m1_n,
-	input rfsh_n,
-	input mreq_n,
-	input iorq_n,
-	input rd_n,
-	input wr_n,
+	input  wire m1_n,
+	input  wire rfsh_n,
+	input  wire mreq_n,
+	input  wire iorq_n,
+	input  wire rd_n,
+	input  wire wr_n,
 
+
+	input  wire [ 1:0] int_turbo, // 2'b00 - 3.5,
+	                              // 2'b01 - 7.0,
+	                              // 2'b1x - 14.0
 
 
 
@@ -62,14 +68,19 @@ module zmem(
 	output wire        csrom,
 
 
-	output cpu_req,
-	output cpu_rnw,
-	output [20:0] cpu_addr,
-	output [7:0] cpu_wrdata,
-	output cpu_wrbsel,
+	output wire        cpu_req,
+	output wire        cpu_rnw,
+	output wire [20:0] cpu_addr,
+	output wire [ 7:0] cpu_wrdata,
+	output wire        cpu_wrbsel,
 
-	input [15:0] cpu_rddata,
-	input cpu_strobe
+	input  wire [15:0] cpu_rddata,
+
+	input  wire        cpu_next,
+	input  wire        cpu_strobe,
+
+
+	output wire        cpu_stall // for zclock
 
 );
 
@@ -83,6 +94,22 @@ module zmem(
 	wire ramwr,ramrd;
 
 	reg ramrd_reg,ramwr_reg,ramrd_prereg;
+
+
+
+
+	wire dram_beg;
+
+	wire opfetch, memrd, memwr;
+
+	wire stall14, stall7_35;
+
+	reg [2:0] stall14_ctr;
+
+	reg mreq_r;
+
+
+
 
 
 	// make paging
@@ -125,6 +152,54 @@ module zmem(
 	assign romoe_n = rd_n | mreq_n;
 
 	assign csrom = romnram; // positive polarity!
+
+
+
+
+
+
+
+
+	// strobe the beginnings of DRAM cycles
+
+	always @(posedge clk)
+	if( zneg )
+		mreq_r <= (~mreq_n) & rfsh_n;
+	//
+	wire dram_beg = zneg && mreq_r && (!romnram) && (~mreq_n) && rfsh_n;
+
+	// access type
+	assign opfetch = (~mreq_n) && (~m1_n);
+	assign memrd   = (~mreq_n) && (~rd_n);
+	assign memwr   = (~mreq_n) &&   rd_n && rfsh_n;
+
+
+	// wait tables: 
+	//
+	// M1 opcode fetch, dram_beg coincides with:
+	// cend:      +3
+	// pre_cend:  +4
+	// post_cbeg: +5
+	// cbeg:      +6
+	//
+	// memory read, dram_beg coincides with:
+	// cend:      +2
+	// pre_cend:  +3
+	// post_cbeg: +4
+	// cbeg:      +5
+	//
+	// memory write: no wait
+	//
+	// special case: if dram_beg pulses 1 when cpu_next is 0,
+	// unconditional wait has to be performed until cpu_next is 1, and
+	// then wait as if dram_beg would coincide with cbeg
+
+
+
+
+
+
+
 
 
 
