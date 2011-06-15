@@ -99,14 +99,24 @@ module zmem(
 
 
 	wire dram_beg;
-
 	wire opfetch, memrd, memwr;
-
 	wire stall14, stall7_35;
+
+	wire stall14_ini;
+	wire stall14_cyc;
+	wire stall14_fin;
+
+	reg [1:0] stall_state;
+
 
 	reg [2:0] stall14_ctr;
 
 	reg mreq_r;
+
+
+	reg pending_cpu_req;
+
+
 
 
 
@@ -194,17 +204,73 @@ module zmem(
 	// unconditional wait has to be performed until cpu_next is 1, and
 	// then wait as if dram_beg would coincide with cbeg
 
+	assign stall14_ini = dram_beg && ( (!cpu_next) || opfetch || memrd ); // no wait at all in write cycles, if next dram cycle is available
+
+	assign stall14_cyc = stall_state[0];
+
+
+
+	always @(posedge fclk, negedge rst_n)
+	if( !rst_n )
+		stall_state <= 2'b00;
+	else
+	begin
+		case( stall_state )
+		2'b00:if( dram_beg )
+		begin
+			if( cpu_next && (memrd || opfetch) )
+				stall_state <= 2'b10;
+			else if( !cpu_next )
+				stall_state <= 2'b01;
+		end
+		2'b01:if( cpu_next )
+			stall_state <= memwr ? 2'b00 : 2'b10;
+		2'b10:тут надо позырить картинку
+
+		default: stall_state <= 2'b00;
+		endcase
+	end
+	
+
+
+	// stall_state: 2'b00 - no cycle
+	//              2'b01 - wait for cpu_next
+	//              2'b10 - wait for removal of stall (only for memrd and opfetch)
+
+
+
+	// cpu request
+	assign cpu_req = pending_cpu_req | dram_beg;
+	//
+	assign cpu_rnw = !memwr;
+	//
+	//
+	always @(posedge fclk, negedge rst_n)
+	if( !rst_n )
+		pending_cpu_req <= 1'b0;
+	else if( cpu_next && cend )
+		pending_cpu_req <= 1'b0;
+	else if( dram_beg )
+		pending_cpu_req <= 1'b1;
 
 
 
 
+	// address, data in and data out
+	//
+	assign cpu_wrbsel = za[0];
+	assign cpu_addr[20:0] = { page[7:0], za[13:1] };
+	assign cpu_wrdata = zd_in;
+	//
+	always @* if( cpu_strobe ) // WARNING! ACHTUNG! LATCH!!!
+		zd_out <= cpu_wrbsel ? cpu_rddata[7:0] : cpu_rddata[15:8];
 
 
 
 
-
+	// !!!! OLD !!!!
 	// DRAM accesses
-
+/*
 	assign ramreq = (~mreq_n) && (~romnram) && rfsh_n;
 
 	assign ramrd = ramreq & (~rd_n);
@@ -239,7 +305,7 @@ module zmem(
 	end
 
 	assign cpu_req = ( ramrd & (~ramrd_reg) ) | ( ramwr & (~ramwr_reg) );
-
+*/
 
 
 endmodule

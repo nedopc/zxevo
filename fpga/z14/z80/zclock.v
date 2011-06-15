@@ -16,10 +16,6 @@
 // for 3.5 mhz, cend is both zpos and zneg (alternating)
 
 
-//    FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME
-// CURRENTLY ONLY 3.5 and 7 MHz!!!! FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME
-//    FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME
-
 
 
 // 14MHz rulez:
@@ -56,6 +52,7 @@ module zclock(
 	                   // 2'b01 -  7.0 MHz
 	                   // 2'b1x - 14.0 MHz
 
+	output reg [1:0] int_turbo, // internal turbo, switched on /RFSH
 
 	input cbeg,
 	input pre_cend // syncing signals, taken from arbiter.v and dram.v
@@ -67,7 +64,6 @@ module zclock(
 	wire h_precend_2; // to take every other pulse of pre_cend
 
 	reg [2:0] zcount; // counter for generating 3.5 and 7 MHz z80 clocks
-	reg [1:0] int_turbo; // internal turbo, controlling muxes
 
 
 	reg old_rfsh_n;
