@@ -74,6 +74,12 @@ module zclock(
 
 
 
+	reg clk14_src; // source for 14MHz clock
+
+
+
+
+
 	wire pre_zpos_35,
 	     pre_zneg_35;
 
@@ -92,10 +98,11 @@ module zclock(
 		precend_cnt = 1'b0;
 		int_turbo   = 2'b00;
 		old_rfsh_n  = 1'b1;
+		clk14_src   = 1'b0;
 	end
 `endif
 
-	// switch between 3.5 and 7 only at predefined time
+	// switch clock only at predefined time
 	always @(posedge fclk) if(zpos)
 	begin
 		old_rfsh_n <= rfsh_n;
@@ -103,6 +110,18 @@ module zclock(
 		if( old_rfsh_n && !rfsh_n )
 			int_turbo <= turbo;
 	end
+
+
+
+
+
+	// 14MHz clocking
+	always @(posedge clk)
+	if( !zclk_stall )
+		clk14_src <= ~clk14_src;
+	//
+	assign pre_zpos_140 =   clk14_src ;
+	assign pre_zneg_140 = (~clk14_src);
 
 
 
