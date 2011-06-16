@@ -104,18 +104,15 @@ module zmem(
 
 	wire stall14_ini;
 	wire stall14_cyc;
-	wire stall14_fin;
-
-	reg [1:0] stall_state;
-
-
-	reg [2:0] stall14_ctr;
+	reg  stall14_cycrd;
+	reg  stall14_fin;
 
 	reg mreq_r;
 
 
 	reg pending_cpu_req;
 
+	reg cpu_rnw_r;
 
 
 
@@ -206,43 +203,41 @@ module zmem(
 
 	assign stall14_ini = dram_beg && ( (!cpu_next) || opfetch || memrd ); // no wait at all in write cycles, if next dram cycle is available
 
-	assign stall14_cyc = stall_state[0];
 
-
-
-	always @(posedge fclk, negedge rst_n)
-	if( !rst_n )
-		stall_state <= 2'b00;
-	else
+	// memrd, opfetch - wait till cend & cpu_next,
+	// memwr - wait till cpu_next
+	assign stall14_cyc = memwr ? (!cpu_next) : stall14_cycrd;
+	//
+	always @(posedge fclk, negedge arst_n)
+	if( !arst_n )
+		stall14_cycrd <= 1'b0;
+	else // posedge fclk
 	begin
-		case( stall_state )
-		2'b00:if( dram_beg )
-		begin
-			if( cpu_next && (memrd || opfetch) )
-				stall_state <= 2'b10;
-			else if( !cpu_next )
-				stall_state <= 2'b01;
-		end
-		2'b01:if( cpu_next )
-			stall_state <= memwr ? 2'b00 : 2'b10;
-		2'b10:тут надо позырить картинку
-
-		default: stall_state <= 2'b00;
-		endcase
+		if( cpu_next && cend )
+			stall14_cycrd <= 1'b0;
+		else if( dram_beg && ( (!cend) || (!cpu_next) ) && (opfetch || memrd) )
+			stall14_cycrd <= 1'b1;
 	end
-	
+	//
+	always @(posedge fclk, negedge arst_n)
+	if( !arst_n )
+		stall14_fin <= 1'b0;
+	else // posedge fclk
+	begin
+		if( stall14_fin && ( (opfetch&pre_cend) || (memrd&post_cbeg) ) )
+			stall14_fin <= 1'b0;
+		else if( cpu_next && cend && cpu_req && (opfetch || memrd) )
+			stall14_fin <= 1'b1;
+	end
 
 
-	// stall_state: 2'b00 - no cycle
-	//              2'b01 - wait for cpu_next
-	//              2'b10 - wait for removal of stall (only for memrd and opfetch)
-
-
+	//
+	assign cpu_stall = stall14_ini | stall14_cyc | stall14_fin;
 
 	// cpu request
 	assign cpu_req = pending_cpu_req | dram_beg;
 	//
-	assign cpu_rnw = !memwr;
+	assign cpu_rnw = dram_beg ? (!memwr) : cpu_rnw_r;
 	//
 	//
 	always @(posedge fclk, negedge rst_n)
@@ -252,7 +247,10 @@ module zmem(
 		pending_cpu_req <= 1'b0;
 	else if( dram_beg )
 		pending_cpu_req <= 1'b1;
-
+	//
+	always @(posedge fclk)
+	if( dram_beg )
+		cpu_rnw_r <= !memwr;
 
 
 
