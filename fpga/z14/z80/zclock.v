@@ -95,6 +95,8 @@ module zclock(
 		int_turbo   = 2'b00;
 		old_rfsh_n  = 1'b1;
 		clk14_src   = 1'b0;
+
+		zclk_out = 1'b0;
 	end
 `endif
 
@@ -112,7 +114,7 @@ module zclock(
 
 
 	// 14MHz clocking
-	always @(posedge clk)
+	always @(posedge fclk)
 	if( !zclk_stall )
 		clk14_src <= ~clk14_src;
 	//

@@ -164,16 +164,16 @@ module zmem(
 
 
 
-
+	assign zd_ena = (~mreq_n) & (~rd_n) & (~romnram);
 
 
 	// strobe the beginnings of DRAM cycles
 
-	always @(posedge clk)
+	always @(posedge fclk)
 	if( zneg )
 		mreq_r <= (~mreq_n) & rfsh_n;
 	//
-	wire dram_beg = zneg && mreq_r && (!romnram) && (~mreq_n) && rfsh_n;
+	assign dram_beg = zneg && mreq_r && (!romnram) && (~mreq_n) && rfsh_n;
 
 	// access type
 	assign opfetch = (~mreq_n) && (~m1_n);
@@ -208,8 +208,8 @@ module zmem(
 	// memwr - wait till cpu_next
 	assign stall14_cyc = memwr ? (!cpu_next) : stall14_cycrd;
 	//
-	always @(posedge fclk, negedge arst_n)
-	if( !arst_n )
+	always @(posedge fclk, negedge rst_n)
+	if( !rst_n )
 		stall14_cycrd <= 1'b0;
 	else // posedge fclk
 	begin
@@ -219,8 +219,8 @@ module zmem(
 			stall14_cycrd <= 1'b1;
 	end
 	//
-	always @(posedge fclk, negedge arst_n)
-	if( !arst_n )
+	always @(posedge fclk, negedge rst_n)
+	if( !rst_n )
 		stall14_fin <= 1'b0;
 	else // posedge fclk
 	begin
