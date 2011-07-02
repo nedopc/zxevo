@@ -107,7 +107,7 @@ module zmem(
 	reg  stall14_cycrd;
 	reg  stall14_fin;
 
-	reg mreq_r;
+	reg r_mreq_n;
 
 
 	reg pending_cpu_req;
@@ -171,9 +171,9 @@ module zmem(
 
 	always @(posedge fclk)
 	if( zneg )
-		mreq_r <= (~mreq_n) & rfsh_n;
+		r_mreq_n <= mreq_n | (~rfsh_n);
 	//
-	assign dram_beg = zneg && mreq_r && (!romnram) && (~mreq_n) && rfsh_n;
+	assign dram_beg = zneg && r_mreq_n && (!romnram) && (!mreq_n) && rfsh_n;
 
 	// access type
 	assign opfetch = (~mreq_n) && (~m1_n);
@@ -232,7 +232,7 @@ module zmem(
 
 
 	//
-	assign cpu_stall = stall14_ini | stall14_cyc | stall14_fin;
+	assign cpu_stall = int_turbo[1] ? (stall14_ini | stall14_cyc | stall14_fin) : 1'b0;
 
 	// cpu request
 	assign cpu_req = pending_cpu_req | dram_beg;

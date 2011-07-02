@@ -281,19 +281,19 @@ module tb;
 
 	always @(rma14 or rma15)
 	begin
-		$display("at time %t us",$time/1000000);
+//		$display("at time %t us",$time/1000000);
 
-		case( {rma15, rma14} )
+//		case( {rma15, rma14} )
 
-		2'b00: $display("BASIC 48");
-		2'b01: $display("TR-DOS");
-		2'b10: $display("BASIC 128");
-		2'b11: $display("GLUKROM");
-		default: $display("unknown");
+//		2'b00: $display("BASIC 48");
+//		2'b01: $display("TR-DOS");
+//		2'b10: $display("BASIC 128");
+//		2'b11: $display("GLUKROM");
+//		default: $display("unknown");
 
-		endcase
+//		endcase
 
-		$display("");
+//		$display("");
 	end
 
 
@@ -304,11 +304,11 @@ module tb;
 
 	always @(rpag)
 	begin
-		$display("at time %t us",$time/1000000);
+//		$display("at time %t us",$time/1000000);
 
-		$display("RAM page is %d",rpag);
+//		$display("RAM page is %d",rpag);
 
-		$display("");
+//		$display("");
 	end
 
 
@@ -322,7 +322,7 @@ module tb;
 		@(negedge int_n);
 		tb.DUT.zkbdmus.kbd[36] = 1'b0;
 	end
-
+/*
 	initial
 	begin : gen_nmi
 
@@ -380,9 +380,45 @@ module tb;
 		tb.DUT.zkbdmus.kbd[39] = 1'b1;
 		@(negedge int_n);
 		tb.DUT.zkbdmus.kbd[39] = 1'b0;
-
 	end
+*/
+
 `endif
+
+
+
+
+
+
+
+
+
+	// dram read opcode
+/*
+	reg old_rfsh_n, old_rd_n, old_m1_n;
+
+	always @(posedge clkz_in)
+	begin
+		old_rfsh_n = zrfsh_n;
+		old_rd_n   = zrd_n;
+		old_m1_n   = zm1_n;
+	end
+*/
+	always @(posedge (zmreq_n | zrd_n | zm1_n | (~zrfsh_n)) )
+	begin
+		if( tb.DUT.z80mem.romnram )
+			$display("Z80ROM: addr %x, opcode %x, time %t",za,zd,$time);
+		else
+			$display("Z80RAM: addr %x, opcode %x, time %t",za,zd,$time);
+	end
+
+
+	// turbo
+	initial
+		force tb.DUT.zclock.turbo = 2'b01;
+
+
+
 
 
 
@@ -415,7 +451,7 @@ module tb;
 
 		ms = ($time/1000000);
 
-		$display("timemark %d ms",ms);
+//		$display("timemark %d ms",ms);
 
 		#10000000.0; // 1 ms
 	end

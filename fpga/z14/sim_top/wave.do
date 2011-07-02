@@ -20,6 +20,7 @@ add wave -noupdate /tb/DUT/zclock/zpos
 add wave -noupdate /tb/DUT/zclock/zneg
 add wave -noupdate /tb/z80/busrq_n
 add wave -noupdate /tb/z80/busak_n
+add wave -noupdate /tb/DUT/z80mem/r_mreq_n
 add wave -noupdate /tb/iorq_n
 add wave -noupdate /tb/mreq_n
 add wave -noupdate /tb/rd_n
@@ -45,7 +46,6 @@ add wave -noupdate /tb/DUT/z80mem/stall14_fin
 add wave -noupdate /tb/DUT/z80mem/stall14_cycrd
 add wave -noupdate /tb/DUT/z80mem/cpu_next
 add wave -noupdate /tb/DUT/z80mem/cpu_stall
-add wave -noupdate -divider <NULL>
 add wave -noupdate /tb/DUT/z80mem/cpu_req
 add wave -noupdate /tb/DUT/z80mem/pending_cpu_req
 add wave -noupdate /tb/DUT/z80mem/cpu_strobe
@@ -54,23 +54,49 @@ add wave -noupdate /tb/DUT/z80mem/cpu_rnw_r
 add wave -noupdate -divider <NULL>
 add wave -noupdate -radix hexadecimal /tb/z80/u0/ir
 add wave -noupdate -divider <NULL>
+add wave -noupdate -divider <NULL>
+add wave -noupdate -divider <NULL>
+add wave -noupdate /tb/DUT/dram/rras0_n
+add wave -noupdate /tb/DUT/dram/rras1_n
+add wave -noupdate /tb/DUT/dram/rucas_n
+add wave -noupdate /tb/DUT/dram/rlcas_n
+add wave -noupdate /tb/DUT/dram/cbeg
+add wave -noupdate -divider <NULL>
 add wave -noupdate -radix hexadecimal {/tb/DUT/instantiate_atm_pagers[0]/atm_pager/page}
 add wave -noupdate {/tb/DUT/instantiate_atm_pagers[0]/atm_pager/romnram}
 add wave -noupdate -divider <NULL>
+add wave -noupdate /tb/z80/reset_n
+add wave -noupdate /tb/z80/clk_n
+add wave -noupdate /tb/z80/rfsh_n
+add wave -noupdate /tb/z80/m1_n
+add wave -noupdate /tb/z80/mreq_n
+add wave -noupdate /tb/z80/rd_n
+add wave -noupdate /tb/z80/wr_n
+add wave -noupdate -radix hexadecimal /tb/z80/a
+add wave -noupdate -radix hexadecimal /tb/z80/d
+add wave -noupdate -divider <NULL>
+add wave -noupdate -divider <NULL>
+add wave -noupdate -divider <NULL>
+add wave -noupdate -divider <NULL>
+add wave -noupdate -divider <NULL>
+add wave -noupdate -divider <NULL>
+add wave -noupdate -divider <NULL>
+add wave -noupdate -divider <NULL>
+add wave -noupdate -divider <NULL>
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {267699653665 ps} 0} {{Cursor 2} {8068901 ps} 0}
+WaveRestoreCursors {{Cursor 1} {267699653665 ps} 0} {{Cursor 2} {40832795891 ps} 0}
 configure wave -namecolwidth 353
-configure wave -valuecolwidth 40
+configure wave -valuecolwidth 172
 configure wave -justifyvalue left
 configure wave -signalnamewidth 0
 configure wave -snapdistance 10
 configure wave -datasetprefix 0
 configure wave -rowmargin 4
 configure wave -childrowmargin 2
-configure wave -gridoffset 178
-configure wave -gridperiod 356
+configure wave -gridoffset 17800
+configure wave -gridperiod 35600
 configure wave -griddelta 8
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {7503927 ps} {8699607 ps}
+WaveRestoreZoom {40832395190 ps} {40833933293 ps}
