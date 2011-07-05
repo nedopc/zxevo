@@ -89,11 +89,7 @@ module zmem(
 	reg [7:0] page;
 	reg romnram;
 
-	wire ramreq;
 
-	wire ramwr,ramrd;
-
-	reg ramrd_reg,ramwr_reg,ramrd_prereg;
 
 
 
@@ -113,6 +109,14 @@ module zmem(
 	reg pending_cpu_req;
 
 	reg cpu_rnw_r;
+
+
+
+	// this is for 7/3.5mhz  
+	wire ramreq;
+	wire ramwr,ramrd;
+	wire cpureq_357;
+	reg ramrd_reg,ramwr_reg;
 
 
 
@@ -162,10 +166,25 @@ module zmem(
 
 
 
+	// 7/3.5mhz support
+
+	assign ramreq = (~mreq_n) && (~romnram) && rfsh_n;
+	assign ramrd = ramreq & (~rd_n);
+	assign ramwr = ramreq & (~wr_n);
+
+	always @(posedge fclk)
+	if( cend && (!cpu_stall) )
+	begin
+		ramrd_reg <= ramrd;
+		ramwr_reg <= ramwr;
+	end
+
+	assign cpureq_357 = ( ramrd & (~ramrd_reg) ) | ( ramwr & (~ramwr_reg) );
+	
+
 
 
 	assign zd_ena = (~mreq_n) & (~rd_n) & (~romnram);
-
 
 	// strobe the beginnings of DRAM cycles
 
@@ -232,12 +251,12 @@ module zmem(
 
 
 	//
-	assign cpu_stall = int_turbo[1] ? (stall14_ini | stall14_cyc | stall14_fin) : 1'b0;
+	assign cpu_stall = int_turbo[1] ? (stall14_ini | stall14_cyc | stall14_fin) : (cpureq_357 && (!cpu_next));
 
 	// cpu request
-	assign cpu_req = pending_cpu_req | dram_beg;
+	assign cpu_req = int_turbo[1] ? (pending_cpu_req | dram_beg) : cpureq_357;
 	//
-	assign cpu_rnw = dram_beg ? (!memwr) : cpu_rnw_r;
+	assign cpu_rnw = int_turbo[1] ? (dram_beg ? (!memwr) : cpu_rnw_r) : ramrd;
 	//
 	//
 	always @(posedge fclk, negedge rst_n)

@@ -18,9 +18,10 @@ add wave -noupdate /tb/DUT/zclock/pre_zneg
 add wave -noupdate -divider <NULL>
 add wave -noupdate /tb/DUT/zclock/zpos
 add wave -noupdate /tb/DUT/zclock/zneg
-add wave -noupdate /tb/z80/busrq_n
-add wave -noupdate /tb/z80/busak_n
+add wave -noupdate /tb/z80/BUSRQ_n
+add wave -noupdate /tb/z80/BUSAK_n
 add wave -noupdate /tb/DUT/z80mem/r_mreq_n
+add wave -noupdate /tb/clkz_in
 add wave -noupdate /tb/iorq_n
 add wave -noupdate /tb/mreq_n
 add wave -noupdate /tb/rd_n
@@ -51,8 +52,9 @@ add wave -noupdate /tb/DUT/z80mem/pending_cpu_req
 add wave -noupdate /tb/DUT/z80mem/cpu_strobe
 add wave -noupdate /tb/DUT/z80mem/cpu_rnw
 add wave -noupdate /tb/DUT/z80mem/cpu_rnw_r
+add wave -noupdate /tb/DUT/z80mem/cend
 add wave -noupdate -divider <NULL>
-add wave -noupdate -radix hexadecimal /tb/z80/u0/ir
+add wave -noupdate -radix hexadecimal /tb/z80/u0/IR
 add wave -noupdate -divider <NULL>
 add wave -noupdate -divider <NULL>
 add wave -noupdate -divider <NULL>
@@ -61,19 +63,22 @@ add wave -noupdate /tb/DUT/dram/rras1_n
 add wave -noupdate /tb/DUT/dram/rucas_n
 add wave -noupdate /tb/DUT/dram/rlcas_n
 add wave -noupdate /tb/DUT/dram/cbeg
+add wave -noupdate -radix hexadecimal /tb/DUT/dram/int_addr
+add wave -noupdate -radix hexadecimal /tb/DUT/dram/int_wrdata
+add wave -noupdate /tb/DUT/dram/int_bsel
 add wave -noupdate -divider <NULL>
 add wave -noupdate -radix hexadecimal {/tb/DUT/instantiate_atm_pagers[0]/atm_pager/page}
 add wave -noupdate {/tb/DUT/instantiate_atm_pagers[0]/atm_pager/romnram}
 add wave -noupdate -divider <NULL>
-add wave -noupdate /tb/z80/reset_n
-add wave -noupdate /tb/z80/clk_n
-add wave -noupdate /tb/z80/rfsh_n
-add wave -noupdate /tb/z80/m1_n
-add wave -noupdate /tb/z80/mreq_n
-add wave -noupdate /tb/z80/rd_n
-add wave -noupdate /tb/z80/wr_n
-add wave -noupdate -radix hexadecimal /tb/z80/a
-add wave -noupdate -radix hexadecimal /tb/z80/d
+add wave -noupdate /tb/z80/RESET_n
+add wave -noupdate /tb/z80/CLK_n
+add wave -noupdate /tb/z80/RFSH_n
+add wave -noupdate /tb/z80/M1_n
+add wave -noupdate /tb/z80/MREQ_n
+add wave -noupdate /tb/z80/RD_n
+add wave -noupdate /tb/z80/WR_n
+add wave -noupdate -radix hexadecimal /tb/z80/A
+add wave -noupdate -radix hexadecimal /tb/z80/D
 add wave -noupdate -divider <NULL>
 add wave -noupdate -divider <NULL>
 add wave -noupdate -divider <NULL>
@@ -84,7 +89,7 @@ add wave -noupdate -divider <NULL>
 add wave -noupdate -divider <NULL>
 add wave -noupdate -divider <NULL>
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {267699653665 ps} 0} {{Cursor 2} {40832795891 ps} 0}
+WaveRestoreCursors {{Cursor 1} {299996871362 ps} 0} {{Cursor 2} {40830071100 ps} 0}
 configure wave -namecolwidth 353
 configure wave -valuecolwidth 172
 configure wave -justifyvalue left
@@ -99,4 +104,4 @@ configure wave -griddelta 8
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {40832395190 ps} {40833933293 ps}
+WaveRestoreZoom {40828490828 ps} {40830663894 ps}
