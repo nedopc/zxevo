@@ -31,8 +31,10 @@ module tb;
 	tri1 int_n,wait_n,nmi_n;
 	wire zint_n,zwait_n,znmi_n;
 
-	wire [15:0] za;
-	wire [7:0] zd;
+	wire [15:0] #((`Z80_DELAY_DOWN+`Z80_DELAY_UP)/2) za;
+	wire [ 7:0] #((`Z80_DELAY_DOWN+`Z80_DELAY_UP)/2) zd;
+//	wire [15:0] za;
+//	wire [ 7:0] zd;
 
 
 	wire csrom, romoe_n, romwe_n;
@@ -393,30 +395,64 @@ module tb;
 
 
 
-	// dram read opcode
-/*
-	reg old_rfsh_n, old_rd_n, old_m1_n;
+	reg [ 7:0] old_opcode;
+	reg [15:0] old_opcode_addr;
 
-	always @(posedge clkz_in)
-	begin
-		old_rfsh_n = zrfsh_n;
-		old_rd_n   = zrd_n;
-		old_m1_n   = zm1_n;
-	end
-*/
+	reg was_m1;
+
+	always @(zm1_n)
+	if( zm1_n )
+		was_m1 <= 1'b0;
+	else 
+		was_m1 = 1'b1;
+
 	always @(posedge (zmreq_n | zrd_n | zm1_n | (~zrfsh_n)) )
+	if( was_m1 )
+	begin
+		if( (zd!==old_opcode) || (za!==old_opcode_addr) )
+		begin		
+			if( tb.DUT.z80mem.romnram )
+//				$display("Z80OPROM: addr %x, opcode %x, time %t",za,zd,$time);
+				$display("Z80OPROM: addr %x, opcode %x",za,zd);
+			else
+//				$display("Z80OPRAM: addr %x, opcode %x, time %t",za,zd,$time);
+				$display("Z80OPRAM: addr %x, opcode %x",za,zd);
+		end
+
+		old_opcode      = zd;
+		old_opcode_addr = za;
+	end
+
+	always @(posedge (zmreq_n | zrd_n | (~zm1_n) | (~zrfsh_n)) )
+	if( !was_m1 )
 	begin
 		if( tb.DUT.z80mem.romnram )
-			$display("Z80ROM: addr %x, opcode %x, time %t",za,zd,$time);
+//			$display("Z80RDROM: addr %x, rddata %x, time %t",za,zd,$time);
+			$display("Z80RDROM: addr %x, rddata %x",za,zd);
 		else
-			$display("Z80RAM: addr %x, opcode %x, time %t",za,zd,$time);
+//			$display("Z80RDRAM: addr %x, rddata %x, time %t",za,zd,$time);
+			$display("Z80RDRAM: addr %x, rddata %x",za,zd);
 	end
+
+	always @(posedge (zmreq_n | zwr_n | (~zm1_n) | (~zrfsh_n)) )
+	begin
+		if( tb.DUT.z80mem.romnram )
+//			$display("Z80WRROM: addr %x, wrdata %x, time %t",za,zd,$time);
+			$display("Z80WRROM: addr %x, wrdata %x",za,zd);
+		else
+//			$display("Z80WRRAM: addr %x, wrdata %x, time %t",za,zd,$time);
+			$display("Z80WRRAM: addr %x, wrdata %x",za,zd);
+	end
+
+
+
 
 
 	// turbo
+`ifdef C7MHZ
 	initial
 		force tb.DUT.zclock.turbo = 2'b01;
-
+`endif
 
 
 
