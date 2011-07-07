@@ -411,12 +411,13 @@ module tb;
 	begin
 		if( (zd!==old_opcode) || (za!==old_opcode_addr) )
 		begin		
-			if( tb.DUT.z80mem.romnram )
+			$display("Z80OP: addr %x, opcode %x",za,zd);
+//			if( tb.DUT.z80mem.romnram )
 //				$display("Z80OPROM: addr %x, opcode %x, time %t",za,zd,$time);
-				$display("Z80OPROM: addr %x, opcode %x",za,zd);
-			else
+//				$display("Z80OPROM: addr %x, opcode %x",za,zd);
+//			else
 //				$display("Z80OPRAM: addr %x, opcode %x, time %t",za,zd,$time);
-				$display("Z80OPRAM: addr %x, opcode %x",za,zd);
+//				$display("Z80OPRAM: addr %x, opcode %x",za,zd);
 		end
 
 		old_opcode      = zd;
@@ -426,22 +427,24 @@ module tb;
 	always @(posedge (zmreq_n | zrd_n | (~zm1_n) | (~zrfsh_n)) )
 	if( !was_m1 )
 	begin
-		if( tb.DUT.z80mem.romnram )
+		$display("Z80RD: addr %x, rddata %x",za,zd);
+//		if( tb.DUT.z80mem.romnram )
 //			$display("Z80RDROM: addr %x, rddata %x, time %t",za,zd,$time);
-			$display("Z80RDROM: addr %x, rddata %x",za,zd);
-		else
+//			$display("Z80RDROM: addr %x, rddata %x",za,zd);
+//		else
 //			$display("Z80RDRAM: addr %x, rddata %x, time %t",za,zd,$time);
-			$display("Z80RDRAM: addr %x, rddata %x",za,zd);
+//			$display("Z80RDRAM: addr %x, rddata %x",za,zd);
 	end
 
 	always @(posedge (zmreq_n | zwr_n | (~zm1_n) | (~zrfsh_n)) )
 	begin
-		if( tb.DUT.z80mem.romnram )
+		$display("Z80WR: addr %x, wrdata %x",za,zd);
+//		if( tb.DUT.z80mem.romnram )
 //			$display("Z80WRROM: addr %x, wrdata %x, time %t",za,zd,$time);
-			$display("Z80WRROM: addr %x, wrdata %x",za,zd);
-		else
+//			$display("Z80WRROM: addr %x, wrdata %x",za,zd);
+//		else
 //			$display("Z80WRRAM: addr %x, wrdata %x, time %t",za,zd,$time);
-			$display("Z80WRRAM: addr %x, wrdata %x",za,zd);
+//			$display("Z80WRRAM: addr %x, wrdata %x",za,zd);
 	end
 
 
