@@ -22,6 +22,7 @@ add wave -noupdate /tb/z80/BUSRQ_n
 add wave -noupdate /tb/z80/BUSAK_n
 add wave -noupdate /tb/DUT/z80mem/r_mreq_n
 add wave -noupdate /tb/clkz_in
+add wave -noupdate /tb/DUT/external_port
 add wave -noupdate /tb/iorq_n
 add wave -noupdate /tb/mreq_n
 add wave -noupdate /tb/rd_n
@@ -33,6 +34,7 @@ add wave -noupdate /tb/nmi_n
 add wave -noupdate /tb/wait_n
 add wave -noupdate -radix hexadecimal /tb/za
 add wave -noupdate -radix hexadecimal /tb/zd
+add wave -noupdate -radix hexadecimal /tb/zd_dut_to_z80
 add wave -noupdate /tb/csrom
 add wave -noupdate /tb/romoe_n
 add wave -noupdate /tb/romwe_n
@@ -89,7 +91,7 @@ add wave -noupdate -divider <NULL>
 add wave -noupdate -divider <NULL>
 add wave -noupdate -divider <NULL>
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {299996871362 ps} 0} {{Cursor 2} {40830071100 ps} 0}
+WaveRestoreCursors {{Cursor 1} {299996871362 ps} 0} {{Cursor 2} {40831544600 ps} 0}
 configure wave -namecolwidth 353
 configure wave -valuecolwidth 172
 configure wave -justifyvalue left
@@ -104,4 +106,4 @@ configure wave -griddelta 8
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {40828490828 ps} {40830663894 ps}
+WaveRestoreZoom {51764182685 ps} {51765737105 ps}
