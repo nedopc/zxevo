@@ -4,6 +4,11 @@
 `include "../include/tune.v"
 
 
+
+//`define ZLOG 1
+
+
+
 `define HALF_CLK_PERIOD (17.8)
 
 `define ZCLK_DELAY      (9.5)
@@ -35,6 +40,9 @@ module tb;
 	wire [ 7:0] #((`Z80_DELAY_DOWN+`Z80_DELAY_UP)/2) zd;
 //	wire [15:0] za;
 //	wire [ 7:0] zd;
+
+	wire [ 7:0] zd_dut_to_z80;
+//	wire [ 7:0] zd_z80_to_dut;
 
 
 	wire csrom, romoe_n, romwe_n;
@@ -155,6 +163,14 @@ module tb;
 	       );
 
 
+
+
+	assign zd_dut_to_z80 = tb.DUT.ena_ram ? tb.DUT.dout_ram : ( tb.DUT.ena_ports ? tb.DUT.dout_ports : ( tb.DUT.drive_ff ? 8'hFF : 8'bZZZZZZZZ ) );
+
+	
+
+
+
 	wire zrst_n = ~res;
 
 	T80a z80( .RESET_n(zrst_n),
@@ -170,7 +186,9 @@ module tb;
 	          .WR_n(zwr_n),
 	          .BUSRQ_n(1'b1),
 	          .A(za),
-	          .D(zd)
+//	          .D(zd),
+	          .D_I(zd_dut_to_z80),
+	          .D_O(zd)
 	        );
 
 	// now make delayed versions of signals
@@ -245,7 +263,7 @@ module tb;
 	// ROM model
 	rom romko(
 	           .addr( {rompg4,rompg3,rompg2,dos_n, (~rompg0_n), za[13:0]} ),
-	           .data(zd),
+	           .data(zd_dut_to_z80),
 	           .ce_n( romoe_n | (~csrom) )
 	         );
 
@@ -394,9 +412,11 @@ module tb;
 
 
 
-
+`ifdef ZLOG
 	reg [ 7:0] old_opcode;
 	reg [15:0] old_opcode_addr;
+
+	wire [7:0] zdd = zd_dut_to_z80;
 
 	reg was_m1;
 
@@ -409,44 +429,41 @@ module tb;
 	always @(posedge (zmreq_n | zrd_n | zm1_n | (~zrfsh_n)) )
 	if( was_m1 )
 	begin
-		if( (zd!==old_opcode) || (za!==old_opcode_addr) )
+		if( (zdd!==old_opcode) || (za!==old_opcode_addr) )
 		begin		
-			$display("Z80OP: addr %x, opcode %x",za,zd);
-//			if( tb.DUT.z80mem.romnram )
-//				$display("Z80OPROM: addr %x, opcode %x, time %t",za,zd,$time);
-//				$display("Z80OPROM: addr %x, opcode %x",za,zd);
-//			else
-//				$display("Z80OPRAM: addr %x, opcode %x, time %t",za,zd,$time);
-//				$display("Z80OPRAM: addr %x, opcode %x",za,zd);
+			if( tb.DUT.z80mem.romnram )
+//				$display("Z80OPROM: addr %x, opcode %x, time %t",za,zdd,$time);
+				$display("Z80OPROM: addr %x, opcode %x",za,zdd);
+			else
+//				$display("Z80OPRAM: addr %x, opcode %x, time %t",za,zdd,$time);
+				$display("Z80OPRAM: addr %x, opcode %x",za,zdd);
 		end
 
-		old_opcode      = zd;
+		old_opcode      = zdd;
 		old_opcode_addr = za;
 	end
 
 	always @(posedge (zmreq_n | zrd_n | (~zm1_n) | (~zrfsh_n)) )
 	if( !was_m1 )
 	begin
-		$display("Z80RD: addr %x, rddata %x",za,zd);
-//		if( tb.DUT.z80mem.romnram )
-//			$display("Z80RDROM: addr %x, rddata %x, time %t",za,zd,$time);
-//			$display("Z80RDROM: addr %x, rddata %x",za,zd);
-//		else
-//			$display("Z80RDRAM: addr %x, rddata %x, time %t",za,zd,$time);
-//			$display("Z80RDRAM: addr %x, rddata %x",za,zd);
+		if( tb.DUT.z80mem.romnram )
+//			$display("Z80RDROM: addr %x, rddata %x, time %t",za,zdd,$time);
+			$display("Z80RDROM: addr %x, rddata %x",za,zdd);
+		else
+//			$display("Z80RDRAM: addr %x, rddata %x, time %t",za,zdd,$time);
+			$display("Z80RDRAM: addr %x, rddata %x",za,zdd);
 	end
 
 	always @(posedge (zmreq_n | zwr_n | (~zm1_n) | (~zrfsh_n)) )
 	begin
-		$display("Z80WR: addr %x, wrdata %x",za,zd);
-//		if( tb.DUT.z80mem.romnram )
+		if( tb.DUT.z80mem.romnram )
 //			$display("Z80WRROM: addr %x, wrdata %x, time %t",za,zd,$time);
-//			$display("Z80WRROM: addr %x, wrdata %x",za,zd);
-//		else
+			$display("Z80WRROM: addr %x, wrdata %x",za,zd);
+		else
 //			$display("Z80WRRAM: addr %x, wrdata %x, time %t",za,zd,$time);
-//			$display("Z80WRRAM: addr %x, wrdata %x",za,zd);
+			$display("Z80WRRAM: addr %x, wrdata %x",za,zd);
 	end
-
+`endif
 
 
 
@@ -455,9 +472,28 @@ module tb;
 `ifdef C7MHZ
 	initial
 		force tb.DUT.zclock.turbo = 2'b01;
+`else
+	`ifdef C35MHZ
+
+		initial
+			force tb.DUT.zclock.turbo = 2'b00;
+
+	`endif
 `endif
 
 
+
+
+
+	// force fetch mode
+//	initial
+//	begin
+//		force tb.DUT.dramarb.bw = 2'b11;
+//
+//		#(64'd2400000000);
+//
+//		release tb.DUT.dramarb.bw;
+//	end
 
 
 
