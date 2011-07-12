@@ -313,10 +313,14 @@ module top(
 
 	wire [3:0] zclk_stall;
 
-	zclock zclock( .fclk(fclk), .rst_n(rst_n), .zclk(zclk), .rfsh_n(rfsh_n), .zclk_out(clkz_out),
-	               .zpos(zpos), .zneg(zneg),
-	               .turbo( 2'b10/*{1'b0,~(peff7[4])}*/ ), .pre_cend(pre_cend), .cbeg(cbeg),
-	               .zclk_stall( cpu_stall | (|zclk_stall) ), .int_turbo(int_turbo) );
+	zclock zclock
+	(
+		.fclk(fclk), .rst_n(rst_n), .zclk(zclk), .rfsh_n(rfsh_n), .zclk_out(clkz_out),
+		.zpos(zpos), .zneg(zneg),
+		.turbo( 2'b10/*{1'b0,~(peff7[4])}*/ ), .pre_cend(pre_cend), .cbeg(cbeg),
+		.zclk_stall( cpu_stall | (|zclk_stall) ), .int_turbo(int_turbo),
+		.external_port(external_port), .iorq_n(iorq_n), .m1_n(m1_n)
+	);
 
 
 

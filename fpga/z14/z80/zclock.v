@@ -54,6 +54,13 @@ module zclock(
 
 	output reg [1:0] int_turbo, // internal turbo, switched on /RFSH
 
+
+	// input signals for 14MHz external IORQ waits
+	input  wire external_port,
+	input  wire iorq_n,
+	input  wire m1_n,
+
+
 	input cbeg,
 	input pre_cend // syncing signals, taken from arbiter.v and dram.v
 );
@@ -68,6 +75,8 @@ module zclock(
 
 	reg old_rfsh_n;
 
+
+	wire stall;
 
 
 	reg clk14_src; // source for 14MHz clock
@@ -112,10 +121,51 @@ module zclock(
 
 
 
+	// make 14MHz iorq wait
+	reg [3:0] io_wait_cnt;
+	
+	reg io_wait;
+
+	wire io;
+	reg  io_r;
+
+	assign io = (~iorq_n) & m1_n & external_port;
+
+	always @(posedge fclk)
+	if( zpos )
+		io_r <= io;
+
+	always @(posedge fclk, negedge rst_n)
+	if( ~rst_n )
+		io_wait_cnt <= 4'd0;
+	else if( io && (!io_r) && zpos && int_turbo[1] )
+		io_wait_cnt[3] <= 1'b1;
+	else if( io_wait_cnt[3] )
+		io_wait_cnt <= io_wait_cnt + 4'd1;
+
+	always @(posedge fclk)
+	case( io_wait_cnt )
+		4'b1000: io_wait <= 1'b1;
+		4'b1001: io_wait <= 1'b1;
+		4'b1010: io_wait <= 1'b1;
+		4'b1011: io_wait <= 1'b1;
+		4'b1100: io_wait <= 1'b1;
+		4'b1101: io_wait <= 1'b0;
+		4'b1110: io_wait <= 1'b1;
+		4'b1111: io_wait <= 1'b0;
+		default: io_wait <= 1'b0;		
+	endcase
+
+
+
+
+	assign stall = zclk_stall | io_wait;
+
+
 
 	// 14MHz clocking
 	always @(posedge fclk)
-	if( !zclk_stall )
+	if( !stall )
 		clk14_src <= ~clk14_src;
 	//
 	assign pre_zpos_140 =   clk14_src ;
@@ -145,13 +195,15 @@ module zclock(
 
 	always @(posedge fclk)
 	begin
-		zpos <= (~zclk_stall) & pre_zpos & zclk_out;
+		zpos <= (~stall) & pre_zpos & zclk_out;
 	end
 
 	always @(posedge fclk)
 	begin
-		zneg <= (~zclk_stall) & pre_zneg & (~zclk_out);
+		zneg <= (~stall) & pre_zneg & (~zclk_out);
 	end
+
+	
 
 
 
