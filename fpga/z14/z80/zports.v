@@ -690,16 +690,16 @@ module zports(
 
 	wire sdcfg_wr,sddat_wr,sddat_rd;
 
-	assign sdcfg_wr = ( (loa==SDCFG) && port_wr && (!shadow) )                  ||
-	                  ( (loa==SDDAT) && port_wr &&   shadow  && (a[15]==1'b1) ) ;
+	assign sdcfg_wr = ( (loa==SDCFG) && port_wr_fclk && (!shadow) )                  ||
+	                  ( (loa==SDDAT) && port_wr_fclk &&   shadow  && (a[15]==1'b1) ) ;
 
-	assign sddat_wr = ( (loa==SDDAT) && port_wr && (!shadow) )                  ||
-	                  ( (loa==SDDAT) && port_wr &&   shadow  && (a[15]==1'b0) ) ;
+	assign sddat_wr = ( (loa==SDDAT) && port_wr_fclk && (!shadow) )                  ||
+	                  ( (loa==SDDAT) && port_wr_fclk &&   shadow  && (a[15]==1'b0) ) ;
 
-	assign sddat_rd = ( (loa==SDDAT) && port_rd              );
+	assign sddat_rd = ( (loa==SDDAT) && port_rd_fclk              );
 
 	// SDCFG write - sdcs_n control
-	always @(posedge zclk, negedge rst_n)
+	always @(posedge fclk, negedge rst_n)
 	begin
 		if( !rst_n )
 			sdcs_n <= 1'b1;
@@ -711,19 +711,7 @@ module zports(
 
 	// start signal for SPI module with resyncing to fclk
 
-	reg sd_start_toggle;
-	reg [2:0] sd_stgl;
-
-	// Z80 clock
-	always @(posedge zclk)
-		if( sddat_wr || sddat_rd )
-			sd_start_toggle <= ~sd_start_toggle;
-
-	// FPGA clock
-	always @(posedge fclk)
-		sd_stgl[2:0] <= { sd_stgl[1:0], sd_start_toggle };
-
-	assign sd_start = ( sd_stgl[1] != sd_stgl[2] );
+	assign sd_start = sddat_wr || sddat_rd;
 
 
 	// data for SPI module
