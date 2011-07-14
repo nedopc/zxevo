@@ -712,10 +712,10 @@ module top(
 		.clr_nmi(clr_nmi),
 
 
-		.pages({ rd_pages[7], rd_pages[6],
-		         rd_pages[5], rd_pages[4],
-		         rd_pages[3], rd_pages[2],
-		         rd_pages[1], rd_pages[0] }),
+		.pages(~{ rd_pages[7], rd_pages[6],
+		          rd_pages[5], rd_pages[4],
+		          rd_pages[3], rd_pages[2],
+		          rd_pages[1], rd_pages[0] }),
 
 		.ramnroms( rd_ramnrom ),
 		.dos7ffds( rd_dos7ffd ),
