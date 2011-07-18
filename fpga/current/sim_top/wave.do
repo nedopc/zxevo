@@ -39,6 +39,8 @@ add wave -noupdate /tb/csrom
 add wave -noupdate /tb/romoe_n
 add wave -noupdate /tb/romwe_n
 add wave -noupdate -divider <NULL>
+add wave -noupdate -radix hexadecimal /tb/z80/u0/IR
+add wave -noupdate -divider <NULL>
 add wave -noupdate /tb/DUT/z80mem/memrd
 add wave -noupdate /tb/DUT/z80mem/memwr
 add wave -noupdate /tb/DUT/z80mem/opfetch
@@ -91,7 +93,7 @@ add wave -noupdate -divider <NULL>
 add wave -noupdate -divider <NULL>
 add wave -noupdate -divider <NULL>
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {299996871362 ps} 0} {{Cursor 2} {40831544600 ps} 0}
+WaveRestoreCursors {{Cursor 1} {447762029900 ps} 0} {{Cursor 2} {166348107189 ps} 0}
 configure wave -namecolwidth 353
 configure wave -valuecolwidth 172
 configure wave -justifyvalue left
@@ -106,4 +108,4 @@ configure wave -griddelta 8
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {51764182685 ps} {51765737105 ps}
+WaveRestoreZoom {447760689667 ps} {447763370133 ps}
