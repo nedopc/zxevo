@@ -30,7 +30,7 @@ module zmem(
 	input  wire [15:0] za,
 
 	input  wire [ 7:0] zd_in, // won't emit anything to Z80 bus, data bus mux is another module
-	output reg  [ 7:0] zd_out, // output to Z80 bus
+	output wire [ 7:0] zd_out, // output to Z80 bus
 
 	output wire zd_ena, // out bus to the Z80
 
@@ -92,6 +92,12 @@ module zmem(
 
 
 
+	reg [15:0] rd_buf;
+
+	reg [15:1] cached_addr;
+	reg        cached_addr_valid;
+
+	wire cache_hit;
 
 
 	wire dram_beg;
@@ -186,13 +192,19 @@ module zmem(
 
 	assign zd_ena = (~mreq_n) & (~rd_n) & (~romnram);
 
+
+
+	assign cache_hit = ( (za[15:1] == cached_addr[15:1]) && cached_addr_valid );
+
+
+
 	// strobe the beginnings of DRAM cycles
 
 	always @(posedge fclk)
 	if( zneg )
 		r_mreq_n <= mreq_n | (~rfsh_n);
 	//
-	assign dram_beg = zneg && r_mreq_n && (!romnram) && (!mreq_n) && rfsh_n;
+	assign dram_beg = ( (!cache_hit) || memwr ) && zneg && r_mreq_n && (!romnram) && (!mreq_n) && rfsh_n;
 
 	// access type
 	assign opfetch = (~mreq_n) && (~m1_n);
@@ -280,49 +292,49 @@ module zmem(
 	assign cpu_wrdata = zd_in;
 	//
 	always @* if( cpu_strobe ) // WARNING! ACHTUNG! LATCH!!!
-		zd_out <= cpu_wrbsel ? cpu_rddata[7:0] : cpu_rddata[15:8];
+		rd_buf <= cpu_rddata;
+	//
+	assign zd_out = cpu_wrbsel ? rd_buf[7:0] : rd_buf[15:8];
 
 
 
 
-	// !!!! OLD !!!!
-	// DRAM accesses
-/*
-	assign ramreq = (~mreq_n) && (~romnram) && rfsh_n;
 
-	assign ramrd = ramreq & (~rd_n);
-	assign ramwr = ramreq & (~wr_n);
-
-
-	assign zd_ena = ramrd;
-	assign cpu_wrdata = zd_in;
-
-	assign cpu_wrbsel = za[0];
-	assign cpu_addr[20:0] = { page[7:0], za[13:1] };
-
-	always @* if( cpu_strobe ) // WARNUNG! ACHTING! LATCH!!!
-		zd_out <= cpu_wrbsel ? cpu_rddata[7:0] : cpu_rddata[15:8];
-
-
-//	always @(posedge fclk) if( pre_cend )
-//		ramrd_prereg <= ramrd;
-//	assign cpu_rnw = ramrd_prereg; // is it correct???
-//
-// removed because it could be source of problems for NMOS Z80
-//
-// new one:
-//
-	assign cpu_rnw = ramrd;
-
-
-	always @(posedge fclk) if( cend )
+	wire io;
+	reg  io_r;
+	//
+	assign io = (~iorq_n);
+	//
+	always @(posedge fclk)
+	if( zpos )
+		io_r <= io;
+	//
+	always @(posedge fclk, negedge rst_n)
+	if( !rst_n )
 	begin
-		ramrd_reg <= ramrd;
-		ramwr_reg <= ramwr;
+		cached_addr_valid <= 1'b0;
+	end
+	else
+	begin
+		if( (zneg && r_mreq_n && (!mreq_n) && rfsh_n && romnram) ||
+		    (zneg && r_mreq_n && memwr                         ) ||
+		    (io && (!io_r) && zpos                             ) )
+			cached_addr_valid <= 1'b0;
+		else if( cpu_strobe )
+			cached_addr_valid <= 1'b1;
+	end
+	//
+	always @(posedge fclk)
+	if( !rst_n )
+	begin
+		cached_addr <= 15'd0;
+	end
+	else if( cpu_strobe )
+	begin
+		cached_addr[15:1] <= za[15:1];
 	end
 
-	assign cpu_req = ( ramrd & (~ramrd_reg) ) | ( ramwr & (~ramwr_reg) );
-*/
+
 
 
 endmodule

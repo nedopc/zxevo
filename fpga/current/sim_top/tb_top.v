@@ -340,6 +340,7 @@ module tb;
 		tb.DUT.zkbdmus.kbd = 40'd0;
 		tb.DUT.zkbdmus.kbd[36] = 1'b1;
 		@(negedge int_n);
+		@(negedge int_n);
 		tb.DUT.zkbdmus.kbd[36] = 1'b0;
 	end
 /*
