@@ -242,3 +242,4 @@ set_global_assignment -name VERILOG_FILE ../common/spi2.v
 set_global_assignment -name VERILOG_FILE ../common/resetter.v
 set_global_assignment -name VERILOG_FILE ../top.v
 set_global_assignment -name MIF_FILE ../video/r0bat_font.mif
+set_instance_assignment -name CUT ON -from clkz_in -to fclk
