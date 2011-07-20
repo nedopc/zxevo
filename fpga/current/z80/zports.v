@@ -763,7 +763,7 @@ module zports(
 	if( !rst_n )
 	begin
 		atm_scr_mode = 3'b011;
-		atm_turbo    = 1'b1;
+		atm_turbo    = 1'b0;
 
 		atm_pen =   1'b1; // no manager,
 		atm_cpm_n = 1'b0; // permanent dosen (shadow ports on)

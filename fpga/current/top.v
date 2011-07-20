@@ -263,6 +263,8 @@ module top(
 
 	wire [2:0] atm_scr_mode;
 
+	wire atm_turbo;
+
 
 	wire beeper_wr, covox_wr;
 
@@ -317,7 +319,7 @@ module top(
 	(
 		.fclk(fclk), .rst_n(rst_n), .zclk(zclk), .rfsh_n(rfsh_n), .zclk_out(clkz_out),
 		.zpos(zpos), .zneg(zneg),
-		.turbo( {~(peff7[4]),(peff7[4])} ), .pre_cend(pre_cend), .cbeg(cbeg),
+		.turbo( {atm_turbo,~(peff7[4])} ), .pre_cend(pre_cend), .cbeg(cbeg),
 		.zclk_stall( cpu_stall | (|zclk_stall) ), .int_turbo(int_turbo),
 		.external_port(external_port), .iorq_n(iorq_n), .m1_n(m1_n)
 	);
@@ -690,7 +692,7 @@ module top(
 	               .atmF7_wr_fclk(atmF7_wr_fclk),
 
 	               .atm_scr_mode(atm_scr_mode),
-	               .atm_turbo   (),
+	               .atm_turbo   (atm_turbo),
 	               .atm_pen     (pager_off),
 	               .atm_cpm_n   (cpm_n),
 	               .atm_pen2    (atm_pen2),
