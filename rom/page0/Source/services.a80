@@ -1,8 +1,8 @@
 
-;LAST UPDATE: 16.05.2011 savelij
+;LAST UPDATE: 04.06.2011 savelij
 
-DD		EQU 16				;„€’€
-MM		EQU 5				;Œ…‘Ÿ–
+DD		EQU 4				;„€’€
+MM		EQU 6				;Œ…‘Ÿ–
 YY		EQU 11				;ƒŽ„
 DATA		EQU DD+(MM<<5)+(YY<<9)+0X8000	;“†… “€ŠŽ‚€Ž
 
@@ -70,6 +70,7 @@ LOOP1		OUTI
 
 		DUPL 0X0066-$,0XFF
 		ORG 0X0066
+		OUT (0XBE),A
 		RETN
 
 LOOP3		LD BC,0X7FFD
@@ -79,7 +80,7 @@ LOOP3		LD BC,0X7FFD
 		JR Z,LOOP2
 RSTPAL		LD A,(HL)
 		LD IXH,A
-		LD A,%10101011			;ZX SCREEN MODE, TURBO ON („‹Ÿ €’Œ)
+		LD A,%10100011			;ZX SCREEN MODE, TURBO OFF („‹Ÿ €’Œ)
 		LD BC,0XFD77			;ˆ „Ž‘’“ Š €‹ˆ’…
 		OUT (C),A
 ;¯ «¨âà 
@@ -87,7 +88,7 @@ RSTPAL		LD A,(HL)
 		HALT
 		DI
 		LD HL,TRSTPAL			;+15
-		LD DE,0XAB0F
+		LD DE,0XA30F
 		LD BC,0XBD77
 		OUT (C),D			;¢ª«.PAL
 RSTPAL0		LD A,E
@@ -101,7 +102,7 @@ RSTPAL0		LD A,E
 		OUT (0XFF),A
 		DEC E
 		JP P,RSTPAL0
-END_INIT	LD A,%10101011
+END_INIT	LD A,%10100011
 		LD BC,0XFD77
 		OUT (C),A			;¢ëª«.PAL
 ;~¯ «¨âà 
@@ -119,7 +120,7 @@ RSTKEYS		LD A,IXH
 		XOR A
 		OUT (PEVO_CONF),A
 		LD BC,0XFF77
-		LD A,0XAB
+		LD A,0XA3
 		JP 0X3D2D
 
 RSTKEYS2	LD BC,CMOSD_SET_ADR
@@ -147,7 +148,11 @@ RSTKEYS2	LD BC,CMOSD_SET_ADR
 		LD HL,RAM_SEL
 		LD DE,0X8013
 		LD BC,ERAM_SEL-RAM_SEL
-		LDIR
+		LDIR				;“‘’€Ž‚Š€ Ž€Ž’—ˆŠ€
+		LD HL,ERAM_SEL
+		LD DE,0X8101
+		LD BC,ENMI_SERVICE-ERAM_SEL
+		LDIR				;“‘’€Ž‚Š€ Ž€Ž’—ˆŠ€
 		LD HL,0X9C33
 		XOR A
 		LD (HL),0XFF
@@ -180,7 +185,7 @@ RSTKEYS2	LD BC,CMOSD_SET_ADR
 		LD HL,0XB7F8
 		LD DE,0XF800
 		LD BC,0X0800
-		LDIR
+		LDIR				;“‘’€Ž‚Š€ ˜ˆ”’€
 		LD BC,WIN_A2
 		LD A,0X7D
 		OUT (C),A
@@ -231,9 +236,6 @@ CMPCFG1		LD A,0XFD
 		EX DE,HL
 		LD HL,LOADADR			;€‘€ŠŽ‚Š€ … ƒ‹žŠ€
 		CALL DEC40
-;		LD HL,CHARS
-;		LD DE,0XF800
-;		CALL DEC40
 		XOR A
 		IN A,(0XFE)
 		CPL
@@ -262,7 +264,6 @@ GDEMO		LD HL,0X6000-szdemoini
 		LD HL,DEMO
 		LD B,3
 		LDIR
-
 START_SELECT	EX AF,AF'			;‘Ž•€…ˆ… € ˆ ”‹€ƒŽ‚
 		LD HL,ERAM_CODE-1
 		LD DE,0X5C80
@@ -283,11 +284,6 @@ START_SELECT	EX AF,AF'			;‘Ž•€…ˆ… € ˆ ”‹€ƒŽ‚
 		RRCA
 		LD D,A				;‘Ž•€ˆ‹ˆ ˆ’ ’“Ž …†ˆŒ€
 		EXX
-;		LD A,IXL
-;		CP "A"
-;		JR Z,CMPCFG2			;…‘‹ˆ Ž…„…‹ˆ‹Ž‘œ Š€Š €’Œ, ’Ž € €’Œ ˆ ‡€“‘Š€…Œ
-;		LD BC,NOATM_CODE-RAM_CODE
-;		ADD HL,BC
 CMPCFG2		JP (HL)
 
 RAM_CODE	LD BC,0X7FFD
@@ -296,10 +292,10 @@ RAM_CODE	LD BC,0X7FFD
 		INC A
 		OUT (0XBF),A
 		LD BC,WIN_A0
-		LD A,IXH	;0X81			;‘’€ˆ–€ …‰‘ˆŠ128
+		LD A,IXH			;‘’€ˆ–€ …‰‘ˆŠ128
 		OUT (C),A
 		LD BC,0XFF77
-		LD A,0XAB
+		LD A,0XA3
 		OUT (C),A
 		XOR A
 		OUT (0XBF),A
@@ -317,76 +313,10 @@ SET_MODE1	OUT (C),D
 		RET
 ERAM_CODE
 
-BONUADR		BINCLUDE cmosset_pack.rom
-LOADADR		BINCLUDE main_pack.rom
-;CHARS		BINCLUDE chars_pack.bin
+BONUADR		binclude cmosset_pack.rom
+LOADADR		binclude main_pack.rom
+		include nmi_service.a80
 
-RAM_SEL
-		PHASE 0X0013
-		OUT (C),A
-		NOP
-FOR_RET		LD (0X00FE),SP
-		LD SP,0X00F4
-		PUSH DE
-		EXX
-		PUSH BC
-		PUSH DE
-		PUSH HL
-		EXX
-		PUSH IX
-		PUSH IY
-		EX AF,AF'
-		PUSH AF
-		EX AF,AF'
-		LD (DNO_SAVE_SP),SP
-		LD HL,(0X00FE)
-		LD DE,0X00F4
-		REPT 10
-		LDI
-		ENDM
-		LD A,0XC9
-		LD (FOR_RET),A
-		LD BC,WIN_P2
-		XOR A
-		OUT (C),A
-		LD HL,0X8000
-		ADD HL,SP
-		LD SP,HL
-		LD HL,0X003B
-		PUSH HL
-		LD BC,WIN_A0
-		LD A,5
-		JP 0X0013
-
-EXIT_MAGIC	LD A,0XED
-		LD (FOR_RET),A
-		LD BC,WIN_P2
-		LD A,0XFD
-		OUT (C),A
-		LD HL,0X00F4
-		LD DE,(0X00FE)
-		REPT 10
-		LDI
-		ENDM
-		LD SP,0
-DNO_SAVE_SP	EQU $-2
-		POP AF
-		EX AF,AF'
-		POP IY
-		POP IX
-		POP HL
-		POP DE
-		POP BC
-		EXX
-		POP DE
-		LD SP,(0X00FE)
-		LD BC,0X3CC8			;€„…‘ ‚Ž‡‚€’€ ‚ …‰‘ˆŠ 48
-		PUSH BC
-		LD BC,WIN_A0
-		LD A,0X83
-		JP 0X0013
-		DEPHASE
-ERAM_SEL
 
 	       	DUPL 0X3D2D-$,0XFF
 		OUT (C),A
@@ -399,9 +329,9 @@ DEMO		LD BC,0X7FFD
 		EI
 szdemoini	EQU $-DEMO
 
-		BINCLUDE grass.bin
+		binclude grass.bin
 
-		INCLUDE dec40.a80
+		include dec40.a80
 
 ;1000 0001 81 0 BASIC 48
 ;1000 0011 83 0 BASIC 128
