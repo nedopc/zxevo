@@ -4,7 +4,7 @@
 RST8_CMP	EX (SP),HL		;HL
 		PUSH AF			;AF
 		LD A,(HL)
-		CP 3FH
+		CP 0X3F
 		JR NC,RST8_YES
 RST8_NO		POP AF
 		EX (SP),HL
