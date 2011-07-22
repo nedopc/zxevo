@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 15.05.2011 savelij
+;LAST UPDATE: 22.07.2011 savelij
 
 PAGE_EVODOS	EQU 1				;ˆ‚…‘€Ÿ ‘’€ˆ–€ ŠŽˆˆ EVO-DOS „‹Ÿ ……•‚€’€
 PAGE_RAMDISK	EQU 2				;ˆ‚…‘€Ÿ ‘’€ˆ–€ €—€‹€ €Œ„ˆ‘Š€, ‘’€ˆ–€ #FD

@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 04.06.2011 savelij
+;LAST UPDATE: 22.07.2011 savelij
 
 ;éèàëÄíÖãú éäçÄ (ÄÑêÖë Ç IX)
 ;+00 X äééêÑàçÄíÄ
@@ -267,7 +267,7 @@ TXT_WINHELP	DB 0X17,0XFF,"Help"
 		DB 0X0D," V=TR-DOS drive"
 		DB 0X0D," Y=Virtual drive"
 		DB 0X0D," M=memory mode"
-		DB 0X0D," W=on/off turbo"
+		DB 0X0D," W=turbo 3,5-7-14 MHz"
 		DB 0X0D," 8=on/off mouse"
 		DB 0X0D," 9=on/off time"
 		DB 0X0D," & uppercased option keys.",0
@@ -287,8 +287,8 @@ VERS_BOOT	DB "NONE                            "
 
 TRDDRV_MODE	DB 0X16,0X30,0X00,0X17,3,"1-4.TR-DOS Drive:  ",0X17,0XFF,"A",0
 TXT_DRIVE	EQU $-2
-SPEED_MODE	DB 0X16,0X38,0X00,0X17,3,"W.Turbo Mode:     ",0X17,0XFF,"off",0
-TXT_SPEED	EQU $-3
+SPEED_MODE	DB 0X16,0X38,0X00,0X17,3,"W.Turbo Mode:    ",0X17,0XFF,"14.0",0
+TXT_SPEED	EQU $-5
 MEM_MODE	DB 0X16,0X40,0X00,0X17,3,"M.Memory Lock:    ",0X17,0XFF
 TXT_MEM		DB "128",0
 VIRTUAL_DRIVE	DB 0X16,0X48,0X00,0X17,3,"Y.Virtual Drive:   ",0X17,0XFF,"A",0
@@ -314,6 +314,7 @@ HOT_KEYS	DB 0X0D,8,3," .",0
 HOT_KEY		EQU $-3
 
 TXTMODTYPE	DB "  ATMCP866"
+TXTTURBOMODE	DB " 3.5 7.014.0"
 
 ;ëèàëéä äãÄÇàò èêéÇÖêüÖåõï ÇëÖÉÑÄ
 MAIN_KEYS	DB LOW (EMAIN_KEYS-$-1),"qaop ",0X07,0X08,0X09,0X0A,0X0B,0X0D
