@@ -162,7 +162,7 @@ module top(
 	// config signals
 	wire [7:0] not_used;
 	wire cfg_vga_on;
-	wire set_nmi;
+	wire [1:0] set_nmi;
 
 	// nmi signals
 	wire gen_nmi;
@@ -647,7 +647,7 @@ module top(
 		.wait_read(wait_read),
 		.wait_rnw(wait_rnw),
 		.wait_end(wait_end),
-		.config0( { not_used[7:4], beeper_mux, tape_read, set_nmi, cfg_vga_on} )
+		.config0( { not_used[7:4], beeper_mux, tape_read, set_nmi[0], cfg_vga_on} )
 	);
 
 	zkbdmus zkbdmus( .fclk(fclk), .rst_n(rst_n),
@@ -689,26 +689,26 @@ module top(
 `else
 	               .wait_read(8'hFF),
 `endif
-	               .atmF7_wr_fclk(atmF7_wr_fclk),
+		.atmF7_wr_fclk(atmF7_wr_fclk),
 
-	               .atm_scr_mode(atm_scr_mode),
-	               .atm_turbo   (atm_turbo),
-	               .atm_pen     (pager_off),
-	               .atm_cpm_n   (cpm_n),
-	               .atm_pen2    (atm_pen2),
+		.atm_scr_mode(atm_scr_mode),
+		.atm_turbo   (atm_turbo),
+		.atm_pen     (pager_off),
+		.atm_cpm_n   (cpm_n),
+		.atm_pen2    (atm_pen2),
 
-	               .romrw_en(romrw_en),
+		.romrw_en(romrw_en),
 
-	               .pent1m_ram0_0(pent1m_ram0_0),
-	               .pent1m_1m_on (pent1m_1m_on),
-	               .pent1m_page  (pent1m_page),
-	               .pent1m_ROM   (pent1m_ROM),
+		.pent1m_ram0_0(pent1m_ram0_0),
+		.pent1m_1m_on (pent1m_1m_on),
+		.pent1m_page  (pent1m_page),
+		.pent1m_ROM   (pent1m_ROM),
 
-	               .atm_palwr  (atm_palwr  ),
-	               .atm_paldata(atm_paldata),
+		.atm_palwr  (atm_palwr  ),
+		.atm_paldata(atm_paldata),
 
-	               .beeper_wr(beeper_wr),
-	               .covox_wr (covox_wr ),
+		.beeper_wr(beeper_wr),
+		.covox_wr (covox_wr ),
 
 		.fnt_wr(fnt_wr),
 		.clr_nmi(clr_nmi),
@@ -724,8 +724,10 @@ module top(
 
 		.palcolor(palcolor),
 
+		.external_port(external_port),
 
-		.external_port(external_port)
+
+		.set_nmi(set_nmi[1])
 	);
 
 
