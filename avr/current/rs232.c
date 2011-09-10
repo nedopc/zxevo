@@ -228,12 +228,12 @@ void rs232_zx_write(UBYTE index, UBYTE data)
 		if ( data&(1<<1) )
 		{
 			//clear RTS
-			RS232RTS_PORT |= _BV(RS232RTS);
+			RS232RTS_PORT &= ~(_BV(RS232RTS));
 		}
 		else
 		{
 			//set RTS
-			RS232RTS_PORT &= ~(_BV(RS232RTS));
+			RS232RTS_PORT |= _BV(RS232RTS);
 		}
 		break;
 
