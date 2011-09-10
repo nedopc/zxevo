@@ -8,12 +8,16 @@
  *
  * @subsection current Current version.
  *
+ *  - Fix RTS line control.
+ *
+ * @subsection ver_2011_06_11 Version 11.06.2011.
+ *
  *  - Add NMI button supporting.
  *  - Fix PS/2 mouse initialization.
  *
  * @subsection ver_2011_05_11 Version 11.05.2011
  *
- * - Direct load UBRR on RS232 mode [if (DLM&0x80)!=0 ]
+ * - Direct load UBRR on RS232 mode [if (DLM&0x80)!=0 ].
  * - Control PLL (ICS501M) via PE2,PE3. Set it to 2X.
  *
  * @subsection ver_2011_04_26 Version 26.04.2011
@@ -29,7 +33,7 @@
  * @subsection ver_2010_12_07 Version 07.12.2010
  *
  * - Keyboard mapping without using RAM.
- * - Add setting resolution for PS/2 mouse [1..4]
+ * - Add setting resolution for PS/2 mouse [1..4].
  *   (left and right mouse buttons and pad'*' - default [1], pad'+' - increment, pad'-' - decrement).
  * - Add PS/2 mouse resolution saving to RTC register.
  *
