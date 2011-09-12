@@ -85,14 +85,14 @@ module vg93(
 	wire wrwidth_ena;
 
 
-	reg [4:0] rdat_sync;
-	reg rdat_edge1, rdat_edge2;
-	wire rdat;
+//	reg [4:0] rdat_sync;
+//	reg rdat_edge1, rdat_edge2;
+//	wire rdat;
 
-	reg [3:0] rwidth_cnt;
-	wire rwidth_ena;
-	reg [5:0] rclk_cnt;
-	wire rclk_strobe;
+//	reg [3:0] rwidth_cnt;
+//	wire rwidth_ena;
+//	reg [5:0] rclk_cnt;
+//	wire rclk_strobe;
 
 
 
@@ -238,64 +238,93 @@ module vg93(
 	// RAWR on time is 4 clocks
 
 	// digital filter - removing glitches
-	always @(posedge fclk)
-		rdat_sync[4:0] <= { rdat_sync[3:0], (~rdat_n) };
+//	always @(posedge fclk)
+//		rdat_sync[4:0] <= { rdat_sync[3:0], (~rdat_n) };
 
 
 
-	always @(posedge fclk)
-	begin
-		if( rdat_sync[4:1]==4'b1111 ) // filter beginning of strobe
-			rdat_edge1 <= 1'b1;
-		else if( rclk_strobe ) // filter any more strobes during same strobe half-perion
-			rdat_edge1 <= 1'b0;
-//		else if( rdat_sync[4:1]==4'b0000 )
+//	always @(posedge fclk)
+//	begin
+//		if( rdat_sync[4:1]==4'b1111 ) // filter beginning of strobe
+//			rdat_edge1 <= 1'b1;
+//		else if( rclk_strobe ) // filter any more strobes during same strobe half-perion
 //			rdat_edge1 <= 1'b0;
+////		else if( rdat_sync[4:1]==4'b0000 )
+////			rdat_edge1 <= 1'b0;
 
-		rdat_edge2 <= rdat_edge1;
-	end
+//		rdat_edge2 <= rdat_edge1;
+//	end
 
-	assign rdat = rdat_edge1 & (~rdat_edge2);
+//	assign rdat = rdat_edge1 & (~rdat_edge2);
 
-//	assign rdat = rdat_sync[1] & (~rdat_sync[2]);
-
-
-
-	always @(posedge fclk)
-		if( rwidth_ena )
-		begin
-			if( rdat )
-				rwidth_cnt <= 4'd0;
-			else
-				rwidth_cnt <= rwidth_cnt + 4'd1;
-		end
-
-	assign rwidth_ena = rdat | (~rwidth_cnt[2]); // [2] - 140ns, [3] - 280ns
-
-	always @(posedge fclk)
-		vg_rawr <= rwidth_cnt[2]; // RAWR has 2 clocks latency from rdat strobe
+////	assign rdat = rdat_sync[1] & (~rdat_sync[2]);
 
 
 
+//	always @(posedge fclk)
+//		if( rwidth_ena )
+//		begin
+//			if( rdat )
+//				rwidth_cnt <= 4'd0;
+//			else
+//				rwidth_cnt <= rwidth_cnt + 4'd1;
+//		end
 
-	assign rclk_strobe = (rclk_cnt==6'd0);
+//	assign rwidth_ena = rdat | (~rwidth_cnt[2]); // [2] - 140ns, [3] - 280ns
 
-	always @(posedge fclk)
+//	always @(posedge fclk)
+//		vg_rawr <= rwidth_cnt[2]; // RAWR has 2 clocks latency from rdat strobe
+
+
+
+
+//	assign rclk_strobe = (rclk_cnt==6'd0);
+
+//	always @(posedge fclk)
+//	begin
+//		if( rdat )
+//			rclk_cnt <= 6'd29; // (56/2)-1 plus halfwidth of RAWR
+//		else if( rclk_strobe )
+//			rclk_cnt <= 6'd55; // period is 56 clocks
+//		else
+//			rclk_cnt <= rclk_cnt - 6'd1;
+//	end
+
+//	always @(posedge fclk)
+//		if( rclk_strobe )
+//			vg_rclk <= ~vg_rclk; // vg_rclk latency is 2 clocks plus a number loaded into rclk_cnt at rdat strobe
+
+	//======== digital PLL by ZEK ============
+/*module pll28(
+    input   wire        clk,   //fclk 28mhz
+    input   wire        rddat, //rdat_n
+    output  reg         rclk,  //vg_rclk
+    output  reg         rawr   //vg_rawr
+    );   */
+
+	//local
+	reg [3:0] rawr_sr;
+	reg [5:0] counter = 0;
+	wire[5:0] delta = 27 - counter;
+	wire[5:0] shift = { delta[5], delta[5], delta[4:1] }; // sign div
+	wire[5:0] inc   = rawr_sr[1:0] == 2'b10 ? shift : 1;
+
+	always @ (posedge fclk)
 	begin
-		if( rdat )
-			rclk_cnt <= 6'd29; // (56/2)-1 plus halfwidth of RAWR
-		else if( rclk_strobe )
-			rclk_cnt <= 6'd55; // period is 56 clocks
-		else
-			rclk_cnt <= rclk_cnt - 6'd1;
+	    rawr_sr <= { rawr_sr[2:0], ~rdat_n };
+	    vg_rawr <= !(rawr_sr[3] && !rawr_sr[0] ); // rawr 100ns
 	end
 
-	always @(posedge fclk)
-		if( rclk_strobe )
-			vg_rclk <= ~vg_rclk; // vg_rclk latency is 2 clocks plus a number loaded into rclk_cnt at rdat strobe
-
-
-
+	always @ (posedge fclk)
+	begin
+	    if (counter < 55)
+	        counter <= counter + inc;
+	    else
+	    begin
+	        counter <= 0;
+	        vg_rclk = ~vg_rclk;
+	    end
+	end
 
 endmodule
 
