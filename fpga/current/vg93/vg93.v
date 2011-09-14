@@ -311,7 +311,7 @@ module vg93(
 
 	always @ (posedge fclk)
 	begin
-	    rawr_sr <= { rawr_sr[2:0], ~rdat_n };
+	    rawr_sr <= { rawr_sr[2:0], rdat_n };
 	    vg_rawr <= !(rawr_sr[3] && !rawr_sr[0] ); // rawr 100ns
 	end
 
