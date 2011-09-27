@@ -231,10 +231,10 @@ void gluk_init(void)
 {
 	UBYTE tmp;
 	//default values
-	gluk_regs[GLUK_REG_A] = 0x00;
-	gluk_regs[GLUK_REG_B] = 0x02;
-	gluk_regs[GLUK_REG_C] = 0x00;
-	gluk_regs[GLUK_REG_D] = 0x80;
+	gluk_regs[GLUK_REG_A] = GLUK_A_INIT_VALUE;
+	gluk_regs[GLUK_REG_B] = GLUK_B_INIT_VALUE;
+	gluk_regs[GLUK_REG_C] = GLUK_C_INIT_VALUE;
+	gluk_regs[GLUK_REG_D] = GLUK_D_INIT_VALUE;
 
 	//setup
 
@@ -402,6 +402,14 @@ void gluk_set_reg(UBYTE index, UBYTE data)
 				case GLUK_REG_DAY_MONTH:
 					rtc_write(5, (gluk_regs[GLUK_REG_YEAR]<<6)+(0x3F&hex_to_bcd(gluk_regs[GLUK_REG_DAY_MONTH])));
 					break;
+			}
+		}
+		else
+		{
+			if( index == GLUK_REG_B )
+			{
+				//BCD or Hex mode set
+				gluk_regs[GLUK_REG_B]=(data&GLUK_B_DATA_MODE)|GLUK_B_INIT_VALUE;
 			}
 		}
 	}

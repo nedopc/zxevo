@@ -8,6 +8,7 @@
  *
  * @subsection current Current version.
  *
+ *  - Add support BCD or HEX format in emulation Gluk clock.
  *  - Fix RTS line control.
  *
  * @subsection ver_2011_06_11 Version 11.06.2011.
