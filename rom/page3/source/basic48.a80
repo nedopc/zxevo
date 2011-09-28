@@ -100,6 +100,7 @@ L0010:  JP      L15F2           ; jump forward to continue at PRINT-A-2.
 L0013
 		OUT (C),A
 		NOP
+		NOP
 		RET
 
 		DUPL 0X0018-$,0XFF
@@ -268,20 +269,10 @@ L0055:  LD      (IY+$00),L      ; store it in the system variable ERR_NR.
 ; On later Spectrums, and the Brazilian Spectrum, the logic of this
 ; routine was reversed.
 
-;===============================
-		IF PRESS_MAGIC
-		RST 0X08
-		DB EXEC_MAGIC
-		RETN
-		NOP
-		ELSE
 ;; RESET
 L0066		PUSH AF		; save the
 		PUSH HL		; registers.
 		LD HL,($5CB0)	; fetch the system variable NMIADD.
-		ENDIF
-;===============================
-
 		LD A,H		; test address
 		OR L		; for zero.
 ;		JR NZ,L0070	; skip to NO-RESET if NOT ZERO

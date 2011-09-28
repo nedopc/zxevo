@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 04.06.2011 savelij
+;LAST UPDATE: 28.09.2011 savelij
 
 ;Žˆ‘€’…‹œ ŽŠ€ (€„…‘ ‚ IX)
 ;+00 X ŠŽŽ„ˆ€’€
@@ -707,7 +707,7 @@ CURSOR_UP	LD C,(IX+8)
 
 CURSOR_UP1	CALL REST2X2
 		RST 8
-		DB 0X4A
+		DB Scroll_down
 		LD E,(IX+1)
 		INC E
 DOWN1		LD D,(IX+0)
@@ -725,6 +725,9 @@ DOWN1		LD D,(IX+0)
 		ADD HL,HL
 		ADD HL,BC
 DOWN4		CALL FILENAME8_3
+		LD A,(FLAGS)
+		AND 2				;Ž‚…Š€ €‹ˆ—ˆŸ Œ›˜ˆ
+		RET Z
 		JP DRAW_MOUSE
 
 DOWN3		ADD HL,HL
@@ -772,7 +775,7 @@ CURSOR_DOWN	LD C,(IX+8)
 
 CURSOR_DOWN1	CALL REST2X2
 		RST 8
-		DB 0X49
+		DB Scrol_up
 		LD A,(IX+1)
 		ADD A,(IX+2)
 		SUB 2
@@ -829,6 +832,9 @@ PDUN0		LD (IX+7),A
 		LD (IX+9),D
 		CALL REST2X2
 		CALL OUT_TEK_DIR
+		LD A,(FLAGS)
+		AND 2				;Ž‚…Š€ €‹ˆ—ˆŸ Œ›˜ˆ
+		RET Z
 		JP DRAW_MOUSE
 
 ;…‘‹ˆ €‰„…Ž Ž‹œ˜… ‚›‘Ž’› ŽŠ€ -2, ’Ž ˆ‘“…Œ ŽŠŽ‚“˜Š“
