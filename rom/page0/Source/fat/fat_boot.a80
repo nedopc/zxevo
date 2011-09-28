@@ -1,23 +1,27 @@
 
-;LAST UPDATE: 04.06.2011 savelij
+;LAST UPDATE: 12.09.2011 savelij
 
+;‡€ƒ“‡Š€ ‚›€ŽƒŽ ˜ˆ”’€
 LOAD_FONT	LD HL,FONTS
 		LD DE,CMP4FONTS
 		JR FATBOOT4
 
+;‡€ƒ“‡Š€ TAP ”€‰‹€
 EMULTAPLOAD	LD HL,TAPES
 		LD DE,CMP4TAPES
 		JR FATBOOT4
 
+;‡€ƒ“‡Š€ ROM ”€‰‹€ „‹Ÿ ŽŽ‚‹…ˆŸ
 LOAD4FLASH	LD HL,ROMS
 		LD DE,CMP4ROMS
 		JR FATBOOT4
 
+;‡€ƒ“‡Š€ Ž€‡€ € €Œ„ˆ‘Š
 COPYIMAGE	LD HL,IMAGES
 		LD DE,CMP4IMAGE
 		JR FATBOOT4
 
-;‚›Ž “‘’Ž‰‘’‚€ „‹Ÿ ‡€ƒ“‡Šˆ
+;‡€ƒ“‡Š€ HOBETA ”€‰‹€ „‹Ÿ ‡€“‘Š€
 FATBOOT		LD HL,HOBETA
 		LD DE,CMP4HOBETA
 FATBOOT4	DI
@@ -27,12 +31,17 @@ FATBOOT4	DI
 		LD (DIR_LEVEL),HL		;“‘’€Ž‚ˆ‹ˆ „Ž ‘’…Š€ ‘Ž•€…ˆ‰ ŽŠŽ˜…Š
 		LD HL,FLAGS
 		SET 3,(HL)			;€Ž’€’œ “„…Œ ‘ FAT
-		CALL COM_DEV
+
+;		CALL COM_DEV
+		LD HL,ADR_CAT-0X100		;€„…‘ Š“„€ Ž‹Ž†ˆ’œ ’€‹ˆ–“ €‰„…›• €‡„…‹Ž‚
+		RST 8
+		DB Com_dev			;‚›‡Ž‚ Œ……„†…€ “‘’Ž‰‘’‚
 		DB Devfind			;‘Š€ˆŽ‚€ˆ… “‘’Ž‰‘’‚
+
 		JP C,_STUPID			;Ž˜ˆŠ€, ˆ Ž„ŽƒŽ €‡„…‹€ … €‰„…Ž
 		LD B,E				;‘—…’—ˆŠ ŠŽ‹ˆ—…‘’‚€ €‰„…›• €‡„…‹Ž‚
 		LD IX,SEL_FAT_DEV		;€„…‘ Žˆ‘€’…‹Ÿ ŽŠ€ ‚›Ž€ €‡„…‹Ž‚
-		LD (IX+0X0A),E;0X10),E			;ŠŽ‹ˆ—…‘’‚Ž “Š’Ž‚ ‚ ŽŠ…
+		LD (IX+0X0A),E			;ŠŽ‹ˆ—…‘’‚Ž “Š’Ž‚ ‚ ŽŠ…
 		INC E
 		INC E
 		LD (IX+2),E			;“‘’€Ž‚ˆ‹ˆ ‚›‘Ž’“ ‚›‚Ž„ˆŒŽƒŽ ŽŠ€
@@ -103,6 +112,8 @@ FATBOOT1	EXX
 		DEC B
 		LD C,B
 		LD A,"e"
+		LD (IX+0X12),L
+		LD (IX+0X13),H			;€„…‘ ’€‹ˆ–› ƒŽŸ—ˆ• Š‹€‚ˆ˜ ‚›Ž€ FAT “‘’Ž‰‘’‚€
 		LD (HL),B
 		INC HL
 FATBOOT3	LD (HL),A			;”ŽŒˆŽ‚€ˆ… ’€‹ˆ–› ƒŽŸ—ˆ• Š‹€‚ˆ˜
@@ -121,13 +132,15 @@ FATBOOT2	LD (HL),LOW (SEL_FAT)		;”ŽŒˆŽ‚€ˆ… ’€‹ˆ–› €„…‘Ž‚ ‚›‡›‚Ž‚
 		DEC A
 		JR Z,SEL_FAT
 		RST 8
-		DB 0X46
+		DB Winw
 		JP _RULILKA			;‚Ž‡‚€™€…Œ‘Ÿ Š Ž™…Œ“ “€‚‹…ˆž
 
 ;……Š‹ž—…ˆ… € “‘’Ž‰‘’‚€ ˆ ‚›‚Ž„ €‰„…ŽƒŽ € …Œ
 SEL_FAT		DI
-		LD A,(IX+8);0X12)			;‚‡Ÿ‹ˆ ŽŒ… ‚›€ŽƒŽ “‘’Ž‰‘’‚€
-		CALL COM_DEV
+		LD A,(IX+8)			;‚‡Ÿ‹ˆ ŽŒ… ‚›€ŽƒŽ “‘’Ž‰‘’‚€
+;		CALL COM_DEV
+		RST 8
+		DB Com_dev
 		DB Set_vol			;‚›€‹ˆ “‘’Ž‰‘’‚Ž Ž ŽŒ…“
 		CALL COM_FAT
 		DB Wc_fat			;ˆˆ–ˆ€‹ˆ‡€–ˆŸ ”€’ „€‰‚…€ „‹Ÿ ‚›€ŽƒŽ “‘’Ž‰‘’‚€
@@ -191,20 +204,20 @@ DIR_LEVEL	EQU $-2
 		INC HL
 		LD D,(HL)
 		LD (DIR_LEVEL),HL		;‘Ž•€ˆ‹ˆ ˆ‡Œ…ˆ‚˜ˆ‰‘Ÿ €„…‘ ‘’…Š€ „ˆ…Š’Žˆ‰
-		LD (IX+8),E;0X12),E
-		LD (IX+9),D;0X13),D
-		LD (IX+7),A;0X0F),A
+		LD (IX+8),E
+		LD (IX+9),D
+		LD (IX+7),A
 		CALL SEARCH_FILE
-		LD (IX+0X0A),C;0X10),C
-		LD (IX+0X0B),B;0X11),B			;‚Ž‘‘’€Ž‚ˆ‹ˆ „€›… ŽŠ€ …„›„“™…‰ „ˆ›
+		LD (IX+0X0A),C
+		LD (IX+0X0B),B			;‚Ž‘‘’€Ž‚ˆ‹ˆ „€›… ŽŠ€ …„›„“™…‰ „ˆ›
 		JP REOUT_HOB			;‚›‚…‹ˆ Ž‚Ž… ‘Ž„…†ˆŒŽ… ŽŠ€
 
 ;ˆ ‚•Ž„… ‚ „ˆ“ ‘Ž•€…ˆ… ’…Š“™ˆ• „€›• ŽŠ€
-SNYT0		LD D,(IX+9);0X13)
-		LD E,(IX+8);0X12)
-		LD A,(IX+7);0X0F)
-		LD C,(IX+0X0A);0X10)
-		LD B,(IX+0X0B);0X11)
+SNYT0		LD D,(IX+9)
+		LD E,(IX+8)
+		LD A,(IX+7)
+		LD C,(IX+0X0A)
+		LD B,(IX+0X0B)
 		LD (HL),D
 		DEC HL
 		LD (HL),E
@@ -235,9 +248,12 @@ GO_RUN_HOB	PUSH HL				;‘Ž•€ˆ‹ˆ €„…‘ Žˆ‘€’…‹Ÿ
 		LD A,(HL)
 		CP "$"
 		JP NZ,LOAD_IMAGE		;……•Ž„ € ‡€ƒ“‡Š“ Ž€‡€
-		CALL COM_DEV
+;		CALL COM_DEV
+		RST 8
+		DB Com_dev
 		DB Kol_vol			;‡€Ž‘ “ Œ……„†…€ “‘’Ž‰‘’‚ Ž ’…Š“™…Œ “‘’Ž‰‘’‚…
 		LD A,D				;‚‡Ÿ‹ˆ ŽŒ… ’…Š“™…ƒŽ “‘’Ž‰‘’‚€
+		LD HL,ADR_CAT-0X100
 		ADD A,A
 		ADD A,A
 		ADD A,A
@@ -257,7 +273,7 @@ GO_RUN_HOB	PUSH HL				;‘Ž•€ˆ‹ˆ €„…‘ Žˆ‘€’…‹Ÿ
 		LDIR				;‡€—…ˆ‹ˆ Š€ „‹Ÿ Œ€‘ŠˆŽ‚Šˆ ‡€“‘Š€‹Šˆ
 		LD HL,ERORDRV
 		LD DE,0X4200
-		LD B,1
+		INC B
 		LDIR				;……Ž‘ ……Œ…›• ”€’€ „‹Ÿ MICROBOOT
 		PUSH DE				;‘ž„€ ……Ž‘ ŠŽ„€ ˆ ‡€“‘Š
 		LD HL,MICROBOOT
@@ -287,11 +303,6 @@ LOAD_FNT1	LD IXL,4
 		XOR A
 		OUT (PEVO_CONF),A
 		JP RESTART
-
-;		LD SP,(LD_FILE_SP)
-;		POP IY
-;		POP IX
-;		RET
 
 ;‡€ƒ“‡Š€ FDI Ž€‡€
 LOAD_FDI	LD A,E
@@ -969,10 +980,10 @@ CMP_FOUNDED	EQU $-2
 ;Ž˜ˆ‚€’…‹œ ‡“ ˆ ˆ„ˆŠ€–ˆ…‰ Ž–…‘‘€
 FLASHER		LD IX,ERASE_ROM
 		RST 8
-		DB 0X46
+		DB Winw
 		LD IX,UPDATE_WIN
 		RST 8
-		DB 0X46
+		DB Winw
 		LD IX,ERASE_ROM
 		LD SP,ADR_CAT
 		LD A,3
