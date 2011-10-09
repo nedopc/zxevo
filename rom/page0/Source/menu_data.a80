@@ -344,7 +344,7 @@ HOT_KEY		EQU $-3
 
 TXT_RESETTO	DB " EVO Service"
 		DB "GLUK Service"
-		DB "    Prof ROM"
+		DB " EVO ProfROM"
 
 TXTMODTYPE	DB "  ATMCP866"
 TXTTURBOMODE	DB " 3.5 7.014.0"

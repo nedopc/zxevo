@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 03.08.2011 savelij
+;LAST UPDATE: 01.10.2011 savelij
 
 PAGE_EVODOS	EQU 1				;ˆ‚…‘€Ÿ ‘’€ˆ–€ ŠŽˆˆ EVO-DOS „‹Ÿ ……•‚€’€
 PAGE_PROFROM	EQU 2				;ˆ‚…‘€Ÿ ‘’€ˆ–€ ……Œ…›• PROFROM
@@ -75,3 +75,4 @@ Set_vol		EQU 1				;01 ‚›Ž €‡„…‹€
 Kol_vol		EQU 2				;02 ‡€Ž‘ €‰„…ŽƒŽ                       
 Set_device	EQU 3				;03 “‘’€Ž‚Š€ ˆ’Ž‚ “‘’Ž‰‘’‚€ ˆ LBA …†ˆŒ€
 To_drv		EQU 4				;04 ‚›‡Ž‚ „€‰‚…€ ‚›€ŽƒŽ “‘’Ž‰‘’‚€   
+Comhddn		EQU 5				;05 ŸŒŽ‰ ‚›‡Ž‚ „€‰‚…€ HDD NEMO (‚…Œ…€Ÿ ”“Š–ˆŸ)
