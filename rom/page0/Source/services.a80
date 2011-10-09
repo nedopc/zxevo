@@ -1,8 +1,8 @@
 
 ;LAST UPDATE: 28.09.2011 savelij
 
-DD		EQU 28				;„€’€
-MM		EQU 9				;Œ…‘Ÿ–
+DD		EQU 9				;„€’€
+MM		EQU 10				;Œ…‘Ÿ–
 YY		EQU 11				;ƒŽ„
 DATA		EQU DD+(MM<<5)+(YY<<9)+0X8000	;“†… “€ŠŽ‚€Ž
 
@@ -23,6 +23,7 @@ DEPKADR		EQU 0X6000
 
 		DUPL 0X0013-$,0XFF
 		OUT (C),A
+		NOP
 		RET
 
 RSTRAM0		LD HL,PAGES_CONF
