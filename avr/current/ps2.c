@@ -63,6 +63,48 @@ volatile UBYTE ps2keyboard_timeout;
 volatile UBYTE ps2keyboard_cmd_count;
 volatile UBYTE ps2keyboard_cmd;
 
+volatile UBYTE  ps2keyboard_log[15];
+volatile UBYTE  ps2keyboard_log_len;
+
+void ps2keyboard_to_log(UBYTE data)
+{
+	if( (ps2keyboard_log_len++) < sizeof(ps2keyboard_log) )
+	{
+		ps2keyboard_log[ps2keyboard_log_len] = data;
+	}
+	else
+	{
+		//overload
+		ps2keyboard_log_len = 0xFF;
+	}
+}
+
+UBYTE ps2keyboard_from_log(void)
+{
+	if( (ps2keyboard_log_len>0) && (ps2keyboard_log_len!=0xFF) )
+	{
+		UBYTE ret = ps2keyboard_log[0];
+		ps2keyboard_log_len--;
+		if( ps2keyboard_log_len>0 )
+		{
+			//shift log
+			UBYTE i;
+			for( i=0; i<ps2keyboard_log_len; i++)
+			{
+				ps2keyboard_log[i]=ps2keyboard_log[i+1];
+			}
+		}
+		return ret;
+	}
+	//0 - no data, 0xFF - overload
+	return ps2keyboard_log_len;
+}
+
+void ps2keyboard_reset_log(void)
+{
+	ps2keyboard_log_len = 0;
+}
+
 static void ps2keyboard_release_clk(void)
 {
 	ps2keyboard_count = 12; //counter reinit
@@ -231,19 +273,22 @@ void ps2keyboard_parse(UBYTE recbyte)
 	to_log(log_ps2keyboard_parse);
 #endif
 
+	if( recbyte==0xFA ) return;
+	if( recbyte==0xFE ) return;
+	if( recbyte==0xEE ) return;
+	if( recbyte==0xAA ) return;
+
+	//start write to log only for full key data
+	if( (ps2keyboard_log_len>0) || ((was_release==0) && (was_E0==0) && (skipshit==0)) )
+	{
+	   	ps2keyboard_to_log(recbyte);
+	}
 
 	if( skipshit )
 	{
 		skipshit--;
 		return;
 	}
-
-
-	if( recbyte==0xFA ) return;
-	if( recbyte==0xFE ) return;
-	if( recbyte==0xEE ) return;
-	if( recbyte==0xAA ) return;
-
 
 	if( recbyte==0xE0 )
 	{

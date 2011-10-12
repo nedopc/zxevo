@@ -35,6 +35,9 @@ volatile UBYTE flags_ex_register;
 // Common modes register.
 volatile UBYTE modes_register;
 
+// Type extensions of gluk registers
+volatile UBYTE ext_type_gluk;
+
 // Buffer for depacking FPGA configuration.
 // You can USED for other purposed after setup FPGA.
 UBYTE dbuf[DBSIZE];
@@ -181,6 +184,7 @@ start:
     ps2keyboard_count = 12;
 	ps2keyboard_cmd_count = 0;
 	ps2keyboard_cmd = 0;
+	ps2keyboard_log_len = 0;
 	ps2mouse_count = 12;
 	ps2mouse_initstep = 0;
 	ps2mouse_resp_count = 0;
@@ -188,6 +192,7 @@ start:
 	flags_register = 0;
 	flags_ex_register = 0;
 	modes_register = 0;
+	ext_type_gluk = 0;
 
 	//enable mouse
 	zx_mouse_reset(1);

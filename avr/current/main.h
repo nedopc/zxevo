@@ -8,6 +8,10 @@
  *
  * @subsection current Current version.
  *
+ * - Add access to PS2 keyboards log via gluk extensions.
+ *
+ * @subsection ver_2011_09_29 Version 29.09.2011.
+ *
  *  - Add support BCD or HEX format in emulation Gluk clock.
  *  - Fix RTS line control.
  *
@@ -101,7 +105,7 @@ extern volatile UBYTE flags_register;
 /** Direction for ps2 keyboard data (0 - Receive/1 - Send). */
 #define FLAG_PS2KEYBOARD_DIRECTION  0x10
 /** Version type (0 - BaseConf /1 - BootLoader). */
-#define FLAG_VERSION_TYPE       0x20
+//#define FLAG_VERSION_TYPE       0x20
 /** Last tape in bit value. */
 #define FLAG_LAST_TAPE_VALUE    0x40
 /** Hard reset flag (1 - enable hard reset). */
@@ -122,6 +126,16 @@ extern volatile UBYTE modes_register;
 #define MODE_VGA 0x01
 /** Tapeout mode (0 - beeper or pwm mode/1 - tapeout). */
 #define MODE_TAPEOUT 0x02
+
+/** Type extensions of gluk registers. */
+extern volatile UBYTE ext_type_gluk;
+/** Type is baseconfiguration version. */
+#define EXT_TYPE_BASECONF_VERSION     0
+/** Type is bootloader version. */
+#define EXT_TYPE_BOOTLOADER_VERSION   1
+/** Type is PS2 keyboards log. */
+#define EXT_TYPE_PS2KEYBOARDS_LOG     2
+
 
 /** Data buffer. */
 extern UBYTE dbuf[];
