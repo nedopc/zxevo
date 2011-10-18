@@ -30,7 +30,7 @@ UBYTE GetVersionByte(UBYTE index)
 
 			case EXT_TYPE_PS2KEYBOARDS_LOG:
 			{
-				//bootloader version
+				//PS2 keyboards log
 				return ps2keyboard_from_log();
 			}
 		}
