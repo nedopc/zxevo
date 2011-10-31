@@ -312,10 +312,13 @@ void ps2keyboard_parse(UBYTE recbyte)
 	if( recbyte==0xAA ) return;
 
 	//start write to log only for full key data
-	if( (ps2keyboard_log_len!=0xFE) || ((was_release==0) && (was_E0==0) && (skipshit==0)) )
+	if( (recbyte!=0xE1) && (skipshit==0) ) //PAUSE not logged
 	{
-		if( ps2keyboard_log_len==0xFE ) ps2keyboard_log_len=0;
-	   	ps2keyboard_to_log(recbyte);
+		if( (ps2keyboard_log_len!=0xFE) || ((was_release==0) && (was_E0==0)/* && (skipshit==0)*/) )
+		{
+			if( ps2keyboard_log_len==0xFE ) ps2keyboard_log_len=0;
+		   	ps2keyboard_to_log(recbyte);
+		}
 	}
 
 	if( skipshit )
