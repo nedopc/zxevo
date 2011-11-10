@@ -16,7 +16,7 @@ module video_vga_sync_h(
 );
 
 	localparam HSYNC_END	= 10'd106;
-	localparam SCANOUT_BEG	= 10'd159;
+	localparam SCANOUT_BEG	= 10'd156;
 
 	localparam HPERIOD = 10'd896;
 
