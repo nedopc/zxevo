@@ -14,7 +14,7 @@
 ..\..\..\tools\mhmt\mhmt -mlz chars_eng.bin chars_pack.bin
 
 ..\..\..\tools\asw\bin\asw -cpu z80undoc -U -L make_all_services.a80
-..\..\..\tools\asw\bin\p2bin make_all_services.p ../services.rom -r $-$ -k
+..\..\..\tools\asw\bin\p2bin make_all_services.p ..\services.rom -r $-$ -k
 
 del micro_boot_fat.rom
 del main.rom

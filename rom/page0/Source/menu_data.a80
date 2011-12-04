@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 03.08.2011 savelij
+;LAST UPDATE: 04.12.2011 savelij
 
 ;éèàëÄíÖãú éäçÄ (ÄÑêÖë Ç IX)
 ;+00 X äééêÑàçÄíÄ
@@ -85,16 +85,20 @@ MKILLSTXT	DB 0X17,0XFF,"Services"
 		DB 0X0D," K.Format ramdisk 640k"	;k
 		DB 0X0D," I.Format ramdisk 896k"	;i
 		DB 0X0D," M.Edit CMOS"			;m
+		DB 0X0D," S.Test PC keyboard"		;s
 		DB 0X0D," F.Fast update ROM"		;f
+		DB 0X0D," U.Update custom ROM"		;u
 		DB 0X0D," C.Image to RAMDISK"		;c
 		DB 0X0D," T.Load font 4 TEXTMODE",0	;t
-MKILLS_KEY	DB LOW (KILL1-$-1),"rkimfct"
+MKILLS_KEY	DB LOW (KILL1-$-1),"rkimsfuct"
 
 KILL1		DW RESETNGS
 		DW RAM_640
 		DW RAM_892
 		DW EDIT_CMOS
-		DW LOAD4FLASH
+		DW PC_KEYS_TEST
+		DW LOAD4FLASH_FULL
+		DW LOAD4FLASH_CUST
 		DW COPYIMAGE
 		DW LOAD_FONT
 KILL2
@@ -241,6 +245,13 @@ TXT_UPDATEWIN	DB 0X17,0XFF,"Update FLASH ROM",0X0D
 		DB 0X0D,3,"Page 7",0
 ;==============================UPDATE ROM=============================
 
+;=======================UPDATE CUSTOM ROM=============================
+UPDATE_CUSTOM	DB 0X09,0X0A,0X04,0X12,0X17,0X00,%00100000,0
+		DW 0,0
+		DW TXT_UPDATECUST,0,0,0
+TXT_UPDATECUST	DB 0X17,0XFF,"Update custom ROM",0
+;=======================UPDATE CUSTOM ROM=============================
+
 ;===============================ERASE ROM=============================
 ERASE_ROM	DB 0X0D,0X05,0X05,0X0A,0X17,0X00,%00000000,0
 		DW 0,0
@@ -305,7 +316,7 @@ TXT_AYPRINTER	DB 0X16,0X70,0X00,0X17,3,"K.DRV AY printer: ",0X17,0XFF,"off",0
 ETXT_AYPRINTER	EQU $-3
 
 ;ëèàëéä äãÄÇàò èêéÇÖêüÖåõï ÇëÖÉÑÄ
-MAIN_KEYS	DB LOW (EMAIN_KEYS-$-1),"qaop ",0X07,0X08,0X09,0X0A,0X0B,0X0D
+MAIN_KEYS	DB LOW (EMAIN_KEYS-$-1),"qaop ",0X07,0X08,0X09,0X0A,0X0B,0X0D,0XAC,0XC6
 EMAIN_KEYS
 
 MAIN_ZONE	DB 0,0X00,0X06,0X01,0X10,"v"		;èÖêÖÅéê ÑàëäéÇéÑéÇ
@@ -331,6 +342,8 @@ ADREXEKEYS	DW UP			;q
 		DW DOWN			;0X0A
 		DW UP			;0X0B
 		DW ENTER		;0X0D
+		DW UDOS			;0XAC
+		DW MSXDOS		;0XC6
 EADREXEKEYS
 
 BUFF_TIME	DB 0X16,0X00,0XD0,0X17,0X4E
@@ -345,9 +358,10 @@ HOT_KEY		EQU $-3
 TXT_RESETTO	DB " EVO Service"
 		DB "GLUK Service"
 		DB " EVO ProfROM"
+		DB "  Custom ROM"
 
 TXTMODTYPE	DB "  ATMCP866"
-TXTTURBOMODE	DB " 3.5 7.014.0"
+TXTTURBOMODE	DB " 3,5 7,014,0"
 
 SIGN_SCL	DB "SINCLAIR"
 IMAGES		DB "TRDSCLFDI",0
@@ -370,9 +384,6 @@ TXT4MENU_TYPE	DB "FAT12"
 		DB "FAT16"
 		DB "FAT32"
 
-;ÑÖîéãíçõÖ áçÄóÖçàü Ñãü Ç äåéë
-CMOS_DEFAULT	DB 0X20,0X02,0X00,0X80,0X00,0X00,0X00,0XAA
-
 ;àçîÄ Ñãü ëéáÑÄçàü 9 ëÖäíéêÄ çéÇéÉé ÑàëäÄ
 DSKINFO		DB 0			;+0XE1-çéåÖê èÖêÇéÉé ëÇéÅéÑçéÉé ëÖäíéêÄ
 		DB 1			;+0XE2-çéåÖê èÖêÇéÉé ëÇéÅéÑçéÉé íêÖäÄ
@@ -389,29 +400,30 @@ DSK_END
 
 TXT_EDITCMOS1	DB "Press ",0X1B,0X18,0X19,0X1A," keys, 0..9,A..F for edit,  X.Exit",0
 TXT_EDITCMOS2	DB "CMOS Editor",0
+
 BR_ATM		DB 0X99,0X9D,0X8B,0X8A,0X98,0X9D,0X8C
 BR_866		DB 0XC9,0XCD,0XBB,0XBA,0XC8,0XCD,0XBC
 
 ;		    0123456789ABCDEF0123456789ABCDEF
-TXT_HELPREG	DB "SECOND                         ",0		;00
-		DB "SECOND ALARM                   ",0		;01
-		DB "MINUTE                         ",0		;02
-		DB "MINUTE ALARM                   ",0		;03
-		DB "HOUR                           ",0		;04
-		DB "HOUR ALARM                     ",0		;05
-		DB "DAY OF WEEK                    ",0		;06
-		DB "DAY                            ",0		;07
-		DB "MONTH                          ",0		;08
-		DB "YEAR                           ",0		;09
-		DB "#20                            ",0		;0A
-		DB "#02                            ",0		;0B
-		DB "#00                            ",0		;0C
-		DB "#80                            ",0		;0D
-		DB "BIT 7=TURBO,BIT 2-0=MEMORY MODE",0		;0E
-		DB "NUMBER VIRTUAL DRIVE           ",0		;0F
-		DB "NUMBER TR-DOS DRIVE            ",0		;10
-		DB "#AA OR #55                     ",0		;11
-EMPTY_STROKA	DB "                               ",0
+TXT_HELPREG	DB "SECOND                          ",0		;00
+		DB "SECOND ALARM                    ",0		;01
+		DB "MINUTE                          ",0		;02
+		DB "MINUTE ALARM                    ",0		;03
+		DB "HOUR                            ",0		;04
+		DB "HOUR ALARM                      ",0		;05
+		DB "DAY OF WEEK                     ",0		;06
+		DB "DAY                             ",0		;07
+		DB "MONTH                           ",0		;08
+		DB "YEAR                            ",0		;09
+		DB "#20                             ",0		;0A
+		DB "#02                             ",0		;0B
+		DB "#00                             ",0		;0C
+		DB "#80                             ",0		;0D
+		DB "BIT 7=TURBO,BIT 2-0=MEMORY MODE ",0		;0E
+		DB "NUMBER VIRTUAL DRIVE            ",0		;0F
+		DB "NUMBER TR-DOS DRIVE             ",0		;10
+		DB "#AA OR #55                      ",0		;11
+EMPTY_STROKA	DB "                                ",0
 
 		DUPL 0X10,0
 DSTUPID		DW _STUPID
