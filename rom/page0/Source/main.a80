@@ -740,15 +740,7 @@ TIMELP		CALL PRINTTIME
 		include pc_keys_test.a80
 
 		include flasher.a80
-
-;		include fat/ports_ngs.a80
-;		include fat/sdcomand.a80
-;COM_DEV		equ $+6
-;TO_DRV		include fat/dev_drv.a80
-;COMSDG		include fat/ngs_sd_drv.a80
-;COMSDZ		include fat/z_sd_drv.a80
-;COMHDDN		include fat/nemo_drv.a80
-;COMHDDS		include fat/smuc_drv.a80
+;		include spg2_run.a80
 
 COM_FAT		include fat/read_fat.a80
 		include fat/fat_boot.a80

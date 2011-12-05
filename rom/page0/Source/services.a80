@@ -221,12 +221,6 @@ CMPCFG1		LD A,0XFD
 		IN A,(0XFE)
 		AND 4				;€†€’Ž "D" ‡€“‘Š „…ŒŠˆ
 		JP Z,GDEMO
-;		LD BC,PENT_CONF
-;		LD A,0X10
-;		OUT (C),A
-;		LD BC,0XFF77
-;		LD A,0XAB
-;		OUT (C),A			;……„ €‘€ŠŽ‚ŠŽ‰ ‘…‚ˆ‘€ “‘’€Ž‚Š€ ’“Ž 14Œƒ–
 		LD IXL,1			;‡€“‘Š Ž‘Ž‚Ž‰ Ž˜ˆ‚Šˆ ‘…‚ˆ‘€
 		LD HL,DEPKADR			;ˆ—…ƒŽ … €†€’Ž, ‡€“‘Š€…Œ Ž‘Ž‚“ž Ž˜ˆ‚Š“
 		LD SP,HL
