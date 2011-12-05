@@ -64,24 +64,25 @@ READ04		POP HL			;‚ HL €„…‘ „‹Ÿ Ž„Ž‹†…ˆŸ ‡€ƒ“‡Šˆ
 		JR READ05
 
 READ07		PUSH HL
-		CALL RDFATZP
-		CALL LST_CLS
+		CALL RDFATZP		;Ž‹“—ˆ’œ ŽŒ… ‘‹…„“ž™…ƒŽ Š‹€‘’…€
+		CALL LST_CLS		;Ž‚…Š€ € ŽŠŽ—€ˆ… FAT –“Ž—Šˆ
 		POP HL
-		JR C,RUNLOAD
+		JR C,RUNLOAD		;…‘‹ˆ Š‹€‘’…€ ‡€ŠŽ—ˆ‹ˆ‘œ, ’Ž ‡€“‘Š€ ‡€ƒ“†…ŽƒŽ
 		PUSH HL
-		CALL REALSEC
+		CALL REALSEC		;…Ž€‡Ž‚€ˆ… ŽŒ…€ Š‹€‘’…€ ‚ ŽŒ… ‘…Š’Ž€
 		POP HL
-		LD A,IXL
-		CP IYL
-		JR C,READ02
-		LD A,IYL
-READ05		CALL LOADSCS
-		LD A,IXL
-		SUB IYL
-		JR Z,RUNLOAD
-		LD IXL,A
-		JR READ07
+		LD A,IXL		;‘ŠŽ‹œŠŽ ‘…Š’ŽŽ‚ Ž‘’€‹Ž‘œ ‡€ƒ“‡ˆ’œ
+		CP IYL			;‘€‚ˆ‚€…Œ ‘ €‡Œ…ŽŒ Š‹€‘’…€
+		JR C,READ02		;…‘‹ˆ Ž‘’€‹Ž‘œ ‡€ƒ“‡ˆ’œ ‘…Š’ŽŽ‚ Œ…œ˜… —…Œ ‚ Š‹€‘’……, ’Ž „Ž‡€ƒ“†€…Œ Ž‘’€’ŽŠ
+		LD A,IYL		;‘ŠŽ‹œŠŽ ‘…Š’ŽŽ‚ ‡€ƒ“†€’œ
+READ05		CALL LOADSCS		;‡€ƒ“‡Š€ ‘…Š’ŽŽ‚
+		LD A,IXL		;‘ŠŽ‹œŠŽ ‘…Š’ŽŽ‚ ‚‘…ƒŽ ‡€ƒ“†€’œ
+		SUB IYL			;Œˆ“‘ ‘ŠŽ‹œŠŽ ‘…Š’ŽŽ‚ ’Ž‹œŠŽ —’Ž ‡€ƒ“‡ˆ‹ˆ
+		JR Z,RUNLOAD		;‘…Š’Ž€ ŠŽ—ˆ‹ˆ‘œ, ……•Ž„ˆŒ € ‡€“‘Š
+		LD IXL,A		;‘ŠŽ‹œŠŽ ‘…Š’ŽŽ‚ Ž‘’€‹Ž‘œ ‡€ƒ“‡ˆ’œ
+		JR READ07		;Ž„Ž‹†€…Œ ‡€ƒ“‡Š“
 
+;‡€ƒ“‡Š€ ŠŽ‹ˆ—…‘’‚€ ‘…Š’ŽŽ‚, …‘‹ˆ Ž‘’€‹Ž‘œ Œ……… €‡Œ…€ Š‹€‘’…€
 READ02		AND A
 		JR Z,READ03
 		CALL LOADSCS
