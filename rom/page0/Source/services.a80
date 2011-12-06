@@ -1,7 +1,7 @@
 
-;LAST UPDATE: 04.12.2011 savelij
+;LAST UPDATE: 06.12.2011 savelij
 
-DD		EQU 4				;„€’€
+DD		EQU 6				;„€’€
 MM		EQU 12				;Œ…‘Ÿ–
 YY		EQU 11				;ƒŽ„
 DATA		EQU DD+(MM<<5)+(YY<<9)+0X8000	;“†… “€ŠŽ‚€Ž
