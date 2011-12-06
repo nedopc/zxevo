@@ -1,8 +1,8 @@
 
-;LAST UPDATE: 02.12.2011 savelij
+;LAST UPDATE: 06.12.2011 savelij
 
 ;VERSION
-VERSBIOS	EQU "0.46 "
+VERSBIOS	EQU "0.46a "
 
 ;BIT 4,(IY+55)
 ;BIT 3,(IY+55)-0-‡€…’ €ˆŒ€–ˆˆ ŠŽ˜€Š€, 1-€‡…˜…ˆ…

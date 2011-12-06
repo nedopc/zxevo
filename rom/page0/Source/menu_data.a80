@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 04.12.2011 savelij
+;LAST UPDATE: 06.12.2011 savelij
 
 ;éèàëÄíÖãú éäçÄ (ÄÑêÖë Ç IX)
 ;+00 X äééêÑàçÄíÄ
@@ -405,25 +405,25 @@ BR_ATM		DB 0X99,0X9D,0X8B,0X8A,0X98,0X9D,0X8C
 BR_866		DB 0XC9,0XCD,0XBB,0XBA,0XC8,0XCD,0XBC
 
 ;		    0123456789ABCDEF0123456789ABCDEF
-TXT_HELPREG	DB "SECOND                          ",0		;00
-		DB "SECOND ALARM                    ",0		;01
-		DB "MINUTE                          ",0		;02
-		DB "MINUTE ALARM                    ",0		;03
-		DB "HOUR                            ",0		;04
-		DB "HOUR ALARM                      ",0		;05
-		DB "DAY OF WEEK                     ",0		;06
-		DB "DAY                             ",0		;07
-		DB "MONTH                           ",0		;08
-		DB "YEAR                            ",0		;09
-		DB "#20                             ",0		;0A
-		DB "#02                             ",0		;0B
-		DB "#00                             ",0		;0C
-		DB "#80                             ",0		;0D
-		DB "BIT 7=TURBO,BIT 2-0=MEMORY MODE ",0		;0E
-		DB "NUMBER VIRTUAL DRIVE            ",0		;0F
-		DB "NUMBER TR-DOS DRIVE             ",0		;10
-		DB "#AA OR #55                      ",0		;11
-EMPTY_STROKA	DB "                                ",0
+TXT_HELPREG	DB "SECOND                         ",0		;00
+		DB "SECOND ALARM                   ",0		;01
+		DB "MINUTE                         ",0		;02
+		DB "MINUTE ALARM                   ",0		;03
+		DB "HOUR                           ",0		;04
+		DB "HOUR ALARM                     ",0		;05
+		DB "DAY OF WEEK                    ",0		;06
+		DB "DAY                            ",0		;07
+		DB "MONTH                          ",0		;08
+		DB "YEAR                           ",0		;09
+		DB "#20                            ",0		;0A
+		DB "#02                            ",0		;0B
+		DB "#00                            ",0		;0C
+		DB "#80                            ",0		;0D
+		DB "BIT 7=TURBO,BIT 2-0=MEMORY MODE",0		;0E
+		DB "NUMBER VIRTUAL DRIVE           ",0		;0F
+		DB "NUMBER TR-DOS DRIVE            ",0		;10
+		DB "#AA OR #55                     ",0		;11
+EMPTY_STROKA	DB "                               ",0
 
 		DUPL 0X10,0
 DSTUPID		DW _STUPID
