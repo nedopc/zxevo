@@ -192,7 +192,7 @@ void ps2keyboard_task(void)
 		//if need send led data on current stage
 		if ( ((ps2keyboard_cmd_count == 2)&&(ps2keyboard_cmd == PS2KEYBOARD_CMD_SETLED)) )
 		{
-			b = (PS2KEYBOARD_LED_SCROLLOCK|PS2KEYBOARD_LED_NUMLOCK)&modes_register;
+			b = (PS2KEYBOARD_LED_SCROLLOCK|PS2KEYBOARD_LED_NUMLOCK|PS2KEYBOARD_LED_CAPSLOCK)&modes_register;
 			ps2keyboard_send(b);
 			ps2keyboard_cmd_count--;
 		}
