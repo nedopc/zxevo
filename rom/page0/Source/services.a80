@@ -1,7 +1,10 @@
 
-;LAST UPDATE: 06.12.2011 savelij
+;LAST UPDATE: 15.12.2011 savelij
 
-DD		EQU 6				;„€’€
+		include ../../macros.a80
+		include ../../global_vars.a80
+
+DD		EQU 15				;„€’€
 MM		EQU 12				;Œ…‘Ÿ–
 YY		EQU 11				;ƒŽ„
 DATA		EQU DD+(MM<<5)+(YY<<9)+0X8000	;“†… “€ŠŽ‚€Ž
@@ -111,7 +114,7 @@ RSTPAL0		LD A,E
 		OUT (0XFF),A
 		DEC E
 		JP P,RSTPAL0
-END_INIT	LD A,%10100011
+END_INIT	LD A,0XAB
 		LD BC,0XFF77
 		OUT (C),A			;¢ëª«.PAL
 RSTKEYS		LD A,IXL
@@ -264,7 +267,7 @@ START_SELECT	EX AF,AF'			;‘Ž•€…ˆ… € ˆ ”‹€ƒŽ‚
 		EXX
 		LD A,IXL
 		AND A
-		LD D,0XAB
+		LD D,0XA3
 		JR NZ,SET_MODE3
 		LD H,0XEF
 		CALL READCMOS
@@ -378,7 +381,7 @@ szdemoini	EQU $-DEMO
 
 		binclude grass.bin
 
-		include dec40.a80
+		include ../../dec40.a80
 
 LDIR4PROFROM	LD HL,JMP2PROFROM
 		LD DE,JMP2PROFROM+0X8000

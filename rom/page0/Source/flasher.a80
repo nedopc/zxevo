@@ -241,7 +241,7 @@ WRBYTE  ; writes given in A byte to rom at address EHL
         AND     0X3F
 ;;;;;;;;OR      0X00
 
-        LD      BC,WIN_A3	;0XFFF7
+        LD      BC,0XFFF7
         OUT     (C),A    ; page is done
 
         LD      A,H
@@ -276,7 +276,7 @@ RDBYTE  ; read byte (same as WRBYTE), reads in A
         AND     0X3F
 ;;;;;;;;OR      0X00
 
-        LD      BC,WIN_A3	;0XFFF7
+        LD      BC,0XFFF7
         OUT     (C),A    ; page is done
 
         LD      A,H

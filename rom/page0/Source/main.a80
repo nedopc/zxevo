@@ -1,8 +1,18 @@
 
-;LAST UPDATE: 06.12.2011 savelij
+;LAST UPDATE: 17.12.2011 savelij
+	
+		include ../../macros.a80
+		include ../../global_vars.a80
+
+DRV_VAR		EQU 0XD100
+ADR_CAT		EQU DRV_VAR-0X1100		;€„…‘ “”…€ „‹Ÿ „ˆ‘Š…’› ˆ €‰„…›• ”€‰‹Ž‚ € FAT
+
+		include ../../fat_vars.a80
+		include ../../ports_ngs.a80
+		include ../../sdcomand.a80
 
 ;VERSION
-VERSBIOS	EQU "0.46a "
+VERSBIOS	EQU "0.48 "
 
 ;BIT 4,(IY+55)
 ;BIT 3,(IY+55)-0-‡€…’ €ˆŒ€–ˆˆ ŠŽ˜€Š€, 1-€‡…˜…ˆ…
@@ -11,10 +21,6 @@ VERSBIOS	EQU "0.46a "
 
 TO_DOS4BAS	EQU 0X3D13
 TO_DOS		EQU 0X3D2F
-
-ADR_CAT		EQU 0XC000			;€„…‘ “”…€ „‹Ÿ „ˆ‘Š…’› ˆ €‰„…›• ”€‰‹Ž‚ € FAT
-DRV_VAR		EQU ADR_CAT+0X1100		;€„…‘ €—€‹€ ……Œ…›• ”€’€
-BUFFSEC		EQU DRV_VAR
 
 ADRTBLDIRL	EQU 0XF5FF			;‘’…Š ‘Ž•€…ˆŸ „€›• ˆ •Ž†„…ˆˆ Ž „ˆ€Œ
 BUFTSC		EQU 0XF600			;’€‹ˆ–€ €„…‘Ž‚ ‘’ŽŠ Š€€
@@ -31,10 +37,11 @@ CMOS_OFF	EQU 0
 
 KOL_MODES	EQU 4				;ŠŽ‹ˆ—…‘’‚Ž …†ˆŒŽ‚
 
+		ORG 0X6000
 		DI
 		CALL CLEAR_128K
-;		XOR A
-;		CALL SET_EFF7			;‚Š‹ž—…ˆ… ’“› ˆ Ž‹Ž‰ €ŒŸ’ˆ
+		XOR A
+		CALL SET_EFF7			;‚Š‹ž—…ˆ… ’“› ˆ Ž‹Ž‰ €ŒŸ’ˆ
 		LD A,0X10
 		CALL SET_7FFD			;‚Š‹ž—…ˆŠ €‘ˆŠ€48 ˆ ‘’€ˆ–› 0
 		CALL ADRTSC			;‘Ž‡„€ˆ… ’€‹ˆ–› €„…‘Ž‚ ‘’ŽŠ Š€€
@@ -66,10 +73,10 @@ START1		CALL DETECTMOUSE		;Ž…„…‹…ˆ… €‹ˆ—ˆŸ Œ›˜ˆ
 		LD (ARXY),HL			;“‘’€Ž‚Š€ „…”Ž‹’Ž‰ Ž‡ˆ–ˆˆ Œ›˜ˆ ˆ ‘’€’…
 		CALL DISK_NONE
 RESTART		DI
-;		XOR A
-;		CALL SET_EFF7
-;		LD A,0X10
-;		CALL SET_7FFD			;‚Š‹ž—ˆ‹ˆ €‘ˆŠ48 ˆ ‘’€ˆ—Š“ 0
+		XOR A
+		CALL SET_EFF7
+		LD A,0X10
+		CALL SET_7FFD			;‚Š‹ž—ˆ‹ˆ €‘ˆŠ48 ˆ ‘’€ˆ—Š“ 0
 		CALL SYSTEM
 		RES 3,(IY+55)
 		LD SP,0X6000
@@ -740,7 +747,6 @@ TIMELP		CALL PRINTTIME
 		include pc_keys_test.a80
 
 		include flasher.a80
-;		include spg2_run.a80
 
 COM_FAT		include fat/read_fat.a80
 		include fat/fat_boot.a80

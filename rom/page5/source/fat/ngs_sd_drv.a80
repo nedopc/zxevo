@@ -19,18 +19,25 @@ SETUPSD		EQU 0X5B00
 ;A=0-инициализация прошла успешно
 ;A=1-карта не найдена или не ответила
 
-		EX AF,AF'
+COMSDG		EX AF,AF'
+		LD A,IYL
+		AND A
+		LD A,(NEXTBYTERST8)
+		JR Z,COMSDG1
 		EX (SP),HL
 		LD A,(HL)
 		INC HL
 		EX (SP),HL
-		ADD A,A
+COMSDG1		ADD A,A
+		PUSH HL
+		LD HL,RET4SDG
+		EX (SP),HL
 		PUSH HL
 		LD HL,NGSSDT
 		ADD A,L
 		LD L,A
-		LD A,0
 		ADC A,H
+		SUB L
 		LD H,A
 		LD A,(HL)
 		INC HL
@@ -39,6 +46,18 @@ SETUPSD		EQU 0X5B00
 		EX AF,AF'
 		EX (SP),HL
 		RET
+
+RET4SDG		PUSH AF
+		LD A,IYL
+		AND A
+		JR NZ,RET4SDG1
+		LD (REG_L),HL
+		EX (SP),HL
+		LD (REG_F),HL
+		EX (SP),HL
+RET4SDG1	POP AF
+		RET
+
 
 NGSSDT		DW GSDINIT	;ИНИТ SD КАРТЫ
 		DW GSDOFF	;ОТКЛЮЧЕНИЕ SD КАРТЫ
