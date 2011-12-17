@@ -1,11 +1,22 @@
 
-;LAST UPDATE: 27.08.2011 savelij
+;LAST UPDATE: 10.12.2011 savelij
 
-		include ../../macros.a80
-		include fat/sdcomand.a80
-		include fat/ports_ngs.a80
-	
-BUF_512		EQU 0X4000		;0X200 “”… —’…ˆŸ ‘…Š’Ž€
+;ŽŒ…€ ‚›‡›‚€…Œ›• ”“Š–ˆ‰
+Wc_fat		EQU 0X00		;ˆˆ–ˆ€‹ˆ‡€–ˆŸ ……Œ…›•
+Getfzap		EQU 0X01		;Ž‹“—…ˆ… Žˆ‘€’…‹Ÿ ”€‰‹€/„ˆ…Š’Žˆˆ
+Ent_dir		EQU 0X02		;‚•Ž„ ‚ „ˆ“/‚›•Ž„ ˆ‡ „ˆ›
+Openfil		EQU 0X03		;Ž’Š›’ˆ… ”€‰‹€
+Readfil		EQU 0X04		;—’…ˆ… Ž’Š›’ŽƒŽ ”€‰‹€
+Getlong		EQU 0X05		;Ž‹“—…ˆ… €‘€ŠŽ‚€ŽƒŽ „‹ˆŽƒŽ ˆŒ…ˆ
+Positf		EQU 0X06		;€Ž’€ ‘ Ž‡ˆ–ˆ…‰ ’…Š“™…ƒŽ ”€‰‹€
+Prvlegz		EQU 0X07		;Žˆ‘Š …„›„“™…‰ "‹…ƒ€‹œŽ‰ ‡€ˆ‘ˆ"
+Nxtlegz		EQU 0X08		;Žˆ‘Š ‘‹…„“ž™…‰ "‹…ƒ€‹œŽ‰ ‡€ˆ‘ˆ"
+Find_file	EQU 0X09		;“‘’€Ž‚Š€ €„…‘ ‘Š‹€„ˆŽ‚€ˆŸ ˆ ‘ˆ‘Š€ €‘˜ˆ…ˆ‰, €—€‹Ž Žˆ‘Š€
+Next_find	EQU 0X0A		;Žˆ‘Š ”€‰‹Ž‚ Ž €‘˜ˆ…ˆŸŒ
+Load_file	EQU 0X0B		;Ž‘‹…„Ž‚€’…‹œŽ… —’…ˆ… ‘…Š’ŽŽ‚
+Read0sector	EQU 0X0C		;—’…ˆ… …‚ŽƒŽ ‘…Š’Ž€ ”€‰‹€
+
+BUF_512		EQU DRV_VAR		;0X200 “”… ‘…Š’Ž€
 ERORDRV		EQU BUF_512+0X200	;2 ‚Ž‡‚€’ ‘ Ž˜ˆŠŽ‰ ‚ A
 CAL_FAT		EQU ERORDRV+2		;1 Š€‹ˆ FAT
 MANYFAT		EQU CAL_FAT+1		;1 ŠŽ‹ˆ—…‘’‚Ž FAT-’€‹ˆ–
@@ -32,9 +43,11 @@ FREECLS		EQU TEK_LEV+1		;8 ‘Ž•€…›… ……Œ…›… „‹Ÿ Ž’Š€’€
 KOLFIND		EQU FREECLS+8		;2 ŠŽ‹ˆ—…‘’‚Ž €‰„…›• Ž Œ€‘Š… ”€‰‹Ž‚
 AFILCLS		EQU KOLFIND+2		;4 ŽŒ… ’…Š“™…ƒŽ Š‹€‘’…€
 
-		ORG ERORDRV+0X100
-Start_Cod
-		include fat/micro_boot_fat.a80
-End_Cod
+FB_EXT		EQU AFILCLS+4		;B “”… 8.3 „‹Ÿ Žˆ‘Š€ ˆŒ…ˆ
+FOUNDED_FILE	EQU FB_EXT+0X0B		;20 Žˆ‘€’…‹œ €‰„…ŽƒŽ ”€‰‹€
+SAVE_IY		EQU FOUNDED_FILE+0X20	;2 ‚“’……… ‘Ž•€…ˆ… …ƒˆ‘’Ž‚ „‹Ÿ „€‹œ…‰˜…ƒŽ ˆ‘Ž‹œ‡Ž‚€ˆŸ
+ADR_MASK_EXT	EQU SAVE_IY+2		;2 €„…‘ €‘˜ˆ…ˆ‰ ”€‰‹Ž‚ „‹Ÿ Žˆ‘Š€
+ADR_SKLAD	EQU ADR_MASK_EXT+2	;2 €„…‘ ‘Š‹€„ˆŽ‚€ˆŸ €‰„…ŽƒŽ
+MAKS_ADR	EQU ADR_SKLAD+2		;1 ‘’€˜ˆ‰ €‰’ Œ€Š‘ˆŒ€‹œŽƒŽ €„…‘€ “”…€ ‘Š‹€„ˆŽ‚€ˆŸ
 
-;		SAVEBIN "micro_boot_fat.rom",Start_Cod,End_Cod-Start_Cod
+TFILCLS		EQU ERORDRV+0X0100	;? ’€‹ˆ–€ Š‹€‘’…Ž‚ ”€‰‹€, €‡Œ… ‡€‚ˆ‘ˆ’ Ž’ €‡Œ…€ Š‹€‘’…€

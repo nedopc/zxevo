@@ -17,19 +17,28 @@ Rdsingl		EQU 2
 Rdmulti		EQU 3
 
 ;ОБЩАЯ ТОЧКА ВХОДА ДЛЯ РАБОТЫ С SD
-		EX AF,AF'
+COMSDZ		EX AF,AF'
+		LD A,IYL
+		AND A
+		LD A,(NEXTBYTERST8)
+		JR Z,COMSDZ1
 		EX (SP),HL
 		LD A,(HL)
 		INC HL
 		EX (SP),HL
-		ADD A,A
+COMSDZ1		ADD A,A
+		PUSH HL
+		LD HL,RET4SDZ
+		EX (SP),HL
 		PUSH HL
 		LD HL,TABLSDZ
 		ADD A,L
 		LD L,A
-		LD A,H
-		ADC A,0
+		ADC A,H
+		SUB L
 		LD H,A
+		XOR A
+		OUT (PEVO_CONF),A
 		LD A,(HL)
 		INC HL
 		LD H,(HL)
@@ -38,11 +47,24 @@ Rdmulti		EQU 3
 		EX (SP),HL
 		RET
 
-TABLSDZ		DW SD_INIT		;0 параметров не требует, на выходе A
-					;смотри выше первые 2 значения
-		DW SD__OFF		;1 просто вырубает питание карты
-		DW RDSINGL		;2 чтение одного сектора
-		DW RDMULTI		;3 чтение секторов, кол-во в "A"
+RET4SDZ		PUSH AF
+		LD A,IYL
+		AND A
+		JR NZ,RET4SD1
+		LD (REG_L),HL
+		EX (SP),HL
+		LD (REG_F),HL
+		EX (SP),HL
+RET4SD1		LD A,1
+		OUT (PEVO_CONF),A
+		POP AF
+		RET
+
+TABLSDZ		DW SD_INIT			;0 параметров не требует, на выходе A
+						;смотри выше первые 2 значения
+		DW SD__OFF			;1 просто вырубает питание карты
+		DW RDSINGL			;2 чтение одного сектора
+		DW RDMULTI			;3 чтение секторов, кол-во в "A"
 
 SD_INIT		CALL CS_HIGH
 		LD BC,P_DATA

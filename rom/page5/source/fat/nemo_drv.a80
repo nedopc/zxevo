@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 09.02.2010 savelij
+;LAST UPDATE: 08.09.2011 savelij
 
 Hddinit		EQU 0
 Hddoff		EQU 1
@@ -7,18 +7,25 @@ Hddrds		EQU 2
 Hddrdm		EQU 3
 
 ;Ž™€Ÿ ’Ž—Š€ ‚•Ž„€ „‹Ÿ €Ž’› ‘ HDD NEMO
-		EX AF,AF'
+COMHDDN		EX AF,AF'
+		LD A,IYL
+		AND A
+		LD A,(NEXTBYTERST8)
+		JR Z,COMHDDN1
 		EX (SP),HL
 		LD A,(HL)
 		INC HL
 		EX (SP),HL
-		ADD A,A
+COMHDDN1	ADD A,A
+		PUSH HL
+		LD HL,RET4NEMO
+		EX (SP),HL
 		PUSH HL
 		LD HL,TBLHDDN
 		ADD A,L
 		LD L,A
-		LD A,H
-		ADC A,0
+		ADC A,H
+		SUB L
 		LD H,A
 		LD A,(HL)
 		INC HL
@@ -26,6 +33,17 @@ Hddrdm		EQU 3
 		LD L,A
 		EX AF,AF'
 		EX (SP),HL
+		RET
+
+RET4NEMO	PUSH AF
+		LD A,IYL
+		AND A
+		JR NZ,RET4NEMO1
+		LD (REG_L),HL
+		EX (SP),HL
+		LD (REG_F),HL
+		EX (SP),HL
+RET4NEMO1	POP AF
 		RET
 
 TBLHDDN		DW HDDINIT
@@ -49,7 +67,7 @@ P_1F1		EQU 0X30			;Ž’ Ž˜ˆŽŠ/‘‚Ž‰‘’‚
 P_1F0		EQU 0X10			;Ž’ „€›•
 P_3F6		EQU 0XC8			;…ƒˆ‘’ ‘Ž‘’ŽŸˆŸ/“€‚‹…ˆŸ
 P_HI		EQU 0X11			;‘’€˜ˆ… 8 ˆ’
-PRT_RW		EQU P_1F0*256+P_HI		;Ž’› —’…ˆŸ/‡€ˆ‘ˆ Ž„ˆŒ ‘‹Ž‚ŽŒ
+PRT_RW		EQU P_1F0*0X100+P_HI		;Ž’› —’…ˆŸ/‡€ˆ‘ˆ Ž„ˆŒ ‘‹Ž‚ŽŒ
 
 ;€ ‚›•Ž„…:
 ;H-„‹Ÿ MASTER 0-HDD, 1-CDROM, 0XFF-NONE
@@ -75,7 +93,14 @@ HDDINIT		LD A,0XE0
 HDDOFF		RET
 
 INIT_91		PUSH HL
-		LD L,49*2+1
+		PUSH BC
+		LD A,IYL
+		AND A
+		JR NZ,INIT91_1
+		LD BC,WIN_P2
+		LD A,0XFD
+		OUT (C),A
+INIT91_1	LD L,49*2+1
 		LD A,(HL)
 		AND 2
 		JR Z,INI_912
@@ -99,6 +124,15 @@ INI_911		DEC DE
 		IN A,(C)
 		AND 0X80
 		JR NZ,INI_911
+		LD L,A
+		LD A,IYL
+		AND A
+		LD A,L
+		JR NZ,INIT91_2
+		LD BC,WIN_P2
+		XOR A
+		OUT (C),A
+INIT91_2	POP BC
 		POP HL
 		RET
 
@@ -131,32 +165,33 @@ HDDRD3		IN A,(C)
 		JR NZ,HDDRD2
 		POP DE
 		POP BC
-		LD A,B
-		AND 0X0F
-		LD B,A
 		XOR A
 		RET
 
-READSEC		LD A,0X40
-		LD C,P_1F0
-READSC1		REPT 4
-		IN E,(C)
-		INC C
-		IN D,(C)
-		DEC C
-		LD (HL),E
-		INC HL
-		LD (HL),D
-		INC HL
-		ENDM
-		DEC A
-		JR NZ,READSC1
+READSEC		LD A,IYL
+		AND A
+		JR Z,RD2MEM
+;‚“’…ˆ‰ ‚›‡Ž‚. —’…ˆ… ‘…Š’Ž€ ‚Ž ‚“’…ˆ‰ “”…
+		LD BC,P_1F0
+		INIR
+		INIR
+		XOR A
+		RET
+
+;‚…˜ˆ‰ ‚›‡Ž‚. —’…ˆ… ‘…Š’Ž€ ‚ €ŒŸ’œ ‚›‡‚€‚˜…ƒŽ
+RD2MEM		LD BC,WIN_P2
+		LD A,0XFD
+		OUT (C),A
+		LD BC,P_1F0
+		INIR
+		INIR
+		LD BC,WIN_P2
+		XOR A
+		OUT (C),A
 		RET
 
 SETHREG		PUSH DE
-;		CALL COM_DEV
-;		DB 3
-		RST 8
+		CALL ICOM_DEV
 		DB Set_device
 		LD D,B
 		LD E,C
