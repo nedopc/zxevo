@@ -8,6 +8,7 @@ tb_top.v
 ../slave/slavespi.v
 ../sound/sound.v
 ../vg93/vg93.v
+../vg93/fapch_zek.v
 
 ../video/video_addrgen.v
 ../video/video_fetch.v
