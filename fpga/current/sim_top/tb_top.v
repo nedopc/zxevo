@@ -288,6 +288,9 @@ module tb;
 	defparam dramko1._verbose_ = 0;
 	defparam dramko2._verbose_ = 0;
 
+	defparam dramko1._init_ = 0;
+	defparam dramko2._init_ = 0;
+
 
 
 `ifndef GATE
@@ -518,7 +521,7 @@ module tb;
 
 
 
-
+/*
 	// time ticks
 	always
 	begin : timemark
@@ -531,7 +534,21 @@ module tb;
 
 		#10000000.0; // 1 ms
 	end
+*/
 
+
+
+
+	// init dram
+	initial
+	begin
+		integer i;
+
+		for(i=0;i<4*1024*1024;i=i+1)
+		begin
+			put_byte(i,(i%257));
+		end
+	end
 
 
 

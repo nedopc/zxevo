@@ -66,6 +66,9 @@ add wave -noupdate /tb/DUT/dram/rras0_n
 add wave -noupdate /tb/DUT/dram/rras1_n
 add wave -noupdate /tb/DUT/dram/rucas_n
 add wave -noupdate /tb/DUT/dram/rlcas_n
+add wave -noupdate /tb/DUT/dram/rwe_n
+add wave -noupdate -radix hexadecimal /tb/DUT/dram/ra
+add wave -noupdate -radix hexadecimal /tb/DUT/dram/rd
 add wave -noupdate /tb/DUT/dram/cbeg
 add wave -noupdate -radix hexadecimal /tb/DUT/dram/int_addr
 add wave -noupdate -radix hexadecimal /tb/DUT/dram/int_wrdata
@@ -85,6 +88,40 @@ add wave -noupdate -radix hexadecimal /tb/z80/A
 add wave -noupdate -radix hexadecimal /tb/z80/D
 add wave -noupdate -divider <NULL>
 add wave -noupdate -divider <NULL>
+add wave -noupdate /tb/DUT/video_top/clk
+add wave -noupdate /tb/DUT/video_top/cbeg
+add wave -noupdate /tb/DUT/video_top/post_cbeg
+add wave -noupdate /tb/DUT/video_top/pre_cend
+add wave -noupdate /tb/DUT/video_top/cend
+add wave -noupdate -divider <NULL>
+add wave -noupdate -divider <NULL>
+add wave -noupdate /tb/DUT/video_top/int_start
+add wave -noupdate /tb/DUT/video_top/line_start
+add wave -noupdate /tb/DUT/video_top/hpix
+add wave -noupdate /tb/DUT/video_top/vpix
+add wave -noupdate -divider <NULL>
+add wave -noupdate /tb/DUT/video_top/fetch_start
+add wave -noupdate /tb/DUT/video_top/fetch_end
+add wave -noupdate /tb/DUT/video_top/fetch_sync
+add wave -noupdate -divider <NULL>
+add wave -noupdate /tb/DUT/video_top/video_go
+add wave -noupdate -radix hexadecimal /tb/DUT/video_top/video_addr
+add wave -noupdate /tb/DUT/video_top/video_next
+add wave -noupdate -radix hexadecimal /tb/DUT/video_top/video_data
+add wave -noupdate /tb/DUT/video_top/video_strobe
+add wave -noupdate /tb/DUT/video_top/video_bw
+add wave -noupdate -divider <NULL>
+add wave -noupdate -radix hexadecimal /tb/DUT/video_top/pic_bits
+add wave -noupdate -divider <NULL>
+add wave -noupdate -radix unsigned /tb/DUT/video_top/vred
+add wave -noupdate -radix unsigned /tb/DUT/video_top/vgrn
+add wave -noupdate -radix unsigned /tb/DUT/video_top/vblu
+add wave -noupdate -divider <NULL>
+add wave -noupdate -divider <NULL>
+add wave -noupdate -divider <NULL>
+add wave -noupdate -divider <NULL>
+add wave -noupdate -divider <NULL>
+add wave -noupdate -divider <NULL>
 add wave -noupdate -divider <NULL>
 add wave -noupdate -divider <NULL>
 add wave -noupdate -divider <NULL>
@@ -93,7 +130,7 @@ add wave -noupdate -divider <NULL>
 add wave -noupdate -divider <NULL>
 add wave -noupdate -divider <NULL>
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {447762029900 ps} 0} {{Cursor 2} {166348107189 ps} 0}
+WaveRestoreCursors {{Cursor 1} {447762029900 ps} 0} {{Cursor 2} {45952747000 ps} 0} {{Cursor 3} {45950183800 ps} 0}
 configure wave -namecolwidth 353
 configure wave -valuecolwidth 172
 configure wave -justifyvalue left
@@ -108,4 +145,4 @@ configure wave -griddelta 8
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {447760689667 ps} {447763370133 ps}
+WaveRestoreZoom {45946214078 ps} {45954822462 ps}
