@@ -19,6 +19,10 @@ module znmi
 
 
 	input  wire       rfsh_n,
+	input  wire       m1_n,
+	input  wire       mreq_n,
+
+	input  wire       csrom,
 
 
 	output reg        in_nmi, // when 1, there must be last ram page in 0000-3FFF
@@ -37,6 +41,37 @@ module znmi
 	reg [1:0] clr_count;
 
 	reg pending_clr;
+
+
+	reg last_m1_rom;
+
+
+
+
+	//remember whether last M1 opcode read was from ROM or RAM
+	reg m1_n_reg, mreq_n_reg;
+
+	always @(posedge fclk) if( zpos )
+		m1_n_reg <= m1_n;
+
+	always @(posedge fclk) if( zneg )
+		mreq_n_reg <= mreq_n;
+
+	wire was_m1 = ~(m1_n_reg | mreq_n_reg);
+
+	reg was_m1_reg;
+
+	always @(posedge fclk)
+		was_m1_reg <= was_m1;
+
+
+	always @(posedge fclk)
+	if( was_m1 && (!was_m1_reg) )
+		last_m1_rom <= csrom;
+
+
+
+
 
 
 	always @(posedge fclk)
