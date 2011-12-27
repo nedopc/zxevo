@@ -167,7 +167,7 @@ module tb;
 
 	assign zd_dut_to_z80 = tb.DUT.ena_ram ? tb.DUT.dout_ram : ( tb.DUT.ena_ports ? tb.DUT.dout_ports : ( tb.DUT.drive_ff ? 8'hFF : 8'bZZZZZZZZ ) );
 
-	
+
 
 
 
@@ -241,7 +241,7 @@ module tb;
 	//
 	//
 	// special handling for broken T80 WR_n
-	//	
+	//
 	always @(negedge clkz_in)
 		mreq_wr_n <= zwr_n;
 	//
@@ -354,7 +354,7 @@ module tb;
 
 		#1000000000;
 
-		a = 22'h3FC066;	
+		a = 22'h3FC066;
 
 		put_byte(a,8'hF5); a=a+1;
 		put_byte(a,8'hC5); a=a+1;
@@ -377,7 +377,7 @@ module tb;
 		put_byte(a,8'h78); a=a+1;
 
 		put_byte(a,8'h1F); a=a+1;
-		
+
 		put_byte(a,8'hDA); a=a+1;
 		put_byte(a,8'h6A); a=a+1;
 		put_byte(a,8'h00); a=a+1;
@@ -427,14 +427,14 @@ module tb;
 	always @(zm1_n)
 	if( zm1_n )
 		was_m1 <= 1'b0;
-	else 
+	else
 		was_m1 = 1'b1;
 
 	always @(posedge (zmreq_n | zrd_n | zm1_n | (~zrfsh_n)) )
 	if( was_m1 )
 	begin
 		if( (zdd!==old_opcode) || (za!==old_opcode_addr) )
-		begin		
+		begin
 			if( tb.DUT.z80mem.romnram )
 //				$display("Z80OPROM: addr %x, opcode %x, time %t",za,zdd,$time);
 				$display("Z80OPROM: addr %x, opcode %x",za,zdd);
@@ -506,7 +506,7 @@ module tb;
 
 
 
-
+`ifndef NO_PIXER
 	// picture out
 	pixer pixer
 	(
@@ -518,7 +518,7 @@ module tb;
 		.grn(grn),
 		.blu(blu)
 	);
-
+`endif
 
 
 /*
@@ -541,7 +541,7 @@ module tb;
 
 	// init dram
 	initial
-	begin
+	begin : init_dram
 		integer i;
 
 		for(i=0;i<4*1024*1024;i=i+1)
@@ -565,7 +565,7 @@ module tb;
 		input [ 7:0] data;
 
 
-		
+
 		reg [19:0] arraddr;
 
 		begin
