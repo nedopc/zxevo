@@ -58,6 +58,16 @@ module video_addrgen(
 	reg [6:0] txctr; // text X counter
 
 
+	reg scr_page_r;
+	reg not_used;
+
+
+	always @(posedge clk)
+		scr_page_r <= scr_page;
+
+
+
+
 	always @(posedge clk)
 		frame_init_r <= frame_init;
 
@@ -131,7 +141,7 @@ module video_addrgen(
 
 	assign addr_ag = { 5'b00000, ~gctr[0], scr_page, 1'b1, gctr[1], gctr[13:2] };
 
-//	assign addr_at = { 5'b00000, ~txctr[0], scr_page, 1'b1, (^txctr[1:0]), 2'b00, tyctr[7:3], txctr[6:2] };
+//	assign addr_at = { 5'b00000, ~txctr[0], scr_page, 1'b1, (^txctr[1:0]), 2'b00, tyctr[7:3], txctr[6:2] }; // old (incorrect) textmode addressing
 	assign addr_at = { 5'b00000, ~txctr[0], scr_page, 1'b1, txctr[1], 2'b00, tyctr[7:3], txctr[6:2] };
 
 
@@ -139,13 +149,14 @@ module video_addrgen(
 	//
 	always @(posedge clk) if( ldaddr )
 	begin
-		video_addr <=
+		{ video_addr[20:15], not_used, video_addr[13:0] } <=
 			( {21{mode_zx     }} & addr_zx  )  |
 			( {21{mode_p_16c  }} & addr_p16c)  |
 			( {21{mode_p_hmclr}} & addr_phm )  |
 			( {21{mode_ag     }} & addr_ag  )  |
 			( {21{mode_a_text }} & addr_at  )  ;
 
+		video_addr[14] <= scr_page_r;
 	end
 
 
