@@ -57,13 +57,7 @@ module video_addrgen(
 	reg [7:0] tyctr; // text Y counter
 	reg [6:0] txctr; // text X counter
 
-
-	reg scr_page_r;
 	reg not_used;
-
-
-	always @(posedge clk)
-		scr_page_r <= scr_page;
 
 
 
@@ -155,9 +149,11 @@ module video_addrgen(
 			( {21{mode_p_hmclr}} & addr_phm )  |
 			( {21{mode_ag     }} & addr_ag  )  |
 			( {21{mode_a_text }} & addr_at  )  ;
-
-		video_addr[14] <= scr_page_r;
 	end
+
+	always @(posedge clk)
+		video_addr[14] <= scr_page;
+
 
 
 endmodule
