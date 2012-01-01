@@ -1,12 +1,12 @@
 
-;LAST UPDATE: 15.12.2011 savelij
+;LAST UPDATE: 01.01.2011 savelij
 
 		include ../../macros.a80
 		include ../../global_vars.a80
 
-DD		EQU 15				;„€’€
-MM		EQU 12				;Œ…‘Ÿ–
-YY		EQU 11				;ƒŽ„
+DD		EQU 1				;„€’€
+MM		EQU 1				;Œ…‘Ÿ–
+YY		EQU 12				;ƒŽ„
 DATA		EQU DD+(MM<<5)+(YY<<9)+0X8000	;“†… “€ŠŽ‚€Ž
 
 KOL_MODES	EQU 4
