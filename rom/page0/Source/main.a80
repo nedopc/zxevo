@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 17.12.2011 savelij
+;LAST UPDATE: 01.01.2012 savelij
 	
 		include ../../macros.a80
 		include ../../global_vars.a80
@@ -386,7 +386,10 @@ CMOS_ONOFF	LD A,(FLAGS)
 		POP AF
 		CP 0X55
 		LD HL,TIME_OFF
-		CALL Z,NEXT
+		JP NZ,MAINLOP
+		RST 8
+		DB Print_message
+;		CALL Z,NEXT
 		JP MAINLOP
 
 ;‚Š‹ž—…ˆ…/‚›Š‹ž—…ˆ… Š“‘Ž€ Œ›˜ˆ
@@ -440,23 +443,41 @@ PRT_DRV_SYM	LD A,(0X5CF8)
 		ADD A,"A"
 		LD (TXT_DRIVE),A
 		LD HL,TRDDRV_MODE
-		JP NEXT
+		RST 8
+		DB Print_message
+		RET
+;		JP NEXT
 
 ;€‘…—€’Š€ ’…Š“™…ƒŽ …†ˆŒ€
 PRT_MODES	LD HL,SPEED_MODE
-		CALL NEXT
+		RST 8
+		DB Print_message
+;		CALL NEXT
 		LD HL,MEM_MODE
-		CALL NEXT
+		RST 8
+		DB Print_message
+;		CALL NEXT
 		LD HL,EMUTAPLOAD
-		CALL NEXT
+		RST 8
+		DB Print_message
+;		CALL NEXT
 		LD HL,SET_RESET
-		CALL NEXT
+		RST 8
+		DB Print_message
+;		CALL NEXT
 		LD HL,ROMLOADFONT
-		CALL NEXT
+		RST 8
+		DB Print_message
+;		CALL NEXT
 		LD HL,TXT_AYPRINTER
-		CALL NEXT
+		RST 8
+		DB Print_message
+;		CALL NEXT
 		LD HL,TYPESFONT
-		JP NEXT
+		RST 8
+		DB Print_message
+		RET
+;		JP NEXT
 
 ;€‘…—€’Š€ ’…Š“™…ƒŽ ‚ˆ’“€‹œŽƒŽ „ˆ‘ŠŽ‚Ž„€
 PRT_VIRTDRV	LD H,0X0F
@@ -464,13 +485,18 @@ PRT_VIRTDRV	LD H,0X0F
 		ADD A,"A"
 		LD (VIRT_DRIVE),A
 		LD HL,VIRTUAL_DRIVE
-		JP NEXT
+		RST 8
+		DB Print_message
+		RET
+;		JP NEXT
 
 ;‚›‚Ž„ Ž‘Ž‚ŽƒŽ Œ…ž ˆ €„ˆ‘…‰
 S_FACE		LD A,7
 		CALL CLS
 		LD HL,TXTFULLSCR
-		CALL NEXT
+		RST 8
+		DB Print_message
+;		CALL NEXT
 		CALL PRT_DRV_SYM		;…—€’œ ’…Š“™…ƒŽ „ˆ‘ŠŽ‚Ž„€
 		CALL PRT_MODES			;…—€’œ ’…Š“™…ƒŽ …†ˆŒ€
 		CALL PRT_VIRTDRV
