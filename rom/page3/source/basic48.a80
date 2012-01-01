@@ -1,7 +1,7 @@
 
 ;www.fruitcake.plus.com
 
-;LAST UPDATE: 16.05.2011 savelij
+;LAST UPDATE: 01.01.2012 savelij
 
 		include rst8_equ.a80
 
@@ -76,12 +76,13 @@ L0000:  DI                      ; disable interrupts.
 ; through here.
 
 ;; ERROR-1
-L0008
-;		LD HL,($5C5D)		; fetch the character address from CH_ADD.
+L0008		LD B,B
+		LD B,B
 		JP RST8_CMP
 
-L000B		LD ($5C5F),HL		; copy it to the error pointer X_PTR.
-		JR L0053		; forward to continue at ERROR-2.
+		LD HL,($5C5D)		; fetch the character address from CH_ADD.
+;		LD ($5C5F),HL		; copy it to the error pointer X_PTR.
+;		JR L0053		; forward to continue at ERROR-2.
 
 ; -----------------------------
 ; THE 'PRINT CHARACTER' RESTART

@@ -3,6 +3,8 @@
 
 		include ../../macros.a80
 		include ../../global_vars.a80
+		include ../../ports_ngs.a80
+		include ../../sdcomand.a80
 		include rst8_vars.a80
 
 DD		EQU 13				;„€’€
@@ -136,8 +138,8 @@ CONTINUE_PROG	XOR A
 		include call_cmos.a80
 		include window.a80
 		include rst8_data.a80
-		include fat/ports_ngs.a80
-		include fat/sdcomand.a80
+;		include fat/ports_ngs.a80
+;		include fat/sdcomand.a80
 		include fat/dev_drv.a80
 		include fat/ngs_sd_drv.a80
 		include fat/z_sd_drv.a80
@@ -145,9 +147,9 @@ CONTINUE_PROG	XOR A
 		IF SMUC=1
 		include fat/smuc_drv.a80
 		ENDIF
-;		include fat/micro_boot_fat.a80
+
 COM_FAT		include fat/read_fat.a80
-;		include fat/fat_boot.a80
+
 		include ay_printer.a80
 
 		DUPL 0X37F8-$,0XFF
