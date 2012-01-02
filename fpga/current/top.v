@@ -752,6 +752,10 @@ module top(
 		.zneg(zneg),
 
 		.rfsh_n(rfsh_n),
+		.m1_n  (m1_n  ),
+		.mreq_n(mreq_n),
+		.csrom (csrom ),
+		.a     (a     ),
 
 		.int_start(int_start),
 
