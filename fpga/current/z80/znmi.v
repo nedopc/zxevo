@@ -6,28 +6,30 @@
 
 module znmi
 (
-	input  wire       rst_n,
-	input  wire       fclk,
+	input  wire        rst_n,
+	input  wire        fclk,
 
-	input  wire       zpos,
-	input  wire       zneg,
+	input  wire        zpos,
+	input  wire        zneg,
 
-	input  wire       int_start, // when INT starts
-	input  wire [1:0] set_nmi,   // NMI request from slavespi
+	input  wire        int_start, // when INT starts
+	input  wire [ 1:0] set_nmi,   // NMI request from slavespi
 
-	input  wire       clr_nmi, // clear nmi: from zports, pulsed at out to #xxBE
-
-
-	input  wire       rfsh_n,
-	input  wire       m1_n,
-	input  wire       mreq_n,
-
-	input  wire       csrom,
+	input  wire        clr_nmi, // clear nmi: from zports, pulsed at out to #xxBE
 
 
-	output reg        in_nmi, // when 1, there must be last ram page in 0000-3FFF
+	input  wire        rfsh_n,
+	input  wire        m1_n,
+	input  wire        mreq_n,
 
-	output wire       gen_nmi // NMI generator: when 1, NMI_N=0, otherwise NMI_N=Z
+	input  wire        csrom,
+
+	input  wire [15:0] a,
+
+
+	output reg         in_nmi, // when 1, there must be last ram page in 0000-3FFF
+
+	output wire        gen_nmi // NMI generator: when 1, NMI_N=0, otherwise NMI_N=Z
 );
 
 	reg  [1:0] set_nmi_r;
@@ -67,7 +69,7 @@ module znmi
 
 	always @(posedge fclk)
 	if( was_m1 && (!was_m1_reg) )
-		last_m1_rom <= csrom;
+		last_m1_rom <= csrom && (a[15:14]==2'b00);
 
 
 
@@ -116,7 +118,7 @@ module znmi
 	begin
 		if( pending_clr && (clr_count==2'd0) )
 			in_nmi <= 1'b0;
-		else if( pending_nmi && int_start && (!in_nmi) )
+		else if( pending_nmi && int_start && (!in_nmi) && (!last_m1_rom) )
 			in_nmi <= 1'b1;
 	end
 
