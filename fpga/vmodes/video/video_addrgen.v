@@ -28,6 +28,7 @@ module video_addrgen(
 	input  wire        mode_a_hmclr,    //
 	input  wire        mode_a_16c,      //
 	input  wire        mode_a_text,     //
+	input  wire        mode_a_txt_1page,//
 
 	output wire [ 2:0] typos // Y position in text mode symbols
 );
@@ -135,8 +136,30 @@ module video_addrgen(
 
 	assign addr_ag = { 5'b00000, ~gctr[0], scr_page, 1'b1, gctr[1], gctr[13:2] };
 
-//	assign addr_at = { 5'b00000, ~txctr[0], scr_page, 1'b1, (^txctr[1:0]), 2'b00, tyctr[7:3], txctr[6:2] }; // old (incorrect) textmode addressing
-	assign addr_at = { 5'b00000, ~txctr[0], scr_page, 1'b1, txctr[1], 2'b00, tyctr[7:3], txctr[6:2] };
+	//                           5 or 1     +0 or +2  ~4,0  +0k or +2k
+//	assign addr_at = { 5'b00000, ~txctr[0], scr_page, 1'b1, txctr[1], 2'b00, tyctr[7:3], txctr[6:2] };
+//	assign addt_et = { 5'b00001,  1'b0    , scr_page, 1'b0, txctr[0], txctr[1], 0, --//00           };
+
+	assign addr_at = { 4'b0000,
+	                   mode_a_txt_1page, // if 1page, 8 and 10 pages instead of 5,1 and 7,3
+	                   mode_a_txt_1page ? 1'b0 : ~txctr[0], // 5 or 1 pages for usual mode
+	                   scr_page,         // actually not used
+	                   ~mode_a_txt_1page, // 5,1 (not 4,0) pages for usual mode
+	                   mode_a_txt_1page ? txctr[0] : txctr[1], // 0,+2 interleave for even-odd or 0,+1 for 1page
+	                   mode_a_txt_1page ? txctr[1] : 1'b0, // sym/attr interleave 0,+1 for 1page
+	                   1'b0,
+	                   tyctr[7:3],
+	                   txctr[6:2]
+	                   };
+
+
+
+
+
+
+
+
+
 
 
 	initial video_addr <= 0;

@@ -32,6 +32,26 @@ one-page textmode in outter memory (off 128k)
 
 just displacements +0, +1000, +2000, +3000, same format as ATM text mode
 
+was (not accounting for attr shift):
+evensyms: 5 (7) +0000
+oddsyms:  5 (7) +2000
+evenattr: 1 (3) +0000
+oddattr:  1 (3) +2000
+
+will be:
+evensyms: 8 (10) +0000
+oddsyms:  8 (10) +1000
+evenattr: 8 (10) +2001
+oddattr:  8 (10) +3000
+
+rendering sequence:
+es oa os+ea  or es os+
+OR
+es os oa+ea
+
+counter: es ea os oa
+         00 01 10 11
+
 
 
 ЫDE fix

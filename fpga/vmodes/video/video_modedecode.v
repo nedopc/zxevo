@@ -1,6 +1,6 @@
 `include "../include/tune.v"
 
-// Pentevo project (c) NedoPC 2010
+// Pentevo project (c) NedoPC 2010,2011
 //
 // decoding mode setup: which border, which modes in one-hot style coding
 
@@ -24,7 +24,7 @@ module video_modedecode(
 	output reg         mode_a_hmclr, // 640x200 atm hardware multicolor
 	output reg         mode_a_16c,   // 320x200 atm 16 colors
 	output reg         mode_a_text,  // 640x200 (80x25 symbols) atm text mode
-
+	output reg         mode_a_txt_1page, // atm text mode in a single page (modifier for mode_a_text)
 
 	output reg         mode_pixf_14, // =1: 14MHz pixelclock on (default is 7MHz).
 
@@ -46,6 +46,7 @@ module video_modedecode(
 // 3'b010 - 640x200 hardware multicolor
 // 3'b000 - 320x200 16 colors
 // 3'b110 - 80x25 text mode
+// 3'b111 - 80x25 text mode (single page)
 // 3'b??? (others) - not defined yet
 
 
@@ -57,6 +58,7 @@ module video_modedecode(
 			3'b010:  mode_atm_n_pent <= 1'b1;
 			3'b000:  mode_atm_n_pent <= 1'b1;
 			3'b110:  mode_atm_n_pent <= 1'b1;
+			3'b111:  mode_atm_n_pent <= 1'b1;
 
 			3'b011:  mode_atm_n_pent <= 1'b0;
 			default: mode_atm_n_pent <= 1'b0;
@@ -67,6 +69,7 @@ module video_modedecode(
 			3'b010: mode_zx <= 1'b0;
 			3'b000: mode_zx <= 1'b0;
 			3'b110: mode_zx <= 1'b0;
+			3'b111: mode_zx <= 1'b0;
 
 			default: begin
 				if( (pent_vmode==2'b00) || (pent_vmode==2'b11) )
@@ -102,18 +105,22 @@ module video_modedecode(
 			mode_a_16c <= 1'b0;
 		
 
-		if( atm_vmode==3'b110 )
+		if( (atm_vmode==3'b110) || (atm_vmode==3'b111) )
 			mode_a_text <= 1'b1;
 		else
 			mode_a_text <= 1'b0;
 		
+		if( atm_vmode==3'b111 )
+			mode_a_txt_1page <= 1'b1;
+		else
+			mode_a_txt_1page <= 1'b0;
 
 
-		if( (atm_vmode==3'b010) || (atm_vmode==3'b110) )
+
+		if( (atm_vmode==3'b010) || (atm_vmode==3'b110) || (atm_vmode==3'b111) )
 			mode_pixf_14 <= 1'b1;
 		else
 			mode_pixf_14 <= 1'b0;
-
 
 
 
