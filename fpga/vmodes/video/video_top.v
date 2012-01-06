@@ -84,6 +84,7 @@ module video_top(
 	wire mode_a_hmclr;
 	wire mode_a_16c;
 	wire mode_a_text;
+	wire mode_a_txt_1page;
 	wire mode_pixf_14;
 
 
@@ -137,16 +138,14 @@ module video_top(
 		.pent_vmode(pent_vmode),
 		.atm_vmode (atm_vmode),
 
-		.mode_atm_n_pent(mode_atm_n_pent),
-
-		.mode_zx     (mode_zx),
-
-		.mode_p_16c  (mode_p_16c),
-		.mode_p_hmclr(mode_p_hmclr),
-
-		.mode_a_hmclr(mode_a_hmclr),
-		.mode_a_16c  (mode_a_16c),
-		.mode_a_text (mode_a_text),
+		.mode_atm_n_pent (mode_atm_n_pent ),
+		.mode_zx         (mode_zx         ),
+		.mode_p_16c      (mode_p_16c      ),
+		.mode_p_hmclr    (mode_p_hmclr    ),
+		.mode_a_hmclr    (mode_a_hmclr    ),
+		.mode_a_16c      (mode_a_16c      ),
+		.mode_a_text     (mode_a_text     ),
+		.mode_a_txt_1page(mode_a_txt_1page),
 
 		.mode_pixf_14(mode_pixf_14),
 
@@ -225,13 +224,14 @@ module video_top(
 
 		.typos(typos),
 
-		.mode_atm_n_pent(mode_atm_n_pent),
-		.mode_zx        (mode_zx        ),
-		.mode_p_16c     (mode_p_16c     ),
-		.mode_p_hmclr   (mode_p_hmclr   ),
-		.mode_a_hmclr   (mode_a_hmclr   ),
-		.mode_a_16c     (mode_a_16c     ),
-		.mode_a_text    (mode_a_text    )
+		.mode_atm_n_pent (mode_atm_n_pent ),
+		.mode_zx         (mode_zx         ),
+		.mode_p_16c      (mode_p_16c      ),
+		.mode_p_hmclr    (mode_p_hmclr    ),
+		.mode_a_hmclr    (mode_a_hmclr    ),
+		.mode_a_16c      (mode_a_16c      ),
+		.mode_a_text     (mode_a_text     ),
+		.mode_a_txt_1page(mode_a_txt_1page)
 	);
 
 
