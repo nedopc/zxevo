@@ -534,8 +534,11 @@ module zports(
 
 
 
-	assign idedataout = ide_rd_n;
-
+//	assign idedataout = ide_rd_n;
+	assign idedataout = ~ide_wr_n; // shit-fix in try to fix IDE errors
+	// warning: this fix kinda blind-picking, good way is to
+	// have idedataout lead wr or rd strobes. also good point to disable data ringing
+	// on ide data bus while not accessing IDE
 
 
 	// data read by Z80 from IDE
