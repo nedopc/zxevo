@@ -736,7 +736,7 @@ module zports(
 
 
 	// data for SPI module
-	assign sd_datain = wr_n ? 8'hFF : din;
+	assign sd_datain = wr_n ? 8'hFF : din; // TODO: CHANGE to sddat_wr!!!
 
 
 
