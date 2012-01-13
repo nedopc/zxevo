@@ -24,7 +24,8 @@ DATA		EQU DD+(MM<<5)+(YY<<9)+0X8000	;“†… “€ŠŽ‚€Ž
 ;—’…ˆ… €‰’€ ˆ‡ Ž‘Ž‚Ž‰ €ŒŸ’ˆ
 		JP RD_BYTE_48K			;0010
 
-JUMP2PAGE	OUT (C),A			;0013
+		DUPL ADR_SEL_ROM-$,0XFF
+JUMP2PAGE	OUT (C),A
 		NOP
 		RET
 

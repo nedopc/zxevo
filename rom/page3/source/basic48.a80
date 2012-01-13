@@ -98,9 +98,8 @@ L0010:  JP      L15F2           ; jump forward to continue at PRINT-A-2.
 
 ; ---
 
-L0013
-		OUT (C),A
-		NOP
+		DUPL ADR_SEL_ROM-$,0XFF
+L0014		OUT (C),A
 		NOP
 		RET
 

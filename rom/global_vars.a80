@@ -84,3 +84,5 @@ Kol_vol		EQU 2				;02 ‡€Ž‘ €‰„…ŽƒŽ
 Set_device	EQU 3				;03 “‘’€Ž‚Š€ ˆ’Ž‚ “‘’Ž‰‘’‚€ ˆ LBA …†ˆŒ€
 To_drv		EQU 4				;04 ‚›‡Ž‚ „€‰‚…€ ‚›€ŽƒŽ “‘’Ž‰‘’‚€   
 Comhddn		EQU 5				;05 ŸŒŽ‰ ‚›‡Ž‚ „€‰‚…€ HDD NEMO (‚…Œ…€Ÿ ”“Š–ˆŸ)
+
+ADR_SEL_ROM	EQU 0X14
