@@ -143,7 +143,15 @@ UBYTE ps2keyboard_from_log(void)
 	else
 	{
 		ret = ps2keyboard_log_end;
-		if ( ret==0xFE ) ret=0;
+		if ( ret==0xFE )
+		{
+			ret=0;
+		}
+		else
+		{
+			//after reading overload 'FF' - reset log
+			ps2keyboard_reset_log();
+		}
 	}
 	//0 - no data, 0xFF - overload
 	return ret;
@@ -371,7 +379,6 @@ void ps2keyboard_parse(UBYTE recbyte)
 		return; // skip next 7 bytes
 	}
 
-
 	if( (recbyte==last_scancode) && (was_E0==last_scancode_E0) )
 	{
 		if( was_release )
@@ -381,6 +388,7 @@ void ps2keyboard_parse(UBYTE recbyte)
 		}
 		else // was depress
 		{
+			was_E0 = 0;
 			return;
 		}
 	}
@@ -398,8 +406,15 @@ void ps2keyboard_parse(UBYTE recbyte)
 		return;
 	}
 
-
 	to_zx( recbyte, was_E0, was_release ); // send valid scancode to zx decoding stage
+#ifdef LOGENABLE
+	char log_ps2keyboard_parse2[] = "KB(..,.,.)\r\n";
+	log_ps2keyboard_parse2[3] = ((recbyte >> 4) <= 9 )?'0'+(recbyte >> 4):'A'+(recbyte >> 4)-10;
+	log_ps2keyboard_parse2[4] = ((recbyte & 0x0F) <= 9 )?'0'+(recbyte & 0x0F):'A'+(recbyte & 0x0F)-10;
+	log_ps2keyboard_parse2[6] = (was_E0)?'1':'0';
+	log_ps2keyboard_parse2[8] = (was_release)?'1':'0';
+	to_log(log_ps2keyboard_parse2);
+#endif
 
 	was_E0 = 0;
 	was_release = 0;

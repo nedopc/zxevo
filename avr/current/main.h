@@ -7,7 +7,7 @@
  * @section history Revision history
  *
  * @subsection current Current version.
- *
+ * - Fix PS2 keyboard hangup.
  * - Add some controls to C gluk's register.
  * - Add access to PS2 keyboards log via gluk extensions.
  *
