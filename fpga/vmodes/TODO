@@ -2,6 +2,8 @@
 
 
 NMI from ROM: execute M1 at 0066, then swap to ram page FF (savelij request)
+DONE and tested. Need to add somewhere DOSON bit to distinguish ROM NMIs 
+from usual ROM page and from DOSed ROM page.
 
 
 overscreen AVR display: юзаем 1 штуку памяти. Всего 512*8 = 4096 бит.
@@ -16,6 +18,7 @@ AVR access to SDcard: делаем бит в SPI-контроллере для a
 как отсутствие sdкарты. АВРка работает так: бит для залочки (чтение-запись),
 бит для поднятия-опускания CS (запись), регистр чтения-записи, аналогичный по
 функциональности Z-контроллеровскому.
+DONE and tested!!!!
 
 
 readback fontrom: читать symbyte в порт. Для считывания надо руками на экране
@@ -24,6 +27,7 @@ readback fontrom: читать symbyte в порт. Для считывания 
 за 25 строчек - 400. Итого вполне можно считать фонтрому за кадр. На каждую группу
 из 5 символов придётся 20 тактов 7мгц (nowait), вполне достаточно для считывания
 (INI:INC B).
+DONE!!!!   need to make z80 routine for readback (and test)
 
 
 03.01.2012, lvd:

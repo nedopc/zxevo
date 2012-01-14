@@ -1,6 +1,6 @@
 `include "../include/tune.v"
 
-// Pentevo project (c) NedoPC 2010-2011
+// Pentevo project (c) NedoPC 2010,2011,2012
 //
 // top module for video output.
 //
@@ -73,7 +73,9 @@ module video_top(
 	input  wire [ 7:0] fnt_d,
 	input  wire        fnt_wr,
 
-	output wire [ 5:0] palcolor // for palette readback
+	output wire [ 5:0] palcolor, // for palette readback
+
+	output wire [ 7:0] fontrom_readback
 );
 
 	// these decoded in video_modedecode.v
@@ -290,7 +292,9 @@ module video_top(
 
 		.fnt_a (fnt_a ),
 		.fnt_d (fnt_d ),
-		.fnt_wr(fnt_wr)
+		.fnt_wr(fnt_wr),
+
+		.fontrom_readback(fontrom_readback)
 	);
 
 
