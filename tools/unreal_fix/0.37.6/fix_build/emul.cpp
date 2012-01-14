@@ -127,7 +127,9 @@ int __cdecl main(int argc, char **argv)
    // http://sourceforge.net/projects/unrealspeccy/
    // http://alonecoder.narod.ru/
    // http://dlcorp.ucoz.ru/forum/22
-   printf(" *** new versions & sources -> http://dlcorp.nedopc.com/viewforum.php?f=8 ***\n");
+   // http://dlcorp.nedopc.com/viewforum.php?f=8
+   printf(" *** new versions & sources of this fix -> http://pentevo.googlecode.com ***\n");
+   printf(" *** original unreal -> http://dlcorp.nedopc.com/viewforum.php?f=8       ***\n");
 
 #ifndef DEBUG
    SetUnhandledExceptionFilter(filter);
