@@ -284,7 +284,7 @@ module zports(
 
 	always @*
 	begin
-		if( ((loa==PORTFD) && (a[15:14]==2'b11)) || // 0xFFFD ports
+		if( ((loa==PORTFD) && a[15]) || // 0xBFFD/0xFFFD ports
 		    (( (loa==VGCOM)&&shadow ) || ( (loa==VGTRK)&&shadow ) || ( (loa==VGSEC)&&shadow ) || ( (loa==VGDAT)&&shadow )) ) // vg93 ports
 			external_port = 1'b1;
 		else

@@ -144,8 +144,8 @@ module znmi
 	begin
 		if( pending_clr && (!clr_count[1]) )
 			in_nmi <= 1'b0;
-		else if( (pending_nmi && int_start && (!in_nmi) && (!last_m1_rom)) ||
-		         (rfsh_n_reg[1] && (!rfsh_n_reg[0]) && last_m1_0066      ) )
+		else if( (pending_nmi && int_start && (!in_nmi) && (!last_m1_rom))       ||
+		         (rfsh_n_reg[1] && (!rfsh_n_reg[0]) && last_m1_0066 && in_nmi_2) )
 			in_nmi <= 1'b1;
 	end
 
