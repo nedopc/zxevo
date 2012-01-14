@@ -35,8 +35,11 @@ void out(unsigned port, unsigned char val)
    #endif
 
    // z-controller
-   if (conf.zc && (port & 0xFF) == 0x57)
+   if (conf.zc && (port & 0xFF) == 0x57 )
    {
+      if ((port & 0x80FF) == 0x8057 && conf.mem_model == MM_ATM3 
+         &&(comp.flags & CF_DOSPORTS)) 
+         return;
        Zc.Wr(port, val);
        return;
    }
@@ -118,6 +121,25 @@ void out(unsigned port, unsigned char val)
           // 6F = 011|01111b
           // 8F = 100|01111b
           comp.wd_shadow[(p1 >> 5) - 1] = val;
+      }
+
+      if (!(port & 6) && (conf.ide_scheme == IDE_NEMO || conf.ide_scheme == IDE_NEMO_A8)&&conf.mem_model == MM_ATM3)
+      {
+            unsigned hi_byte = (conf.ide_scheme == IDE_NEMO)? (port & 1) : (port & 0x100);
+             if (hi_byte)
+             {
+                 comp.ide_write = val;
+                 return;
+             }
+             if ((port & 0x18) == 0x08)
+             {
+                 if ((port & 0xE0) == 0xC0)
+                     hdd.write(8, val);
+                 return;
+             } // CS1=0,CS0=1,reg=6
+             if ((port & 0x18) != 0x10)
+                 return; // invalid CS0,CS1
+             goto write_hdd_5;
       }
 
       if (conf.ide_scheme == IDE_ATM && (port & 0x1F) == 0x0F)
@@ -643,7 +665,11 @@ __inline unsigned char in1(unsigned port)
 
    // z-controller
    if (conf.zc && (port & 0xFF) == 0x57)
+   {
+      if ((port & 0x80FF) == 0x8057 && conf.mem_model == MM_ATM3 
+         &&(comp.flags & CF_DOSPORTS)) return (unsigned char)0xFF;
        return Zc.Rd(port);
+   }
 
    if(conf.mem_model == MM_ATM3)
    {
@@ -732,6 +758,19 @@ __inline unsigned char in1(unsigned port)
           // 8F = 100|01111b
           return comp.wd_shadow[(p1 >> 5) - 1];
       }
+
+      if (!(port & 6) && (conf.ide_scheme == IDE_NEMO || conf.ide_scheme == IDE_NEMO_A8)&&conf.mem_model == MM_ATM3 )
+       {
+          unsigned hi_byte = (conf.ide_scheme == IDE_NEMO)? (port & 1) : (port & 0x100);
+          if(hi_byte)
+              return comp.ide_read;
+          comp.ide_read = 0xFF;
+          if((port & 0x18) == 0x08)
+              return ((port & 0xE0) == 0xC0)? hdd.read(8) : 0xFF; // CS1=0,CS0=1,reg=6
+          if((port & 0x18) != 0x10)
+              return 0xFF; // invalid CS0,CS1
+          goto read_hdd_5;
+       }
 
       if (conf.ide_scheme == IDE_ATM && (port & 0x1F) == 0x0F)
       {
