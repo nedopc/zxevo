@@ -1,6 +1,6 @@
 `include "../include/tune.v"
 
-// Pentevo project (c) NedoPC 2008-2011
+// Pentevo project (c) NedoPC 2008-2012
 //
 // top-level
 
@@ -193,7 +193,6 @@ module top(
 	wire intrq,drq;
 	wire vg_wrFF;
 
-	wire [1:0] rstrom;
 
 
 
@@ -253,8 +252,20 @@ module top(
 	wire go;
 
 
-	wire sd_start;
-	wire [7:0] sd_dataout,sd_datain;
+	// AVR SDcard control
+	wire       avr_lock_claim,
+	           avr_lock_grant,
+	           avr_sdcs_n,
+	           avr_sd_start;
+     	wire [7:0] avr_sd_datain;
+	wire [7:0] avr_sd_dataout;
+
+	// ZX SDcard control
+	wire       zx_sdcs_n_val,
+	           zx_sdcs_n_stb,
+	           zx_sd_start;
+	wire [7:0] zx_sd_datain;
+	wire [7:0] zx_sd_dataout;
 
 
 	wire tape_read; // data for tapein
@@ -339,6 +350,11 @@ module top(
 
 	wire       atm_palwr;
 	wire [5:0] atm_paldata;
+
+	wire [7:0] fontrom_readback;
+
+
+
 
 	wire int_start;
 
@@ -627,7 +643,9 @@ module top(
 		.fnt_d (d      ),
 		.fnt_wr(fnt_wr ),
 
-		.palcolor(palcolor)
+		.palcolor(palcolor),
+
+		.fontrom_readback(fontrom_readback)
 	);
 
 
@@ -637,7 +655,7 @@ module top(
 		.spics_n(spics_n), .spidi(spidi),
 		.spido(spido), .spick(spick),
 		.status_in({/* wait_rnw */ wr_n, waits[6:0]}), .genrst(genrst),
-		.rstrom(rstrom), .kbd_out(kbd_data),
+		.kbd_out(kbd_data),
 		.kbd_stb(kbd_stb), .mus_out(mus_data),
 		.mus_xstb(mus_xstb), .mus_ystb(mus_ystb),
 		.mus_btnstb(mus_btnstb), .kj_stb(kj_stb),
@@ -647,7 +665,14 @@ module top(
 		.wait_read(wait_read),
 		.wait_rnw(wait_rnw),
 		.wait_end(wait_end),
-		.config0( { not_used[7:4], beeper_mux, tape_read, set_nmi[0], cfg_vga_on} )
+		.config0( { not_used[7:4], beeper_mux, tape_read, set_nmi[0], cfg_vga_on} ),
+
+		.sd_lock_out(avr_lock_claim),
+		.sd_lock_in (avr_lock_grant),
+		.sd_cs_n    (avr_sdcs_n    ),
+		.sd_start   (avr_sd_start  ),
+		.sd_datain  (avr_sd_datain ),
+		.sd_dataout (avr_sd_dataout)
 	);
 
 	zkbdmus zkbdmus( .fclk(fclk), .rst_n(rst_n),
@@ -665,12 +690,16 @@ module top(
 	               .a(a), .iorq_n(iorq_n), .rd_n(rd_n), .wr_n(wr_n), .porthit(porthit),
 	               .ay_bdir(ay_bdir), .ay_bc1(ay_bc1), .border(border),
 	               .p7ffd(p7ffd), .peff7(peff7), .mreq_n(mreq_n), .m1_n(m1_n), .dos(dos),
-	               .rstrom(rstrom), .vg_intrq(intrq), .vg_drq(drq), .vg_wrFF(vg_wrFF),
-	               .vg_cs_n(vg_cs_n), .sd_start(sd_start), .sd_dataout(sd_dataout),
-	               .sd_datain(sd_datain), .sdcs_n(sdcs_n),
+	               .vg_intrq(intrq), .vg_drq(drq), .vg_wrFF(vg_wrFF), .vg_cs_n(vg_cs_n),
 	               .idein(idein), .ideout(ideout), .idedataout(idedataout),
 	               .ide_a(ide_a), .ide_cs0_n(ide_cs0_n), .ide_cs1_n(ide_cs1_n),
 	               .ide_wr_n(ide_wr_n), .ide_rd_n(ide_rd_n),
+
+		       .sd_cs_n_val(zx_sdcs_n_val),
+		       .sd_cs_n_stb(zx_sdcs_n_stb),
+		       .sd_start   (zx_sd_start  ),
+		       .sd_datain  (zx_sd_datain ),
+		       .sd_dataout (zx_sd_dataout),
 
 	               .keys_in(kbd_port_data),
 	               .mus_in (mus_port_data),
@@ -723,6 +752,7 @@ module top(
 		.dos7ffds( rd_dos7ffd ),
 
 		.palcolor(palcolor),
+		.fontrom_readback(fontrom_readback),
 
 		.external_port(external_port),
 
@@ -794,8 +824,33 @@ module top(
 
 
 
-	spi2 zspi( .clock(fclk), .sck(sdclk), .sdo(sddo), .sdi(sddi), .start(sd_start),
-	           .speed(2'b00), .din(sd_datain), .dout(sd_dataout) );
+//	spi2 zspi( .clock(fclk), .sck(sdclk), .sdo(sddo), .sdi(sddi), .start(sd_start),
+//	           .speed(2'b00), .din(sd_datain), .dout(sd_dataout) );
+	spihub spihub(
+
+		.fclk (fclk ),
+		.rst_n(rst_n),
+
+		.sdcs_n(sdcs_n),
+		.sdclk (sdclk ),
+		.sddo  (sddo  ),
+		.sddi  (sddi  ),
+
+		.zx_sdcs_n_val(zx_sdcs_n_val),
+		.zx_sdcs_n_stb(zx_sdcs_n_stb),
+		.zx_sd_start  (zx_sd_start  ),
+		.zx_sd_datain (zx_sd_datain ),
+		.zx_sd_dataout(zx_sd_dataout),
+
+		.avr_lock_in   (avr_lock_claim),
+		.avr_lock_out  (avr_lock_grant),
+		.avr_sdcs_n    (avr_sdcs_n    ),
+		.avr_sd_start  (avr_sd_start  ),
+		.avr_sd_datain (avr_sd_datain ),
+		.avr_sd_dataout(avr_sd_dataout)
+
+
+	);
 
 
 

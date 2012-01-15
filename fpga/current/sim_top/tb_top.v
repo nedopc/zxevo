@@ -62,6 +62,14 @@ module tb;
 
 
 
+	// sdcard
+	wire sdcs_n, sddo, sddi, sdclk;
+
+	// avr
+	wire spick, spidi, spido, spics_n;
+
+
+
 
 	assign zwait_n = (wait_n==1'b0) ? 1'b0 : 1'b1;
 	assign znmi_n = (nmi_n==1'b0) ? 1'b0 : 1'b1;
@@ -147,12 +155,16 @@ module tb;
 	         .vg_wd(1'b0),
 
 	         // SDcard SPI
-	         .sddi(1'b1),
+	         .sddi(sddi),
+	         .sddo(sddo),
+	         .sdcs_n(sdcs_n),
+	         .sdclk(sdclk),
 
 	         // ATmega SPI
-	         .spics_n(1'b1),
-	         .spick(1'b0),
-	         .spido(1'b1),
+	         .spics_n(spics_n),
+	         .spick(spick),
+	         .spido(spido),
+	         .spidi(spidi),
 
 		 .vhsync(hsync),
 		 .vvsync(vsync),
@@ -554,6 +566,33 @@ module tb;
 
 
 
+
+`ifdef SPITEST
+	// spitest printing module
+	// does not hurt at any time (yet), so attached forever
+
+	spitest_print spitest_print(
+		.sdclk (sdclk ),
+		.sddi  (sddi  ),
+		.sddo  (sddo  ),
+		.sdcs_n(sdcs_n)
+	);
+
+	// spitest AVR imitator
+
+	spitest_avr spitest_avr(
+		.spick  (spick  ),
+		.spics_n(spics_n),
+		.spido  (spido  ),
+		.spidi  (spidi  )
+	);
+`else
+	assign sddi = 1'b1;
+
+	assign spics_n = 1'b1;
+	assign spick   = 1'b0;
+	assign spido   = 1'b1;
+`endif
 
 
 

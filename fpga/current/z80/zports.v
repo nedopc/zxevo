@@ -1,4 +1,4 @@
-// PentEvo project (c) NedoPC 2008-2010
+// PentEvo project (c) NedoPC 2008-2012
 //
 // most of pentevo ports are here
 
@@ -54,8 +54,6 @@ module zports(
 	output wire [ 7:0] p7ffd,
 	output wire [ 7:0] peff7,
 
-	input  wire [ 1:0] rstrom,
-
 	input  wire        tape_read,
 
 	output wire        vg_cs_n,
@@ -63,7 +61,8 @@ module zports(
 	input  wire        vg_drq, // from vg93 module - drq + irq read
 	output wire        vg_wrFF,        // write strobe of #FF port
 
-	output reg         sdcs_n,
+	output wire        sd_cs_n_val,
+	output wire        sd_cs_n_stb,
 	output wire        sd_start,
 	output wire [ 7:0] sd_datain,
 	input  wire [ 7:0] sd_dataout,
@@ -116,6 +115,7 @@ module zports(
 	input  wire [ 7:0] dos7ffds,
 
 	input  wire [ 5:0] palcolor,
+	input  wire [ 7:0] fontrom_readback,
 
 
 	// NMI generation
@@ -123,7 +123,6 @@ module zports(
 );
 
 
-	reg rstsync1,rstsync2;
 
 
 	localparam PORTFE = 8'hFE;
@@ -285,7 +284,7 @@ module zports(
 
 	always @*
 	begin
-		if( ((loa==PORTFD) && (a[15:14]==2'b11)) || // 0xFFFD ports
+		if( ((loa==PORTFD) && a[15]) || // 0xBFFD/0xFFFD ports
 		    (( (loa==VGCOM)&&shadow ) || ( (loa==VGTRK)&&shadow ) || ( (loa==VGSEC)&&shadow ) || ( (loa==VGDAT)&&shadow )) ) // vg93 ports
 			external_port = 1'b1;
 		else
@@ -598,13 +597,13 @@ module zports(
 			p7ffd_int <= din; // 2..0 - page, 3 - screen, 4 - rom, 5 - block48k, 6..7 -
 	end
 
-	always @(posedge zclk)
-	begin
-		if( rstsync2 )
-			p7ffd_rom_int <= rstrom[0];
-		else if( (a[15]==1'b0) && portfd_wr && (!block7ffd) )
+	always @(posedge zclk, negedge rst_n)
+	if( !rst_n )
+			p7ffd_rom_int <= 1'b0;
+	else
+		if( (a[15]==1'b0) && portfd_wr && (!block7ffd) )
 			p7ffd_rom_int <= din[4];
-	end
+
 
 	assign block7ffd=p7ffd_int[5] & block1m;
 
@@ -699,14 +698,6 @@ module zports(
 
 
 
-// reset rom selection
-
-	always @(posedge zclk)
-	begin
-		rstsync1<=~rst_n;
-		rstsync2<=rstsync1;
-	end
-
 
 
 
@@ -723,23 +714,16 @@ module zports(
 	assign sddat_rd = ( (loa==SDDAT) && port_rd_fclk              );
 
 	// SDCFG write - sdcs_n control
-	always @(posedge fclk, negedge rst_n)
-	begin
-		if( !rst_n )
-			sdcs_n <= 1'b1;
-		else // posedge zclk
-			if( sdcfg_wr )
-				sdcs_n <= din[1];
-	end
+	assign sd_cs_n_stb = sdcfg_wr;
+	assign sd_cs_n_val = din[1];
 
 
 	// start signal for SPI module with resyncing to fclk
 
 	assign sd_start = sddat_wr || sddat_rd;
 
-
 	// data for SPI module
-	assign sd_datain = wr_n ? 8'hFF : din;
+	assign sd_datain = sddat_rd ? 8'hFF : din;
 
 
 
@@ -857,13 +841,16 @@ module zports(
 	4'hA: portbemux = p7ffd_int;
 	4'hB: portbemux = peff7_int;
 
-	4'hC: portbemux = { ~atm_pen2, atm_cpm_n, ~atm_pen, 1'bX, atm_turbo, atm_scr_mode };
+	4'hC: portbemux = { ~atm_pen2, atm_cpm_n, ~atm_pen, dos, atm_turbo, atm_scr_mode };
 
 	4'hD: portbemux = { ~palcolor[4], ~palcolor[2], ~palcolor[0], ~palcolor[5], 2'b11, ~palcolor[3], ~palcolor[1] };
 //	assign atm_paldata = { ~din[4], ~din[7], ~din[1], ~din[6], ~din[0], ~din[5] };
 //  {GgRrBb} -> {grbG11RB}
 // was: 76543210 -> 471605
 // now:             543210 -> 4205xx31
+
+	4'hE: portbemux = fontrom_readback;
+
 
 	default: portbemux = 8'bXXXXXXXX;
 

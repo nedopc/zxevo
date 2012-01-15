@@ -44,7 +44,10 @@ module video_render(
 	input  wire        mode_a_16c,      //
 	input  wire        mode_a_text,     //
 
-	input  wire        mode_pixf_14     //
+	input  wire        mode_pixf_14,    //
+
+
+	output wire [ 7:0] fontrom_readback
 );
 
 
@@ -179,6 +182,9 @@ module video_render(
 		.rden     ( rom_ena          ),
 		.q        ( symbyte          )
 	);
+
+
+	assign fontrom_readback = symbyte;
 
 
 endmodule
