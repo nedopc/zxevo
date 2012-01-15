@@ -63,7 +63,7 @@ SRCS=emul.cpp std.cpp atm.cpp cheat.cpp config.cpp dbgbpx.cpp dbgcmd.cpp dbglabl
         snd_bass.cpp sound.cpp sshot_png.cpp tape.cpp util.cpp vars.cpp \
         vs1001.cpp wd93cmd.cpp wd93crc.cpp wd93dat.cpp wd93trk.cpp \
         wldr_fdi.cpp wldr_isd.cpp wldr_pro.cpp wldr_td0.cpp wldr_trd.cpp wldr_udi.cpp \
-        z80.cpp z80asm.cpp zc.cpp
+        z80.cpp z80asm.cpp zc.cpp zxevo.cpp
 
 OBJS=$(SRCS:.cpp=.obj)
 

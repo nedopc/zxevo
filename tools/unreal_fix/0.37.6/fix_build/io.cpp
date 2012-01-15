@@ -10,6 +10,7 @@
 #include "sdcard.h"
 #include "zc.h"
 #include "tape.h"
+#include "zxevo.h"
 
 void out(unsigned port, unsigned char val)
 {
@@ -686,8 +687,11 @@ __inline unsigned char in1(unsigned port)
            }
            case 0xA: return comp.p7FFD;
            case 0xB: return comp.pEFF7; // lvd - added EFF7 reading in pentevo (atm3)
-           case 0xC: return ((comp.aFF77 >> 14) << 7) | ((comp.aFF77 >> 9) << 6) | ((comp.aFF77 >> 8) << 5) | (comp.pFF77 & 0xF);
+
+           // lvd: fixed bug with no-anding bits from aFF77, added CF_TRDOS to bit 4
+           case 0xC: return (((comp.aFF77 >> 14) << 7) & 0x0080) | (((comp.aFF77 >> 9) << 6) & 0x0040) | (((comp.aFF77 >> 8) << 5) & 0x0020) | ((comp.flags & CF_TRDOS)?0x0010:0) | (comp.pFF77 & 0xF);
            case 0xD: return atm_readpal();
+		   case 0xE: return zxevo_readfont();
            }
        }
    }
