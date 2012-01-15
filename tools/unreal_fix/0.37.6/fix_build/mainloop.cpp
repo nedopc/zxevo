@@ -12,6 +12,7 @@
 #include "emulkeys.h"
 #include "vs1001.h"
 #include "z80.h"
+#include "zxevo.h"
 
 #include "util.h"
 
@@ -23,6 +24,7 @@ void spectrum_frame()
    init_snd_frame();
    init_frame();
 
+   zxevo_set_readfont_pos(); // init readfont position to simulate correct font reading for zxevo -- lvd
    if(cpu.dbgchk)
    {
        cpu.SetDbgMemIf();
