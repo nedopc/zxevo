@@ -1,6 +1,6 @@
 `include "../include/tune.v"
 
-// Pentevo project (c) NedoPC 2011
+// Pentevo project (c) NedoPC 2011-2012
 //
 // address generation module for video data fetching
 
