@@ -252,9 +252,13 @@ L0055:  LD      (IY+$00),L      ; store it in the system variable ERR_NR.
 
 ; ---
 
-        DB    $FF, $FF, $FF   ; unused locations
-        DB    $FF, $FF, $FF   ; before the fixed-position
-        DB    $FF             ; NMI routine.
+;        DB    $FF, $FF, $FF   ; unused locations
+;        DB    $FF, $FF, $FF   ; before the fixed-position
+;        DB    $FF             ; NMI routine.
+
+L0070		POP HL		; restore the
+		POP AF		; registers.
+		RETN		; return to previous interrupt state.
 
 ; ------------------------------------
 ; THE 'NON-MASKABLE INTERRUPT' ROUTINE
@@ -270,7 +274,9 @@ L0055:  LD      (IY+$00),L      ; store it in the system variable ERR_NR.
 ; routine was reversed.
 
 ;; RESET
-L0066		PUSH AF		; save the
+		DUPL 0X0066-$,0XFF
+L0066		NOP
+		PUSH AF		; save the
 		PUSH HL		; registers.
 		LD HL,($5CB0)	; fetch the system variable NMIADD.
 		LD A,H		; test address
@@ -280,9 +286,9 @@ L0066		PUSH AF		; save the
 		JP (HL)		; jump to routine ( i.e. L0000 )
 
 ;; NO-RESET
-L0070		POP HL		; restore the
-		POP AF		; registers.
-		RETN		; return to previous interrupt state.
+;L0070		POP HL		; restore the
+;		POP AF		; registers.
+;		RETN		; return to previous interrupt state.
 
 ; ---------------------------
 ; THE 'CH ADD + 1' SUBROUTINE
@@ -294,6 +300,7 @@ L0070		POP HL		; restore the
 ; Both TEMP-PTR1 and TEMP-PTR2 are used by the READ command routine.
 
 ;; CH-ADD+1
+		DUPL 0X0074-$,0XFF
 L0074:  LD      HL,($5C5D)      ; fetch address from CH_ADD.
 
 ;; TEMP-PTR1

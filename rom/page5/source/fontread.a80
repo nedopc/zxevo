@@ -1,0 +1,293 @@
+
+; Пример чтения фонтрома в пентеве
+;
+; (c) lvd^nedopc 2012
+;
+; сорец для аласма
+
+;ПЕРЕДЕЛКА ДЛЯ КОМПИЛЯЦИИ В СОСТАВЕ EVO RESET SERVICE 18.01.2012 savelij
+
+;START   EQU     #6000
+ ;       ORG     START
+
+FREAD		EQU 0X8000+OFFSET_FNTSAVE-0X800
+FONT		EQU 0X8000+OFFSET_FNTSAVE;0XD800
+;FLDIR		EQU 0XD800
+
+SCAN_FONT
+;        DI 
+
+;        LD      A,1
+;        OUT     (0XFE),A
+
+        XOR     A
+        OUT     (PEVO_CONF),A
+
+        LD      BC,0XEFF7
+        OUT     (C),A   ;ставим ефф7, который доступен только в нешедоу-режиме
+
+        INC     A
+        OUT     (PEVO_CONF),A
+
+        LD      A,0XA7
+        LD      BC,0XFF77
+        OUT     (C),A     ;включаем новый пентевный текстмод - 1-страничный
+                          ; заодно ефф7 и фф77 ставят нам 7 МГц частоту
+
+        CALL    OUTPAGE   ;выводим все символы на экран
+
+LOOP
+        CALL    SYNCREAD   ;считываем фонтром методом чтения байтиков, которые на экране
+        JP    DECODEFONT ; перекодируем в обычный формат фонтрома ИИНВЕРТИМ СЧИТАННЫЙ ФОНТ
+;        CALL    INVERTFONT ; инвертируем все байты фонта
+;        CALL    WRITEFONT  ; пишем взад
+
+;        LD      A,0X7F
+;        IN      A,(0XFE)
+;        RRA 
+;        JR      C,LOOP     ;итого всё мигает пока не нажмём any key
+
+;        LD      A,0XFF
+;        LD      BC,WIN_A3
+;        OUT     (C),A
+
+;        LD      A,0XA3
+;        LD      BC,0XFF77
+;        OUT     (C),A ; восстанавливаем 6912-режим
+
+;        XOR     A
+;        OUT     (PEVO_CONF),A ;закрываем шедоу
+
+;        RET 
+
+
+
+OUTPAGE
+;        LD      A,0X7F-8    ;где находится 1страничный текстмод (см доку)
+;        LD      BC,WIN_A3
+;        OUT     (C),A
+
+;        LD      HL,0XC000   ; ставим атрибуты. Не обязательно, чтоб символы были видимы,
+;        LD      DE,0XC001   ; можно нафигачить нулей
+;        LD      (HL),0X01;5
+;        LD      BC,0X3FFF
+;        LDIR 
+
+		LD HL,0XE1C0
+		LD D,H
+		LD E,L
+		INC DE
+		LD BC,0X40*25
+		LD (HL),0
+		LDIR
+		LD HL,0XF1C0
+		LD D,H
+		LD E,L
+		INC DE
+		LD BC,0X40*25
+		LD (HL),0
+		LDIR
+
+        XOR     A         ; код печатаемого символа
+        LD      HL,0XC1C0  ; откуда начинаем печатать
+        LD      DE,64-40
+        LD      C,25      ; сколько строк печатаем. Достаточно напечатать 16 строк сверху.
+STRLOOP
+        LD      B,80/5
+SYMLOOP
+        CALL    PRINC  ; повторяем каждый символ 5 раз
+        CALL    PRINC 
+        CALL    PRINC
+        CALL    PRINC
+        CALL    PRINC
+
+        INC     A 
+
+        DJNZ    SYMLOOP
+
+        ADD     HL,DE ; смещение на следующую строку
+
+        DEC     C
+        JR      NZ,STRLOOP
+
+        RET 
+
+PRINC   ; печатаем символ и апдейтим указатель в HL на следующий символ
+        LD      (HL),A
+        BIT     4,H
+        SET     4,H
+        RET     Z
+        RES     4,H
+        INC     HL
+        RET 
+
+SYNCREAD
+
+        ; эта процедура должна выполняться при частоте процессора 7 МГц!!!!!!!
+
+        ; сначала включаем IM 2 и делаем таблички для него
+        DI 
+;        IM      2   
+
+        ; setup IM2 tables
+
+;        LD      HL,INTTAB
+;        LD      A,1
+;        LD      I,A
+;        INC     A
+
+;        LD      (HL),A
+;        INC     L
+;        JR      NZ,$-2
+
+;        INC     H
+;        LD      (HL),A
+
+;        LD      L,H
+;        LD      (HL),0XC3 ; JP
+;        INC     HL
+;        LD      (HL)LOW (INTPROC)
+;        INC     HL
+;        LD      (HL),HIGH (INTPROC)
+
+
+        LD      HL,FREAD ; заранее ставим куда будем читать фонт
+
+        EI   
+        HALT 
+        EI 
+        HALT ; делаем халт чтоб после инта и задержки попасть чтением спецпорта прямо
+             ; в момент начала отображения символов. делаем халт 2 раза, чтоб убедиццо,
+             ; что инт будет схвачен в своем начале, а не в середине.
+             ; обработчик инта - сначала JP, потом RET.
+
+
+
+
+        ; делаем задержку до момента отображения первого символа. Он повторяется 5 раз,
+        ; а первая команда INI попадает циклом ввода примерно в середину этих
+        ; 5 символов
+        LD      BC,0
+        LD BC,0
+        LD      B,2
+        DJNZ    $
+        LD      D,76
+LINWAIT
+        LD      BC,256*33
+        DJNZ    $
+        DEC     D
+        JP      NZ,LINWAIT
+        LD      BC,0X0EBE  ; заодно в процессе задержки грузим адрес порта
+        LD      D,128     ; и счётчик для 128 строк
+
+
+READLOOP
+        ; читаем 16 байт. Как раз INI:INC B выполняется за 20 тактов, и 5 символов
+        ; длятся тоже 20 тактов (@7MHz nowait)
+       REPT     16
+        INI 
+        INC     B
+       ENDM 
+
+        LD      E,7    ; просираем оставшееся время строки
+        DEC     E
+        JR      NZ,$-1
+
+        DEC     D
+        JP      NZ,READLOOP ; итого весь этот луп занимает 448 тактов
+
+
+        ; всё считали, идём на йух...
+        DI 
+ ;       IM      1
+        RET 
+
+INTPROC ; обработчег инта :)
+        RET 
+
+
+
+
+DECODEFONT
+        
+        ; перекодируем считанный фонт в обычный формат
+
+        LD      HL,FREAD
+        LD      DE,FONT
+
+
+        LD      IXH,16
+DF256L
+        LD      IXL,16
+DF16L
+        LD      BC,16
+       REPT     8
+        LD      A,(HL)
+        ADD     HL,BC
+        LD      (DE),A
+        INC     DE
+       ENDM 
+
+        LD      BC,1-128
+        ADD     HL,BC
+
+        DEC     IXL
+        JR      NZ,DF16L
+
+        LD      BC,128-16
+        ADD     HL,BC
+
+        DEC     IXH
+        JR      NZ,DF256L
+
+        RET 
+
+
+
+;INVERTFONT
+
+        ; инвертируем фонт
+
+;        LD      HL,FONT
+;        LD      BC,2048
+;IFLOOP
+;        LD      A,(HL)
+;        CPL 
+;        LD      (HL),A
+;        CPI 
+;        JP      PE,IFLOOP
+
+;        RET 
+
+
+
+;WRITEFONT
+
+        ; пишем фонт обратно в фонтром
+
+;        LD      A,0X05
+;        OUT     (PEVO_CONF),A
+
+;        LD      HL,FONT
+;        LD      DE,FLDIR ; лдирим из озу в озу -- всё работает
+;        LD      BC,2048
+;        LDIR 
+
+;        LD      A,1
+;        OUT     (PEVO_CONF),A
+;        RET 
+
+
+
+;        ORG     ($+255)&0XFF00
+;INTTAB
+;        DS      512
+
+
+;FREAD   DS      2048
+;FONT    DS      2048
+
+;FLDIR   EQU     FONT & 0XF800
+
+;ENDD
+;        ORG     START

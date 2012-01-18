@@ -6,33 +6,33 @@ COLOR1		EQU 0X0B
 COLOR2		EQU 0X22
 
 		ORG 0
-START           DI
+TEST_TXTMODE	DI
 		LD SP,0X6000
-                LD BC,0XFF77
-                LD A,0XA3		;SPECTRUM SCREEN
-                OUT (C),A
-                XOR A
-                CALL SET_7FFD
-                LD HL,0X4000
-                LD DE,0X4001
-                LD BC,0X1800
-                LD (HL),L
-                LDIR
-                LD D,H
-                LD E,L
-                INC DE
-                LD BC,0X300
-                LD (HL),0X39
-                LDIR
-                LD A,1
-                OUT (0XFE),A
-                LD DE,0X4808		;ÄÑêÖë èÖóÄíà çÄ ùäêÄçÖ
-                LD HL,TEXT_SPMODE
-                CALL PRINT
-                LD DE,0X48E2
-                LD HL,PRESS_SPACE
-                CALL PRINT
-                CALL WAIT_KEYS
+		LD BC,0XFF77
+		LD A,0XA3		;SPECTRUM SCREEN
+		OUT (C),A
+		XOR A
+		CALL SET_7FFD
+		LD HL,0X4000
+		LD DE,0X4001
+		LD BC,0X1800
+		LD (HL),L
+		LDIR
+		LD D,H
+		LD E,L
+		INC DE
+		LD BC,0X300
+		LD (HL),0X39
+		LDIR
+		LD A,1
+		OUT (0XFE),A
+		LD DE,0X4808		;ÄÑêÖë èÖóÄíà çÄ ùäêÄçÖ
+		LD HL,TEXT_SPMODE
+		CALL PRINT
+		LD DE,0X48E2
+		LD HL,PRESS_SPACE
+		CALL PRINT
+		CALL WAIT_KEYS
 		LD BC,0XFF77
 		LD A,0XA6		;TEXTMODE SCREEN
 		OUT (C),A
@@ -49,7 +49,7 @@ START           DI
 		LD C,COLOR2
 		CALL PRTT_MSG
 		CALL WAIT_KEYS
-		JP START
+		JP TEST_TXTMODE
 
 PRTT_MSG	LD A,(HL)
 		INC HL
@@ -174,71 +174,7 @@ TEXT_TXTMODE	DB "TEXT SCREEN MODE",0
 PRESS_SPACE	DB "PRESS SPACE FOR CONTINUE",0
 
 CHARS		binclude ../../page0/source/shr_3d00.bin
-
-;áÄèéãçüãäÄ çéÇéÉé íÖäëíåéÑçéÉé ùäêÄçÄ Ç ëíêÄçàñÄï 9 à 11, ÅÖá ÇõïéÑÄ
-FILL_NEWTXTMODE	DI
-		LD A,1
-		OUT (PEVO_CONF),A
-		LD BC,WIN_A3
-		LD A,0XA4
-		OUT (C),A
-LOC_475		LD BC,RD_7FFD
-		IN A,(C)
-		LD E,A
-		XOR 8
-		LD BC,0X7FFD
-		OUT (C),A
-		LD BC,WIN_A3
-		LD A,E
-		AND 8
-		RRCA
-		RRCA
-		XOR 0X74
-		OUT (C), A
-		LD IXL,0
-		LD HL,0XC000
-		LD C,0X19
-LOC_496		LD B,0X50
-		LD A,IXL
-LOC_49A		LD (HL),A
-		INC A
-		INC HL
-		DJNZ LOC_49A
-		INC IXL
-		DEC C
-		JR NZ,LOC_496
-		LD HL,0XC800
-		XOR A
-		EX AF,AF'
-		LD A,7
-LOC_4AB		EX AF,AF'
-		LD D,H
-		LD E,L
-		INC DE
-		ADD A,0X38
-		LD (HL),A
-		SUB 38H
-		LD BC,0XA0
-		LDIR
-		INC A
-		EX AF,AF'
-		DEC A
-		JR NZ,LOC_4AB
-		LD IXL,1
-		LD A,0X0C
-LOC_4C3		EX AF, AF'
-		LD D,H
-		LD E,L
-		INC DE
-		LD A,IXL
-		LD (HL),A
-		LD BC,0X50
-		LDIR
-		INC IXL
-		EX AF,AF'
-		DEC A
-		JR NZ,LOC_4C3
-		JR LOC_475
+TXT_CHARS	binclude ../../page4/source/8x8_ar.fnt
 
    ; Fill rest of rom with 0XFF
 		DUPL 0X3D2F-$,0XFF

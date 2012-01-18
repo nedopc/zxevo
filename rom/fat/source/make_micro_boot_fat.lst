@@ -1,0 +1,1908 @@
+ AS V1.42 Beta [Bld 78] - source file make_micro_boot_fat.a80 - page 1 - 1/18/2012 21:33:24
+
+
+       1/       0 :                     
+       2/       0 :                     ;LAST UPDATE: 13.12.2011 savelij
+       3/       0 :                     
+       4/       0 :                     		include ../../macros.a80
+(1)    1/       0 :                     
+(1)    2/       0 :                     		RELAXED ON
+(1)    3/       0 :                     		CPU Z80UNDOC
+(1)    4/       0 :                     
+(1)    5/       0 :                     DZ		MACRO DEFZ
+(1)    6/       0 :                     		DB DEFZ,0
+(1)    7/       0 :                     		ENDM 
+(1)    8/       0 :                     
+(1)    9/       0 :                     DC		MACRO DEFC
+(1)   10/       0 :                     		IF STRLEN(DEFC)>1
+(1)   11/       0 :                     		DB SUBSTR(DEFC,0,STRLEN(DEFC)-1)
+(1)   12/       0 :                     		ENDIF
+(1)   13/       0 :                     		IF STRLEN(DEFC)>0
+(1)   14/       0 :                     		DB CHARFROMSTR(DEFC,STRLEN(DEFC)-1)|80H
+(1)   15/       0 :                     		ENDIF
+(1)   16/       0 :                     		ENDM
+(1)   17/       0 :                     
+(1)   18/       0 :                     SUM_HOB		MACRO STR,AA,BB,CC
+(1)   19/       0 :                     		DB STR
+(1)   20/       0 :                     		DW AA
+(1)   21/       0 :                     		DW BB
+(1)   22/       0 :                     		DB 0
+(1)   23/       0 :                     		DB CC
+(1)   24/       0 :                     $$I := 0
+(1)   25/       0 :                     $$S := 0
+(1)   26/       0 :                     		REPT 9
+(1)   27/       0 :                     $$N := CHARFROMSTR (STR,STRLEN(STR)+$$S-9)
+(1)   28/       0 :                     $$I := ($$I+$$S+$$N+($$N*256))&0XFFFF
+(1)   29/       0 :                     $$S := $$S+1
+(1)   30/       0 :                     		ENDM
+(1)   31/       0 :                     $$I := ($$I+$$S+LOW (AA)+(LOW (AA)*0X100))&0XFFFF
+(1)   32/       0 :                     $$S := $$S+1
+(1)   33/       0 :                     $$I := ($$I+$$S+HIGH (AA)+(HIGH (AA)*0X100))&0XFFFF
+(1)   34/       0 :                     $$S := $$S+1
+(1)   35/       0 :                     $$I := ($$I+$$S+LOW (BB)+(LOW (BB)*0X100))&0XFFFF
+(1)   36/       0 :                     $$S := $$S+1
+(1)   37/       0 :                     $$I := ($$I+$$S+HIGH (BB)+(HIGH (BB)*0X100))&0XFFFF
+(1)   38/       0 :                     $$S := $$S+1
+(1)   39/       0 :                     $$I := ($$I+$$S+LOW (CC)+(LOW (CC)*0X100))&0XFFFF
+(1)   40/       0 :                     $$S := $$S+1
+(1)   41/       0 :                     $$I := ($$I+$$S+HIGH (CC)+(HIGH (CC)*0X100))&0XFFFF
+(1)   42/       0 :                     $$S := $$S+1
+(1)   43/       0 :                     		DW $$I
+(1)   44/       0 :                     		ENDM
+(1)   45/       0 :                     
+(1)   46/       0 :                     DUPL		MACRO LEN,FILL
+(1)   47/       0 :                     DUPL:
+(1)   48/       0 :                     $$N		EQU (LEN) / 1024
+(1)   49/       0 :                     $$M		EQU (LEN) # 1024
+(1)   50/       0 :                     		REPT $$N
+(1)   51/       0 :                     		DB 1024 DUP(FILL)
+(1)   52/       0 :                     		ENDM
+(1)   53/       0 :                     		IF $$M <> 0
+(1)   54/       0 :                     		DB $$M DUP(FILL)
+(1)   55/       0 :                     		ENDIF
+(1)   56/       0 :                     		ENDM
+ AS V1.42 Beta [Bld 78] - source file make_micro_boot_fat.a80(../../macros.a80) - page 2 - 1/18/2012 21:33:24
+
+
+(1)   57/       0 :                     
+(1)   58/       0 :                     HIGH		FUNCTION X,((X >> 8) & 0XFF)
+(1)   59/       0 :                     LOW		FUNCTION X,(X & 0XFF)
+(1)   60/       0 :                     
+       5/       0 :                     		include ../../global_vars.a80
+(1)    1/       0 :                     
+(1)    2/       0 :                     ;LAST UPDATE: 18.01.2012 savelij
+(1)    3/       0 :                     
+(1)    4/       0 : =1H                 PAGE_EVODOS	EQU 1				;àçÇÖêëçÄü ëíêÄçàñÄ äéèàà EVO-DOS Ñãü èÖêÖïÇÄíÄ
+(1)    5/       0 : =2H                 PAGE_PROFROM	EQU 2				;àçÇÖêëçÄü ëíêÄçàñÄ èÖêÖåÖççõï PROFROM
+(1)    6/       0 : =3H                 PAGE_RAMDISK	EQU 3				;àçÇÖêëçÄü ëíêÄçàñÄ çÄóÄãÄ êÄåÑàëäÄ
+(1)    7/       0 : =40H                PAGE4FLASHER	EQU 0X40			;àçÇÖêëçÄü ëíêÄçàñÄ çÄóÄãÄ áÄÉêìáäà èêéòàÇäà
+(1)    8/       0 : =60H                PAGE4TAP	EQU 0X60			;àçÇÖêëçÄü ëíêÄçàñÄ Ñãü áÄÉêìáäà TAP îÄâãÄ
+(1)    9/       0 :                     
+(1)   10/       0 : =8CH                CONF4PROF	EQU 0X8C			;ëíÄêíéÇÄü ëíêÄçàñÄ Ñãü EVO PROFROM 128K
+(1)   11/       0 : =90H                CONF4GLUK	EQU 0X90			;ëíÄêíéÇÄü ëíêÄçàñÄ Ñãü GLUK 64K
+(1)   12/       0 : =9CH                CONF4CUSTOM	EQU 0X9C			;ëíÄêíéÇÄü ëíêÄçàñÄ Ñãü èéãúáéÇÄíÖãúëäéâ èêéòàÇäà 64ä
+(1)   13/       0 :                     
+(1)   14/       0 : =27F8H              CP866_UTL	EQU 0X27F8			;ÄÑêÖë çÄïéÜÑÖçàü Ç èáì òêàîíÄ
+(1)   15/       0 : =2FF8H              CP866_FONT	EQU 0X2FF8			;ÄÑêÖë çÄïéÜÑÖçàü Ç èáì òêàîíÄ
+(1)   16/       0 : =37F8H              ATM_FONT	EQU 0X37F8			;ÄÑêÖë çÄïéÜÑÖçàü Ç èáì òêàîíÄ
+(1)   17/       0 :                     
+(1)   18/       0 : =37F7H              WIN_P0		EQU 0X37F7			;ÄÑêÖë 0 ëíêÄçàñõ èêéÖñàêéÇÄçàü PENTEVO
+(1)   19/       0 : =77F7H              WIN_P1		EQU 0X77F7			;ÄÑêÖë 1 ëíêÄçàñõ èêéÖñàêéÇÄçàü PENTEVO
+(1)   20/       0 : =B7F7H              WIN_P2		EQU 0XB7F7			;ÄÑêÖë 2 ëíêÄçàñõ èêéÖñàêéÇÄçàü PENTEVO
+(1)   21/       0 : =F7F7H              WIN_P3		EQU 0XF7F7			;ÄÑêÖë 3 ëíêÄçàñõ èêéÖñàêéÇÄçàü PENTEVO
+(1)   22/       0 : =3FF7H              WIN_A0		EQU 0X3FF7			;ÄÑêÖë 0 ëíêÄçàñõ èêéÖñàêéÇÄçàü ATM
+(1)   23/       0 : =7FF7H              WIN_A1		EQU 0X7FF7			;ÄÑêÖë 1 ëíêÄçàñõ èêéÖñàêéÇÄçàü ATM
+(1)   24/       0 : =BFF7H              WIN_A2		EQU 0XBFF7			;ÄÑêÖë 2 ëíêÄçàñõ èêéÖñàêéÇÄçàü ATM
+(1)   25/       0 : =FFF7H              WIN_A3		EQU 0XFFF7			;ÄÑêÖë 3 ëíêÄçàñõ èêéÖñàêéÇÄçàü ATM
+(1)   26/       0 : =BFH                PEVO_CONF	EQU 0XBF			;ÄÑêÖë èéêíÄ äéçîàÉÄ PENTEVO
+(1)   27/       0 : =DEF7H              CMOSD_SET_ADR	EQU 0XDEF7			;ÄÑêÖë èéêíÄ ìëíÄçéÇäà ÄÑêÖëÄ CMOS üóÖâäà àá DOS
+(1)   28/       0 : =BEF7H              CMOSD_RD_WR	EQU 0XBEF7			;ÄÑêÖë èéêíÄ óíÖçàü/áÄèàëà ÅÄâí CMOS àá ÑéëÄ
+(1)   29/       0 : =DFF7H              CMOS_SET_ADR	EQU 0XDFF7			;ÄÑêÖë èéêíÄ ìëíÄçéÇäà ÄÑêÖëÄ CMOS üóÖâäà
+(1)   30/       0 : =BFF7H              CMOS_RD_WR	EQU 0XBFF7			;ÄÑêÖë èéêíÄ óíÖçàü/áÄèàëà ÅÄâí CMOS
+(1)   31/       0 : =EFF7H              PENT_CONF	EQU 0XEFF7			;ÄÑêÖë èéêíÄ äéçîàÉÄ êÖÜàåÄ èÖçíÄÉéçÄ
+(1)   32/       0 :                     
+(1)   33/       0 :                     ;èéêíÄ Ñãü óíÖçàü èéêíéÇ äéçîàÉìêÄñàà
+(1)   34/       0 : =BEH                RD_0WINA0	EQU 0X00BE			;ÄÑêÖë èéêíÄ 0 éäçÄ èêéÖñàêéÇÄçàü 0 åÄèÖêÄ
+(1)   35/       0 : =1BEH               RD_0WINA1	EQU 0X01BE			;ÄÑêÖë èéêíÄ 1 éäçÄ èêéÖñàêéÇÄçàü 0 åÄèÖêÄ
+(1)   36/       0 : =2BEH               RD_0WINA2	EQU 0X02BE			;ÄÑêÖë èéêíÄ 2 éäçÄ èêéÖñàêéÇÄçàü 0 åÄèÖêÄ
+(1)   37/       0 : =3BEH               RD_0WINA3	EQU 0X03BE			;ÄÑêÖë èéêíÄ 3 éäçÄ èêéÖñàêéÇÄçàü 0 åÄèÖêÄ
+(1)   38/       0 : =4BEH               RD_1WINA0	EQU 0X04BE			;ÄÑêÖë èéêíÄ 0 éäçÄ èêéÖñàêéÇÄçàü 1 åÄèÖêÄ
+(1)   39/       0 : =5BEH               RD_1WINA1	EQU 0X05BE			;ÄÑêÖë èéêíÄ 1 éäçÄ èêéÖñàêéÇÄçàü 1 åÄèÖêÄ
+(1)   40/       0 : =6BEH               RD_1WINA2	EQU 0X06BE			;ÄÑêÖë èéêíÄ 2 éäçÄ èêéÖñàêéÇÄçàü 1 åÄèÖêÄ
+(1)   41/       0 : =7BEH               RD_1WINA3	EQU 0X07BE			;ÄÑêÖë èéêíÄ 3 éäçÄ èêéÖñàêéÇÄçàü 1 åÄèÖêÄ
+(1)   42/       0 : =8BEH               RD_RAMNROM	EQU 0X08BE			;ÄÑêÖë èéêíÄ ÅàíéÇ RAM & ROM
+(1)   43/       0 : =9BEH               RD_DOS7FFD	EQU 0X09BE			;ÄÑêÖë èéêíÄ ÅàíéÇ DOS & 7FFD
+(1)   44/       0 : =ABEH               RD_7FFD		EQU 0X0ABE			;ÄÑêÖë èéêíÄ 7FFD
+(1)   45/       0 : =BBEH               RD_EFF7		EQU 0X0BBE			;ÄÑêÖë èéêíÄ EFF7
+(1)   46/       0 : =CBEH               RD_77		EQU 0X0CBE			;ÄÑêÖë èéêíÄ xx77
+(1)   47/       0 : =DBEH               RD_PALITRA	EQU 0X0DBE			;ÄÑêÖë èéêíÄ èÄãàíêõ
+(1)   48/       0 :                     
+(1)   49/       0 : =4000H              FDI_TABLE_CYL	EQU 0X4000			;ÄÑêÖë íÄÅãàñõ çÄóÄã ÑéêéÜÖä Ç éÅêÄáÖ
+(1)   50/       0 : =40FFH              FDI_PAGE_START	EQU 0X40FF			;ëåÖôÖçàÖ Ç ëíêÄçàñÄï çÄóÄãÄ ëÖäíéêéÇ éÅêÄáÄ
+(1)   51/       0 : =41FEH              FDI_BYTE_SMESH	EQU 0X41FE			;ëåÖôÖçàÖ Ç ÅÄâíÄï çÄóÄãÄ éÅêÄáÄ áÄÉêìÜÖççéÉé Ç êÄåÑàëä
+(1)   52/       0 : =41FFH              FDI_BLOCK_SMESH	EQU 0X41FF			;ëåÖôÖçàÖ Ç ÅãéäÄï (èé 256 ÅÄâí) çÄóÄãÄ ëÖäíéêéÇ éÅêÄáÄ
+(1)   53/       0 : =4400H              FDI_IMAGE1SECT	EQU 0X4400			;ÄÑêÖë áÄÉêìáäà èÖêÇéÉé ëÖäíéêÄ Ñãü éèêÖÑÖãÖçàü ëåÖôÖçàü
+(1)   54/       0 :                     
+(1)   55/       0 : =80H                TURBO14		EQU 0X80			;êÄáêÖòÖçàÖ ÇäãûóÖçàü TURBO 14MHZ
+ AS V1.42 Beta [Bld 78] - source file make_micro_boot_fat.a80(../../global_vars.a80) - page 3 - 1/18/2012 21:33:24
+
+
+(1)   56/       0 : =40H                EMUL_TAPE	EQU 0X40			;êÄáêÖòÖçàÖ ùåìãüñàà áÄÉêìáäà ë ãÖçíõ
+(1)   57/       0 : =20H                PRINTER_AY	EQU 0X20			;êÄáêÖòÖçàÖ èéÑåÖçõ ÑêÄâÇÖêÄ èÖóÄíà Ç BASIC48
+(1)   58/       0 : =10H                RELOAD_FONT	EQU 0X10			;êÄáêÖòÖçàÖ èÖêÖáÄÉêìáäà òêàîíÄ èêà ëÅêéëÖ
+(1)   59/       0 : =8H                 TYPE_FONT	EQU 0X08			;ÇõÅéê äéÑàêéÇäà òêàîíÄ
+(1)   60/       0 :                     
+(1)   61/       0 : =0H                 RESET2EVOSERV	EQU 0				;ëÅêéë Ç EVO SRVICE
+(1)   62/       0 : =1H                 RESET2GLUK	EQU 1				;ëÅêéë Ç GLUK SERVICE
+(1)   63/       0 : =2H                 RESET2PROFROM	EQU 2				;ëÅêéë Ç PROFROM
+(1)   64/       0 : =3H                 RESET2CUSTOM	EQU 3				;ëÅêéë Ç CUSTOM ROM
+(1)   65/       0 :                     
+(1)   66/       0 :                     ;çéåÖêÄ îìçäñàâ RST 8, èéêüÑéä åéÜÖí Åõíú àáåÖçÖç. 
+(1)   67/       0 : =40H                Ay_prn_init	EQU 0X40
+(1)   68/       0 : =41H                Ay_prn_a_	EQU 0X41
+(1)   69/       0 : =42H                Ay_prn_token	EQU 0X42
+(1)   70/       0 : =43H                Ay_prn_scr	EQU 0X43
+(1)   71/       0 : =44H                Tape_init	EQU 0X44
+(1)   72/       0 : =45H                Tape_emul	EQU 0X45
+(1)   73/       0 : =46H                Winw		EQU 0X46
+(1)   74/       0 : =47H                Print_message	EQU 0X47
+(1)   75/       0 : =48H                Print_a		EQU 0X48
+(1)   76/       0 : =49H                Scrol_up	EQU 0X49
+(1)   77/       0 : =4AH                Scroll_down	EQU 0X4A
+(1)   78/       0 : =4BH                Com_dev		EQU 0X4B
+(1)   79/       0 : =4CH                Run_filecode	EQU 0X4C
+(1)   80/       0 : =4DH                Write_font	EQU 0X4D
+(1)   81/       0 : =4EH                Read_font	EQU 0X4E
+(1)   82/       0 :                     
+(1)   83/       0 :                     ;çéåÖêÄ îìçäñàâ åÖçÖÑÜÖêÄ ìëíêéâëíÇ
+(1)   84/       0 : =0H                 Devfind		EQU 0				;00 èéàëä ìëíêéâëíÇ                        
+(1)   85/       0 : =1H                 Set_vol		EQU 1				;01 ÇõÅéê êÄáÑÖãÄ                          
+(1)   86/       0 : =2H                 Kol_vol		EQU 2				;02 áÄèêéë çÄâÑÖçéÉé                       
+(1)   87/       0 : =3H                 Set_device	EQU 3				;03 ìëíÄçéÇäÄ ÅàíéÇ ìëíêéâëíÇÄ à LBA êÖÜàåÄ
+(1)   88/       0 : =4H                 To_drv		EQU 4				;04 ÇõáéÇ ÑêÄâÇÖêÄ ÇõÅêÄççéÉé ìëíêéâëíÇÄ   
+(1)   89/       0 : =5H                 Comhddn		EQU 5				;05 èêüåéâ ÇõáéÇ ÑêÄâÇÖêÄ HDD NEMO (ÇêÖåÖççÄü îìçäñàü)
+(1)   90/       0 :                     
+(1)   91/       0 : =14H                ADR_SEL_ROM	EQU 0X0014			;ÄÑêÖë èÖêÖäãûóÖçàü ëíêÄçàñ ROM
+(1)   92/       0 : =67H                ADR_MAGIC	EQU 0X0067			;ÄÑêÖë çÄóÄãÄ éÅêÄÅéíäà MAGIC
+(1)   93/       0 : =6AH                ADR_EXITRST8	EQU ADR_MAGIC+3			;ÄÑêÖë ÇõïéÑÄ àá RST 8
+(1)   94/       0 : =6DH                ADR_EXITMAGIC	EQU ADR_EXITRST8+3		;ÄÑêÖë ÇõïéÑÄ àá MAGIC
+(1)   95/       0 : =70H                B_BF		EQU ADR_EXITMAGIC+3		;1
+(1)   96/       0 : =71H                B_77		EQU B_BF+1			;1
+(1)   97/       0 : =72H                B_EFF7		EQU B_77+1			;1
+(1)   98/       0 : =73H                B_7FFD		EQU B_EFF7+1			;1
+(1)   99/       0 : =74H                B_DOS7FFD	EQU B_7FFD+1			;1
+(1)  100/       0 : =75H                B_RAMNROM	EQU B_DOS7FFD+1			;1
+(1)  101/       0 : =76H                B_1WINA3	EQU B_RAMNROM+1			;1
+(1)  102/       0 : =77H                B_1WINA2	EQU B_1WINA3+1			;1
+(1)  103/       0 : =78H                B_1WINA1	EQU B_1WINA2+1			;1
+(1)  104/       0 : =79H                B_1WINA0	EQU B_1WINA1+1			;1
+(1)  105/       0 : =7AH                B_0WINA3	EQU B_1WINA0+1			;1
+(1)  106/       0 : =7BH                B_0WINA2	EQU B_0WINA3+1			;1
+(1)  107/       0 : =7CH                B_0WINA1	EQU B_0WINA2+1			;1
+(1)  108/       0 : =7DH                B_0WINA0	EQU B_0WINA1+1			;1
+(1)  109/       0 : =7EH                TEK_PALS	EQU B_0WINA0+1			;0X10
+(1)  110/       0 : =BEH                NMI_SAVE_SP	EQU 0X00BE
+(1)  111/       0 : =FDH                RST8_SAVE_SP	EQU 0X00FD
+(1)  112/       0 : =FFH                IM_WORK		EQU 0X00FF
+(1)  113/       0 : =180H               NEW_STACK	EQU 0X0180
+(1)  114/       0 : =3CD0H              ADR_RST8END	EQU 0X3CD0			;ÄÑêÖë ÇéáÇêÄíÄ àá RST 8
+(1)  115/       0 :                     
+ AS V1.42 Beta [Bld 78] - source file make_micro_boot_fat.a80(../../global_vars.a80) - page 4 - 1/18/2012 21:33:24
+
+
+(1)  116/       0 : =2300H              OFFSET_FNTSAVE	EQU 0X2300			;ëåÖôÖçàÖ Ç ëíêÄçàñÖ Ñãü ëéïêÄçÖçàü òêàîíÄ
+(1)  117/       0 : =2B00H              OFFSET_SCRSAVE	EQU 0X2B00			;ëåÖôÖçàÖ Ç ëíêÄçàñÖ Ñãü ëéïêÄçÖçàü ùäêÄçÄ
+(1)  118/       0 :                     
+       6/       0 :                     		include ../../ports_ngs.a80
+(1)    1/       0 :                     
+(1)    2/       0 :                     ; ports description and include file for
+(1)    3/       0 :                     ; NeoGS software projects, v0.3
+(1)    4/       0 :                     ;
+(1)    5/       0 :                     ;
+(1)    6/       0 :                     ; bits degisnation:
+(1)    7/       0 :                     ; B_* -bit position (0,1,2,3,4,5,6,7)
+(1)    8/       0 :                     ; M_* -bit mask (1,2,4,8,0X10,
+(1)    9/       0 :                     ;                           0X20,0X40,0X80)
+(1)   10/       0 :                     ;
+(1)   11/       0 :                     ; C_* - constants to be used
+(1)   12/       0 :                     ;
+(1)   13/       0 :                     ;
+(1)   14/       0 :                     ; part of NeoGS project
+(1)   15/       0 :                     ;
+(1)   16/       0 :                     ; (c) 2008 NedoPC
+(1)   17/       0 :                     
+(1)   18/       0 :                     ;---------------------------------------
+(1)   19/       0 :                     
+(1)   20/       0 :                     ;ZX-side ports
+(1)   21/       0 :                     
+(1)   22/       0 : =BBH                GSCOM		EQU 0XBB		; write-only, command for NGS
+(1)   23/       0 :                     
+(1)   24/       0 : =BBH                GSSTAT		EQU 0XBB		; read-only, command and data bits
+(1)   25/       0 :                     				; (positions given immediately below)
+(1)   26/       0 :                     
+(1)   27/       0 : =0H                 B_CBIT		EQU 0		; Command position
+(1)   28/       0 : =1H                 M_CBIT		EQU 1		; BIT:AND Mask
+(1)   29/       0 :                     
+(1)   30/       0 : =7H                 B_DBIT		EQU 7		; Data position
+(1)   31/       0 : =80H                M_DBIT		EQU 0X80		; BIT and mask
+(1)   32/       0 :                     
+(1)   33/       0 : =B3H                GSDAT		EQU 0XB3		; read-write
+(1)   34/       0 :                     				; data transfer register for NGS
+(1)   35/       0 :                     
+(1)   36/       0 : =33H                GSCTR		EQU 0X33		; write-only, control register for NGS:
+(1)   37/       0 :                     				; constants available given immediately below
+(1)   38/       0 :                     
+(1)   39/       0 : =80H                C_GRST		EQU 0X80		; reset constant to be written into
+(1)   40/       0 :                     
+(1)   41/       0 : =40H                C_GNMI		EQU 0X40		; NMI constant to be written into GSCTR
+(1)   42/       0 :                     
+(1)   43/       0 : =20H                C_GLED		EQU 0X20		; LED toggle constant
+(1)   44/       0 :                     
+(1)   45/       0 :                     ;---------------------------------------
+(1)   46/       0 :                     
+(1)   47/       0 :                     ;GS-side ports
+(1)   48/       0 :                     
+(1)   49/       0 : =0H                 MPAG		EQU 0X00		; write-only, Memory PAGe ;port (big
+(1)   50/       0 :                     				; pages at 8000-FFFF or small at 8000-BFFF)
+(1)   51/       0 :                     
+(1)   52/       0 : =10H                MPAGEX		EQU 0X10		; write-only, Memory PAGe EXtended
+(1)   53/       0 :                     				; (only small pages at C000-FFFF)
+(1)   54/       0 :                     
+(1)   55/       0 : =1H                 ZXCMD		EQU 0X01		; read-only, ZX CoMmanD port: here is
+(1)   56/       0 :                     				; the byte written by ZX into GSCOM
+ AS V1.42 Beta [Bld 78] - source file make_micro_boot_fat.a80(../../ports_ngs.a80) - page 5 - 1/18/2012 21:33:24
+
+
+(1)   57/       0 :                     
+(1)   58/       0 : =2H                 ZXDATRD		EQU 0X02		; read-only, ZX DATa ReaD: a byte
+(1)   59/       0 :                     				; written by ZX into GSDAT appears here
+(1)   60/       0 :                     				; upon reading this port, data bit is cleared
+(1)   61/       0 :                     
+(1)   62/       0 : =3H                 ZXDATWR		EQU 0X03		; write-only, ZX DATa WRite: a byte
+(1)   63/       0 :                     				; written here is available for ZX in
+(1)   64/       0 :                     				; GSDAT upon writing here, data bit is set
+(1)   65/       0 :                     
+(1)   66/       0 : =4H                 ZXSTAT		EQU 0X04		; read-only, read ZX STATus: command and
+(1)   67/       0 :                     				; data bits. positions are defined by
+(1)   68/       0 :                     				; *_CBIT and *_DBIT above
+(1)   69/       0 :                     
+(1)   70/       0 : =5H                 CLRCBIT		EQU 0X05		; read-write, upon either reading or
+(1)   71/       0 :                     				; writing this port, the Command BIT is CLeaRed
+(1)   72/       0 : =6H                 VOL1		EQU 0X06
+(1)   73/       0 : =7H                 VOL2		EQU 0X07
+(1)   74/       0 : =8H                 VOL3		EQU 0X08
+(1)   75/       0 : =9H                 VOL4		EQU 0X09
+(1)   76/       0 : =16H                VOL5		EQU 0X16
+(1)   77/       0 : =17H                VOL6		EQU 0X17
+(1)   78/       0 : =18H                VOL7		EQU 0X18
+(1)   79/       0 : =19H                VOL8		EQU 0X19		; write-only, volumes for sound channels 1-8
+(1)   80/       0 :                     
+(1)   81/       0 :                     ; following two ports are useless and
+(1)   82/       0 :                     ; very odd. They have been made just
+(1)   83/       0 :                     ; because they were on the original GS
+(1)   84/       0 :                     ; and for that strange case when
+(1)   85/       0 :                     ; somebody too crazy have used them.
+(1)   86/       0 :                     ; Nevertheless, DO NOT USE THEM! They
+(1)   87/       0 :                     ; can disappear or even radically change
+(1)   88/       0 :                     ; functionality in future firmware
+(1)   89/       0 :                     ; releases.
+(1)   90/       0 :                     
+(1)   91/       0 : =AH                 DPORT1		EQU 0X0A		; DAMNPORT1
+(1)   92/       0 :                     				; writing or reading this port sets data
+(1)   93/       0 :                     				; bit to the inverse of bit 0 into MPAG
+(1)   94/       0 :                     				; port
+(1)   95/       0 :                     
+(1)   96/       0 : =BH                 DPORT2		EQU 0X0B		; DAMNPORT2
+(1)   97/       0 :                     				; the same as DAMNPORT1, but instead
+(1)   98/       0 :                     				; command bit involved, which is made
+(1)   99/       0 :                     				; equal to 5th bit of VOL4
+(1)  100/       0 :                     
+(1)  101/       0 : =1H                 LEDCTR		EQU 0X01		; write-only, controls on-board LED.
+(1)  102/       0 :                     				; D0=0 - LED is on, D0=1 - LED is off
+(1)  103/       0 :                     				; reset state is LED on.
+(1)  104/       0 :                     
+(1)  105/       0 : =FH                 GSCFG0		EQU 0X0F		; read-write, GS ConFiG port 0: acts as
+(1)  106/       0 :                     				; memory cell, reads previously written
+(1)  107/       0 :                     				; value. Bits and fields follow:
+(1)  108/       0 :                     
+(1)  109/       0 : =0H                 B_NOROM		EQU 0		; =0 - there is ROM everywhere except 0X4000-7FFF,
+(1)  110/       0 :                     				; =1 - the RAM is all around
+(1)  111/       0 : =1H                 M_NOROM		EQU 1
+(1)  112/       0 :                     
+(1)  113/       0 : =1H                 B_RAMRO		EQU 1		; =1 - ram absolute adresses 0X0000-7FFF
+(1)  114/       0 :                     				; (zeroth big page) are write-protected
+(1)  115/       0 : =2H                 M_RAMRO		EQU 2
+(1)  116/       0 :                     
+ AS V1.42 Beta [Bld 78] - source file make_micro_boot_fat.a80(../../ports_ngs.a80) - page 6 - 1/18/2012 21:33:24
+
+
+(1)  117/       0 : =2H                 B_8CHAN		EQU 2		; B_8CHANS
+(1)  118/       0 :                     				; =1 - 8 channels mode
+(1)  119/       0 : =4H                 M_8CHAN		EQU 4		; M_8CHANS
+(1)  120/       0 :                     
+(1)  121/       0 : =3H                 B_EXPAG		EQU 3		; =1 - extended paging: both MPAG and
+(1)  122/       0 :                     				; MPAGEX are used to switch two memory windows
+(1)  123/       0 : =8H                 M_EXPAG		EQU 8
+(1)  124/       0 :                     
+(1)  125/       0 : =4H                 B_CKSL0		EQU 4		; B_CKSEL0
+(1)  126/       0 :                     				; these bits should be set according to
+(1)  127/       0 :                     				; the C_**MHZ constants below
+(1)  128/       0 : =10H                M_CKSL0		EQU 0X10		; M_CKSEL0
+(1)  129/       0 :                     
+(1)  130/       0 : =5H                 B_CKSL1		EQU 5		; B_CKSEL1
+(1)  131/       0 : =20H                M_CKSL1		EQU 0X20		; M_CKSEL1
+(1)  132/       0 :                     
+(1)  133/       0 : =30H                C_10MHZ		EQU 0X30
+(1)  134/       0 : =10H                C_12MHZ		EQU 0X10
+(1)  135/       0 : =20H                C_20MHZ		EQU 0X20
+(1)  136/       0 : =0H                 C_24MHZ		EQU 0X00
+(1)  137/       0 :                     
+(1)  138/       0 : =6H                 B_PAN4C		EQU 6		; B_PAN4CH
+(1)  139/       0 :                     				; =1 - 4 channels, panning (every
+(1)  140/       0 :                     				; channel is on left and right with two volumes)
+(1)  141/       0 : =40H                M_PAN4C		EQU 0X40		; M_PAN4CH
+(1)  142/       0 :                     
+(1)  143/       0 : =7H                 B_INV7B		EQU 7		;B_INV7B
+(1)  144/       0 :                     				; =1 - invert 7th bit of sample before
+(1)  145/       0 :                     				; putting them to MUL/DAC
+(1)  146/       0 : =80H                M_INV7B		EQU 0X80
+(1)  147/       0 :                     
+(1)  148/       0 : =7H                 B_SNCLR		EQU 7		; B_SETNCLR
+(1)  149/       0 : =80H                M_SNCLR		EQU 0X80		; M_SETNCLR
+(1)  150/       0 :                     
+(1)  151/       0 : =11H                SCTRL		EQU 0X11		; Serial ConTRoL: read-write, read:
+(1)  152/       0 :                     				; current state of below bits, write - see GS_info
+(1)  153/       0 :                     
+(1)  154/       0 : =0H                 B_SDNCS		EQU 0
+(1)  155/       0 : =1H                 M_SDNCS		EQU 1
+(1)  156/       0 :                     
+(1)  157/       0 : =1H                 B_MCNCS		EQU 1
+(1)  158/       0 : =2H                 M_MCNCS		EQU 2
+(1)  159/       0 :                     
+(1)  160/       0 : =2H                 B_MPXRS		EQU 2
+(1)  161/       0 : =4H                 M_MPXRS		EQU 4
+(1)  162/       0 :                     
+(1)  163/       0 : =3H                 B_MCSP0		EQU 3		; B_MCSPD0
+(1)  164/       0 : =8H                 M_MCSP0		EQU 8		; M_MCSPD0
+(1)  165/       0 :                     
+(1)  166/       0 : =4H                 B_MDHLF		EQU 4
+(1)  167/       0 : =10H                M_MDHLF		EQU 0X10
+(1)  168/       0 :                     
+(1)  169/       0 : =5H                 B_MCSP1		EQU 5		; B_MCSPD1
+(1)  170/       0 : =20H                M_MCSP1		EQU 0X20		; M_MCSPD1
+(1)  171/       0 :                     
+(1)  172/       0 : =12H                SSTAT		EQU 0X12		; Serial STATus: read-only, reads state of below bits
+(1)  173/       0 :                     
+(1)  174/       0 : =0H                 B_MDDRQ		EQU 0
+(1)  175/       0 : =1H                 M_MDDRQ		EQU 1
+(1)  176/       0 :                     
+ AS V1.42 Beta [Bld 78] - source file make_micro_boot_fat.a80(../../ports_ngs.a80) - page 7 - 1/18/2012 21:33:24
+
+
+(1)  177/       0 : =1H                 B_SDDET		EQU 1
+(1)  178/       0 : =2H                 M_SDDET		EQU 2
+(1)  179/       0 :                     
+(1)  180/       0 : =2H                 B_SDWP		EQU 2
+(1)  181/       0 : =4H                 M_SDWP		EQU 4
+(1)  182/       0 :                     
+(1)  183/       0 : =3H                 B_MCRDY		EQU 3
+(1)  184/       0 : =8H                 M_MCRDY		EQU 8
+(1)  185/       0 :                     
+(1)  186/       0 : =13H                SD_SEND		EQU 0X13		; SD card SEND, write-only, when
+(1)  187/       0 :                     				; written, byte transfer starts with
+(1)  188/       0 :                     				; written byte
+(1)  189/       0 :                     
+(1)  190/       0 : =13H                SD_READ		EQU 0X13		; SD card READ, read-only, reads byte
+(1)  191/       0 :                     				; received in previous byte transfer
+(1)  192/       0 :                     
+(1)  193/       0 : =14H                SD_RSTR		EQU 0X14		; SD card Read and STaRt, read-only,
+(1)  194/       0 :                     				; reads previously received byte and
+(1)  195/       0 :                     				; starts new byte transfer with 0XFF
+(1)  196/       0 :                     
+(1)  197/       0 : =14H                MD_SEND		EQU 0X14		; Mp3 Data SEND, write-only, sends byte
+(1)  198/       0 :                     				; to the mp3 data interface
+(1)  199/       0 :                     
+(1)  200/       0 : =15H                MC_SEND		EQU 0X15		; Mp3 Control SEND, write-only, sends
+(1)  201/       0 :                     				; byte to the mp3 control interface
+(1)  202/       0 :                     
+(1)  203/       0 : =15H                MC_READ		EQU 0X15		; Mp3 Control READ, read-only, reads
+(1)  204/       0 :                     				; byte that was received during
+(1)  205/       0 :                     				; previous sending of byte
+(1)  206/       0 :                     
+(1)  207/       0 : =1BH                DMA_MOD		EQU 0X1B		; DMA MODULE
+(1)  208/       0 :                     
+(1)  209/       0 : =1CH                DMA_HAD		EQU 0X1C		; DMA High ADdress
+(1)  210/       0 :                     
+(1)  211/       0 : =1DH                DMA_MAD		EQU 0X1D		; DMA Middle ADdress
+(1)  212/       0 :                     
+(1)  213/       0 : =1EH                DMA_LAD		EQU 0X1E		; DMA Low ADdress
+(1)  214/       0 :                     
+(1)  215/       0 : =1FH                DMA_CST		EQU 0X1F		; DMA Control and STate
+(1)  216/       0 :                     
+       7/       0 :                     		include ../../sdcomand.a80
+(1)    1/       0 : =57H                P_DATA		EQU 0X57
+(1)    2/       0 : =77H                P_CONF		EQU 0X77
+(1)    3/       0 :                     
+(1)    4/       0 : =49H                CMD_09		EQU 0X49	;SEND_CSD
+(1)    5/       0 : =4CH                CMD_12		EQU 0X4C	;STOP_TRANSMISSION
+(1)    6/       0 : =51H                CMD_17		EQU 0X51	;READ_SINGLE_BLOCK
+(1)    7/       0 : =52H                CMD_18		EQU 0X52	;READ_MULTIPLE_BLOCK
+(1)    8/       0 : =58H                CMD_24		EQU 0X58	;WRITE_BLOCK
+(1)    9/       0 : =59H                CMD_25		EQU 0X59	;WRITE_MULTIPLE_BLOCK
+(1)   10/       0 : =77H                CMD_55		EQU 0X77	;APP_CMD
+(1)   11/       0 : =7AH                CMD_58		EQU 0X7A	;READ_OCR
+(1)   12/       0 : =7BH                CMD_59		EQU 0X7B	;CRC_ON_OFF
+(1)   13/       0 : =69H                ACMD_41		EQU 0X69	;SD_SEND_OP_COND
+(1)   14/       0 :                     
+       8/       0 :                     
+       9/       0 : =4000H              DRV_VAR		EQU 0X4000
+      10/       0 :                     
+      11/       0 :                     		include ../../fat_vars.a80
+(1)    1/       0 :                     
+ AS V1.42 Beta [Bld 78] - source file make_micro_boot_fat.a80(../../fat_vars.a80) - page 8 - 1/18/2012 21:33:24
+
+
+(1)    2/       0 :                     ;LAST UPDATE: 10.12.2011 savelij
+(1)    3/       0 :                     
+(1)    4/       0 :                     ;çéåÖêÄ ÇõáõÇÄÖåõï îìçäñàâ
+(1)    5/       0 : =0H                 Wc_fat		EQU 0X00		;àçàñàÄãàáÄñàü èÖêÖåÖççõï
+(1)    6/       0 : =1H                 Getfzap		EQU 0X01		;èéãìóÖçàÖ éèàëÄíÖãü îÄâãÄ/ÑàêÖäíéêàà
+(1)    7/       0 : =2H                 Ent_dir		EQU 0X02		;ÇïéÑ Ç Ñàêì/ÇõïéÑ àá Ñàêõ
+(1)    8/       0 : =3H                 Openfil		EQU 0X03		;éíäêõíàÖ îÄâãÄ
+(1)    9/       0 : =4H                 Readfil		EQU 0X04		;óíÖçàÖ éíäêõíéÉé îÄâãÄ
+(1)   10/       0 : =5H                 Getlong		EQU 0X05		;èéãìóÖçàÖ êÄëèÄäéÇÄççéÉé ÑãàççéÉé àåÖçà
+(1)   11/       0 : =6H                 Positf		EQU 0X06		;êÄÅéíÄ ë èéáàñàÖâ íÖäìôÖÉé îÄâãÄ
+(1)   12/       0 : =7H                 Prvlegz		EQU 0X07		;èéàëä èêÖÑõÑìôÖâ "ãÖÉÄãúçéâ áÄèàëà"
+(1)   13/       0 : =8H                 Nxtlegz		EQU 0X08		;èéàëä ëãÖÑìûôÖâ "ãÖÉÄãúçéâ áÄèàëà"
+(1)   14/       0 : =9H                 Find_file	EQU 0X09		;ìëíÄçéÇäÄ ÄÑêÖë ëäãÄÑàêéÇÄçàü à ëèàëäÄ êÄëòàêÖçàâ, çÄóÄãé èéàëäÄ
+(1)   15/       0 : =AH                 Next_find	EQU 0X0A		;èéàëä îÄâãéÇ èé êÄëòàêÖçàüå
+(1)   16/       0 : =BH                 Load_file	EQU 0X0B		;èéëãÖÑéÇÄíÖãúçéÖ óíÖçàÖ ëÖäíéêéÇ
+(1)   17/       0 : =CH                 Read0sector	EQU 0X0C		;óíÖçàÖ èÖêÇéÉé ëÖäíéêÄ îÄâãÄ
+(1)   18/       0 :                     
+(1)   19/       0 : =4000H              BUF_512		EQU DRV_VAR		;0X200 ÅìîÖê ëÖäíéêÄ
+(1)   20/       0 : =4200H              ERORDRV		EQU BUF_512+0X200	;2 ÇéáÇêÄí ë éòàÅäéâ Ç A
+(1)   21/       0 : =4202H              CAL_FAT		EQU ERORDRV+2		;1 äÄãàÅê FAT
+(1)   22/       0 : =4203H              MANYFAT		EQU CAL_FAT+1		;1 äéãàóÖëíÇé FAT-íÄÅãàñ
+(1)   23/       0 : =4204H              BYTSSEC		EQU MANYFAT+1		;1 äéãàóÖëíÇé ëÖäíéêéÇ Ç äãÄëíÖêÖ
+(1)   24/       0 : =4205H              ROOTCLS		EQU BYTSSEC+1		;4 ëÖäíéê çÄóÄãÄ ROOT ÑàêÖäíéêàà
+(1)   25/       0 : =4209H              ROOTZAP		EQU ROOTCLS+4		;2 äéã-Çé áÄèàëÖâ Ç ROOT ÑàêÖäíéêàà
+(1)   26/       0 : =420BH              SEC_FAT		EQU ROOTZAP+2		;4 äéãàóÖëíÇé ëÖäíéêéÇ éÑçéâ îÄí
+(1)   27/       0 : =420FH              RSVDSEC		EQU SEC_FAT+4		;2 êÄáåÖê êÖáÖêÇçéâ éÅãÄëíà
+(1)   28/       0 : =4211H              STARTRZ		EQU RSVDSEC+2		;4 çÄóÄãé ÑàëäÄ/êÄáÑÖãÄ
+(1)   29/       0 : =4215H              FRSTDAT		EQU STARTRZ+4		;4 ÄÑêÖë èÖêÇéÉé ëÖäíéêÄ ÑÄççõï éí BPB
+(1)   30/       0 : =4219H              SEC_DSC		EQU FRSTDAT+4		;4 äéãàóÖëíÇé ëÖäíéêéÇ çÄ ÑàëäÖ/êÄáÑÖãÖ
+(1)   31/       0 : =421DH              CLS_DSC		EQU SEC_DSC+4		;4 äéãàóÖëíÇé äãÄëíÖêéÇ çÄ ÑàëäÖ/êÄáÑÖãÖ
+(1)   32/       0 : =4221H              FATSTR		EQU CLS_DSC+4		;4 çÄóÄãé èÖêÇéâ FAT íÄÅãàñõ
+(1)   33/       0 : =4225H              FILE_SZ		EQU FATSTR+4		;4 êÄáåÖê îÄâãÄ Ç ÅÄâíÄï
+(1)   34/       0 : =4229H              KOLWCLS		EQU FILE_SZ+4		;4 äéãàóÖëíÇé ëÇéÅéÑçõï äãÄëíÖêéÇ
+(1)   35/       0 : =422DH              LST0ZAP		EQU KOLWCLS+4		;4 èÖêÇõâ ëÇéÅéÑçõâ äãÄëíÖê
+(1)   36/       0 : =4231H              LSTLOAD		EQU LST0ZAP+4		;4 çéåÖê ëÖäíéêÄ áÄÉêìÜÖççéÉé Ç ÅìîÖê
+(1)   37/       0 : =4235H              TEK_DIR		EQU LSTLOAD+4		;4 äãÄëíÖê íÖäìôÖâ DIR
+(1)   38/       0 : =4239H              TEK_ZAP		EQU TEK_DIR+4		;2 íÖäìôÄü áÄèàëú Ç DIR
+(1)   39/       0 : =423BH              SAVEZAP		EQU TEK_ZAP+2		;2 ëéïêÄçÖççÄü íÖäìôÄü èéáàñàü
+(1)   40/       0 : =423DH              TEK_LVL		EQU SAVEZAP+2		;1 íÖäìôàâ ìêéÇÖçú äÄíÄãéÉÄ
+(1)   41/       0 : =423EH              TEK_LEV		EQU TEK_LVL+1		;1 ÉãìÅàçÄ çÄïéÜÑÖçàü Ç ÑàêÖäíéêàüï
+(1)   42/       0 : =423FH              FREECLS		EQU TEK_LEV+1		;8 ëéïêÄçÖçõÖ èÖêÖåÖççõÖ Ñãü éíäÄíÄ
+(1)   43/       0 : =4247H              KOLFIND		EQU FREECLS+8		;2 äéãàóÖëíÇé çÄâÑÖççõï èé åÄëäÖ îÄâãéÇ
+(1)   44/       0 : =4249H              AFILCLS		EQU KOLFIND+2		;4 çéåÖê íÖäìôÖÉé äãÄëíÖêÄ
+(1)   45/       0 :                     
+(1)   46/       0 : =424DH              FB_EXT		EQU AFILCLS+4		;B ÅìîÖê 8.3 Ñãü èéàëäÄ àåÖçà
+(1)   47/       0 : =4258H              FOUNDED_FILE	EQU FB_EXT+0X0B		;20 éèàëÄíÖãú çÄâÑÖççéÉé îÄâãÄ
+(1)   48/       0 : =4278H              SAVE_IY		EQU FOUNDED_FILE+0X20	;2 ÇçìíêÖçÖÖ ëéïêÄçÖçàÖ êÖÉàëíêéÇ Ñãü ÑÄãúçÖâòÖÉé àëèéãúáéÇÄçàü
+(1)   49/       0 : =427AH              ADR_MASK_EXT	EQU SAVE_IY+2		;2 ÄÑêÖë êÄëòàêÖçàâ îÄâãéÇ Ñãü èéàëäÄ
+(1)   50/       0 : =427CH              ADR_SKLAD	EQU ADR_MASK_EXT+2	;2 ÄÑêÖë ëäãÄÑàêéÇÄçàü çÄâÑÖççéÉé
+(1)   51/       0 : =427EH              MAKS_ADR	EQU ADR_SKLAD+2		;1 ëíÄêòàâ ÅÄâí åÄäëàåÄãúçéÉé ÄÑêÖëÄ ÅìîÖêÄ ëäãÄÑàêéÇÄçàü
+(1)   52/       0 :                     
+(1)   53/       0 : =4300H              TFILCLS		EQU ERORDRV+0X0100	;? íÄÅãàñÄ äãÄëíÖêéÇ îÄâãÄ, êÄáåÖê áÄÇàëàí éí êÄáåÖêÄ äãÄëíÖêÄ
+(1)   54/       0 :                     
+      12/       0 :                     
+      13/    4300 :                     		ORG DRV_VAR+0X300
+      14/    4300 :                     		include micro_boot_fat.a80
+(1)    1/    4300 :                     
+(1)    2/    4300 :                     ;LAST UPDATE: 13.12.2011 savelij
+(1)    3/    4300 :                     
+(1)    4/    4300 : =42FFH              NUM_DEVICE	EQU DRV_VAR+0X2FF		;1 çéåÖê ìëíêéâëíÇÄ Ñãü áÄèìëäÄ äéÑÄ
+ AS V1.42 Beta [Bld 78] - source file make_micro_boot_fat.a80(micro_boot_fat.a80) - page 9 - 1/18/2012 21:33:24
+
+
+(1)    5/    4300 : =42FEH              MAS_SLA		EQU NUM_DEVICE-1		;1 åÄëäÄ Ñãü MASTER/SLAVE
+(1)    6/    4300 : =42FCH              LOADSCS1	EQU MAS_SLA-2			;2 ÄÑêÖë ÇõáõÇÄÖåéÉé ÑêÄâÇÖêÄ
+(1)    7/    4300 : =42FAH              LENGHT		EQU LOADSCS1-2			;2 ÑãàçÄ îÄâãÄ Ç ÅÄâíÄï
+(1)    8/    4300 :                     
+(1)    9/    4300 :                     ;çÄ ÇïéÑÖ: A-çéåÖê ÇõÅêÄççéÉé ìëíêéâëíÇÄ
+(1)   10/    4300 :                     ;	BCDE-çéåÖê äãÄëíÖêÄ áÄèìëäÄÖåéÉé îÄâãÄ
+(1)   11/    4300 : F3                  		DI
+(1)   12/    4301 : 3A FF 42            		LD A,(NUM_DEVICE)
+(1)   13/    4304 : A7                  		AND A
+(1)   14/    4305 : 21 BB 45            		LD HL,READ_SD		
+(1)   15/    4308 : 28 0F               		JR Z,SETLOADER
+(1)   16/    430A : 3D                  		DEC A
+(1)   17/    430B : 21 62 46            		LD HL,READNGS
+(1)   18/    430E : 28 09               		JR Z,SETLOADER
+(1)   19/    4310 : 3D                  		DEC A
+(1)   20/    4311 : 21 CA 46            		LD HL,RD_HDDN
+(1)   21/    4314 : 28 03               		JR Z,SETLOADER
+(1)   22/    4316 : 21 3C 47            		LD HL,RD_HDDS
+(1)   23/    4319 : 22 FC 42            SETLOADER	LD (LOADSCS1),HL		;ìëíÄçéÇàãà ÄÑêÖë óàíÄãäà ëÖäíéêéÇ
+(1)   24/    431C : 3A FE 42            		LD A,(MAS_SLA)
+(1)   25/    431F : A7                  		AND A
+(1)   26/    4320 : 3E E0               		LD A,0XE0
+(1)   27/    4322 : 28 02               		JR Z,SETMASL
+(1)   28/    4324 : 3E F0               		LD A,0XF0
+(1)   29/    4326 : 32 FE 42            SETMASL		LD (MAS_SLA),A
+(1)   30/    4329 : 2A 6C 42            		LD HL,(FOUNDED_FILE+0X14)
+(1)   31/    432C : 22 4B 42            		LD (AFILCLS+2),HL
+(1)   32/    432F : 2A 72 42            		LD HL,(FOUNDED_FILE+0X1A)
+(1)   33/    4332 : 22 49 42            		LD (AFILCLS),HL
+(1)   34/    4335 : 3A 60 42            		LD A,(FOUNDED_FILE+8)
+(1)   35/    4338 : FE 53               		CP "S"
+(1)   36/    433A : CA D2 47            		JP Z,RUNSPG2			;èÖêÖïéÑ çÄ áÄèìëä SPG îÄâãÄ
+(1)   37/    433D : CD 2A 45            		CALL REALSEC			;èêÖéÅêÄáéÇÄãà Ç çéåÖê ëÖäíéêÄ
+(1)   38/    4340 : CD B0 45            		CALL LOADLST			;áÄÉêìáàãà Ç ÅìîÖê
+(1)   39/    4343 : D9                  		EXX
+(1)   40/    4344 : 2A 09 40            		LD HL,(BUF_512+9)
+(1)   41/    4347 : 22 45 5D            		LD (0X5D45),HL			;ÄÑêÖë ëíÄêíÄ äéÑÄ
+(1)   42/    434A : 2A 0B 40            		LD HL,(BUF_512+0X0B)
+(1)   43/    434D : 22 FA 42            		LD (LENGHT),HL			;ìëíÄçéÇäÄ Ñãàçõ îÄâãÄ Ç ÅÄâíÄï
+(1)   44/    4350 : 11 11 00            		LD DE,0X11
+(1)   45/    4353 : 19                  		ADD HL,DE			;èêéèìëä HOBETA áÄÉéãéÇäÄ
+(1)   46/    4354 : 7D                  		LD A,L
+(1)   47/    4355 : A7                  		AND A
+(1)   48/    4356 : 28 01               		JR Z,READ01			;Öëãà åãÄÑòàâ ÅÄâí çÖ 0
+(1)   49/    4358 : 24                  		INC H				;ëíÄêòàâ +1
+(1)   50/    4359 : 7C                  READ01		LD A,H
+(1)   51/    435A : CB 3F               		SRL A				;ÑÖãàå çÄ 2 àÅé çÄ îÄíÖ ëÖäíéê 512 ÅÄâí
+(1)   52/    435C : CE 00               		ADC A,0				;ìóàíõÇÄÖå óÖí/çÖóÖí
+(1)   53/    435E : 3D                  		DEC A				;èÖêÇõâ ëÖäíéê áÄÉêìÜÖç, Éêìáàíú çÄ 1 åÖçúòÖ
+(1)   54/    435F : D9                  		EXX
+(1)   55/    4360 : CA E1 43            		JP Z,LDIRBUF			;Öëãà ëÖäíéê 1 èÖêÖçéë à áÄèìëä
+(1)   56/    4363 : DD 6F               		LD IXL,A			;áÄèéåçàãà äéãàóÖëíÇé ëÖäíéêéÇ-1
+(1)   57/    4365 : D9                  		EXX
+(1)   58/    4366 : CD 03 44            		CALL LD_ONES			;èÖêÖçéë éëíÄíäéÇ èÖêÇéÉé ëÖäíéêÄ
+(1)   59/    4369 : D5                  		PUSH DE				;ÄÑêÖë äìÑÄ ÑÄãÖÖ Éêìáàíú
+(1)   60/    436A : D9                  		EXX
+(1)   61/    436B : 21 01 00            		LD HL,1				;éÑàç ëÖäíéê ìÜÖ áÄÉêìÜÖç
+(1)   62/    436E : 19                  		ADD HL,DE			;ÑÄãÖÖ Éêìáàíú ëé ëãÖÑìûôÖÉé ëÖäíéêÄ 
+(1)   63/    436F : EB                  		EX DE,HL
+(1)   64/    4370 : 30 01               		JR NC,READ04
+ AS V1.42 Beta [Bld 78] - source file make_micro_boot_fat.a80(micro_boot_fat.a80) - page 10 - 1/18/2012 21:33:24
+
+
+(1)   65/    4372 : 03                  		INC BC				;BCDE=BCDE+1
+(1)   66/    4373 : E1                  READ04		POP HL				;Ç HL ÄÑêÖë Ñãü èêéÑéãÜÖçàü áÄÉêìáäà
+(1)   67/    4374 : FD 2A 04 42         		LD IY,(BYTSSEC)			;LY=äéã-Çé ëÖäíéêéÇ Ç äãÄëíÖêÖ
+(1)   68/    4378 : DD 7D               		LD A,IXL
+(1)   69/    437A : FD BD               		CP IYL				;ëÖäíéêéÇ éëíÄãéëú åÖçúòÖ óÖå Ç äãÄëíÖêÖ
+(1)   70/    437C : 38 2F               		JR C,READ02			;èÖêÖïéÑ çÄ ÑéáÄÉêìáäì éëíÄíäÄ ëÖäíéêéÇ
+(1)   71/    437E : DD 2C               		INC IXL
+(1)   72/    4380 : FD 7D               		LD A,IYL
+(1)   73/    4382 : FE 02               		CP 2
+(1)   74/    4384 : 38 03               		JR C,READ07
+(1)   75/    4386 : 3D                  		DEC A
+(1)   76/    4387 : 18 17               		JR READ05
+(1)   77/    4389 :                     
+(1)   78/    4389 : E5                  READ07		PUSH HL
+(1)   79/    438A : CD 8D 44            		CALL RDFATZP			;èéãìóàíú çéåÖê ëãÖÑìûôÖÉé äãÄëíÖêÄ
+(1)   80/    438D : CD 6C 44            		CALL LST_CLS			;èêéÇÖêäÄ çÄ éäéçóÄçàÖ FAT ñìèéóäà
+(1)   81/    4390 : E1                  		POP HL
+(1)   82/    4391 : 38 42               		JR C,RUNLOAD			;Öëãà äãÄëíÖêÄ áÄäéçóàãàëú, íé áÄèìëäÄ áÄÉêìÜÖççéÉé
+(1)   83/    4393 : E5                  		PUSH HL
+(1)   84/    4394 : CD 2A 45            		CALL REALSEC			;èêÖéÅêÄáéÇÄçàÖ çéåÖêÄ äãÄëíÖêÄ Ç çéåÖê ëÖäíéêÄ
+(1)   85/    4397 : E1                  		POP HL
+(1)   86/    4398 : DD 7D               		LD A,IXL			;ëäéãúäé ëÖäíéêéÇ éëíÄãéëú áÄÉêìáàíú
+(1)   87/    439A : FD BD               		CP IYL				;ëêÄÇçàÇÄÖå ë êÄáåÖêéå äãÄëíÖêÄ
+(1)   88/    439C : 38 0F               		JR C,READ02			;Öëãà éëíÄãéëú áÄÉêìáàíú ëÖäíéêéÇ åÖçúòÖ óÖå Ç äãÄëíÖêÖ, íé ÑéáÄÉêìÜÄÖå éëíÄíéä
+(1)   89/    439E : FD 7D               		LD A,IYL			;ëäéãúäé ëÖäíéêéÇ áÄÉêìÜÄíú
+(1)   90/    43A0 : CD 10 44            READ05		CALL LOADSCS			;áÄÉêìáäÄ ëÖäíéêéÇ
+(1)   91/    43A3 : DD 7D               		LD A,IXL			;ëäéãúäé ëÖäíéêéÇ ÇëÖÉé áÄÉêìÜÄíú
+(1)   92/    43A5 : FD 95               		SUB IYL				;åàçìë ëäéãúäé ëÖäíéêéÇ íéãúäé óíé áÄÉêìáàãà
+(1)   93/    43A7 : 28 2C               		JR Z,RUNLOAD			;ëÖäíéêÄ äéçóàãàëú, èÖêÖïéÑàå çÄ áÄèìëä
+(1)   94/    43A9 : DD 6F               		LD IXL,A			;ëäéãúäé ëÖäíéêéÇ éëíÄãéëú áÄÉêìáàíú
+(1)   95/    43AB : 18 DC               		JR READ07			;èêéÑéãÜÄÖå áÄÉêìáäì
+(1)   96/    43AD :                     
+(1)   97/    43AD :                     ;áÄÉêìáäÄ äéãàóÖëíÇÄ ëÖäíéêéÇ, Öëãà éëíÄãéëú åÖçÖÖ êÄáåÖêÄ äãÄëíÖêÄ
+(1)   98/    43AD : A7                  READ02		AND A
+(1)   99/    43AE : 28 03               		JR Z,READ03
+(1)  100/    43B0 : CD 10 44            		CALL LOADSCS
+(1)  101/    43B3 : E5                  READ03		PUSH HL
+(1)  102/    43B4 : DD 7D               		LD A,IXL
+(1)  103/    43B6 : 3D                  		DEC A
+(1)  104/    43B7 : 6F                  		LD L,A
+(1)  105/    43B8 : 26 00               		LD H,0
+(1)  106/    43BA : 19                  		ADD HL,DE
+(1)  107/    43BB : EB                  		EX DE,HL
+(1)  108/    43BC : 30 01               		JR NC,READ06
+(1)  109/    43BE : 03                  		INC BC
+(1)  110/    43BF : CD B0 45            READ06		CALL LOADLST
+(1)  111/    43C2 : ED 4B FA 42         		LD BC,(LENGHT)
+(1)  112/    43C6 : EB                  		EX DE,HL
+(1)  113/    43C7 : 21 11 00            		LD HL,0X11
+(1)  114/    43CA : 09                  		ADD HL,BC
+(1)  115/    43CB : 44                  		LD B,H
+(1)  116/    43CC : 4D                  		LD C,L
+(1)  117/    43CD : EB                  		EX DE,HL
+(1)  118/    43CE : D1                  		POP DE
+(1)  119/    43CF : 78                  		LD A,B
+(1)  120/    43D0 : E6 01               		AND 1
+(1)  121/    43D2 : 47                  		LD B,A
+(1)  122/    43D3 : ED B0               		LDIR
+(1)  123/    43D5 :                     ;áÄèìëä áÄÉêìÜÖççéÉé
+(1)  124/    43D5 : 21 58 27            RUNLOAD		LD HL,0X2758
+ AS V1.42 Beta [Bld 78] - source file make_micro_boot_fat.a80(micro_boot_fat.a80) - page 11 - 1/18/2012 21:33:24
+
+
+(1)  125/    43D8 : D9                  		EXX
+(1)  126/    43D9 : FD 21 3A 5C         		LD IY,0X5C3A
+(1)  127/    43DD : FB                  		EI
+(1)  128/    43DE : C3 7D 1B            		JP 0X1B7D			;áÄèìëä èÖêÖçÖëÖççéâ ÅÖâëàä èêéÉà
+(1)  129/    43E1 :                     
+(1)  130/    43E1 : 21 EF 01            LDIRBUF		LD HL,0X200-0X11
+(1)  131/    43E4 : ED 5B 0B 40         		LD DE,(BUF_512+0X0B)
+(1)  132/    43E8 : A7                  		AND A
+(1)  133/    43E9 : ED 52               		SBC HL,DE
+(1)  134/    43EB : 30 06               		JR NC,LDIRBUF1
+(1)  135/    43ED : CD 03 44            		CALL LD_ONES
+(1)  136/    43F0 : C3 D5 43            		JP RUNLOAD
+(1)  137/    43F3 :                     
+(1)  138/    43F3 : 21 11 40            LDIRBUF1	LD HL,BUF_512+0X11
+(1)  139/    43F6 : ED 5B 09 40         		LD DE,(BUF_512+9)
+(1)  140/    43FA : ED 4B 0B 40         		LD BC,(BUF_512+0X0B)
+(1)  141/    43FE : ED B0               		LDIR
+(1)  142/    4400 : C3 D5 43            		JP RUNLOAD
+(1)  143/    4403 :                     
+(1)  144/    4403 :                     ;èÖêÖçéë äìëäÄ àá ìÜÖ áÄÉêìÜÖççéÉé ëÖäíéêÄ, Öëãà îÄâã=501 ÅÄâí à åÖçÖÖ 
+(1)  145/    4403 : 21 11 40            LD_ONES		LD HL,BUF_512+0X11
+(1)  146/    4406 : ED 5B 09 40         		LD DE,(BUF_512+9)
+(1)  147/    440A : 01 EF 01            		LD BC,0X200-0X11
+(1)  148/    440D : ED B0               		LDIR
+(1)  149/    440F : C9                  		RET
+(1)  150/    4410 :                     
+(1)  151/    4410 :                     ;áÄÉêìáàíú ëÖäíéêÄ ë ÇõÅêÄççéÉé ìëíêéâëíÇÄ
+(1)  152/    4410 : E5                  LOADSCS		PUSH HL
+(1)  153/    4411 : 2A FC 42            		LD HL,(LOADSCS1)
+(1)  154/    4414 : E3                  		EX (SP),HL
+(1)  155/    4415 : C9                  		RET
+(1)  156/    4416 :                     
+(1)  157/    4416 :                     ;LX-äéãàóÖëíÇé ëÖäíéêéÇ Ñãü áÄÉêìáäà
+(1)  158/    4416 :                     ;HX-êÄáåÖê äãÄëíÖêÄ
+(1)  159/    4416 :                     ;LY-TEMP VAR
+(1)  160/    4416 :                     ;HY-ëåÖôÖçàÖ Ç äãÄëíÖêÖ
+(1)  161/    4416 :                     
+(1)  162/    4416 :                     ;IXL-êÄáåÖê äãÄëíÖêÄ 
+(1)  163/    4416 :                     ;IXH-TEMP VAR        
+(1)  164/    4416 :                     ;IYL-äéãàóÖëíÇé ëÖäíéêéÇ Ñãü áÄÉêìáäà
+(1)  165/    4416 :                     ;IYH-ëåÖôÖçàÖ Ç äãÄëíÖêÖ
+(1)  166/    4416 : C5                  LD_FILE		PUSH BC				;ëíÄêòàÖ 16 Åàí çéåÖêÄ äãÄëíÖêÄ
+(1)  167/    4417 : D5                  		PUSH DE				;åãÄÑòàÖ 16 Åàí çéåÖêÄ äãÄëíÖêÄ
+(1)  168/    4418 : E5                  		PUSH HL				;ëéïêÄçàãà ÄÑêÖë áÄÉêìáäà
+(1)  169/    4419 : CD 2A 45            		CALL REALSEC			;èÖêÖÇÖãà çéåÖê äãÄëíÖêÄ Ç çéåÖê ëÖäíéêÄ
+(1)  170/    441C : DD 2A 04 42         		LD IX,(BYTSSEC)
+(1)  171/    4420 : FD 7C               		LD A,IYH	;HY ëåÖôÖçàÖ Ç äãÄëíÖêÖ
+(1)  172/    4422 : 6F                  		LD L,A
+(1)  173/    4423 : 26 00               		LD H,0
+(1)  174/    4425 : 19                  		ADD HL,DE
+(1)  175/    4426 : EB                  		EX DE,HL
+(1)  176/    4427 : 30 01               		JR NC,LDFILE1
+(1)  177/    4429 : 03                  		INC BC				;BCDE=çéåÖê ëÖäíéêÄ éíäìÑÄ Éêìáàíú
+(1)  178/    442A : FD 7D               LDFILE1		LD A,IYL;IXL		;LX äéãàóÖëíÇé ëÖäíéêéÇ Ñãü áÄÉêìáäà
+(1)  179/    442C : DD BD               		CP IXL;IXH		;HX êÄáåÖê äãÄëíÖêÄ
+(1)  180/    442E : DA 33 44            		JP C,LDFILE2
+(1)  181/    4431 : DD 7D               		LD A,IXL;IXH		;HX êÄáåÖê äãÄëíÖêÄ
+(1)  182/    4433 : FD 84               LDFILE2		ADD A,IYH		;HY ëåÖôÖçàÖ Ç äãÄëíÖêÖ
+(1)  183/    4435 : DD BD               		CP IXL;IXH			;HX êÄáåÖê äãÄëíÖêÄ
+(1)  184/    4437 : FD 7D               		LD A,IYL;IXL		;LX äéãàóÖëíÇé ëÖäíéêéÇ Ñãü áÄÉêìáäà
+ AS V1.42 Beta [Bld 78] - source file make_micro_boot_fat.a80(micro_boot_fat.a80) - page 12 - 1/18/2012 21:33:24
+
+
+(1)  185/    4439 : DA 40 44            		JP C,LDFILE5
+(1)  186/    443C : DD 7D               		LD A,IXL;IXH		;HX êÄáåÖê äãÄëíÖêÄ
+(1)  187/    443E : FD 94               		SUB IYH			;HY ëåÖôÖçàÖ Ç äãÄëíÖêÖ
+(1)  188/    4440 : DD 67               LDFILE5		LD IXH,A;IYL,A		;LY,A TEMP VAR				;ëäéãúäé ëÖäíéêéÇ ëÖâóÄë Éêìáàå
+(1)  189/    4442 : E1                  		POP HL				;ÇéëëíÄçéÇàãà ÄÑêÖë áÄÉêìáäà
+(1)  190/    4443 : CD 10 44            		CALL LOADSCS			;áÄÉêìáàãà ëÖäíéêÄ
+(1)  191/    4446 : D1                  		POP DE
+(1)  192/    4447 : C1                  		POP BC				;ÇéëëíÄçéÇàãà çéåÖê äãÄëíÖêÄ
+(1)  193/    4448 : FD 7C               		LD A,IYH		;HY ëåÖôÖçàÖ Ç äãÄëíÖêÖ
+(1)  194/    444A : DD 84               		ADD A,IXH;IYL		;LY TEMP VAR
+(1)  195/    444C : DD BD               		CP IXL;IXH			;HX êÄáåÖê äãÄëíÖêÄ
+(1)  196/    444E : DA 53 44            		JP C,LDFILE3
+(1)  197/    4451 : DD 95               		SUB IXL;IXH			;HX êÄáåÖê äãÄëíÖêÄ
+(1)  198/    4453 : FD 67               LDFILE3		LD IYH,A		;HY,A ëåÖôÖçàÖ Ç äãÄëíÖêÖ
+(1)  199/    4455 : DA 61 44            		JP C,LDFILE4
+(1)  200/    4458 : E5                  		PUSH HL				;ëéïêÄçàãà ÄÑêÖë áÄÉêìáäà
+(1)  201/    4459 : CD 8D 44            		CALL RDFATZP			;èêéóàíÄãà çéåÖê ëãÖÑìûôÖÉé äãÄëíÖêÄ
+(1)  202/    445C : CD 6C 44            		CALL LST_CLS			;èêéÇÖêàãà, Ä åéÜÖí ùíé èéëãÖÑçàâ äãÄëíÖê?
+(1)  203/    445F : E1                  		POP HL				;ÇéëëíÄçéÇàãà ÄÑêÖë áÄÉêìáäà
+(1)  204/    4460 : D8                  		RET C				;Öëãà èéëãÖÑçàâ, ÇõïéÑàå
+(1)  205/    4461 : FD 7D               LDFILE4		LD A,IYL;IXL		;LX äéãàóÖëíÇé ëÖäíéêéÇ Ñãü áÄÉêìáäà
+(1)  206/    4463 : DD 94               		SUB IXH;IYL			;LY TEMP VAR
+(1)  207/    4465 : C8                  		RET Z
+(1)  208/    4466 : FD 6F               		LD IYL,A;IXL,A		;LX,A äéãàóÖëíÇé ëÖäíéêéÇ Ñãü áÄÉêìáäà
+(1)  209/    4468 : C2 16 44            		JP NZ,LD_FILE
+(1)  210/    446B : C9                  		RET
+(1)  211/    446C :                     
+(1)  212/    446C : 3A 02 42            LST_CLS		LD A,(CAL_FAT)
+(1)  213/    446F : A7                  		AND A
+(1)  214/    4470 : 20 06               		JR NZ,LST_CL1
+(1)  215/    4472 : 21 F7 0F            		LD HL,0X0FF7
+(1)  216/    4475 : ED 52               		SBC HL,DE
+(1)  217/    4477 : C9                  		RET
+(1)  218/    4478 :                     
+(1)  219/    4478 : 3D                  LST_CL1		DEC A
+(1)  220/    4479 : 20 06               		JR NZ,LST_CL2
+(1)  221/    447B : 21 F7 FF            		LD HL,0XFFF7
+(1)  222/    447E : ED 52               		SBC HL,DE
+(1)  223/    4480 : C9                  		RET
+(1)  224/    4481 :                     
+(1)  225/    4481 : 21 FF 0F            LST_CL2		LD HL,0X0FFF
+(1)  226/    4484 : ED 42               		SBC HL,BC
+(1)  227/    4486 : C0                  		RET NZ
+(1)  228/    4487 : 21 F7 FF            		LD HL,0XFFF7
+(1)  229/    448A : ED 52               		SBC HL,DE
+(1)  230/    448C : C9                  		RET
+(1)  231/    448D :                     
+(1)  232/    448D : ED 4B 4B 42         RDFATZP		LD BC,(AFILCLS+2)
+(1)  233/    4491 : ED 5B 49 42         		LD DE,(AFILCLS)
+(1)  234/    4495 : 3A 02 42            		LD A,(CAL_FAT)
+(1)  235/    4498 : A7                  		AND A
+(1)  236/    4499 : 28 3F               		JR Z,RDFATS0
+(1)  237/    449B : 3D                  		DEC A
+(1)  238/    449C : 28 1F               		JR Z,RDFATS1
+(1)  239/    449E : EB                  		EX DE,HL
+(1)  240/    449F : 29                  		ADD HL,HL
+(1)  241/    44A0 : EB                  		EX DE,HL
+(1)  242/    44A1 : 21 00 00            		LD HL,0
+(1)  243/    44A4 : ED 4A               		ADC HL,BC
+(1)  244/    44A6 : 09                  		ADD HL,BC
+ AS V1.42 Beta [Bld 78] - source file make_micro_boot_fat.a80(micro_boot_fat.a80) - page 13 - 1/18/2012 21:33:24
+
+
+(1)  245/    44A7 : 7B                  		LD A,E
+(1)  246/    44A8 : 5A                  		LD E,D
+(1)  247/    44A9 : 55                  		LD D,L
+(1)  248/    44AA : 4C                  		LD C,H
+(1)  249/    44AB : 06 00               		LD B,0
+(1)  250/    44AD : CD C3 44            		CALL RDFATS2
+(1)  251/    44B0 : 23                  		INC HL
+(1)  252/    44B1 : 4E                  		LD C,(HL)
+(1)  253/    44B2 : 23                  		INC HL
+(1)  254/    44B3 : 46                  		LD B,(HL)
+(1)  255/    44B4 : ED 43 4B 42         RDFATS5		LD (AFILCLS+2),BC
+(1)  256/    44B8 : ED 53 49 42         		LD (AFILCLS),DE
+(1)  257/    44BC : C9                  		RET
+(1)  258/    44BD :                     
+(1)  259/    44BD : 01 00 00            RDFATS1		LD BC,0
+(1)  260/    44C0 : 7B                  		LD A,E
+(1)  261/    44C1 : 5A                  		LD E,D
+(1)  262/    44C2 : 51                  		LD D,C
+(1)  263/    44C3 : F5                  RDFATS2		PUSH AF
+(1)  264/    44C4 : C5                  		PUSH BC
+(1)  265/    44C5 : 21 21 42            		LD HL,FATSTR
+(1)  266/    44C8 : CD 97 45            		CALL BCDEHLP
+(1)  267/    44CB : CD B0 45            		CALL LOADLST
+(1)  268/    44CE : C1                  		POP BC
+(1)  269/    44CF : F1                  		POP AF
+(1)  270/    44D0 : 5F                  		LD E,A
+(1)  271/    44D1 : 16 00               		LD D,0
+(1)  272/    44D3 : 19                  		ADD HL,DE
+(1)  273/    44D4 : 19                  		ADD HL,DE
+(1)  274/    44D5 : 5E                  		LD E,(HL)
+(1)  275/    44D6 : 23                  		INC HL
+(1)  276/    44D7 : 56                  		LD D,(HL)
+(1)  277/    44D8 : 18 DA               		JR RDFATS5
+(1)  278/    44DA :                     
+(1)  279/    44DA : 62                  RDFATS0		LD H,D
+(1)  280/    44DB : 6B                  		LD L,E
+(1)  281/    44DC : 29                  		ADD HL,HL
+(1)  282/    44DD : 19                  		ADD HL,DE
+(1)  283/    44DE : CB 3C               		SRL H
+(1)  284/    44E0 : CB 1D               		RR L
+(1)  285/    44E2 : 7B                  		LD A,E
+(1)  286/    44E3 : 5C                  		LD E,H
+(1)  287/    44E4 : 16 00               		LD D,0
+(1)  288/    44E6 : 42                  		LD B,D
+(1)  289/    44E7 : 4A                  		LD C,D
+(1)  290/    44E8 : CB 3B               		SRL E
+(1)  291/    44EA : F5                  		PUSH AF
+(1)  292/    44EB : E5                  		PUSH HL
+(1)  293/    44EC : 21 21 42            		LD HL,FATSTR
+(1)  294/    44EF : CD 97 45            		CALL BCDEHLP
+(1)  295/    44F2 : CD B0 45            		CALL LOADLST
+(1)  296/    44F5 : C1                  		POP BC
+(1)  297/    44F6 : 78                  		LD A,B
+(1)  298/    44F7 : E6 01               		AND 1
+(1)  299/    44F9 : 47                  		LD B,A
+(1)  300/    44FA : 09                  		ADD HL,BC
+(1)  301/    44FB : 46                  		LD B,(HL)
+(1)  302/    44FC : 23                  		INC HL
+(1)  303/    44FD : 7C                  		LD A,H
+(1)  304/    44FE : FE 42               		CP HIGH (BUF_512)+2
+ AS V1.42 Beta [Bld 78] - source file make_micro_boot_fat.a80(micro_boot_fat.a80) - page 14 - 1/18/2012 21:33:24
+
+
+(1)  305/    4500 : 20 09               		JR NZ,RDFATS4
+(1)  306/    4502 : C5                  		PUSH BC
+(1)  307/    4503 : 01 00 00            		LD BC,0
+(1)  308/    4506 : 13                  		INC DE
+(1)  309/    4507 : CD B0 45            		CALL LOADLST
+(1)  310/    450A : C1                  		POP BC
+(1)  311/    450B : F1                  RDFATS4		POP AF
+(1)  312/    450C : 56                  		LD D,(HL)
+(1)  313/    450D : 58                  		LD E,B
+(1)  314/    450E : 01 00 00            		LD BC,0
+(1)  315/    4511 : 1F                  		RRA
+(1)  316/    4512 : 30 10               		JR NC,RDFATS3
+(1)  317/    4514 :                     		REPT 4
+(1)  318/    4514 :                     		SRL D
+(1)  319/    4514 :                     		RR E
+(1)  320/    4514 :                     		ENDM
+(1)  318/    4514 : CB 3A               		SRL D
+(1)  319/    4516 : CB 1B               		RR E
+(1)  318/    4518 : CB 3A               		SRL D
+(1)  319/    451A : CB 1B               		RR E
+(1)  318/    451C : CB 3A               		SRL D
+(1)  319/    451E : CB 1B               		RR E
+(1)  318/    4520 : CB 3A               		SRL D
+(1)  319/    4522 : CB 1B               		RR E
+(1)  321/    4524 : 7A                  RDFATS3		LD A,D
+(1)  322/    4525 : E6 0F               		AND 0X0F
+(1)  323/    4527 : 57                  		LD D,A
+(1)  324/    4528 : 18 8A               		JR RDFATS5
+(1)  325/    452A :                     
+(1)  326/    452A :                     ;ÇõóàëãÖçàÖ êÖÄãúçéÉé ëÖäíéêÄ
+(1)  327/    452A :                     ;çÄ ÇïéÑÖ BCDE=çéåÖê FAT
+(1)  328/    452A :                     ;çÄ ÇõïéÑÖ BCDE=ÄÑêÖë ëÖäíéêÄ
+(1)  329/    452A : ED 4B 4B 42         REALSEC		LD BC,(AFILCLS+2)
+(1)  330/    452E : ED 5B 49 42         		LD DE,(AFILCLS)
+(1)  331/    4532 : 78                  		LD A,B
+(1)  332/    4533 : B1                  		OR C
+(1)  333/    4534 : B2                  		OR D
+(1)  334/    4535 : B3                  		OR E
+(1)  335/    4536 : 20 13               		JR NZ,REALSE1
+(1)  336/    4538 : ED 5B 21 42         		LD DE,(FATSTR)
+(1)  337/    453C : ED 4B 23 42         		LD BC,(FATSTR+2)
+(1)  338/    4540 : 21 0B 42            		LD HL,SEC_FAT
+(1)  339/    4543 : E5                  		PUSH HL
+(1)  340/    4544 : CD 97 45            		CALL BCDEHLP
+(1)  341/    4547 : E1                  		POP HL
+(1)  342/    4548 : C3 97 45            		JP BCDEHLP
+(1)  343/    454B :                     
+(1)  344/    454B : 21 FE FF            REALSE1		LD HL,0XFFFE
+(1)  345/    454E : EB                  		EX DE,HL
+(1)  346/    454F : 19                  		ADD HL,DE
+(1)  347/    4550 : EB                  		EX DE,HL
+(1)  348/    4551 : 23                  		INC HL
+(1)  349/    4552 : ED 4A               		ADC HL,BC			;çéåÖê äãÄëíÖêÄ-2
+(1)  350/    4554 : 3A 04 42            		LD A,(BYTSSEC)
+(1)  351/    4557 : 18 08               		JR REALSE3
+(1)  352/    4559 :                     
+(1)  353/    4559 : CB 23               REALSE2		SLA E
+(1)  354/    455B : CB 12               		RL D
+(1)  355/    455D : CB 15               		RL L
+(1)  356/    455F : CB 14               		RL H
+ AS V1.42 Beta [Bld 78] - source file make_micro_boot_fat.a80(micro_boot_fat.a80) - page 15 - 1/18/2012 21:33:24
+
+
+(1)  357/    4561 : 0F                  REALSE3		RRCA
+(1)  358/    4562 : 30 F5               		JR NC,REALSE2			;ìåçéÜàãà çÄ êÄáåÖê äãÄëíÖêÄ
+(1)  359/    4564 : 44                  		LD B,H
+(1)  360/    4565 : 4D                  		LD C,L
+(1)  361/    4566 : 21 11 42            		LD HL,STARTRZ
+(1)  362/    4569 : CD 97 45            		CALL BCDEHLP			;èêàÅÄÇàãà ëåÖôÖçàÖ éí çÄóÄãÄ ÑàëäÄ
+(1)  363/    456C : 21 15 42            		LD HL,FRSTDAT
+(1)  364/    456F : C3 97 45            		JP BCDEHLP			;èêàÅÄÇàãà ëåÖôÖçàÖ éí çÄóÄãÄ êÄáÑÖãÄ
+(1)  365/    4572 :                     
+(1)  366/    4572 : 5A                  BCDE200		LD E,D
+(1)  367/    4573 : 51                  		LD D,C
+(1)  368/    4574 : 48                  		LD C,B
+(1)  369/    4575 : 06 00               		LD B,0
+(1)  370/    4577 : 3E 02               		LD A,2
+(1)  371/    4579 : 18 08               		JR BCDE_A
+(1)  372/    457B :                     
+(1)  373/    457B :                     ;BCDE>>A=BCDE
+(1)  374/    457B : CB 38               BCDE_A1		SRL B
+(1)  375/    457D : CB 19               		RR C
+(1)  376/    457F : CB 1A               		RR D
+(1)  377/    4581 : CB 1B               		RR E
+(1)  378/    4583 : 0F                  BCDE_A		RRCA
+(1)  379/    4584 : 30 F5               		JR NC,BCDE_A1
+(1)  380/    4586 : C9                  		RET
+(1)  381/    4587 :                     
+(1)  382/    4587 :                     ;(ADR)-BCDE=BCDE
+(1)  383/    4587 : 7E                  BCDEHLM		LD A,(HL)
+(1)  384/    4588 : 23                  		INC HL
+(1)  385/    4589 : 93                  		SUB E
+(1)  386/    458A : 5F                  		LD E,A
+(1)  387/    458B : 7E                  		LD A,(HL)
+(1)  388/    458C : 23                  		INC HL
+(1)  389/    458D : 9A                  		SBC A,D
+(1)  390/    458E : 57                  		LD D,A
+(1)  391/    458F : 7E                  		LD A,(HL)
+(1)  392/    4590 : 23                  		INC HL
+(1)  393/    4591 : 99                  		SBC A,C
+(1)  394/    4592 : 4F                  		LD C,A
+(1)  395/    4593 : 7E                  		LD A,(HL)
+(1)  396/    4594 : 98                  		SBC A,B
+(1)  397/    4595 : 47                  		LD B,A
+(1)  398/    4596 : C9                  		RET
+(1)  399/    4597 :                     
+(1)  400/    4597 :                     ;(ADR)+BCDE=BCDE
+(1)  401/    4597 : 7E                  BCDEHLP		LD A,(HL)
+(1)  402/    4598 : 23                  		INC HL
+(1)  403/    4599 : 83                  		ADD A,E
+(1)  404/    459A : 5F                  		LD E,A
+(1)  405/    459B : 7E                  		LD A,(HL)
+(1)  406/    459C : 23                  		INC HL
+(1)  407/    459D : 8A                  		ADC A,D
+(1)  408/    459E : 57                  		LD D,A
+(1)  409/    459F : 7E                  		LD A,(HL)
+(1)  410/    45A0 : 23                  		INC HL
+(1)  411/    45A1 : 89                  		ADC A,C
+(1)  412/    45A2 : 4F                  		LD C,A
+(1)  413/    45A3 : 7E                  		LD A,(HL)
+(1)  414/    45A4 : 88                  		ADC A,B
+(1)  415/    45A5 : 47                  		LD B,A
+(1)  416/    45A6 : C9                  		RET
+ AS V1.42 Beta [Bld 78] - source file make_micro_boot_fat.a80(micro_boot_fat.a80) - page 16 - 1/18/2012 21:33:24
+
+
+(1)  417/    45A7 :                     
+(1)  418/    45A7 :                     ;HLDE+BC=HLDE
+(1)  419/    45A7 : EB                  HLDEPBC		EX DE,HL
+(1)  420/    45A8 : 09                  		ADD HL,BC
+(1)  421/    45A9 : EB                  		EX DE,HL
+(1)  422/    45AA : 01 00 00            		LD BC,0
+(1)  423/    45AD : ED 4A               		ADC HL,BC
+(1)  424/    45AF : C9                  		RET
+(1)  425/    45B0 :                     
+(1)  426/    45B0 :                     ;áÄÉêìÜÄÖå ëÖäíéê Ç ÅìîÖê
+(1)  427/    45B0 : 21 00 40            LOADLST		LD HL,BUF_512
+(1)  428/    45B3 : E5                  		PUSH HL
+(1)  429/    45B4 : 3E 01               		LD A,1
+(1)  430/    45B6 : CD 10 44            		CALL LOADSCS
+(1)  431/    45B9 : E1                  		POP HL
+(1)  432/    45BA : C9                  		RET
+(1)  433/    45BB :                     
+(1)  434/    45BB :                     ;================áÄÉêìáóàä ë ZC SD äÄêíéóäà===================
+(1)  435/    45BB : F5                  READ_SD		PUSH AF
+(1)  436/    45BC : 3E 01               		LD A,1
+(1)  437/    45BE : D3 77               		OUT (P_CONF),A
+(1)  438/    45C0 : F1                  		POP AF
+(1)  439/    45C1 : 08                  		EX AF,AF'
+(1)  440/    45C2 : 3E 52               		LD A,CMD_18
+(1)  441/    45C4 : CD F9 45            		CALL SECM200
+(1)  442/    45C7 : 08                  		EX AF,AF'
+(1)  443/    45C8 : 08                  RDMULT1		EX AF,AF'
+(1)  444/    45C9 : CD 54 46            RDMULT2		CALL IN_OOUT
+(1)  445/    45CC : FE FE               		CP 0XFE
+(1)  446/    45CE : 20 F9               		JR NZ,RDMULT2
+(1)  447/    45D0 : C5                  		PUSH BC
+(1)  448/    45D1 : 01 57 00            		LD BC,P_DATA
+(1)  449/    45D4 : ED B2               		INIR
+(1)  450/    45D6 : 00                  		NOP
+(1)  451/    45D7 : ED B2               		INIR
+(1)  452/    45D9 : 00                  		NOP
+(1)  453/    45DA : ED 78               		IN A,(C)
+(1)  454/    45DC : 00                  		NOP
+(1)  455/    45DD : ED 78               		IN A,(C)
+(1)  456/    45DF : C1                  		POP BC
+(1)  457/    45E0 : 08                  		EX AF,AF'
+(1)  458/    45E1 : 3D                  		DEC A
+(1)  459/    45E2 : 20 E4               		JR NZ,RDMULT1
+(1)  460/    45E4 : 3E 4C               		LD A,CMD_12
+(1)  461/    45E6 : CD 3D 46            		CALL OUT_COM
+(1)  462/    45E9 : CD 54 46            RDMULT3		CALL IN_OOUT
+(1)  463/    45EC : 3C                  		INC A
+(1)  464/    45ED : 20 FA               		JR NZ,RDMULT3
+(1)  465/    45EF : F5                  		PUSH AF
+(1)  466/    45F0 : 3E 03               		LD A,3
+(1)  467/    45F2 : D3 77               		OUT (P_CONF),A
+(1)  468/    45F4 : AF                  		XOR A
+(1)  469/    45F5 : D3 57               		OUT (P_DATA),A
+(1)  470/    45F7 : F1                  		POP AF
+(1)  471/    45F8 : C9                  		RET
+(1)  472/    45F9 :                     
+(1)  473/    45F9 : E5                  SECM200		PUSH HL
+(1)  474/    45FA : D5                  		PUSH DE
+(1)  475/    45FB : C5                  		PUSH BC
+(1)  476/    45FC : F5                  		PUSH AF
+ AS V1.42 Beta [Bld 78] - source file make_micro_boot_fat.a80(micro_boot_fat.a80) - page 17 - 1/18/2012 21:33:24
+
+
+(1)  477/    45FD : C5                  		PUSH BC
+(1)  478/    45FE : 3E 7A               		LD A,CMD_58
+(1)  479/    4600 : 01 57 00            		LD BC,P_DATA
+(1)  480/    4603 : CD 3D 46            		CALL OUT_COM
+(1)  481/    4606 : CD 54 46            		CALL IN_OOUT
+(1)  482/    4609 : ED 78               		IN A,(C)
+(1)  483/    460B : 00                  		NOP
+(1)  484/    460C : ED 60               		IN H,(C)
+(1)  485/    460E : 00                  		NOP
+(1)  486/    460F : ED 60               		IN H,(C)
+(1)  487/    4611 : 00                  		NOP
+(1)  488/    4612 : ED 60               		IN H,(C)
+(1)  489/    4614 : CB 77               		BIT 6,A
+(1)  490/    4616 : E1                  		POP HL
+(1)  491/    4617 : 20 0A               		JR NZ,SECN200
+(1)  492/    4619 : EB                  		EX DE,HL
+(1)  493/    461A : 29                  		ADD HL,HL
+(1)  494/    461B : EB                  		EX DE,HL
+(1)  495/    461C : ED 6A               		ADC HL,HL
+(1)  496/    461E : 65                  		LD H,L
+(1)  497/    461F : 6A                  		LD L,D
+(1)  498/    4620 : 53                  		LD D,E
+(1)  499/    4621 : 1E 00               		LD E,0
+(1)  500/    4623 : F1                  SECN200		POP AF
+(1)  501/    4624 : 01 57 00            		LD BC,P_DATA
+(1)  502/    4627 : ED 79               		OUT (C),A
+(1)  503/    4629 : 00                  		NOP
+(1)  504/    462A : ED 61               		OUT (C),H
+(1)  505/    462C : 00                  		NOP
+(1)  506/    462D : ED 69               		OUT (C),L
+(1)  507/    462F : 00                  		NOP
+(1)  508/    4630 : ED 51               		OUT (C),D
+(1)  509/    4632 : 00                  		NOP
+(1)  510/    4633 : ED 59               		OUT (C),E
+(1)  511/    4635 : 3E FF               		LD A,0XFF
+(1)  512/    4637 : ED 79               		OUT (C),A
+(1)  513/    4639 : C1                  		POP BC
+(1)  514/    463A : D1                  		POP DE
+(1)  515/    463B : E1                  		POP HL
+(1)  516/    463C : C9                  		RET
+(1)  517/    463D :                     
+(1)  518/    463D : C5                  OUT_COM		PUSH BC
+(1)  519/    463E : 01 57 00            		LD BC,P_DATA
+(1)  520/    4641 : ED 79               		OUT (C),A
+(1)  521/    4643 : AF                  		XOR A
+(1)  522/    4644 : ED 79               		OUT (C),A
+(1)  523/    4646 : 00                  		NOP
+(1)  524/    4647 : ED 79               		OUT (C),A
+(1)  525/    4649 : 00                  		NOP
+(1)  526/    464A : ED 79               		OUT (C),A
+(1)  527/    464C : 00                  		NOP
+(1)  528/    464D : ED 79               		OUT (C),A
+(1)  529/    464F : 3D                  		DEC A
+(1)  530/    4650 : ED 79               		OUT (C),A
+(1)  531/    4652 : C1                  		POP BC
+(1)  532/    4653 : C9                  		RET
+(1)  533/    4654 :                     
+(1)  534/    4654 : D5                  IN_OOUT		PUSH DE
+(1)  535/    4655 : 11 FF 08            		LD DE,0X08FF
+(1)  536/    4658 : DB 57               IN_WAIT		IN A,(P_DATA)
+ AS V1.42 Beta [Bld 78] - source file make_micro_boot_fat.a80(micro_boot_fat.a80) - page 18 - 1/18/2012 21:33:24
+
+
+(1)  537/    465A : BB                  		CP E
+(1)  538/    465B : 20 03               		JR NZ,IN_EXIT
+(1)  539/    465D : 15                  IN_NEXT		DEC D
+(1)  540/    465E : 20 F8               		JR NZ,IN_WAIT
+(1)  541/    4660 : D1                  IN_EXIT		POP DE
+(1)  542/    4661 : C9                  		RET
+(1)  543/    4662 :                     ;=========================================================
+(1)  544/    4662 :                     
+(1)  545/    4662 :                     ;===============óíÖçàÖ ë SD NEOGS=========================
+(1)  546/    4662 :                     ;óíÖçàÖ "A" ëÖäíéêéÇ
+(1)  547/    4662 : 08                  READNGS		EX AF,AF'
+(1)  548/    4663 : 3E 03               		LD A,3
+(1)  549/    4665 : CD 92 46            		CALL COMM2SD
+(1)  550/    4668 : 08                  		EX AF,AF'
+(1)  551/    4669 : D5                  		PUSH DE
+(1)  552/    466A : C5                  		PUSH BC
+(1)  553/    466B : 01 B3 00            		LD BC,GSDAT
+(1)  554/    466E : 08                  SDRDSN1		EX AF,AF'
+(1)  555/    466F : D3 BB               		OUT (GSCOM),A
+(1)  556/    4671 : CD C4 46            		CALL WC_
+(1)  557/    4674 : 11 00 02            		LD DE,0X0200
+(1)  558/    4677 : CD BE 46            SDRDSN2		CALL WN_
+(1)  559/    467A : ED A2               		INI
+(1)  560/    467C : 1B                  		DEC DE
+(1)  561/    467D : 7A                  		LD A,D
+(1)  562/    467E : B3                  		OR E
+(1)  563/    467F : 20 F6               		JR NZ,SDRDSN2
+(1)  564/    4681 : 08                  		EX AF,AF'
+(1)  565/    4682 : 3D                  		DEC A
+(1)  566/    4683 : 20 E9               		JR NZ,SDRDSN1
+(1)  567/    4685 : CD BE 46            		CALL WN_
+(1)  568/    4688 : ED 78               SDRDSN3		IN A,(C)
+(1)  569/    468A : FE 77               		CP 0X77
+(1)  570/    468C : 20 FA               		JR NZ,SDRDSN3
+(1)  571/    468E : C1                  		POP BC
+(1)  572/    468F : D1                  		POP DE
+(1)  573/    4690 : AF                  		XOR A
+(1)  574/    4691 : C9                  		RET
+(1)  575/    4692 :                     
+(1)  576/    4692 :                     ;èÖêÖÑÄíóàä äéåÄçÑ/èÄêÄåÖíêéÇ Ç ÑêÄâÇÖê çÄ NeoGS
+(1)  577/    4692 : D3 B3               COMM2SD		OUT (GSDAT),A			;ìòãÄ äéåÄçÑÄ ÑêÄâÇÖêì
+(1)  578/    4694 : 3E 1E               		LD A,0X1E
+(1)  579/    4696 : D3 BB               		OUT (GSCOM),A			;ìòãÄ äéåÄçÑÄ èêéòàÇäÖ
+(1)  580/    4698 : CD C4 46            		CALL WC_
+(1)  581/    469B : 78                  		LD A,B
+(1)  582/    469C : D3 B3               		OUT (GSDAT),A			;ìòãà Åàíõ 31-24 èÄêÄåÖíêéÇ
+(1)  583/    469E : CD B8 46            		CALL WD_
+(1)  584/    46A1 : 79                  		LD A,C
+(1)  585/    46A2 : D3 B3               		OUT (GSDAT),A			;ìòãà Åàíõ 23-16 èÄêÄåÖíêéÇ
+(1)  586/    46A4 : CD B8 46            		CALL WD_
+(1)  587/    46A7 : 7A                  		LD A,D
+(1)  588/    46A8 : D3 B3               		OUT (GSDAT),A			;ìòãà Åàíõ 15-8 èÄêÄåÖíêéÇ
+(1)  589/    46AA : CD B8 46            		CALL WD_
+(1)  590/    46AD : 7B                  		LD A,E
+(1)  591/    46AE : D3 B3               		OUT (GSDAT),A			;ìòãà Åàíõ 7-0 èÄêÄåÖíêéÇ
+(1)  592/    46B0 : CD B8 46            		CALL WD_
+(1)  593/    46B3 : 08                  		EX AF,AF'
+(1)  594/    46B4 : D3 B3               		OUT (GSDAT),A			;ìòãé äéã-Çé ëÖäíéêéÇ
+(1)  595/    46B6 : 08                  		EX AF,AF'
+(1)  596/    46B7 : C9                  		RET
+ AS V1.42 Beta [Bld 78] - source file make_micro_boot_fat.a80(micro_boot_fat.a80) - page 19 - 1/18/2012 21:33:24
+
+
+(1)  597/    46B8 :                     
+(1)  598/    46B8 :                     ;éÜàÑÄçàÖ äéÉÑÄ NeoGS ÅÄâí áÄÅÖêÖí
+(1)  599/    46B8 : DB BB               WD_		IN A,(GSCOM)
+(1)  600/    46BA : 17                  		RLA
+(1)  601/    46BB : 38 FB               		JR C,WD_
+(1)  602/    46BD : C9                  		RET
+(1)  603/    46BE :                     
+(1)  604/    46BE :                     ;éÜàÑÄçàÖ äéÉÑÄ NeoGS ÑÄëí ÅÄâí
+(1)  605/    46BE : DB BB               WN_		IN A,(GSCOM)
+(1)  606/    46C0 : 17                  		RLA
+(1)  607/    46C1 : 30 FB               		JR NC,WN_
+(1)  608/    46C3 : C9                  		RET
+(1)  609/    46C4 :                     
+(1)  610/    46C4 :                     ;éÜàÑÄçàÖ äéÉÑÄ NeoGS äéåÄçÑì áÄÅÖêÖí
+(1)  611/    46C4 : DB BB               WC_		IN A,(GSCOM)
+(1)  612/    46C6 : 1F                  		RRA
+(1)  613/    46C7 : 38 FB               		JR C,WC_
+(1)  614/    46C9 : C9                  		RET
+(1)  615/    46CA :                     ;==========================================================
+(1)  616/    46CA :                     
+(1)  617/    46CA :                     ;==================óíÖçàÖ ë NEMO HDD=======================
+(1)  618/    46CA : =F0H                P_1F7		EQU 0XF0			;êÖÉàëíê ëéëíéüçàü/êÖÉàëíê äéåÄçÑ
+(1)  619/    46CA : =D0H                P_1F6		EQU 0XD0			;CHS-çéåÖê ÉéãéÇõ à ìëíê/LBA ÄÑêÖë 24-27
+(1)  620/    46CA : =B0H                P_1F5		EQU 0XB0			;CHS-ñàãàçÑê 8-15/LBA ÄÑêÖë 16-23
+(1)  621/    46CA : =90H                P_1F4		EQU 0X90			;CHS-ñàãàçÑê 0-7/LBA ÄÑêÖë 8-15
+(1)  622/    46CA : =70H                P_1F3		EQU 0X70			;CHS-çéåÖê ëÖäíéêÄ/LBA ÄÑêÖë 0-7
+(1)  623/    46CA : =50H                P_1F2		EQU 0X50			;ëóÖíóàä ëÖäíéêéÇ
+(1)  624/    46CA : =30H                P_1F1		EQU 0X30			;èéêí éòàÅéä/ëÇéâëíÇ
+(1)  625/    46CA : =10H                P_1F0		EQU 0X10			;èéêí ÑÄççõï
+(1)  626/    46CA : =C8H                P_3F6		EQU 0XC8			;êÖÉàëíê ëéëíéüçàü/ìèêÄÇãÖçàü
+(1)  627/    46CA : =11H                P_HI		EQU 0X11			;ëíÄêòàÖ 8 Åàí
+(1)  628/    46CA : =1011H              PRT_RW		EQU P_1F0*256+P_HI		;èéêíõ óíÖçàü/áÄèàëà éÑçàå ëãéÇéå
+(1)  629/    46CA :                     
+(1)  630/    46CA : C5                  RD_HDDN		PUSH BC
+(1)  631/    46CB : D5                  		PUSH DE
+(1)  632/    46CC : D5                  		PUSH DE
+(1)  633/    46CD : 08                  		EX AF,AF'
+(1)  634/    46CE : 3A FE 42            		LD A,(MAS_SLA)
+(1)  635/    46D1 : B0                  		OR B
+(1)  636/    46D2 : 59                  		LD E,C
+(1)  637/    46D3 : 01 D0 FF            		LD BC,0XFF00+P_1F6
+(1)  638/    46D6 : ED 79               		OUT (C),A
+(1)  639/    46D8 : 0E B0               		LD C,P_1F5
+(1)  640/    46DA : ED 59               		OUT (C),E
+(1)  641/    46DC : D1                  		POP DE
+(1)  642/    46DD : 0E 90               		LD C,P_1F4
+(1)  643/    46DF : ED 51               		OUT (C),D
+(1)  644/    46E1 : 0E 70               		LD C,P_1F3
+(1)  645/    46E3 : ED 59               		OUT (C),E
+(1)  646/    46E5 : 0E 50               		LD C,P_1F2
+(1)  647/    46E7 : 08                  		EX AF,AF'
+(1)  648/    46E8 : ED 79               		OUT (C),A
+(1)  649/    46EA : 08                  		EX AF,AF'
+(1)  650/    46EB : 0E F0               		LD C,P_1F7
+(1)  651/    46ED : 3E 20               		LD A,0X20
+(1)  652/    46EF : ED 79               		OUT (C),A
+(1)  653/    46F1 : 0E F0               		LD C,P_1F7
+(1)  654/    46F3 : ED 78               HDDRD1		IN A,(C)
+(1)  655/    46F5 : E6 88               		AND 0X88
+(1)  656/    46F7 : FE 08               		CP 8
+ AS V1.42 Beta [Bld 78] - source file make_micro_boot_fat.a80(micro_boot_fat.a80) - page 20 - 1/18/2012 21:33:24
+
+
+(1)  657/    46F9 : 20 F8               		JR NZ,HDDRD1
+(1)  658/    46FB : 08                  		EX AF,AF'
+(1)  659/    46FC : 08                  HDDRD2		EX AF,AF'
+(1)  660/    46FD : 3E 40               		LD A,0X40
+(1)  661/    46FF : 0E 10               		LD C,P_1F0
+(1)  662/    4701 : ED 58               READSC1		IN E,(C)
+(1)  663/    4703 : 0C                  		INC C
+(1)  664/    4704 : ED 50               		IN D,(C)
+(1)  665/    4706 : 0D                  		DEC C
+(1)  666/    4707 : 73                  		LD (HL),E
+(1)  667/    4708 : 23                  		INC HL
+(1)  668/    4709 : 72                  		LD (HL),D
+(1)  669/    470A : 23                  		INC HL
+(1)  670/    470B : ED 58               		IN E,(C)
+(1)  671/    470D : 0C                  		INC C
+(1)  672/    470E : ED 50               		IN D,(C)
+(1)  673/    4710 : 0D                  		DEC C
+(1)  674/    4711 : 73                  		LD (HL),E
+(1)  675/    4712 : 23                  		INC HL
+(1)  676/    4713 : 72                  		LD (HL),D
+(1)  677/    4714 : 23                  		INC HL
+(1)  678/    4715 : ED 58               		IN E,(C)
+(1)  679/    4717 : 0C                  		INC C
+(1)  680/    4718 : ED 50               		IN D,(C)
+(1)  681/    471A : 0D                  		DEC C
+(1)  682/    471B : 73                  		LD (HL),E
+(1)  683/    471C : 23                  		INC HL
+(1)  684/    471D : 72                  		LD (HL),D
+(1)  685/    471E : 23                  		INC HL
+(1)  686/    471F : ED 58               		IN E,(C)
+(1)  687/    4721 : 0C                  		INC C
+(1)  688/    4722 : ED 50               		IN D,(C)
+(1)  689/    4724 : 0D                  		DEC C
+(1)  690/    4725 : 73                  		LD (HL),E
+(1)  691/    4726 : 23                  		INC HL
+(1)  692/    4727 : 72                  		LD (HL),D
+(1)  693/    4728 : 23                  		INC HL
+(1)  694/    4729 : 3D                  		DEC A
+(1)  695/    472A : 20 D5               		JR NZ,READSC1
+(1)  696/    472C : 0E F0               		LD C,P_1F7
+(1)  697/    472E : ED 78               HDDRD3		IN A,(C)
+(1)  698/    4730 : E6 80               		AND 0X80
+(1)  699/    4732 : 20 FA               		JR NZ,HDDRD3
+(1)  700/    4734 : 08                  		EX AF,AF'
+(1)  701/    4735 : 3D                  		DEC A
+(1)  702/    4736 : 20 C4               		JR NZ,HDDRD2
+(1)  703/    4738 : D1                  		POP DE
+(1)  704/    4739 : C1                  		POP BC
+(1)  705/    473A : AF                  		XOR A
+(1)  706/    473B : C9                  		RET
+(1)  707/    473C :                     ;=============================================================
+(1)  708/    473C :                     
+(1)  709/    473C :                     ;==================óíÖçàÖ ëé ëåìä ÇàçíÄ=======================
+(1)  710/    473C : =FFH                PS1F7		EQU 0XFF			;0XFFBE	êÖÉàëíê ëéëíéüçàü/êÖÉàëíê äéåÄçÑ
+(1)  711/    473C : =FEH                PS1F6		EQU 0XFE			;0XFEBE	CHS-çéåÖê ÉéãéÇõ à ìëíê/LBA ÄÑêÖë 24-27
+(1)  712/    473C : =FDH                PS1F5		EQU 0XFD			;0XFDBE	CHS-ñàãàçÑê 8-15/LBA ÄÑêÖë 16-23
+(1)  713/    473C : =FCH                PS1F4		EQU 0XFC			;0XFCBE	CHS-ñàãàçÑê 0-7/LBA ÄÑêÖë 8-15
+(1)  714/    473C : =FBH                PS1F3		EQU 0XFB			;0XFBBE	CHS-çéåÖê ëÖäíéêÄ/LBA ÄÑêÖë 0-7
+(1)  715/    473C : =FAH                PS1F2		EQU 0XFA			;0XFABE	ëóÖíóàä ëÖäíéêéÇ
+(1)  716/    473C : =F9H                PS1F1		EQU 0XF9			;0XF9BE	èéêí éòàÅéä/ëÇéâëíÇ
+ AS V1.42 Beta [Bld 78] - source file make_micro_boot_fat.a80(micro_boot_fat.a80) - page 21 - 1/18/2012 21:33:24
+
+
+(1)  717/    473C : =F8H                PS1F0		EQU 0XF8			;0XF8BE	èéêí ÑÄççõï
+(1)  718/    473C : =FEH                PS3F6		EQU 0XFE			;0XFEBE	êÖÉàëíê ëéëíéüçàü/ìèêÄÇãÖçàü
+(1)  719/    473C : =D8H                PSHI		EQU 0XD8			;0XD8BE	ëíÄêòàÖ 8 Åàí
+(1)  720/    473C : =F8D8H              PRTSRW		EQU PS1F0*256+PSHI		;èéêíõ óíÖçàü/áÄèàëà éÑçàå ëãéÇéå
+(1)  721/    473C : =BEH                LOW_PRT		EQU 0XBE			;åãÄÑòàâ ÅÄâí ÄÑêÖëÄ SMUC IDE
+(1)  722/    473C : =FFBAH              SMUCSYS		EQU 0XFFBA			;ëàëíÖåçõâ èéêí SMUC
+(1)  723/    473C : =5FBAH              SMUCVER		EQU 0X5FBA			;èéêí ÇÖêëàà SMUC
+(1)  724/    473C :                     
+(1)  725/    473C : C5                  RD_HDDS		PUSH BC
+(1)  726/    473D : D5                  		PUSH DE
+(1)  727/    473E : CD 9E 47            		CALL SETSREG
+(1)  728/    4741 : 08                  		EX AF,AF'
+(1)  729/    4742 : 06 FF               		LD B,PS1F7
+(1)  730/    4744 : 3E 20               		LD A,0X20
+(1)  731/    4746 : CD C2 47            		CALL SOUTPRT
+(1)  732/    4749 : CD CA 47            HDSRDM2		CALL SINPRT
+(1)  733/    474C : E6 88               		AND 0X88
+(1)  734/    474E : FE 08               		CP 8
+(1)  735/    4750 : 20 F7               		JR NZ,HDSRDM2
+(1)  736/    4752 : 08                  		EX AF,AF'
+(1)  737/    4753 : F5                  HDSRDM1		PUSH AF
+(1)  738/    4754 : 11 D8 F8            		LD DE,PRTSRW
+(1)  739/    4757 : 3E 40               		LD A,0X40
+(1)  740/    4759 : 08                  RDCSSC1		EX AF,AF'
+(1)  741/    475A : 42                  		LD B,D
+(1)  742/    475B : CD CA 47            		CALL SINPRT
+(1)  743/    475E : 77                  		LD (HL),A
+(1)  744/    475F : 23                  		INC HL
+(1)  745/    4760 : 43                  		LD B,E
+(1)  746/    4761 : CD CA 47            		CALL SINPRT
+(1)  747/    4764 : 77                  		LD (HL),A
+(1)  748/    4765 : 23                  		INC HL
+(1)  749/    4766 : 42                  		LD B,D
+(1)  750/    4767 : CD CA 47            		CALL SINPRT
+(1)  751/    476A : 77                  		LD (HL),A
+(1)  752/    476B : 23                  		INC HL
+(1)  753/    476C : 43                  		LD B,E
+(1)  754/    476D : CD CA 47            		CALL SINPRT
+(1)  755/    4770 : 77                  		LD (HL),A
+(1)  756/    4771 : 23                  		INC HL
+(1)  757/    4772 : 42                  		LD B,D
+(1)  758/    4773 : CD CA 47            		CALL SINPRT
+(1)  759/    4776 : 77                  		LD (HL),A
+(1)  760/    4777 : 23                  		INC HL
+(1)  761/    4778 : 43                  		LD B,E
+(1)  762/    4779 : CD CA 47            		CALL SINPRT
+(1)  763/    477C : 77                  		LD (HL),A
+(1)  764/    477D : 23                  		INC HL
+(1)  765/    477E : 42                  		LD B,D
+(1)  766/    477F : CD CA 47            		CALL SINPRT
+(1)  767/    4782 : 77                  		LD (HL),A
+(1)  768/    4783 : 23                  		INC HL
+(1)  769/    4784 : 43                  		LD B,E
+(1)  770/    4785 : CD CA 47            		CALL SINPRT
+(1)  771/    4788 : 77                  		LD (HL),A
+(1)  772/    4789 : 23                  		INC HL
+(1)  773/    478A : 08                  		EX AF,AF'
+(1)  774/    478B : 3D                  		DEC A
+(1)  775/    478C : 20 CB               		JR NZ,RDCSSC1
+(1)  776/    478E : 06 FF               		LD B,PS1F7
+ AS V1.42 Beta [Bld 78] - source file make_micro_boot_fat.a80(micro_boot_fat.a80) - page 22 - 1/18/2012 21:33:24
+
+
+(1)  777/    4790 : CD CA 47            HDSRDM3		CALL SINPRT
+(1)  778/    4793 : E6 80               		AND 0X80
+(1)  779/    4795 : 20 F9               		JR NZ,HDSRDM3
+(1)  780/    4797 : F1                  		POP AF
+(1)  781/    4798 : 3D                  		DEC A
+(1)  782/    4799 : 20 B8               		JR NZ,HDSRDM1
+(1)  783/    479B : D1                  		POP DE
+(1)  784/    479C : C1                  		POP BC
+(1)  785/    479D : C9                  		RET
+(1)  786/    479E :                     	
+(1)  787/    479E : D5                  SETSREG		PUSH DE
+(1)  788/    479F : 50                  		LD D,B
+(1)  789/    47A0 : 59                  		LD E,C
+(1)  790/    47A1 : 08                  		EX AF,AF'
+(1)  791/    47A2 : 3A FE 42            		LD A,(MAS_SLA)
+(1)  792/    47A5 : B2                  		OR D
+(1)  793/    47A6 : 01 BE FE            		LD BC,(PS1F6*0X0100)+LOW_PRT
+(1)  794/    47A9 : CD C2 47            		CALL SOUTPRT
+(1)  795/    47AC : 06 FD               		LD B,PS1F5
+(1)  796/    47AE : 7B                  		LD A,E
+(1)  797/    47AF : CD C2 47            		CALL SOUTPRT
+(1)  798/    47B2 : D1                  		POP DE
+(1)  799/    47B3 : 06 FC               		LD B,PS1F4
+(1)  800/    47B5 : 7A                  		LD A,D
+(1)  801/    47B6 : CD C2 47            		CALL SOUTPRT
+(1)  802/    47B9 : 06 FB               		LD B,PS1F3
+(1)  803/    47BB : 7B                  		LD A,E
+(1)  804/    47BC : CD C2 47            		CALL SOUTPRT
+(1)  805/    47BF : 06 FA               		LD B,PS1F2
+(1)  806/    47C1 : 08                  		EX AF,AF'
+(1)  807/    47C2 :                     
+(1)  808/    47C2 : E5                  SOUTPRT		PUSH HL
+(1)  809/    47C3 : 21 F0 3F            		LD HL,0X3FF0
+(1)  810/    47C6 : E3                  		EX (SP),HL
+(1)  811/    47C7 : C3 2F 3D            		JP 0X3D2F
+(1)  812/    47CA :                     
+(1)  813/    47CA : E5                  SINPRT		PUSH HL
+(1)  814/    47CB : 21 F3 3F            		LD HL,0X3FF3
+(1)  815/    47CE : E3                  		EX (SP),HL
+(1)  816/    47CF : C3 2F 3D            		JP 0X3D2F
+(1)  817/    47D2 :                     
+(1)  818/    47D2 :                     ;=============================================================
+(1)  819/    47D2 :                     
+      15/    47D2 :                     		include spg2_run.a80
+(1)    1/    47D2 :                     
+(1)    2/    47D2 :                     ;SPG runner, version 0.2
+(1)    3/    47D2 :                     ;EVO version
+(1)    4/    47D2 :                     
+(1)    5/    47D2 :                     ;§†≠≠Î© ™Æ§ ®·ØÆ´Ïß„•‚ Æ§≠„ ¢≠•Ë≠ÓÓ
+(1)    6/    47D2 :                     ;‰„≠™Ê®Ó - LOADING
+(1)    7/    47D2 :                     ;„ ≠•Ò ‚Æ´Ï™Æ 2 ¢ÂÆ§≠ÎÂ Ø†‡†¨•‚‡†:
+(1)    8/    47D2 :                     ;HL - †§‡•· ™„§† £‡„ß®‚Ï
+(1)    9/    47D2 :                     ;B  - ™Æ´-¢Æ °´Æ™Æ¢ ‡†ß¨•‡Æ¨ ¢ 2™,
+(1)   10/    47D2 :                     ;     ™Æ‚Æ‡Î• ≠„¶≠Æ ß†£‡„ß®‚Ï
+(1)   11/    47D2 :                     
+(1)   12/    47D2 :                     ;Ø•‡•§ Ø•‡¢Î¨ ¢ÎßÆ¢Æ¨ LOADING'†, Æ≠†Ô
+(1)   13/    47D2 :                     ;§Æ´¶≠† °Î‚Ï ·ØÆß®Ê®Æ≠®‡Æ¢†≠† ≠† ≠†Á†´Æ
+(1)   14/    47D2 :                     ;‰†©´† SPG
+(1)   15/    47D2 :                     
+(1)   16/    47D2 :                     ;ß†‚•¨, Ø‡® ™†¶§Æ¨ ØÆ·´•§„ÓÈ•¨ Æ°‡†È•≠®®
+ AS V1.42 Beta [Bld 78] - source file make_micro_boot_fat.a80(spg2_run.a80) - page 23 - 1/18/2012 21:33:24
+
+
+(1)   17/    47D2 :                     ;™ ≠•©, §Æ´¶•≠ £‡„ß®‚Ï·Ô ÆÁ•‡•§≠Æ© ™„·Æ™
+(1)   18/    47D2 :                     ;§†≠≠Æ£Æ ‰†©´†.
+(1)   19/    47D2 :                     ;  í.•. ØÆ·´• ™†¶§Æ£Æ Æ°‡†È•≠®Ô ™ §†≠≠Æ©
+(1)   20/    47D2 :                     ;Ø‡ÆÊ•§„‡•, Æ≠† §Æ´¶≠† ·ÆÂ‡†≠Ô‚Ï ØÆß®Ê®Ó
+(1)   21/    47D2 :                     ;¢ ≠„‚‡® ‰†©´† ® Ø‡Æ§Æ´¶†‚Ï Á®‚†‚Ï §†≠Î•
+(1)   22/    47D2 :                     ;®ß ≠•£Æ · ‚Æ£Æ  ¶•  ¨•·‚†,  ≠†  ™Æ‚Æ‡Æ¨
+(1)   23/    47D2 :                     ;Æ·‚†≠Æ¢®´®·Ï Ø‡® Ø‡ÆË´Æ¨ Æ°‡†È•≠®®...
+(1)   24/    47D2 :                     
+(1)   25/    47D2 :                     ;        ORG $
+(1)   26/    47D2 : =5000H              PAGER   EQU 0X5000;0X4800
+(1)   27/    47D2 : =A000H              LOBU    EQU 0XA000
+(1)   28/    47D2 :                     ;---------------------------------------
+(1)   29/    47D2 : FD 26 00            RUNSPG2 LD IYH,0
+(1)   30/    47D5 : 21 00 A0            	LD HL,LOBU
+(1)   31/    47D8 : 06 01                       LD B,1
+(1)   32/    47DA : CD 69 49                    CALL LOADING
+(1)   33/    47DD : 21 20 A0                    LD HL,LOBU+32
+(1)   34/    47E0 : 11 45 49                    LD DE,IDNT
+(1)   35/    47E3 : 06 0C                       LD B,12;·¨.ÆØ®·†≠®• ß†£Æ´Æ¢™† SPG
+(1)   36/    47E5 : 1A                  RAZ     LD A,(DE)
+(1)   37/    47E6 : BE                  	CP (HL)
+(1)   38/    47E7 : C0                  	RET NZ
+(1)   39/    47E8 : 23                          INC HL
+(1)   40/    47E9 : 13                          INC DE
+(1)   41/    47EA : 10 F9                       DJNZ RAZ
+(1)   42/    47EC :                     ;¢ ™‡†‚Ê• ‚„‚ ®§•‚ ·™†≠®‡Æ¢†≠®• °´Æ™Æ¢, ™Æ‚Æ‡Î• ØÆ ·‚‡†≠®Ê†¨ £‡„ßÔ‚·Ô.
+(1)   43/    47EC :                     ;°´Æ™Æ¢ ¨†™·®¨„¨ 12 ¨Æ¶•‚ °Î‚Ï
+(1)   44/    47EC :                     
+(1)   45/    47EC : 7E                          LD A,(HL)
+(1)   46/    47ED : FE 03                       CP 3
+(1)   47/    47EF : D0                          RET NC;¢ÎÂÆ§®¨, •·´® ¢•‡·®Ô ¢ÎË• 0.2 (0X02)
+(1)   48/    47F0 : FE 02                       CP 2
+(1)   49/    47F2 : 38 17                       JR C,OF4;SPG ¢•‡·®® 0X00 ®´® 0X01
+(1)   50/    47F4 :                     ;SPGv0.2:
+(1)   51/    47F4 : 3E 0F                       LD A,15
+(1)   52/    47F6 : 32 81 48                    LD (VrS+1),A
+(1)   53/    47F9 : 3E 10                       LD A,16
+(1)   54/    47FB : 32 26 48                    LD (V2A+1),A
+(1)   55/    47FE : 32 0E 49                    LD (V2F+1),A
+(1)   56/    4801 : 3E 04                       LD A,4
+(1)   57/    4803 : 32 A3 48                    LD (V2B+1),A
+(1)   58/    4806 : 3E 0F                       LD A,15
+(1)   59/    4808 : 32 D8 48                    LD (V2C+1),A
+(1)   60/    480B :                     ;SPGv0.0/0.1:
+(1)   61/    480B :                     OF4     ;LD HL,SPGLOG:CALL SPGLOG
+(1)   62/    480B : 21 00 A0                    LD HL,LOBU
+(1)   63/    480E : 11 00 50                    LD DE,PAGER
+(1)   64/    4811 : 01 00 08                    LD BC,0X0800
+(1)   65/    4814 : ED B0                       LDIR
+(1)   66/    4816 :                     ;-------
+(1)   67/    4816 : 21 55 49                    LD HL,MANAG0
+(1)   68/    4819 : 11 00 50                    LD DE,PAGER
+(1)   69/    481C : 01 20 00                    LD BC,32
+(1)   70/    481F : ED B0                       LDIR;™®§†•¨ ¨†≠†£•‡ ·‡†≠®Ê ¢ ß†£Æ´Æ¢Æ™ SPG (®°Æ Ø•‡¢Î• 32° ‚†¨ ≠• ØÆ´Ïß„Ó‚·Ô)
+(1)   71/    4821 : AF                          XOR A
+(1)   72/    4822 : CD 00 50                    CALL PAGER;¢™´ÓÁ†•¨ 0Ó ·‚‡†≠®Ê„
+(1)   73/    4825 :                     ;-------
+(1)   74/    4825 : 3E 08               V2A     LD A,8
+(1)   75/    4827 : 32 53 49            	LD (C0),A;·Á•‚Á®™!
+(1)   76/    482A :                     ;‚„‚ §†´•• Ø•‡•≠Æ·Ô‚·Ô ≠„¶≠Î• Ø•‡•¨•≠≠Î• ®ß ß†£Æ´Æ¢™† SPG ‰†©´†, ‚†¨ ‡†·ØÆ´Æ¶•≠®• ·‚•™†, ·‚†‡‚Æ¢Î© †§‡•·· ® ‚.§.
+ AS V1.42 Beta [Bld 78] - source file make_micro_boot_fat.a80(spg2_run.a80) - page 24 - 1/18/2012 21:33:24
+
+
+(1)   77/    482A : 2A 40 50                    LD HL,(PAGER+64)
+(1)   78/    482D : 22 08 49                    LD (SAR+1),HL
+(1)   79/    4830 :                     
+(1)   80/    4830 : 3A 42 50                    LD A,(PAGER+66)
+(1)   81/    4833 : 32 D6 48                    LD (SPA+1),A
+(1)   82/    4836 : 2A 4A 50                    LD HL,(PAGER+74)
+(1)   83/    4839 : 7C                          LD A,H
+(1)   84/    483A : FE 40                       CP 0X40
+(1)   85/    483C : 30 03                       JR NC,NSPZ
+(1)   86/    483E : 2A 51 49                    LD HL,(SPBU)
+(1)   87/    4841 : 22 05 49            NSPZ    LD (SSPA+1),HL
+(1)   88/    4844 :                     
+(1)   89/    4844 : 2A 44 50                    LD HL,(PAGER+68)
+(1)   90/    4847 : 22 BF 48                    LD (V2E+1),HL
+(1)   91/    484A :                     
+(1)   92/    484A : 2A 4C 50                    LD HL,(PAGER+76)
+(1)   93/    484D : 7C                  		LD A,H
+(1)   94/    484E : B5                  		OR L
+(1)   95/    484F : 28 03               		JR Z,V2Di
+(1)   96/    4851 : 22 D1 48                    LD (V2D+1),HL
+(1)   97/    4854 : ED 4B 4E 50         V2Di    LD BC,(PAGER+78)
+(1)   98/    4858 : 78                          LD A,B
+(1)   99/    4859 : B1                          OR C
+(1)  100/    485A : 28 0D                       JR Z,MAA
+(1)  101/    485C : 78                          LD A,B
+(1)  102/    485D : B7                          OR A
+(1)  103/    485E : 28 09                       JR Z,MAA
+(1)  104/    4860 : 06 01                       LD B,1
+(1)  105/    4862 : 79                          LD A,C
+(1)  106/    4863 : FE 41                       CP 0X41
+(1)  107/    4865 : 38 02                       JR C,MAA
+(1)  108/    4867 : 0E 00                       LD C,0
+(1)  109/    4869 : ED 43 C7 48         MAA     LD (LAA+1),BC
+(1)  110/    486D :                     
+(1)  111/    486D : DD 21 80 50                 LD IX,PAGER+128
+(1)  112/    4871 : DD 7E 02            GROP    LD A,(IX+2)
+(1)  113/    4874 : FE 0E               	CP 14
+(1)  114/    4876 : 38 02               	JR C,NSPL
+(1)  115/    4878 : 3E 0D                       LD A,13;Æ£‡†≠®Á•≠®• ≠† ¨†™· ‡†ß¨•‡ °´Æ™†, §†°Î ≠† ØÆ¢‡•¶§•≠≠ÎÂ SPG ≠• ØÆ´„Á®‚Ï ß†‚®‡†≠®• ¢·•© Ø†¨Ô‚®.
+(1)  116/    487A : 32 9C 48            NSPL    LD (SPGL+1),A
+(1)  117/    487D :                     
+(1)  118/    487D : DD 7E 03                    LD A,(IX+3)
+(1)  119/    4880 : E6 07               VrS     AND 7
+(1)  120/    4882 : F3                          DI
+(1)  121/    4883 : CD 00 50                    CALL PAGER;≠† ¢ÎÂÆ§• ¢ A
+(1)  122/    4886 :                     ;                     ß≠†Á. ØÆ‡‚† 0X7FFD
+(1)  123/    4886 :                     
+(1)  124/    4886 : 21 00 52                    LD HL,PAGER+512
+(1)  125/    4889 : DD 5E 00                    LD E,(IX)
+(1)  126/    488C : DD 56 01                    LD D,(IX+1)
+(1)  127/    488F : 01 00 06                    LD BC,0X0600
+(1)  128/    4892 : CD 0A 49                    CALL LC
+(1)  129/    4895 : EB                          EX DE,HL
+(1)  130/    4896 : 7C                          LD A,H
+(1)  131/    4897 : FE A0                       CP 0XA0
+(1)  132/    4899 : 38 15                       JR C,DIPL;‚®ØÆ ß†£‡„ß®´® ¢·• °´Æ™® („·´Æ¢®•: ™Æ£§† †§‡•· ß†£‡„ß™® °´Æ™† ≠®¶• 0XA000 Ø•‡•ÂÆ§®¨ ™ ·‚†§®® ß†Ø„·™† SPG)
+(1)  133/    489B : 06 01               SPGL    LD B,1
+(1)  134/    489D : 78                  	LD A,B
+(1)  135/    489E : B7                  	OR A
+(1)  136/    489F : C4 69 49            	CALL NZ,LOADING;®≠†Á• £‡„ß®¨ ÆÁ•‡•§≠Æ© °´Æ™ SPG ‰†©´† ¢ Ø†¨Ô‚Ï (¢ ß†§†≠≠„Ó ·‚‡†≠®Ê„)
+ AS V1.42 Beta [Bld 78] - source file make_micro_boot_fat.a80(spg2_run.a80) - page 25 - 1/18/2012 21:33:24
+
+
+(1)  137/    48A2 :                     
+(1)  138/    48A2 : 11 08 00            V2B     LD DE,8
+(1)  139/    48A5 : DD 19               	ADD IX,DE;·Æ°·‚¢•≠≠Æ Ø•‡•ÂÆ§®¨ ™ ÆØ®·†‚•´Ó ·´•§. °´Æ™†
+(1)  140/    48A7 :                     
+(1)  141/    48A7 : 3A 53 49                    LD A,(C0)
+(1)  142/    48AA : 3D                          DEC A
+(1)  143/    48AB : 32 53 49                    LD (C0),A
+(1)  144/    48AE : 20 C1                       JR NZ,GROP;®§•¨ ≠† ß†£‡„ß™„ ·´•§ °´Æ™†, •·´® ·Á•‚Á®™ ≠• £Æ¢Æ‡®‚ Æ°‡†‚≠Æ£Æ
+(1)  145/    48B0 :                     ;-------
+(1)  146/    48B0 :                     ;‚„‚ ¢Î·‚†¢´Ô•¨ ≠„¶≠Î© ·‚•™, Ø‡•‡Î¢†≠®Ô ® ‚.§. ≠„ ® ¢™´ÓÁ†•¨ ≠„¶≠„Ó ·‚‡†≠®Ê„ (Á‚Æ ¢ ß†£Æ´Æ¢™• SPG „™†ß†≠†)
+(1)  147/    48B0 :                     ;® §•´†•¨ JP ≠† ß†§†≠≠Î© †§‡•·
+(1)  148/    48B0 :                     ;Ì™‡†≠ Á®·‚®‚Ï ≠• ≠„¶≠Æ
+(1)  149/    48B0 : F3                  DIPL    DI
+(1)  150/    48B1 : 3E 3F                       LD A,63
+(1)  151/    48B3 : ED 47                       LD I,A
+(1)  152/    48B5 : ED 56                       IM 1
+(1)  153/    48B7 : FD 21 3A 5C                 LD IY,0X5C3A
+(1)  154/    48BB :                     
+(1)  155/    48BB : 21 00 50                    LD HL,PAGER
+(1)  156/    48BE : 11 00 00            V2E     LD DE,0
+(1)  157/    48C1 : 01 20 00                    LD BC,32
+(1)  158/    48C4 : ED B0                       LDIR
+(1)  159/    48C6 :                     
+(1)  160/    48C6 : 01 00 00            LAA     LD BC,0
+(1)  161/    48C9 : 78                  	LD A,B
+(1)  162/    48CA : B1                  	OR C
+(1)  163/    48CB : 28 08               	JR Z,SPA
+(1)  164/    48CD : 21 C0 50                    LD HL,PAGER+192
+(1)  165/    48D0 : 11 00 5B            V2D     LD DE,0X5B00
+(1)  166/    48D3 : ED B0                       LDIR
+(1)  167/    48D5 :                     
+(1)  168/    48D5 : 3E 00               SPA     LD A,0
+(1)  169/    48D7 : E6 07               V2C     AND 7
+(1)  170/    48D9 : CD 00 50                    CALL PAGER
+(1)  171/    48DC :                     
+(1)  172/    48DC : 3A 43 50                    LD A,(PAGER+67);ÆØÔ‚Ï ·¨Æ‚‡®¨ ß†£Æ´Æ¢Æ™ SPG ‰†©´†
+(1)  173/    48DF : FE 01                       CP 1
+(1)  174/    48E1 : 20 06                       JR NZ,NNx
+(1)  175/    48E3 : 3A 54 49                    LD A,(DRVE)
+(1)  176/    48E6 : 32 F6 5C                    LD (0X5CF6),A
+(1)  177/    48E9 :                     
+(1)  178/    48E9 : 3A D8 48            NNx     LD A,(V2C+1)
+(1)  179/    48EC : FE 07               	CP 7
+(1)  180/    48EE : 28 14               	JR Z,SSPA
+(1)  181/    48F0 : 21 31 50                    LD HL,PAGER+49
+(1)  182/    48F3 : 1E 05                       LD E,5
+(1)  183/    48F5 : 4E                  OUTZ    LD C,(HL)
+(1)  184/    48F6 : 23                  	INC HL
+(1)  185/    48F7 : 46                          LD B,(HL)
+(1)  186/    48F8 : 23                          INC HL
+(1)  187/    48F9 : 78                          LD A,B
+(1)  188/    48FA : B1                          OR C
+(1)  189/    48FB : 28 03                       JR Z,OUTz
+(1)  190/    48FD : 7E                          LD A,(HL)
+(1)  191/    48FE : ED 79                       OUT (C),A
+(1)  192/    4900 : 23                  OUTz    INC HL
+(1)  193/    4901 : 1D                          DEC E
+(1)  194/    4902 : 20 F1                       JR NZ,OUTZ
+(1)  195/    4904 :                     
+(1)  196/    4904 : 31 00 00            SSPA    LD SP,0
+ AS V1.42 Beta [Bld 78] - source file make_micro_boot_fat.a80(spg2_run.a80) - page 26 - 1/18/2012 21:33:24
+
+
+(1)  197/    4907 : C3 00 00            SAR     JP 0
+(1)  198/    490A :                     ;-------
+(1)  199/    490A : 3A 53 49            LC      LD A,(C0)
+(1)  200/    490D : FE 08               V2F     CP 8
+(1)  201/    490F : C0                  	RET NZ;¢ÎßÎ¢†•‚·Ô ‚Æ´Ï™Æ ™Æ£§† ·Á•‚Á®™ Æ°≠„´®´·Ô, Á‚Æ°Î ‚Æ´Ï™Æ Æ§®≠ ‡†ß Æ≠„Ó ¢Îß¢†‚Ï
+(1)  202/    4910 : 7A                          LD A,D
+(1)  203/    4911 : FE A0                       CP 0XA0
+(1)  204/    4913 : 30 1F                       JR NC,V01;·†¨Î© Ø•‡¢Î© °´Æ™ ¨Æ¶•‚ £‡„ß®‚Ï·Ô ¢ †§‡•· ≠®¶• 0Xa000
+(1)  205/    4915 :                     
+(1)  206/    4915 : ED 53 3B 49                 LD (SREZ+4),DE
+(1)  207/    4919 : C6 06                       ADD A,6
+(1)  208/    491B : 57                          LD D,A
+(1)  209/    491C : D5                          PUSH DE
+(1)  210/    491D : 2A 08 49                    LD HL,(SAR+1)
+(1)  211/    4920 : 22 43 49                    LD (SR1+1),HL;·‚†‡‚Æ¢Î© †§‡•· ¢Î·‚†¢´Ô•¨
+(1)  212/    4923 : 11 20 50                    LD DE,PAGER+0X20
+(1)  213/    4926 : ED 53 08 49                 LD (SAR+1),DE;‚„‚ ‡•ß®§•≠‚ °„§•‚ (Ø•‡•·Î´†•‚ °´Æ™, Á‚Æ Æ™†ß†´·Ô ¢¨•·‚• · ß†£Æ´Æ¢™Æ¨ SPG, ®°Æ £‡„ß®¨ °´Æ™® ØÆ 2™°)
+(1)  214/    492A : 21 37 49                    LD HL,SREZ
+(1)  215/    492D : 01 10 00                    LD BC,16
+(1)  216/    4930 : ED B0                       LDIR
+(1)  217/    4932 : D1                          POP DE
+(1)  218/    4933 : C9                          RET
+(1)  219/    4934 :                     
+(1)  220/    4934 : ED B0               V01     LDIR
+(1)  221/    4936 : C9                          RET
+(1)  222/    4937 :                     
+(1)  223/    4937 : 21 00 52            SREZ    LD HL,PAGER+512
+(1)  224/    493A : 11 00 00                    LD DE,0
+(1)  225/    493D : 01 00 06                    LD BC,0X0600
+(1)  226/    4940 : ED B0                       LDIR
+(1)  227/    4942 : C3 00 00            SR1     JP 0
+(1)  228/    4945 :                     
+(1)  229/    4945 : 53 70 65 63 74 72   IDNT    DB "SpectrumProg"
+                    75 6D 50 72 6F 67 
+(1)  230/    4951 :                     ;-------
+(1)  231/    4951 : 00 60               SPBU    DW 0X6000
+(1)  232/    4953 : 00                  C0      NOP
+(1)  233/    4954 : 00                  DRVE    DB 0;≠Æ¨•‡ †™‚®¢≠Æ£Æ §®·™Æ¢Æ§†
+(1)  234/    4955 :                     
+(1)  235/    4955 :                     ;---------------------------------------
+(1)  236/    4955 :                     MANAG0  ;I:A - num of PAGE (VALID: 0-15)
+(1)  237/    4955 : C5                          PUSH BC
+(1)  238/    4956 : 4F                          LD C,A
+(1)  239/    4957 : E6 F8                       AND %11111000
+(1)  240/    4959 : 79                          LD A,C
+(1)  241/    495A : 28 04                       JR Z,K128
+(1)  242/    495C : E6 07                       AND 7
+(1)  243/    495E : F6 40                       OR %01000000
+(1)  244/    4960 : F6 10               K128    OR 16
+(1)  245/    4962 : 01 FD 7F            	LD BC,0X7FFD
+(1)  246/    4965 : ED 79               	OUT (C),A
+(1)  247/    4967 : C1                          POP BC
+(1)  248/    4968 : C9                          RET
+(1)  249/    4969 :                     ;---------------------------------------
+(1)  250/    4969 :                     
+(1)  251/    4969 : DD E5               LOADING		PUSH IX
+(1)  252/    496B : 78                  		LD A,B
+(1)  253/    496C : 87                  		ADD A,A
+(1)  254/    496D : 87                  		ADD A,A
+(1)  255/    496E : FD 6F               		LD IYL,A
+ AS V1.42 Beta [Bld 78] - source file make_micro_boot_fat.a80(spg2_run.a80) - page 27 - 1/18/2012 21:33:24
+
+
+(1)  256/    4970 : CD 16 44            		CALL LD_FILE
+(1)  257/    4973 : DD E1               		POP IX
+(1)  258/    4975 : C9                  		RET
+(1)  259/    4976 :                     
+(1)  260/    4976 :                     ;---------------------------------------
+(1)  261/    4976 :                     
+      16/    4976 :                     
+ AS V1.42 Beta [Bld 78] - source file make_micro_boot_fat.a80 - page 28 - 1/18/2012 21:33:24
+
+
+  symbol table (* = unused):
+  ------------------------
+
+*ACMD_41 :                       69 - |  ADR_EXITMAGIC :                 6D - |
+ ADR_EXITRST8 :                  6A - |  ADR_MAGIC :                     67 - |
+ ADR_MASK_EXT :                427A - | *ADR_RST8END :                 3CD0 - |
+*ADR_SEL_ROM :                   14 - |  ADR_SKLAD :                   427C - |
+ AFILCLS :                     4249 - | *ARCHITECTURE :  i386-unknown-win32 - |
+*ATM_FONT :                    37F8 - | *Ay_prn_a_ :                     41 - |
+*Ay_prn_init :                   40 - | *Ay_prn_scr :                    43 - |
+*Ay_prn_token :                  42 - | *BCDE200 :                     4572 C |
+*BCDEHLM :                     4587 C |  BCDEHLP :                     4597 C |
+ BCDE_A :                      4583 C |  BCDE_A1 :                     457B C |
+*BIGENDIAN :                      0 - | *BRANCHEXT :                      0 - |
+ BUF_512 :                     4000 - |  BYTSSEC :                     4204 - |
+ B_0WINA0 :                      7D - |  B_0WINA1 :                      7C - |
+ B_0WINA2 :                      7B - |  B_0WINA3 :                      7A - |
+ B_1WINA0 :                      79 - |  B_1WINA1 :                      78 - |
+ B_1WINA2 :                      77 - |  B_1WINA3 :                      76 - |
+ B_77 :                          71 - |  B_7FFD :                        73 - |
+*B_8CHAN :                        2 - |  B_BF :                          70 - |
+*B_CBIT :                         0 - | *B_CKSL0 :                        4 - |
+*B_CKSL1 :                        5 - | *B_DBIT :                         7 - |
+ B_DOS7FFD :                     74 - |  B_EFF7 :                        72 - |
+*B_EXPAG :                        3 - | *B_INV7B :                        7 - |
+*B_MCNCS :                        1 - | *B_MCRDY :                        3 - |
+*B_MCSP0 :                        3 - | *B_MCSP1 :                        5 - |
+*B_MDDRQ :                        0 - | *B_MDHLF :                        4 - |
+*B_MPXRS :                        2 - | *B_NOROM :                        0 - |
+*B_PAN4C :                        6 - |  B_RAMNROM :                     75 - |
+*B_RAMRO :                        1 - | *B_SDDET :                        1 - |
+*B_SDNCS :                        0 - | *B_SDWP :                         2 - |
+*B_SNCLR :                        7 - |  C0 :                          4953 C |
+ CAL_FAT :                     4202 - | *CASESENSITIVE :                  1 - |
+*CLRCBIT :                        5 - |  CLS_DSC :                     421D - |
+*CMD_09 :                        49 - |  CMD_12 :                        4C - |
+*CMD_17 :                        51 - |  CMD_18 :                        52 - |
+*CMD_24 :                        58 - | *CMD_25 :                        59 - |
+*CMD_55 :                        77 - |  CMD_58 :                        7A - |
+*CMD_59 :                        7B - | *CMOSD_RD_WR :                 BEF7 - |
+*CMOSD_SET_ADR :               DEF7 - | *CMOS_RD_WR :                  BFF7 - |
+*CMOS_SET_ADR :                DFF7 - |  COMM2SD :                     4692 C |
+*CONF4CUSTOM :                   9C - | *CONF4GLUK :                     90 - |
+*CONF4PROF :                     8C - | *CONSTPI :        3.141592653589793 - |
+*CP866_FONT :                  2FF8 - | *CP866_UTL :                   27F8 - |
+*C_10MHZ :                       30 - | *C_12MHZ :                       10 - |
+*C_20MHZ :                       20 - | *C_24MHZ :                        0 - |
+*C_GLED :                        20 - | *C_GNMI :                        40 - |
+*C_GRST :                        80 - | *Com_dev :                       4B - |
+*Comhddn :                        5 - | *DATE :                   1/18/2012 - |
+ DIPL :                        48B0 C | *DMA_CST :                       1F - |
+*DMA_HAD :                       1C - | *DMA_LAD :                       1E - |
+*DMA_MAD :                       1D - | *DMA_MOD :                       1B - |
+*DPORT1 :                         A - | *DPORT2 :                         B - |
+ DRVE :                        4954 C |  DRV_VAR :                     4000 - |
+*Devfind :                        0 - | *EMUL_TAPE :                     40 - |
+ ERORDRV :                     4200 - | *Ent_dir :                        2 - |
+*FALSE :                          0 - |  FATSTR :                      4221 - |
+ FB_EXT :                      424D - | *FDI_BLOCK_SMESH :             41FF - |
+*FDI_BYTE_SMESH :              41FE - | *FDI_IMAGE1SECT :              4400 - |
+ AS V1.42 Beta [Bld 78] - source file make_micro_boot_fat.a80 - page 29 - 1/18/2012 21:33:24
+
+
+*FDI_PAGE_START :              40FF - | *FDI_TABLE_CYL :               4000 - |
+ FILE_SZ :                     4225 - |  FOUNDED_FILE :                4258 - |
+ FREECLS :                     423F - |  FRSTDAT :                     4215 - |
+*FULLPMMU :                       1 - | *Find_file :                      9 - |
+ GROP :                        4871 C | *GSCFG0 :                         F - |
+ GSCOM :                         BB - | *GSCTR :                         33 - |
+ GSDAT :                         B3 - | *GSSTAT :                        BB - |
+*Getfzap :                        1 - | *Getlong :                        5 - |
+*HAS64 :                          1 - | *HASDSP :                         0 - |
+*HASFPU :                         0 - | *HASPMMU :                        0 - |
+ HDDRD1 :                      46F3 C |  HDDRD2 :                      46FC C |
+ HDDRD3 :                      472E C |  HDSRDM1 :                     4753 C |
+ HDSRDM2 :                     4749 C |  HDSRDM3 :                     4790 C |
+*HLDEPBC :                     45A7 C |  IDNT :                        4945 C |
+*IM_WORK :                       FF - | *INEXTMODE :                      0 - |
+*INLWORDMODE :                    0 - | *INMAXMODE :                      0 - |
+*INSRCMODE :                      0 - | *INSUPMODE :                      0 - |
+ IN_EXIT :                     4660 C | *IN_NEXT :                     465D C |
+ IN_OOUT :                     4654 C |  IN_WAIT :                     4658 C |
+ K128 :                        4960 C |  KOLFIND :                     4247 - |
+ KOLWCLS :                     4229 - | *Kol_vol :                        2 - |
+ LAA :                         48C6 C |  LC :                          490A C |
+ LDFILE1 :                     442A C |  LDFILE2 :                     4433 C |
+ LDFILE3 :                     4453 C |  LDFILE4 :                     4461 C |
+ LDFILE5 :                     4440 C |  LDIRBUF :                     43E1 C |
+ LDIRBUF1 :                    43F3 C |  LD_FILE :                     4416 C |
+ LD_ONES :                     4403 C | *LEDCTR :                         1 - |
+ LENGHT :                      42FA - | *LISTON :                         1 - |
+ LOADING :                     4969 C |  LOADLST :                     45B0 C |
+ LOADSCS :                     4410 C |  LOADSCS1 :                    42FC - |
+ LOBU :                        A000 - |  LOW_PRT :                       BE - |
+ LST0ZAP :                     422D - |  LSTLOAD :                     4231 - |
+ LST_CL1 :                     4478 C |  LST_CL2 :                     4481 C |
+ LST_CLS :                     446C C | *Load_file :                      B - |
+ MAA :                         4869 C | *MACEXP :                         1 - |
+*MAKS_ADR :                    427E - |  MANAG0 :                      4955 C |
+ MANYFAT :                     4203 - |  MAS_SLA :                     42FE - |
+*MC_READ :                       15 - | *MC_SEND :                       15 - |
+*MD_SEND :                       14 - | *MOMCPU :                      80DC - |
+*MOMCPUNAME :              Z80UNDOC - | *MPAG :                           0 - |
+*MPAGEX :                        10 - | *M_8CHAN :                        4 - |
+*M_CBIT :                         1 - | *M_CKSL0 :                       10 - |
+*M_CKSL1 :                       20 - | *M_DBIT :                        80 - |
+*M_EXPAG :                        8 - | *M_INV7B :                       80 - |
+*M_MCNCS :                        2 - | *M_MCRDY :                        8 - |
+*M_MCSP0 :                        8 - | *M_MCSP1 :                       20 - |
+*M_MDDRQ :                        1 - | *M_MDHLF :                       10 - |
+*M_MPXRS :                        4 - | *M_NOROM :                        1 - |
+*M_PAN4C :                       40 - | *M_RAMRO :                        2 - |
+*M_SDDET :                        2 - | *M_SDNCS :                        1 - |
+*M_SDWP :                         4 - | *M_SNCLR :                       80 - |
+*NESTMAX :                      100 - | *NEW_STACK :                    180 - |
+*NMI_SAVE_SP :                   BE - |  NNx :                         48E9 C |
+ NSPL :                        487A C |  NSPZ :                        4841 C |
+ NUM_DEVICE :                  42FF - | *Next_find :                      A - |
+*Nxtlegz :                        8 - |  OF4 :                         480B C |
+*OFFSET_FNTSAVE :              2300 - | *OFFSET_SCRSAVE :              2B00 - |
+ OUTZ :                        48F5 C |  OUT_COM :                     463D C |
+ OUTz :                        4900 C | *Openfil :                        3 - |
+*PACKING :                        0 - | *PADDING :                        1 - |
+ AS V1.42 Beta [Bld 78] - source file make_micro_boot_fat.a80 - page 30 - 1/18/2012 21:33:24
+
+
+*PAGE4FLASHER :                  40 - | *PAGE4TAP :                      60 - |
+ PAGER :                       5000 - | *PAGE_EVODOS :                    1 - |
+*PAGE_PROFROM :                   2 - | *PAGE_RAMDISK :                   3 - |
+*PENT_CONF :                   EFF7 - | *PEVO_CONF :                     BF - |
+*PRINTER_AY :                    20 - |  PRTSRW :                      F8D8 - |
+*PRT_RW :                      1011 - |  PS1F0 :                         F8 - |
+*PS1F1 :                         F9 - |  PS1F2 :                         FA - |
+ PS1F3 :                         FB - |  PS1F4 :                         FC - |
+ PS1F5 :                         FD - |  PS1F6 :                         FE - |
+ PS1F7 :                         FF - | *PS3F6 :                         FE - |
+ PSHI :                          D8 - |  P_1F0 :                         10 - |
+*P_1F1 :                         30 - |  P_1F2 :                         50 - |
+ P_1F3 :                         70 - |  P_1F4 :                         90 - |
+ P_1F5 :                         B0 - |  P_1F6 :                         D0 - |
+ P_1F7 :                         F0 - | *P_3F6 :                         C8 - |
+ P_CONF :                        77 - |  P_DATA :                        57 - |
+ P_HI :                          11 - | *Positf :                         6 - |
+*Print_a :                       48 - | *Print_message :                 47 - |
+*Prvlegz :                        7 - |  RAZ :                         47E5 C |
+ RDCSSC1 :                     4759 C |  RDFATS0 :                     44DA C |
+ RDFATS1 :                     44BD C |  RDFATS2 :                     44C3 C |
+ RDFATS3 :                     4524 C |  RDFATS4 :                     450B C |
+ RDFATS5 :                     44B4 C |  RDFATZP :                     448D C |
+ RDMULT1 :                     45C8 C |  RDMULT2 :                     45C9 C |
+ RDMULT3 :                     45E9 C | *RD_0WINA0 :                     BE - |
+*RD_0WINA1 :                    1BE - | *RD_0WINA2 :                    2BE - |
+*RD_0WINA3 :                    3BE - | *RD_1WINA0 :                    4BE - |
+*RD_1WINA1 :                    5BE - | *RD_1WINA2 :                    6BE - |
+*RD_1WINA3 :                    7BE - | *RD_77 :                        CBE - |
+*RD_7FFD :                      ABE - | *RD_DOS7FFD :                   9BE - |
+*RD_EFF7 :                      BBE - |  RD_HDDN :                     46CA C |
+ RD_HDDS :                     473C C | *RD_PALITRA :                   DBE - |
+*RD_RAMNROM :                   8BE - |  READ01 :                      4359 C |
+ READ02 :                      43AD C |  READ03 :                      43B3 C |
+ READ04 :                      4373 C |  READ05 :                      43A0 C |
+ READ06 :                      43BF C |  READ07 :                      4389 C |
+ READNGS :                     4662 C |  READSC1 :                     4701 C |
+ READ_SD :                     45BB C |  REALSE1 :                     454B C |
+ REALSE2 :                     4559 C |  REALSE3 :                     4561 C |
+ REALSEC :                     452A C | *RELAXED :                        1 - |
+*RELOAD_FONT :                   10 - | *RESET2CUSTOM :                   3 - |
+*RESET2EVOSERV :                  0 - | *RESET2GLUK :                     1 - |
+*RESET2PROFROM :                  2 - |  ROOTCLS :                     4205 - |
+ ROOTZAP :                     4209 - | *RST8_SAVE_SP :                  FD - |
+ RSVDSEC :                     420F - |  RUNLOAD :                     43D5 C |
+ RUNSPG2 :                     47D2 C | *Read0sector :                    C - |
+*Read_font :                     4E - | *Readfil :                        4 - |
+*Run_filecode :                  4C - |  SAR :                         4907 C |
+ SAVEZAP :                     423B - |  SAVE_IY :                     4278 - |
+*SCTRL :                         11 - |  SDRDSN1 :                     466E C |
+ SDRDSN2 :                     4677 C |  SDRDSN3 :                     4688 C |
+*SD_READ :                       13 - | *SD_RSTR :                       14 - |
+*SD_SEND :                       13 - |  SECM200 :                     45F9 C |
+ SECN200 :                     4623 C |  SEC_DSC :                     4219 - |
+ SEC_FAT :                     420B - |  SETLOADER :                   4319 C |
+ SETMASL :                     4326 C |  SETSREG :                     479E C |
+ SINPRT :                      47CA C | *SMUCSYS :                     FFBA - |
+*SMUCVER :                     5FBA - |  SOUTPRT :                     47C2 C |
+ SPA :                         48D5 C |  SPBU :                        4951 C |
+ SPGL :                        489B C |  SR1 :                         4942 C |
+ AS V1.42 Beta [Bld 78] - source file make_micro_boot_fat.a80 - page 31 - 1/18/2012 21:33:24
+
+
+ SREZ :                        4937 C |  SSPA :                        4904 C |
+*SSTAT :                         12 - |  STARTRZ :                     4211 - |
+*Scrol_up :                      49 - | *Scroll_down :                   4A - |
+*Set_device :                     3 - | *Set_vol :                        1 - |
+ TEK_DIR :                     4235 - |  TEK_LEV :                     423E - |
+ TEK_LVL :                     423D - | *TEK_PALS :                      7E - |
+ TEK_ZAP :                     4239 - | *TFILCLS :                     4300 - |
+*TIME :                    21:33:24 - | *TRUE :                           1 - |
+*TURBO14 :                       80 - | *TYPE_FONT :                      8 - |
+*Tape_emul :                     45 - | *Tape_init :                     44 - |
+*To_drv :                         4 - |  V01 :                         4934 C |
+ V2A :                         4825 C |  V2B :                         48A2 C |
+ V2C :                         48D7 C |  V2D :                         48D0 C |
+ V2Di :                        4854 C |  V2E :                         48BE C |
+ V2F :                         490D C | *VERSION :                     142F - |
+*VOL1 :                           6 - | *VOL2 :                           7 - |
+*VOL3 :                           8 - | *VOL4 :                           9 - |
+*VOL5 :                          16 - | *VOL6 :                          17 - |
+*VOL7 :                          18 - | *VOL8 :                          19 - |
+ VrS :                         4880 C |  WC_ :                         46C4 C |
+ WD_ :                         46B8 C | *WIN_A0 :                      3FF7 - |
+*WIN_A1 :                      7FF7 - | *WIN_A2 :                      BFF7 - |
+*WIN_A3 :                      FFF7 - | *WIN_P0 :                      37F7 - |
+*WIN_P1 :                      77F7 - | *WIN_P2 :                      B7F7 - |
+*WIN_P3 :                      F7F7 - |  WN_ :                         46BE C |
+*Wc_fat :                         0 - | *Winw :                          46 - |
+*Write_font :                    4D - | *ZXCMD :                          1 - |
+*ZXDATRD :                        2 - | *ZXDATWR :                        3 - |
+*ZXSTAT :                         4 - |
+
+    411 symbols
+    227 unused symbols
+
+ AS V1.42 Beta [Bld 78] - source file make_micro_boot_fat.a80 - page 32 - 1/18/2012 21:33:24
+
+
+  defined macros:
+  ---------------
+
+DC                                    | DUPL                                 
+DZ                                    | SUM_HOB                              
+
+      4 macros
+
+ AS V1.42 Beta [Bld 78] - source file make_micro_boot_fat.a80 - page 33 - 1/18/2012 21:33:24
+
+
+  defined functions:
+  ------------------
+
+LOW                                   | HIGH                                 
+
+ AS V1.42 Beta [Bld 78] - source file make_micro_boot_fat.a80 - page 34 - 1/18/2012 21:33:24
+
+
+  codepages:
+  ----------
+
+STANDARD (0 changed characters)
+
+
+0.17 seconds assembly time
+
+   1558 lines source file
+   1566 lines incl. macro expansions
+      2 passes
+      0 errors
+      0 warnings
