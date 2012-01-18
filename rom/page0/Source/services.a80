@@ -4,7 +4,7 @@
 		include ../../macros.a80
 		include ../../global_vars.a80
 
-DD		EQU 4				;„€’€
+DD		EQU 18				;„€’€
 MM		EQU 1				;Œ…‘Ÿ–
 YY		EQU 12				;ƒŽ„
 DATA		EQU DD+(MM<<5)+(YY<<9)+0X8000	;“†… “€ŠŽ‚€Ž
@@ -68,6 +68,9 @@ RSTRAM1		LD HL,PAGES_CONF
 		DEC A
 		LD HL,PAGES_PROFROM		;ŠŽ”ˆƒ“ˆŽ‚€’œ „‹Ÿ PROFROM
 		JR Z,RSTRAM
+
+		DUPL 0X0066-$,0
+		NOP 
 		LD HL,PAGES_CUSTOM		;ŠŽ”ˆƒ“ˆŽ‚€’œ „‹Ÿ USER ROM
 RSTRAM		LD A,0XEF
 		IN A,(0XFE)
@@ -167,7 +170,7 @@ RSTKEYS2	LD BC,CMOSD_SET_ADR
 		LD BC,ERAM_SEL-RAM_SEL
 		LDIR				;“‘’€Ž‚Š€ Ž€Ž’—ˆŠ€
 		LD HL,ERAM_SEL
-		LD DE,0X8101
+		LD DE,0X8000+NEW_STACK
 		LD BC,ENMI_SERVICE-ERAM_SEL
 		LDIR				;“‘’€Ž‚Š€ Ž€Ž’—ˆŠ€
 		LD BC,WIN_A3

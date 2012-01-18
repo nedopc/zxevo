@@ -1,0 +1,225 @@
+
+		include ../../macros.a80
+		include ../../global_vars.a80
+
+		ORG 0X6000
+TEST_READ_FONT	DI
+		LD SP,0X6000
+		LD HL,0X4000
+		LD D,H
+		LD E,L
+		INC DE
+		LD BC,0X1800
+		LD (HL),L
+		LDIR
+		LD BC,0X300
+		LD (HL),%00001111
+		LDIR
+		LD DE,0X4001
+		LD HL,FIRST_TEST
+		CALL PRINT
+		LD A,4
+		OUT (PEVO_CONF),A
+		LD IXL,0
+		LD HL,0
+		LD DE,0X8000
+		LD BC,0X800
+		LDIR				;ПЕРВОЕ ЧТЕНИЕ ФОНТА
+		XOR A
+		OUT (PEVO_CONF),A
+		LD HL,0X8000
+		LD DE,TXT_CHARS
+		LD BC,0X800
+TRDFNT01	LD A,(DE)			;СРАВНЕНИЕ С ИСХОДНЫМ
+		CP (HL)
+		JR Z,TRDFNT03
+		LD IXL,1
+		LD DE,0X4041
+		LD HL,FIRST_READ_ERR
+		CALL PRINT
+		JR TRDFNT04
+
+TRDFNT03	INC HL
+		INC DE
+		DEC BC
+		LD A,B
+		OR C
+		JR NZ,TRDFNT01
+		LD IXL,0
+		LD DE,0X4801
+		LD HL,FIRST_PASS_OK
+		CALL PRINT
+TRDFNT04	LD DE,0X50E1
+		LD HL,PRESS_SPACE
+		CALL PRINT
+		CALL WAIT_SPACE
+		LD HL,TXT_CHARS
+;		RST 8
+;		DB Write_font
+		LD A,4
+		OUT (PEVO_CONF),A
+		LD DE,0
+		LD BC,0X800
+		LDIR
+		DJNZ $
+		LD HL,0
+		LD DE,0X8000
+		LD BC,0X800
+		LDIR				;ЧТЕНИЕ ФОНТА
+		XOR A
+		OUT (PEVO_CONF),A
+		LD IXL,0
+		LD HL,TXT_CHARS
+		LD DE,0X8000
+		LD BC,0X800
+TRDFNT02	LD A,(DE)			;СРАВНЕНИЕ
+		CP (HL)
+		JR Z,TRDFNT05
+		LD IXL,1
+		LD DE,0X4841
+		LD HL,SECOND_PASS_ERR
+		CALL PRINT
+		JR TRDFNT06
+
+TRDFNT05	INC HL
+		INC DE
+		DEC BC
+		LD A,B
+		OR C
+		JR NZ,TRDFNT02
+		LD DE,0X4841
+		LD HL,SECOND_PASS_OK
+		CALL PRINT
+TRDFNT06	LD DE,0X50E0
+		LD HL,PRESS_SPACE
+		CALL PRINT
+		CALL WAIT_SPACE
+		LD A,IXL
+		AND A
+		JP NZ,TEST_READ_FONT
+		LD A,1
+		OUT (PEVO_CONF),A
+		LD BC,0X7FFD
+		LD A,0X10			;ЭКРАН 0
+		OUT (C),A
+		LD BC,0XFF77
+		LD A,0XA4
+		OUT (C),A
+		LD BC,WIN_A3
+		LD A,0X76			;СТРАНИЦА 9
+		OUT (C),A
+		LD HL,0XC800
+		LD DE,0XC801
+		LD BC,0X800
+		LD (HL),%00110000
+		LDIR
+		LD DE,0X0203
+		LD HL,SECOND_TEST
+		LD C,%00111010
+		CALL PRINTT
+		LD DE,0X0905
+		LD HL,SCREEN0
+		LD C,%00011001
+		CALL PRINTT
+		CALL WAIT_SPACE
+		LD BC,WIN_A3
+		LD A,0X74			;СТРАНИЦА 11
+		OUT (C),A
+		LD BC,0X7FFD
+		LD A,0X18			;ЭКРАН 1
+		OUT (C),A
+		LD HL,0XC800
+		LD DE,0XC801
+		LD BC,0X800
+		LD (HL),%00001000
+		LDIR
+		LD DE,0X1204
+		LD HL,SECOND_TEST
+		LD C,%00011111
+		CALL PRINTT
+		LD DE,0X1110
+		LD HL,SCREEN1
+		LD C,%00110001
+		CALL PRINTT
+		CALL WAIT_SPACE
+		JR $
+
+;D=X E=Y C=COLOR
+PRINTT		LD A,(HL)
+		INC HL
+		AND A
+		RET Z
+		PUSH HL
+		PUSH DE
+		LD B,D
+		LD L,E
+		LD H,0
+		LD D,H
+		ADD HL,HL	;X2
+		ADD HL,HL	;X4
+		ADD HL,DE	;X5
+		ADD HL,HL	;10
+		ADD HL,HL	;20
+		ADD HL,HL	;40
+		ADD HL,HL	;80
+		LD E,B
+		ADD HL,DE
+		LD DE,0XC000
+		ADD HL,DE
+		LD (HL),A
+		SET 3,H
+		LD (HL),C
+		POP DE
+		POP HL
+		INC D
+		JR PRINTT
+
+PRINT		LD A,(HL)
+		INC HL
+		AND A
+		RET Z
+		PUSH HL
+		PUSH DE
+		PUSH DE
+		LD L,A
+		LD H,0
+		LD DE,TXT_CHARS
+		ADD HL,HL
+		ADD HL,HL
+		ADD HL,HL
+		ADD HL,DE
+		POP DE
+		REPT 8
+		LD A,(HL)
+		LD (DE),A
+		INC HL
+		INC D
+		ENDM
+		POP DE
+		POP HL
+		INC E
+		JR PRINT
+
+WAIT_SPACE	LD A,0X7F
+		IN A,(0XFE)
+		AND 1
+		JR NZ,WAIT_SPACE
+WAIT_SPACE1	XOR A
+		IN A,(0XFE)
+		CPL
+		AND 0X1F
+		JR NZ,WAIT_SPACE1
+		RET
+
+TXT_CHARS	binclude ../../page4/source/8x8_ar.fnt
+
+;		    01234567890123456789012345678901
+FIRST_TEST	DB " Первый тест: чтение фонта ",0
+SECOND_TEST	DB " Второй тест: вывод текста на текстовые экраны 9 и 11 ",0
+FIRST_READ_ERR	DB " Первое чтение фонта - ошибка ",0
+FIRST_PASS_OK	DB " Первое чтение фонта - ОК ",0
+SECOND_PASS_ERR	DB " Второе чтение фонта - ошибка ",0
+SECOND_PASS_OK	DB " Второе чтение фонта - ОК ",0
+SCREEN0		DB " Цветная печать на экране номер 0 - в 9 странице ",0
+SCREEN1		DB " Цветная печать на экране номер 1 - в 11 странице ",0
+PRESS_SPACE	DB " Press SPACE please :) ",0

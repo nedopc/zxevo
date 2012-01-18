@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 13.12.2011 savelij
+;LAST UPDATE: 18.01.2012 savelij
 
 		include ../../macros.a80
 		include ../../global_vars.a80
@@ -21,6 +21,9 @@ JUMP2PAGE	OUT (C),A
 		NOP
 		RET
 
+		DUPL 0X0066-$,0XFF
+		NOP
+
 		DUPL 0X0080-$,0XFF
 UNPACK		include ../../dec40.a80
 
@@ -36,7 +39,8 @@ UNPACK		include ../../dec40.a80
 
 MICRO_BOOT	binclude ../../fat/source/micro_boot_fat_pack.rom
 
-		DUPL 0X2FF8-$,0XFF
+		DUPL 0X27F8-$,0XFF
+		binclude 8x8_ar.fnt
 		binclude 866_code.fnt
 		binclude atm_code.fnt
 
