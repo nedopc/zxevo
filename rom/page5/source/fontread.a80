@@ -20,14 +20,14 @@ SCAN_FONT
 ;        LD      A,1
 ;        OUT     (0XFE),A
 
-        XOR     A
-        OUT     (PEVO_CONF),A
+;        XOR     A
+;        OUT     (PEVO_CONF),A
 
-        LD      BC,0XEFF7
-        OUT     (C),A   ;ставим ефф7, который доступен только в нешедоу-режиме
+;        LD      BC,0XEFF7
+;        OUT     (C),A   ;ставим ефф7, который доступен только в нешедоу-режиме
 
-        INC     A
-        OUT     (PEVO_CONF),A
+;        INC     A
+;        OUT     (PEVO_CONF),A
 
         LD      A,0XA7
         LD      BC,0XFF77
@@ -77,14 +77,14 @@ OUTPAGE
 		LD D,H
 		LD E,L
 		INC DE
-		LD BC,0X40*25
+		LD BC,0X40*25-1
 		LD (HL),0
 		LDIR
 		LD HL,0XF1C0
 		LD D,H
 		LD E,L
 		INC DE
-		LD BC,0X40*25
+		LD BC,0X40*25-1
 		LD (HL),0
 		LDIR
 
@@ -168,7 +168,7 @@ SYNCREAD
         ; а первая команда INI попадает циклом ввода примерно в середину этих
         ; 5 символов
         LD      BC,0
-        LD BC,0
+	DI
         LD      B,2
         DJNZ    $
         LD      D,76

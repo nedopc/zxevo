@@ -4,7 +4,7 @@
 		include ../../macros.a80
 		include ../../global_vars.a80
 
-DD		EQU 18				;„€’€
+DD		EQU 19				;„€’€
 MM		EQU 1				;Œ…‘Ÿ–
 YY		EQU 12				;ƒŽ„
 DATA		EQU DD+(MM<<5)+(YY<<9)+0X8000	;“†… “€ŠŽ‚€Ž
@@ -95,14 +95,14 @@ LOOP1		OUTI
 		JR Z,LOOP2
 RSTPAL		LD A,(HL)
 		LD IXH,A			;ŽŒ… ‘’€ˆ–› ‡€‚…˜…ˆŸ ˆˆ’€ Œ€€ƒ…€ 
-		LD A,%10100011			;ZX SCREEN MODE, TURBO OFF („‹Ÿ €’Œ)
+		LD DE,0XA30F
+;		LD A,%10100011			;ZX SCREEN MODE, TURBO OFF („‹Ÿ €’Œ)
 		LD BC,0XFD77			;ˆ „Ž‘’“ Š €‹ˆ’…
-		OUT (C),A
+		OUT (C),D
 		EI				;¯ «¨âà 
 		HALT
 		DI
 		LD HL,TRSTPAL			;+15
-		LD DE,0XA30F
 		LD BC,0XBD77
 		OUT (C),D			;¢ª«.PAL
 RSTPAL0		LD A,E
