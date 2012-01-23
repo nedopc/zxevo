@@ -7,17 +7,21 @@ TAPE_EMUL	LD H,0XEF
 		JR NZ,EMULOADTAP
 		LD A,(REG_A)
 		LD (REG_C),A
-		LD HL,REG_F
-		SET 6,(HL)
-		RES 0,(HL)
+		CP A
+		PUSH AF
+		POP HL
+		LD (REG_F),HL
+;		LD HL,REG_F
+;		SET 6,(HL)
+;		RES 0,(HL)
 		RET
 
-EMULOADTAP	LD A,(0X8002)			;ŽŒ… ‘’€ˆ–› ƒ„… €—ˆ€…’‘Ÿ ‘‹…„“ž™ˆ‰ ‹ŽŠ
+EMULOADTAP	LD A,(CPU2+2)			;ŽŒ… ‘’€ˆ–› ƒ„… €—ˆ€…’‘Ÿ ‘‹…„“ž™ˆ‰ ‹ŽŠ
 		LD IYL,A
 		ADD A,PAGE4TAP
 		LD BC,WIN_P1
 		OUT (C),A			;…€‹œ€Ÿ ‘’€ˆ–€ Ž’Š“„€ €’œ
-		LD HL,(0X8000)			;‘Œ…™…ˆ… ‚ ‘’€ˆ–…
+		LD HL,(CPU2)			;‘Œ…™…ˆ… ‚ ‘’€ˆ–…
 		LD DE,(REG_IXL)			;€„…‘ Š“„€ ‹Ž†ˆ’œ
 		LD A,D
 		EXX
@@ -76,9 +80,9 @@ ELT05		RES 6,H
 		LD B,HIGH (WIN_P2)
 		XOR A
 		OUT (C),A			;‚Š‹ž—ˆ‹ˆ Ž‘‹…„žž ‘’€ˆ–“
-		LD (0X8000),HL			;‚…“‹ˆ ‘Œ…™…ˆ… ‚ ‘’€ˆ–… „‹Ÿ ‡€ƒ“‡Šˆ
+		LD (CPU2),HL			;‚…“‹ˆ ‘Œ…™…ˆ… ‚ ‘’€ˆ–… „‹Ÿ ‡€ƒ“‡Šˆ
 		LD A,IYL
-		LD (0X8002),A			;‚…“‹ˆ ‚ ……Œ…“ž ŽŒ… ’…Š“™…‰ ‘’€ˆ–› ‡€ƒ“‡Šˆ
+		LD (CPU2+2),A			;‚…“‹ˆ ‚ ……Œ…“ž ŽŒ… ’…Š“™…‰ ‘’€ˆ–› ‡€ƒ“‡Šˆ
 		LD HL,(REG_IXL)
 		LD DE,(REG_E)
 		ADD HL,DE
@@ -91,10 +95,16 @@ ELT05		RES 6,H
 		RET
 
 TAPE_INIT	XOR A
-		LD HL,0X8000
+		LD HL,CPU2
 		LD (HL),A
 		INC L
 		LD (HL),A
 		INC L
 		LD (HL),A
+		LD HL,(REG_L)
+		LD DE,(REG_E)
+		SCF
+		SBC HL,DE
+		LD (REG_L),HL
+		LD (REG_E),DE
 		RET
