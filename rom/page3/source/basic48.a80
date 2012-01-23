@@ -5,9 +5,7 @@
 
 		include rst8_equ.a80
 
-AY_PRINTER	EQU 1
-TAP_EMUL	EQU 1
-PRESS_MAGIC	EQU 1
+TAP_EMU_BORDER	EQU 0
 
 ; **************************************
 ; *** SPECTRUM 128 ROM 1 DISASSEMBLY ***
@@ -202,7 +200,7 @@ L0038:  PUSH    AF              ; save the registers.
 L0048:  PUSH    BC              ; save the other
         PUSH    DE              ; main registers.
 
-		IF BAS48_ONLY
+		IF BAS48_ONLY=1
 		CALL L02BF
 		ELSE
 		CALL L386E		; Spectrum 128 patch: read the keypad and keyboard
@@ -1725,11 +1723,11 @@ L053F:  PUSH    AF              ; preserve accumulator throughout.
         RRCA                    ; range 0-7.
 
 ;===============================
-;		IF TAP_EMUL
-;		DB 0,0
-;		ELSE
+		IF TAP_EMU_BORDER=1
+		DB 0,0
+		ELSE
 		OUT ($FE),A	; change the border colour.
-;		ENDIF
+		ENDIF
 ;===============================
 
         LD      A,$7F           ; read from port address $7FFE the
@@ -1768,11 +1766,11 @@ L0556:  INC     D               ; reset the zero flag without disturbing carry.
         LD      A,$0F           ; make the border white and mic off.
 
 ;===============================
-;		IF TAP_EMUL
-;		DB 0,0
-;		ELSE
+		IF TAP_EMU_BORDER=1
+		DB 0,0
+		ELSE
 		OUT ($FE),A	; output to port.
-;		ENDIF
+		ENDIF
 ;===============================
 
         LD      HL,L053F        ; Address: SA/LD-RET
@@ -1787,13 +1785,10 @@ L0556:  INC     D               ; reset the zero flag without disturbing carry.
         OR      $02             ; combine with red border colour.
 
 ;===============================
-		IF TAP_EMUL
 		RST 0X08
 		DB TAPE_EMUL
-		ELSE
-		LD C,A		; and store initial state long-term in C.
-		CP A		; set the zero flag.
-		ENDIF
+;		LD C,A		; and store initial state long-term in C.
+;		CP A		; set the zero flag.
 ;=============================== 
 
 ;; LD-BREAK
@@ -2373,14 +2368,12 @@ L073A:  LD      (IX+$00),$00    ; place type zero - program in descriptor.
         LD      DE,($5C53)      ; fetch PROG to DE.
 
 ;===============================
-		IF TAP_EMUL
-		CALL INI_TAP
-		ELSE
-		
-		SCF		; set carry flag to calculate from end of
+		RST 0X08
+		DB TAPE_INIT
+		NOP
+;		SCF		; set carry flag to calculate from end of
 				; variables E_LINE -1.
-		SBC HL,DE	; subtract to give total length.
-		ENDIF
+;		SBC HL,DE	; subtract to give total length.
 
         LD      (IX+$0B),L      ; place total length
         LD      (IX+$0C),H      ; in descriptor.
@@ -3455,7 +3448,7 @@ L0B4C:  LD      (HL),A          ; store bit patterns in temporary buffer
 ; Tokens and User defined graphics are now separated.
 
 ;; PO-T&UDG
-L0B52		IF BAS48_ONLY
+L0B52		IF BAS48_ONLY=1
 		SUB 0XA5
 		JR NC,L0B5F
 		ELSE
@@ -4349,12 +4342,9 @@ L0E9B:  LD      A,$18           ; reverse the line number
 
 L0EAC:  DI                      ; disable interrupts as this is time-critical.
 ;===============================
-		IF AY_PRINTER
 		RST 0X08
 		DB AY_PRN_SCR
-		ELSE
-		LD B,$B0		; top 176 lines.
-		ENDIF
+;		LD B,$B0		; top 176 lines.
 ;===============================
 
 L0EAF		LD HL,$4000		; address start of the display file.
@@ -4464,17 +4454,14 @@ L0EE7:  LD      (HL),A          ; set addressed location to zero.
 
 ;; COPY-LINE
 ;===============================
-L0EF4		IF AY_PRINTER
+L0EF4		
 		LD A,(HL)
 		RST 0X08
 		DB AY_PRN_A_
 		RET
-
-		ELSE
-		LD A,B			; fetch the counter 1-8 or 1-176
-		CP $03			; is it 01 or 02 ?.
-		SBC A,A			; result is $FF if so else $00.
-		ENDIF
+;		LD A,B			; fetch the counter 1-8 or 1-176
+;		CP $03			; is it 01 or 02 ?.
+;		SBC A,A			; result is $FF if so else $00.
 ;===============================
 		AND $02			; result is 02 now else 00.
 					; bit 1 set slows the printer.
@@ -5531,12 +5518,9 @@ L1219:  LD      ($5CB2),HL      ; set system variable RAMTOP to HL.
         SET     1,(IY+$01)      ; update FLAGS  - signal printer in use.
 
 ;===============================
-		IF AY_PRINTER
 		CALL PRINTER_INITER
-		ELSE
-		CALL L0EDF			; call routine CLEAR-PRB to initialize system
+;		CALL L0EDF			; call routine CLEAR-PRB to initialize system
 						; variables associated with printer.
-		ENDIF
 ;===============================
 
         LD      (IY+$31),$02    ; set DF_SZ the lower screen display size to
@@ -5696,7 +5680,7 @@ L133C:  CALL    L15EF           ; call routine OUT-CODE to print the code.
         CALL    L0C0A           ; call routine PO-MSG to print.
 
 X1349
-		IF BAS48_ONLY
+		IF BAS48_ONLY=1
 		XOR A
 		LD DE,L1536
 		ELSE
@@ -5953,11 +5937,8 @@ L15AF		DW L09F4		; PRINT-OUT
 		DW L15C4		; REPORT-J
 		DB "R"
 ;=======================================
-		IF AY_PRINTER
 		DW PRN_TOKEN
-		ELSE
-		DW L09F4		; PRINT-OUT
-		ENDIF
+;		DW L09F4		; PRINT-OUT
 ;=======================================
 		DW L15C4		; REPORT-J
 		DB "P"
@@ -8191,7 +8172,7 @@ L1B7B:  RST     08H             ; ERROR-1
         DB    $14             ; Error Report: BREAK into program
 
 ;; STMT-R-1
-L1B7D		IF BAS48_ONLY
+L1B7D		IF BAS48_ONLY=1
 		BIT 7,(IY+0X0A)
 		ELSE
 		CALL L3B4D		; Spectrum 128 patch
@@ -8366,7 +8347,7 @@ L1BEE:  CALL    L2530           ; routine SYNTAX-Z
 ; If so go to next statement which in the first case will be on next line.
 
 ;; STMT-NEXT
-L1BF4		IF BAS48_ONLY
+L1BF4		IF BAS48_ONLY=1
 		RST 0X18
 		CP 0X0D
 		ELSE
@@ -11756,7 +11737,7 @@ L2634:  LD      BC,$105A        ; priority $10, operation code $1A ('read-in')
         JR      Z,L2665         ; forward to S-INK$-EN if so
 
 ;===============================
-		IF BAS48_ONLY
+		IF BAS48_ONLY=1
 		CALL L028E
 		ELSE
 		JP L3B6C		; Spectrum 128 patch
@@ -19299,19 +19280,9 @@ L3BDA		DC "PLAY"	;DEFM    "PLA"           ; PLAY token
 L3BDE:  JP      L3C01           ; This is not called from either ROM. It can be used to scan the keypad.
 
 ;===============================
-		IF TAP_EMUL
-INI_TAP		RST 0X08
-		DB TAPE_INIT
-		SCF
-		SBC HL,DE
-		RET
-		ENDIF
-
-		IF AY_PRINTER
 PRINTER_INITER	RST 0X08
 		DB AY_PRN_INIT
-		JP L0EDF
-		ENDIF
+		RET
 
 PRN_TOKEN	RST 0X08
 		DB AY_PRN_TOKEN

@@ -12,7 +12,7 @@ ADR_CAT		EQU DRV_VAR-0X1100		;€„…‘ “”…€ „‹Ÿ „ˆ‘Š…’› ˆ €‰„…›• ”€‰‹Ž‚ € FAT
 		include ../../sdcomand.a80
 
 ;VERSION
-VERSBIOS	EQU "0.49a "
+VERSBIOS	EQU "0.49b "
 
 ;BIT 4,(IY+55)
 ;BIT 3,(IY+55)-0-‡€…’ €ˆŒ€–ˆˆ ŠŽ˜€Š€, 1-€‡…˜…ˆ…
