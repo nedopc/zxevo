@@ -23,10 +23,10 @@ TO_DRV		PUSH HL
 		LD A,L
 		JR NZ,TO_DRV1
 		RST 0X10
-		LD A,(REG_A)
-		LD DE,(REG_E)
-		LD BC,(REG_C)
-		LD HL,(REG_L)
+		LD A,(RREG_A)
+		LD DE,(RREG_E)
+		LD BC,(RREG_C)
+		LD HL,(RREG_L)
 		EX (SP),HL
 TO_DRV1		LD HL,(GO_DEV)
 		EX (SP),HL
@@ -173,18 +173,18 @@ KOL_VOL		LD HL,(ADRTEKV)			;€„…‘ ’…Š“™…ƒŽ ‚›€ŽƒŽ €‡„…‹€
 		INC HL
 		LD A,(HL)			;’ˆ €‡„…‹€
 		LD HL,(KOLDVOL)			;D-ŽŒ… ‚›€ŽƒŽ €‡„…‹€, E-ŠŽ‹ˆ—…‘’‚Ž €‰„…›• €‡„…‹Ž‚
-		LD (REG_E),HL
+		LD (RREG_E),HL
 		AND A
 		PUSH AF
 		POP HL
-		LD (REG_F),HL
+		LD (RREG_F),HL
 		RET
 
 FOR_EXTERN	PUSH AF
 		POP HL
-		LD (REG_F),HL
+		LD (RREG_F),HL
 		LD BC,0X100			;……Ž‘ „Ž 256 €‰’
-		LD DE,(REG_L)			;€„…‘ Š“„€ ……Ž‘ˆ’œ
+		LD DE,(RREG_L)			;€„…‘ Š“„€ ……Ž‘ˆ’œ
 		LD HL,ADRTVOL
 		LD A,D
 		CP 0XC0				;‚…•ŸŸ ƒ€ˆ–€ €„…‘€ ……Ž‘€
@@ -217,7 +217,7 @@ LDIR4EXTRN2	LDIR				;………‘‹ˆ Ž‘’€’ŽŠ ’€‹ˆ–›
 
 LDIR4EXTRN	LDIR
 LDIR4EXTRN1	LD HL,(KOLDVOL)
-		LD (REG_E),HL
+		LD (RREG_E),HL
 		RET
 
 ;‚›—ˆ‘‹…ˆ… ŠŽ‹ˆ—…‘’‚€ €‰„…›• €‡„…‹Ž‚ € ‚‘…• “‘’Ž‰‘’‚€•
@@ -441,7 +441,7 @@ SET_VOL		LD L,A
 		AND A
 		LD A,L
 		JR NZ,SET_VOL1
-		LD A,(REG_A)
+		LD A,(RREG_A)
 SET_VOL1	LD HL,KOLDVOL
 		CP (HL)
 		CCF
@@ -514,8 +514,8 @@ CP_RAZD		LD E,1			;FAT16
 
 ;‚…Œ…€Ÿ ”“Š–ˆŸ ‚›‡Ž‚€ „€‰‚…€ HDD NEMO
 COMHDDNEX	RST 0X10
-		LD A,(REG_A)
-		LD DE,(REG_E)
-		LD BC,(REG_C)
-		LD HL,(REG_L)
+		LD A,(RREG_A)
+		LD DE,(RREG_E)
+		LD BC,(RREG_C)
+		LD HL,(RREG_L)
 		JP COMHDDN
