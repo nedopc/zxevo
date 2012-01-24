@@ -13,7 +13,7 @@ unsigned char rm(unsigned addr)
 #endif
 
 #ifdef MOD_GSZ80
-   if ((temp.gsdmaon!=0) && (conf.mem_model == MM_PENTAGON) && ((addr & 0xc000)==0) && ((comp.pEFF7 & EFF7_ROCACHE)==0))
+   if ((temp.gsdmaon!=0) && ( (conf.mem_model==MM_PENTAGON) || (conf.mem_model==MM_ATM3) ) && ((addr & 0xc000)==0) && ((comp.pEFF7 & EFF7_ROCACHE)==0))
     {
      unsigned char *tmp;
      tmp = GSRAM_M+((temp.gsdmaaddr-1) & 0x1FFFFF);
@@ -40,7 +40,7 @@ void wm(unsigned addr, unsigned char val)
 #endif
 
 #ifdef MOD_GSZ80
-   if ((temp.gsdmaon!=0) && (conf.mem_model == MM_PENTAGON) && ((addr & 0xc000)==0))
+   if ((temp.gsdmaon!=0) && ( (conf.mem_model==MM_PENTAGON) || (conf.mem_model==MM_ATM3) ) && ((addr & 0xc000)==0))
     {
      unsigned char *tmp;
      tmp = GSRAM_M+temp.gsdmaaddr;
