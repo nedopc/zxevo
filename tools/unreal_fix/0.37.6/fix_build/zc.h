@@ -7,6 +7,7 @@ class TZc
     TSdCard SdCard;
     u8 Cfg;
     u8 Status;
+    u8 RdBuff;
 public:
     void Reset();
     void Open(const char *Name) { SdCard.Open(Name); }
