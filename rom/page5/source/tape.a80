@@ -5,12 +5,12 @@ TAPE_EMUL	LD H,0XEF
 		CALL READCMOS
 		AND EMUL_TAPE
 		JR NZ,EMULOADTAP
-		LD A,(REG_A)
-		LD (REG_C),A
+		LD A,(RREG_A)
+		LD (RREG_C),A
 		CP A
 		PUSH AF
 		POP HL
-		LD (REG_F),HL
+		LD (RREG_F),HL
 ;		LD HL,REG_F
 ;		SET 6,(HL)
 ;		RES 0,(HL)
@@ -22,7 +22,7 @@ EMULOADTAP	LD A,(CPU2+2)			;ŽŒ… ‘’€ˆ–› ƒ„… €—ˆ€…’‘Ÿ ‘‹…„“ž™ˆ‰ ‹ŽŠ
 		LD BC,WIN_P1
 		OUT (C),A			;…€‹œ€Ÿ ‘’€ˆ–€ Ž’Š“„€ €’œ
 		LD HL,(CPU2)			;‘Œ…™…ˆ… ‚ ‘’€ˆ–…
-		LD DE,(REG_IXL)			;€„…‘ Š“„€ ‹Ž†ˆ’œ
+		LD DE,(RREG_IXL)		;€„…‘ Š“„€ ‹Ž†ˆ’œ
 		LD A,D
 		EXX
 		LD BC,WIN_P2
@@ -83,13 +83,13 @@ ELT05		RES 6,H
 		LD (CPU2),HL			;‚…“‹ˆ ‘Œ…™…ˆ… ‚ ‘’€ˆ–… „‹Ÿ ‡€ƒ“‡Šˆ
 		LD A,IYL
 		LD (CPU2+2),A			;‚…“‹ˆ ‚ ……Œ…“ž ŽŒ… ’…Š“™…‰ ‘’€ˆ–› ‡€ƒ“‡Šˆ
-		LD HL,(REG_IXL)
-		LD DE,(REG_E)
+		LD HL,(RREG_IXL)
+		LD DE,(RREG_E)
 		ADD HL,DE
-		LD (REG_IXL),HL
+		LD (RREG_IXL),HL
 		LD HL,0
-		LD (REG_E),HL
-		LD HL,REG_F
+		LD (RREG_E),HL
+		LD HL,RREG_F
 		RES 6,(HL)
 		SET 0,(HL)
 		RET
@@ -101,10 +101,10 @@ TAPE_INIT	XOR A
 		LD (HL),A
 		INC L
 		LD (HL),A
-		LD HL,(REG_L)
-		LD DE,(REG_E)
+		LD HL,(RREG_L)
+		LD DE,(RREG_E)
 		SCF
 		SBC HL,DE
-		LD (REG_L),HL
-		LD (REG_E),DE
+		LD (RREG_L),HL
+		LD (RREG_E),DE
 		RET

@@ -4,7 +4,7 @@
 		include ../../macros.a80
 		include ../../global_vars.a80
 
-DD		EQU 23				;„€’€
+DD		EQU 24				;„€’€
 MM		EQU 1				;Œ…‘Ÿ–
 YY		EQU 12				;ƒŽ„
 DATA		EQU DD+(MM<<5)+(YY<<9)+0X8000	;“†… “€ŠŽ‚€Ž
