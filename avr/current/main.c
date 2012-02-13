@@ -78,7 +78,7 @@ void hardware_init(void)
 	PORTC = 0b11011111;
 	DDRC  = 0b00000000; // PWRGOOD input, other pulled up
 
-	PORTB = 0b11110001;
+	PORTB = 0b11000001;
 	DDRB  = 0b10000111; // LED off, spi outs inactive
 
 	PORTA = 0b11111111;
