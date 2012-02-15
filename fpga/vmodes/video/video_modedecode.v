@@ -26,6 +26,10 @@ module video_modedecode(
 	output reg         mode_a_text,  // 640x200 (80x25 symbols) atm text mode
 	output reg         mode_a_txt_1page, // atm text mode in a single page (modifier for mode_a_text)
 
+
+	output reg         mode_new, // new mode with line descriptors and palette autoload
+
+
 	output reg         mode_pixf_14, // =1: 14MHz pixelclock on (default is 7MHz).
 
 
@@ -47,7 +51,9 @@ module video_modedecode(
 // 3'b000 - 320x200 16 colors
 // 3'b110 - 80x25 text mode
 // 3'b111 - 80x25 text mode (single page)
-// 3'b??? (others) - not defined yet
+
+// new mode (atm encoding):
+// 3'b100 - new mode with line descriptors and palette autoload
 
 
 
@@ -60,6 +66,8 @@ module video_modedecode(
 			3'b110:  mode_atm_n_pent <= 1'b1;
 			3'b111:  mode_atm_n_pent <= 1'b1;
 
+			3'b100:  mode_atm_n_pent <= 1'b1;
+
 			3'b011:  mode_atm_n_pent <= 1'b0;
 			default: mode_atm_n_pent <= 1'b0;
 		endcase
@@ -71,6 +79,8 @@ module video_modedecode(
 			3'b110: mode_zx <= 1'b0;
 			3'b111: mode_zx <= 1'b0;
 
+			3'b100: mode_zx <= 1'b0;
+
 			default: begin
 				if( (pent_vmode==2'b00) || (pent_vmode==2'b11) )
 					mode_zx <= 1'b1;
@@ -80,7 +90,7 @@ module video_modedecode(
 		endcase
 
 
-		
+
 		if( (atm_vmode==3'b011) && (pent_vmode==2'b10) )
 			mode_p_16c <= 1'b1;
 		else
@@ -97,19 +107,19 @@ module video_modedecode(
 			mode_a_hmclr <= 1'b1;
 		else
 			mode_a_hmclr <= 1'b0;
-		
+
 
 		if( atm_vmode==3'b000 )
 			mode_a_16c <= 1'b1;
 		else
 			mode_a_16c <= 1'b0;
-		
+
 
 		if( (atm_vmode==3'b110) || (atm_vmode==3'b111) )
 			mode_a_text <= 1'b1;
 		else
 			mode_a_text <= 1'b0;
-		
+
 		if( atm_vmode==3'b111 )
 			mode_a_txt_1page <= 1'b1;
 		else
@@ -129,6 +139,12 @@ module video_modedecode(
 		else
 			mode_bw <= 2'b01; // 1/4
 
+
+
+		if( atm_vmode==3'b100 )
+			mode_new <= 1'b1;
+		else
+			mode_new <= 1'b0;
 
 	end
 
