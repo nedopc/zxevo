@@ -118,7 +118,7 @@ module arbiter(
 
 	output wire [15:0] cpu_rddata,
 	output reg         cpu_next,
-        output reg         cpu_strobe
+	output reg         cpu_strobe
 );
 
 	wire cbeg;

@@ -9,15 +9,19 @@ module video_addrgen(
 	input  wire        clk, // 28 MHz clock
 
 
-	output reg  [20:0] video_addr, // DRAM arbiter signals
-	input  wire        video_next, //
-
+	output reg  [20:0] video_addr,   // DRAM arbiter signals
+	input  wire        video_next,   //
+	input  wire        video_strobe, //
+	input  wire [15:0] video_data,   //
+	
+	input  wire [ 1:0] decoded_bw, // decoded BW comes from video_modedecode
+	output reg  [ 1:0] video_bw,   // resulting BW, which will vary in new videomode (mode #4)
 
 	input  wire        line_start, // some video sync signals
 	input  wire        int_start,  //
 	input  wire        vpix,       //
 
-	input  wire        scr_page, // which screen to use
+	input  wire        scr_page, // which screen page to use
 
 
 	input  wire        mode_atm_n_pent, // decoded modes
@@ -29,15 +33,23 @@ module video_addrgen(
 	input  wire        mode_a_16c,      //
 	input  wire        mode_a_text,     //
 	input  wire        mode_a_txt_1page,//
-
-	output wire [ 2:0] typos // Y position in text mode symbols
+	                                    //
+	input  wire        mode_new,        //
+	
+	output wire [ 2:0] typos, // Y position in text mode symbols
+	
+	
 );
 
-	wire mode_ag;
-
+	wire   mode_ag;
 	assign mode_ag = mode_a_16c | mode_a_hmclr;
 
+	
+	wire [20:0] video_addr_unreg;
+	reg  [20:0] video_addr;
+	reg         video_addr14;
 
+	
 
 	wire line_init, frame_init;
 
@@ -58,10 +70,64 @@ module video_addrgen(
 	reg [7:0] tyctr; // text Y counter
 	reg [6:0] txctr; // text X counter
 
-	reg not_used;
+
+	
+	wire [20:0] addr_zx;   // standard zx mode
+	wire [20:0] addr_phm;  // pentagon hardware multicolor
+	wire [20:0] addr_p16c; // pentagon 16c
+
+	wire [20:0] addr_ag; // atm gfx: 16c (x320) or hard multicolor (x640) - same sequence!
+
+	wire [20:0] addr_at; // atm text
+
+	wire [11:0] addr_zx_pix;
+	wire [11:0] addr_zx_attr;
+	wire [11:0] addr_zx_p16c;
 
 
 
+
+	
+
+	// below are new mode related stuff definition
+
+	localparam LMODE_320_64C = 2'b00; // do not change!
+	localparam LMODE_320_DPF = 2'b10; // bit-dependency:
+	localparam LMODE_640_TXT = 2'b11; //  bit0 - 320 or 640
+	localparam LMODE_640_16C = 2'b01; //  bit1 - 1 or 2 planes
+
+
+	reg [12:0] nyptr0; // Y pointer for plane 0
+	reg [12:0] nyptr1; // Y pointer for plane 1
+
+	reg [ 7:0] nxctr0; // X counter for plane 0
+	reg [ 7:0] nxctr1; // X counter for plane 1
+
+	reg [ 1:0] lmode; // line mode
+
+	reg [ 1:0] pal54; // bits 5:4 into palette
+
+	reg [ 2:0] scrleft; // scroll to the left
+
+	reg [ 1:0] plane1_lag; // 0..3 pixels lag for plane 1 over plane 0 in DPF
+
+	wire [20:0] addr_nfetch; // addr for fetching palette data and line descriptors
+	wire [20:0] addr_plane0; // addr for fetching plane 0 data
+	wire [20:0] addr_plane1; // addr for fetching plane 1 data
+
+	reg [10:0] nfetch_ptr; // pointer for fetching palette and line descriptors:
+	                       // we need 256 palette words and 4*200 line descr words,
+	                       // total 800+256 = 1056 words
+
+	reg naddr_fetch;  // when appropriate addresses are fetched by new videomode
+	reg naddr_plane0; //
+	reg naddr_plane1; //
+
+	
+	
+	
+	
+	
 
 	always @(posedge clk)
 		frame_init_r <= frame_init;
@@ -107,19 +173,6 @@ module video_addrgen(
 // [4:1] - horiz pos 0..15 (words)
 // [12:5] - vert pos
 
-	wire [20:0] addr_zx;   // standard zx mode
-	wire [20:0] addr_phm;  // pentagon hardware multicolor
-	wire [20:0] addr_p16c; // pentagon 16c
-
-	wire [20:0] addr_ag; // atm gfx: 16c (x320) or hard multicolor (x640) - same sequence!
-
-	wire [20:0] addr_at; // atm text
-
-	wire [11:0] addr_zx_pix;
-	wire [11:0] addr_zx_attr;
-	wire [11:0] addr_zx_p16c;
-
-
 	assign addr_zx_pix  = { gctr[12:11], gctr[7:5], gctr[10:8], gctr[4:1] };
 
 	assign addr_zx_attr = { 3'b110, gctr[12:8], gctr[4:1] };
@@ -155,29 +208,40 @@ module video_addrgen(
 
 
 
+	// addresses for new mode fetches
+
+	assign addr_fetch = { 6'b000010, scr_page, 3'b000, nfetch_ptr }; // page #08 or #0A
+
+	assign addr_plane0 = { nyptr0, nxctr0 };
+	assign addr_plane1 = { nyptr1, nxctr1 };
 
 
-
-
-
-
+	assign video_addr_unreg =
+	                        ( {21{mode_zx     }} & addr_zx     )  |
+	                        ( {21{mode_p_16c  }} & addr_p16c   )  |
+	                        ( {21{mode_p_hmclr}} & addr_phm    )  |
+	                        ( {21{mode_ag     }} & addr_ag     )  |
+	                        ( {21{mode_a_text }} & addr_at     )  |
+	                        ( {21{naddr_fetch }} & addr_nfetch )  |
+	                        ( {21{naddr_plane0}} & addr_plane0 )  |
+	                        ( {21{naddr_plane1}} & addr_plane1 )  ;
 
 	initial video_addr <= 0;
 	//
 	always @(posedge clk) if( ldaddr )
 	begin
-		{ video_addr[20:15], not_used, video_addr[13:0] } <=
-			( {21{mode_zx     }} & addr_zx  )  |
-			( {21{mode_p_16c  }} & addr_p16c)  |
-			( {21{mode_p_hmclr}} & addr_phm )  |
-			( {21{mode_ag     }} & addr_ag  )  |
-			( {21{mode_a_text }} & addr_at  )  ;
+		{ video_addr[20:15], video_addr14, video_addr[13:0] } <= video_addr_unreg;
 	end
 
 	always @(posedge clk)
+	if( naddr_plane0 || naddr_plane1 )
+	begin
+		video_addr[14] <= video_addr14; // 1 cycle lag -- not important (????)
+	end
+	else
+	begin
 		video_addr[14] <= scr_page;
-
-
+	end
 
 endmodule
 
