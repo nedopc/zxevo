@@ -102,8 +102,7 @@ module arbiter(
 	                //                     3'b11 - 8 video accesses (stall of CPU)
 
 	input  [20:0] video_addr,   // during access block, only when video_strobe==1
-	output [15:0] video_data,   // read video data which is valid only during video_strobe==1 because video_data
-	                            // is just wires to the dram.v's rddata signals
+	output [15:0] video_data,   // read video data which is valid only during video_strobe==1 and 3 clocks more
 	output reg    video_strobe, // positive one-cycle strobe as soon as there is next video_data available.
 	                            // if there is video_strobe, it coincides with cend signal
 	output reg    video_next,   // on this signal you can change video_addr; it is one clock leading the video_strobe

@@ -1,4 +1,4 @@
-`include "../include/tune.v"
+﻿`include "../include/tune.v"
 
 // Pentevo project (c) NedoPC 2011-2012
 //
@@ -12,11 +12,15 @@ module video_addrgen(
 	output reg  [20:0] video_addr,   // DRAM arbiter signals
 	input  wire        video_next,   //
 	input  wire        video_strobe, //
-	input  wire [15:0] video_data,   //
+	input  wire [15:0] video_data,   // we need strobe and data to prefetch palette and line infos
 	
 	input  wire [ 1:0] decoded_bw, // decoded BW comes from video_modedecode
 	output reg  [ 1:0] video_bw,   // resulting BW, which will vary in new videomode (mode #4)
 
+	input  wire        fetch_go, // from fetcher
+	output wire        video_go, // to arbiter
+	
+	
 	input  wire        line_start, // some video sync signals
 	input  wire        int_start,  //
 	input  wire        vpix,       //
@@ -37,7 +41,11 @@ module video_addrgen(
 	input  wire        mode_new,        //
 	
 	output wire [ 2:0] typos, // Y position in text mode symbols
-	
+
+
+	output wire [ 7:0] npal_adr, // palette write
+	output wire [ 5:0] npal_dat, //
+	output reg         npal_wr,  //
 	
 );
 
@@ -119,13 +127,20 @@ module video_addrgen(
 	                       // we need 256 palette words and 4*200 line descr words,
 	                       // total 800+256 = 1056 words
 
-	reg naddr_fetch;  // when appropriate addresses are fetched by new videomode
-	reg naddr_plane0; //
-	reg naddr_plane1; //
+	reg mxaddr_fetch;  // when appropriate addresses are fetched by new videomode
+	reg mxaddr_plane0; //
+	reg mxaddr_plane1; //
 
+	reg fetch_palette;
 	
+	reg fetch_descr0;
+	reg fetch_descr1;
+	reg fetch_descr2;
+	reg fetch_descr3;
+
+	reg palline_go;
 	
-	
+	wire fnext; // fetch next
 	
 	
 
@@ -210,21 +225,21 @@ module video_addrgen(
 
 	// addresses for new mode fetches
 
-	assign addr_fetch = { 6'b000010, scr_page, 3'b000, nfetch_ptr }; // page #08 or #0A
+	assign addr_fetch = { 6'b000010, scr_page, 3'b000, nfetch_ptr[10:0] }; // page #08 or #0A
 
 	assign addr_plane0 = { nyptr0, nxctr0 };
 	assign addr_plane1 = { nyptr1, nxctr1 };
 
 
 	assign video_addr_unreg =
-	                        ( {21{mode_zx     }} & addr_zx     )  |
-	                        ( {21{mode_p_16c  }} & addr_p16c   )  |
-	                        ( {21{mode_p_hmclr}} & addr_phm    )  |
-	                        ( {21{mode_ag     }} & addr_ag     )  |
-	                        ( {21{mode_a_text }} & addr_at     )  |
-	                        ( {21{naddr_fetch }} & addr_nfetch )  |
-	                        ( {21{naddr_plane0}} & addr_plane0 )  |
-	                        ( {21{naddr_plane1}} & addr_plane1 )  ;
+	                        ( {21{mode_zx      }} & addr_zx     )  |
+	                        ( {21{mode_p_16c   }} & addr_p16c   )  |
+	                        ( {21{mode_p_hmclr }} & addr_phm    )  |
+	                        ( {21{mode_ag      }} & addr_ag     )  |
+	                        ( {21{mode_a_text  }} & addr_at     )  |
+	                        ( {21{mxaddr_fetch }} & addr_nfetch )  |
+	                        ( {21{mxaddr_plane0}} & addr_plane0 )  |
+	                        ( {21{mxaddr_plane1}} & addr_plane1 )  ;
 
 	initial video_addr <= 0;
 	//
@@ -234,14 +249,71 @@ module video_addrgen(
 	end
 
 	always @(posedge clk)
-	if( naddr_plane0 || naddr_plane1 )
-	begin
-		video_addr[14] <= video_addr14; // 1 cycle lag -- not important (????)
-	end
+		video_addr[14] <= (mxaddr_plane0 || mxaddr_plane1) ? video_addr14 : scr_page; // 1 cycle lag - not important??
+
+		
+		
+		
+		
+		
+		
+	// new video modes control and prefetch
+
+	
+	always @(posedge clk)
+		video_bw <= ( (lmode==LMODE_640_TXT) && mode_new && (!palline_go) ) ? 1'b01 : decoded_bw; // decoded_bw is 1'b10 for mode_new
+
+	assign video_go = fetch_go | palline_go;
+
+
+	always @(posedge clk)
+	if( !mode_new )
+		palline_go <= 1'b0;
+	else if( frame_init_r )
+		palline_go <= 1'b1;
+	else if( конец фетча строки )
+		palline_go <= 1'b1;
+	else if( конец фетча дескриптора строки )
+		palline_go <= 1'b0;
+		
+	
+	
+	always @(posedge clk)
+	if( frame_init )
+		nfetch_ptr <= 11'd0;
 	else
-	begin
-		video_addr[14] <= scr_page;
-	end
+		хзчто
+
+
+	always @(posedge clk)
+	if( frame_init && mode_new )
+		mxaddr_fetch <= 1'b1;
+	else
+		hzchto
+	
+	always @(posedge clk)
+	if( !mode_new )
+		fetch_palette <= 1'b0;
+	else if( frame_init )
+		fetch_palette <= 1'b1;
+	else if( nfetch_ptr[8] && ldaddr ) // 
+		fetch_palette <= 1'b0;
+
+	always @(posedge clk)
+
+		fetch_descr0 <= 1'b1;?????
+		
+	// palette write output
+	assign npal_adr = video_data[15:8];
+	assign npal_dat = video_data[ 5:0];
+	//
+	always @(posedge clk)
+	if( fetch_palette && video_strobe )
+		npal_wr <= 1'b1;
+	else
+		npal_wr <= 1'b0;
+
+		
 
 endmodule
 
