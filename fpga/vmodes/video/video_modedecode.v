@@ -136,6 +136,8 @@ module video_modedecode(
 
 		if( (atm_vmode==3'b011) && (pent_vmode!=2'b10) )
 			mode_bw <= 2'b00; // 1/8
+		else if( atm_vmode==2'b100 )
+			mode_bw = 2'b10; // 1/2
 		else
 			mode_bw <= 2'b01; // 1/4
 
