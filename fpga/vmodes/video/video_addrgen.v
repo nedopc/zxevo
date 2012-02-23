@@ -8,6 +8,10 @@ module video_addrgen(
 
 	input  wire        clk, // 28 MHz clock
 
+	input  wire        cbeg,
+	input  wire        post_cbeg,
+	input  wire        pre_cend,
+	input  wire        cend,
 
 	output reg  [20:0] video_addr,   // DRAM arbiter signals
 	input  wire        video_next,   //
@@ -126,19 +130,21 @@ module video_addrgen(
 	reg [10:0] nfetch_ptr; // pointer for fetching palette and line descriptors:
 	                       // we need 256 palette words and 4*200 line descr words,
 	                       // total 800+256 = 1056 words
-
+	reg nfetch_ptr_8_reg;
+						   
 	reg mxaddr_fetch;  // when appropriate addresses are fetched by new videomode
 	reg mxaddr_plane0; //
 	reg mxaddr_plane1; //
 
-	reg fetch_palette;
-	
-	reg fetch_descr0;
-	reg fetch_descr1;
-	reg fetch_descr2;
-	reg fetch_descr3;
+	reg palette;
+	reg palette_r
+	reg descr0;
+	reg descr1;
+	reg descr2;
+	reg descr3;
 
 	reg palline_go;
+	
 	
 	wire fnext; // fetch next
 	
@@ -256,33 +262,43 @@ module video_addrgen(
 		
 		
 		
-		
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// new video modes control and prefetch
-
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	always @(posedge clk)
 		video_bw <= ( (lmode==LMODE_640_TXT) && mode_new && (!palline_go) ) ? 1'b01 : decoded_bw; // decoded_bw is 1'b10 for mode_new
 
 	assign video_go = fetch_go | palline_go;
 
-
+	
 	always @(posedge clk)
-	if( !mode_new )
-		palline_go <= 1'b0;
-	else if( frame_init_r )
-		palline_go <= 1'b1;
-	else if( конец фетча строки )
-		palline_go <= 1'b1;
-	else if( конец фетча дескриптора строки )
-		palline_go <= 1'b0;
-		
+	if( cend ) palette_r <= palette_r;
 	
-	
+	// control of 'go' signal
+	always @(posedge clk)
+	if( cend )
+	begin
+		if( !mode_new )
+			palline_go <= 1'b0;
+		else if( palette )
+			palline_go <= 1'b1;
+		else if( (!palette) && palette_r )
+			palline_go <= 1'b0;
+
+		else if( descr2 && video_strobe )
+			palline_go <= 1'b0;
+	end	
+
+
+	// palette and descriptors fetch address
+	assign gnext = (~descr3) & (video_next | frame_init_r);
+	//
 	always @(posedge clk)
 	if( frame_init )
 		nfetch_ptr <= 11'd0;
-	else
-		хзчто
+	else if( fnext )
+		nfetch_ptr <= nfetch_ptr + 11'd1;
 
 
 	always @(posedge clk)
@@ -290,25 +306,33 @@ module video_addrgen(
 		mxaddr_fetch <= 1'b1;
 	else
 		hzchto
-	
+
+	// palette fetch signal
+	always @(posedge clk)
+		nfetch_ptr_8_reg <= nfetch_ptr[8];
+	//	
 	always @(posedge clk)
 	if( !mode_new )
-		fetch_palette <= 1'b0;
+		palette <= 1'b0;
 	else if( frame_init )
-		fetch_palette <= 1'b1;
-	else if( nfetch_ptr[8] && ldaddr ) // 
-		fetch_palette <= 1'b0;
+		palette <= 1'b1;
+	else if( nfetch_ptr_8_reg && video_strobe )
+		palette <= 1'b0;
 
+		
+	// descriptors fetch signals
 	always @(posedge clk)
+	if( video_next && что-то )
+		descr0 <= 1'b1;?????
 
-		fetch_descr0 <= 1'b1;?????
+
 		
 	// palette write output
 	assign npal_adr = video_data[15:8];
 	assign npal_dat = video_data[ 5:0];
 	//
 	always @(posedge clk)
-	if( fetch_palette && video_strobe )
+	if( palette && video_strobe )
 		npal_wr <= 1'b1;
 	else
 		npal_wr <= 1'b0;
