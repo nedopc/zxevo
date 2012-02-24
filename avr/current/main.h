@@ -8,6 +8,8 @@
  *
  * @subsection current Current version.
  *
+ * - Fix RS232 (clear overrun error flag)
+ *
  * @subsection ver_2012_02_13 Version 13.02.2011.
  *
  * - Add SD WRP and SD DET to C gluk's register.
