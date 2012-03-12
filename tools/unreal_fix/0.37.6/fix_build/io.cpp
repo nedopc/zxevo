@@ -38,8 +38,8 @@ void out(unsigned port, unsigned char val)
    // z-controller
    if (conf.zc && (port & 0xFF) == 0x57 )
    {
-      if ((port & 0x80FF) == 0x8057 && conf.mem_model == MM_ATM3 
-         &&(comp.flags & CF_DOSPORTS)) 
+      if ((port & 0x80FF) == 0x8057 && conf.mem_model == MM_ATM3
+         &&(comp.flags & CF_DOSPORTS))
          return;
        Zc.Wr(port, val);
        return;
@@ -200,7 +200,9 @@ void out(unsigned port, unsigned char val)
              return;
          }
 
-         u32 mask = (conf.mem_model == MM_ATM3) ? 0x3FFF : 0x00FF;
+         u32 mask = (conf.mem_model == MM_ATM3) ? /*0x3FFF*/ 0x0FFF : 0x00FF; // lvd fix: pentevo hardware decodes fully only low byte,
+                                                                              // so using eff7 in shadow mode lead to outting to fff7,
+                                                                              // unlike this was in unreal!
          if ((port & mask) == (0x3FF7 & mask)) // xff7
          {
              comp.pFFF7[((comp.p7FFD & 0x10) >> 2) | ((port >> 14) & 3)] = (((val & 0xC0) << 2) | (val & 0x3F)) ^ 0x33F;
