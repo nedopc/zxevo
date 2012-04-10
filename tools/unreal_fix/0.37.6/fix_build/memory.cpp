@@ -437,6 +437,11 @@ unsigned char cmos_read()
       }
    }
 
+   if (input.buffer_enabled && reg >= 0xF0)    //thims zxevo_ps2
+   {
+       return input.buffer.Pop();
+   }
+
    switch (reg)
    {
       case 0:     return cmosBCD((BYTE)st.wSecond);
