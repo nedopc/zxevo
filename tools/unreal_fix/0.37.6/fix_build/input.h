@@ -1,5 +1,47 @@
 #pragma once
 
+class TKeyboardBuffer // thims zxevo_ps/2
+{
+    unsigned char buffer[256];
+    unsigned char push;
+    unsigned char pop;
+    bool full;
+
+public:
+    TKeyboardBuffer() { Empty(); }
+    
+    void Empty()
+    {
+        push = pop = 0;
+        full = false;
+    }
+
+    void Push(unsigned char key)
+    {
+        if (!full)
+        {
+            buffer[push++] = key;
+            if (push == sizeof(buffer)) push = 0;
+            if (push == pop) full = true;
+        }        
+    }
+
+    unsigned char Pop()
+    {
+        if (!full)
+        {
+            if (push != pop)
+            {
+                unsigned char key = buffer[pop++];
+                if (pop == sizeof(buffer)) pop = 0;
+                return key;
+            }
+            return 0;
+        }
+        return 0xFF;
+    }
+};
+
 struct ATM_KBD
 {
    union {
@@ -46,6 +88,9 @@ struct K_INPUT
    unsigned char firedelay, firestate; // autofire vars
 
    ATM_KBD atm51;
+   TKeyboardBuffer buffer;
+   bool buffer_enabled;
+
 
    unsigned stick_delay;
    int prev_wheel;

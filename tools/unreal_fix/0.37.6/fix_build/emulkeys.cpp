@@ -4,6 +4,7 @@
 #include "emul.h"
 #include "vars.h"
 #include "config.h"
+#include "input.h"
 #include "draw.h"
 #include "dx.h"
 #include "debug.h"
@@ -267,6 +268,8 @@ static const char *getrom(ROM_MODE page)
 void m_reset(ROM_MODE page)
 {
    sprintf(statusline, "Reset to %s", getrom(page)); statcnt = 50;
+   input.buffer_enabled = false;    //DimkaM disable ps/2 access
+   input.buffer.Empty();
    nmi_pending = 0;
    cpu.nmi_in_progress = false;
    reset(page);

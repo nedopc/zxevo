@@ -325,11 +325,30 @@ char K_INPUT::readdevices()
    }
 
    if (nokb)
-       memset(kbdpc, 0, sizeof kbdpc);
+       memset(kbdpc, 0, sizeof(kbdpc));
    else
    {
 //      GetKeyboardState(kbdpc);
+//thims zxevo_ps/2
+      static unsigned char kbdpc_prev[VK_MAX];
+      if (buffer_enabled)
+          memcpy(kbdpc_prev, kbdpc, sizeof(kbdpc));
+
       ReadKeyboard(kbdpc);
+
+      if (buffer_enabled)
+      {
+          for (int i = 0; i < sizeof(kbdpc); i++)
+          {
+             if ((kbdpc[i] & 0x80) != (kbdpc_prev[i] & 0x80) && dik_scan[i])
+             {
+                if (dik_scan[i] & 0x0100) input.buffer.Push(0xE0);
+                if (kbdpc_prev[i] & 0x80) input.buffer.Push(0xF0);
+                input.buffer.Push(dik_scan[i] & 0x00FF);
+             }
+          }
+      }
+
       if (lastkey)
       {
 //[vv]          kbdpc[lastkey] = 0x80;
