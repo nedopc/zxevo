@@ -465,7 +465,13 @@ unsigned char cmos_read()
 void cmos_write(unsigned char val)
 {
    if (conf.cmos == 2) comp.cmos_addr &= 0x3F;
-   cmos[comp.cmos_addr] = val;
+	if (conf.mem_model == MM_ATM3 && comp.cmos_addr == 0x0C)
+	{
+		if (val & 0x01)
+		   input.buffer.Empty();
+		return;
+	}
+	cmos[comp.cmos_addr] = val;
 }
 
 void NVRAM::write(unsigned char val)

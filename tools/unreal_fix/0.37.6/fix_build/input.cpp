@@ -331,12 +331,12 @@ char K_INPUT::readdevices()
 //      GetKeyboardState(kbdpc);
 //thims zxevo_ps/2
       static unsigned char kbdpc_prev[VK_MAX];
-      if (buffer_enabled)
+      if (buffer_enabled&&(!dbgbreak))
           memcpy(kbdpc_prev, kbdpc, sizeof(kbdpc));
 
       ReadKeyboard(kbdpc);
 
-      if (buffer_enabled)
+      if (buffer_enabled&&(!dbgbreak))//DimkaM fix
       {
           for (int i = 0; i < sizeof(kbdpc); i++)
           {
