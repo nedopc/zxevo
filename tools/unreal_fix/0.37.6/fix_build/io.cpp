@@ -618,9 +618,8 @@ set1FFD:
       }
       if (port == (0xBFF7 & mask))
       {
-         if (comp.cmos_addr == 0x0C && val == 0x01) input.buffer.Empty(); //DimkaM reset ps2 buffer
-         if (comp.cmos_addr >= 0xF0 && val <= 2 && conf.mem_model == MM_ATM3) //thims zxevo_ps2 or version_configuration selected
-         {
+         if (comp.cmos_addr >= 0xF0 && val <= 2 && conf.mem_model == MM_ATM3)
+         {//thims added
             if (val < 2)
             {
                input.buffer_enabled = false;
@@ -637,7 +636,7 @@ set1FFD:
                strcpy((char*)cmos + 0xF0, "UnrealSpeccy");
                *(unsigned*)(cmos + 0xFC) = version;
             }
-            else if (val==2) input.buffer_enabled = true;
+            else input.buffer_enabled = true;
          }
          else cmos_write(val);
          return;
