@@ -1,10 +1,5 @@
 
-;LAST UPDATE: 08.09.2011 savelij
-
-Hddinit		EQU 0
-Hddoff		EQU 1
-Hddrds		EQU 2
-Hddrdm		EQU 3
+;LAST UPDATE: 26.05.2012 savelij
 
 ;ОБЩАЯ ТОЧКА ВХОДА ДЛЯ РАБОТЫ С HDD NEMO
 COMHDDN		EX AF,AF'
@@ -48,14 +43,14 @@ RET4NEMO1	POP AF
 
 TBLHDDN		DW HDDINIT
 		DW HDDOFF
-		DW HDDRDS			;READ SINGLE
 		DW HDDRDM			;READ MULTI
+		DW HDDWRM			;WRITE MULTI
 
-;Входные параметры общие:
-;HL-адрес загрузки в память
-;BCDE-32-х битный номер сектора
-;A-количество блоков (блок=512 байт)
-;только для многоблочной записи/чтении
+;ВХОДНЫЕ ПАРАМЕТРЫ ОБЩИЕ:
+;HL-АДРЕС ЗАГРУЗКИ В ПАМЯТЬ
+;BCDE-32-Х БИТНЫЙ НОМЕР СЕКТОРА
+;A-КОЛИЧЕСТВО БЛОКОВ (БЛОК=512 БАЙТ)
+;ТОЛЬКО ДЛЯ МНОГОБЛОЧНОЙ ЗАПИСИ/ЧТЕНИИ
 
 P_1F7		EQU 0XF0			;РЕГИСТР СОСТОЯНИЯ/РЕГИСТР КОМАНД
 P_1F6		EQU 0XD0			;CHS-НОМЕР ГОЛОВЫ И УСТР/LBA АДРЕС 24-27
@@ -116,7 +111,7 @@ INIT91_1	LD L,49*2+1
 		LD C,P_1F7
 		LD A,0X91
 		OUT (C),A
-		LD DE,0X1000
+		LD DE,0X2000
 INI_911		DEC DE
 		LD A,D
 		OR E
@@ -137,10 +132,10 @@ INIT91_2	POP BC
 		RET
 
 INI_912		LD A,0XFF
+		POP BC
 		POP HL
 		RET
 
-HDDRDS		LD A,1
 HDDRDM		PUSH BC
 		PUSH DE
 		CALL SETHREG
@@ -168,26 +163,92 @@ HDDRD3		IN A,(C)
 		XOR A
 		RET
 
-READSEC		LD A,IYL
-		AND A
-		JR Z,RD2MEM
-;ВНУТРЕННИЙ ВЫЗОВ. ЧТЕНИЕ СЕКТОРА ВО ВНУТРЕНННИЙ БУФЕР
-		LD BC,P_1F0
-		INIR
-		INIR
+HDDWRM		PUSH BC
+		PUSH DE
+		CALL SETHREG
+		EX AF,AF'
+		LD C,P_1F7
+		LD A,0X30
+		OUT (C),A
+		LD C,P_1F7
+HDDWR1		IN A,(C)
+		AND 0X88
+		CP 8
+		JR NZ,HDDWR1
+		EX AF,AF'
+HDDWR2		EX AF,AF'
+		CALL WRITSEC
+		LD C,P_1F7
+HDDWR3		IN A,(C)
+		AND 0X80
+		JR NZ,HDDWR3
+		EX AF,AF'
+		DEC A
+		JR NZ,HDDWR2
+		POP DE
+		POP BC
+		LD A,B
+		AND 0X0F
+		LD B,A
 		XOR A
 		RET
 
+READSEC		LD A,IYL
+		AND A
+		JR NZ,RD2MEM2			;ВНУТРЕННИЙ ВЫЗОВ. ЧТЕНИЕ СЕКТОРА ВО ВНУТРЕНННИЙ БУФЕР
 ;ВНЕШНИЙ ВЫЗОВ. ЧТЕНИЕ СЕКТОРА В ПАМЯТЬ ВЫЗВАВШЕГО
-RD2MEM		LD BC,WIN_P2
-		LD A,0XFD
+RD2MEM		LD A,(R_7FFD)
+		AND 0X10
+		LD BC,(B0_CPU2)
+		JR Z,RD2MEM1
+		LD BC,(B1_CPU2)
+RD2MEM1		LD A,C
+		LD C,LOW (WIN_A0)
 		OUT (C),A
-		LD BC,P_1F0
+RD2MEM2		LD BC,P_1F0
 		INIR
 		INIR
 		LD BC,WIN_P2
 		XOR A
 		OUT (C),A
+		RET
+
+WRITSEC		EXX
+		PUSH HL
+		LD HL,0
+		ADD HL,SP
+		EXX
+		LD SP,HL
+		LD A,0X40
+		LD HL,PRT_RW
+WR_SEC1		POP DE
+		LD C,L
+		OUT (C),D
+		LD C,H
+		OUT (C),E
+		POP DE
+		LD C,L
+		OUT (C),D
+		LD C,H
+		OUT (C),E
+		POP DE
+		LD C,L
+		OUT (C),D
+		LD C,H
+		OUT (C),E
+		POP DE
+		LD C,L
+		OUT (C),D
+		LD C,H
+		OUT (C),E
+		DEC A
+		JR NZ,WR_SEC1
+		LD HL,0
+		ADD HL,SP
+		EXX
+		LD SP,HL
+		POP HL
+		EXX
 		RET
 
 SETHREG		PUSH DE
@@ -219,7 +280,15 @@ SETHRE1		IN A,(C)
 ID_DEV		LD BC,0XFF00+P_1F6
 		OUT (C),A
 		LD C,P_1F7
+		LD D,0X10
+ID_DEV3		EI
+		HALT
+		DI
+		DEC D
+		JR Z,NO_DEV
 		IN A,(C)
+		BIT 7,A
+		JR NZ,ID_DEV3
 		AND A
 		JR Z,NO_DEV
 		INC A
@@ -251,7 +320,7 @@ ID_DEV2		LD C,P_1F4
 		IN D,(C)
 		LD A,D
 		OR E
-		JP Z,READSEC
+		JP Z,RD2MEM2
 		LD HL,0XEB14
 		SBC HL,DE
 		LD A,1

@@ -29,6 +29,11 @@ SCAN_FONT
 ;        INC     A
 ;        OUT     (PEVO_CONF),A
 
+		LD A,(N_7FFD)
+		AND %11110111
+		LD BC,0X7FFD
+		OUT (C),A
+
         LD      A,0XA7
         LD      BC,0XFF77
         OUT     (C),A     ;включаем новый пентевный текстмод - 1-страничный
@@ -60,8 +65,6 @@ LOOP
 
 ;        RET 
 
-
-
 OUTPAGE
 ;        LD      A,0X7F-8    ;где находится 1страничный текстмод (см доку)
 ;        LD      BC,WIN_A3
@@ -73,23 +76,15 @@ OUTPAGE
 ;        LD      BC,0X3FFF
 ;        LDIR 
 
-		LD HL,0XE1C0
-		LD D,H
-		LD E,L
-		INC DE
-		LD BC,0X40*25-1
-		LD (HL),0
-		LDIR
-		LD HL,0XF1C0
-		LD D,H
-		LD E,L
-		INC DE
-		LD BC,0X40*25-1
-		LD (HL),0
-		LDIR
+		XOR A
+		LD HL,CPU3+LATTR
+		CALL CLSTXTMD1
+		XOR A
+		LD HL,CPU3+RATTR
+		CALL CLSTXTMD1
 
         XOR     A         ; код печатаемого символа
-        LD      HL,0XC1C0  ; откуда начинаем печатать
+        LD      HL,CPU3+LSYM	;0XC1C0  ; откуда начинаем печатать
         LD      DE,64-40
         LD      C,25      ; сколько строк печатаем. Достаточно напечатать 16 строк сверху.
 STRLOOP

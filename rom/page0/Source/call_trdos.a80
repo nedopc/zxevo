@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 02.12.2011 savelij
+;LAST UPDATE: 09.05.2012 savelij
 
 GLUBOOT		LD HL,FLAGS
 		RES 3,(HL)			;‡€“‘Š ‘ „ˆ‘Š…’›
@@ -53,6 +53,7 @@ OUT_HOB		LD (IX+7),0
 REOUT_HOB	LD A,B
 		OR C				;Ž‚…Š€ ŠŽ‹ˆ—…‘’‚€ €‰„…ŽƒŽ
 		JP Z,NO_BAS			;…‘‹ˆ 0, ’Ž …’ €‘ˆŠŽ‚
+		LD HL,FLAGS
 		RES 2,(IY+55)			;…„Ž‹Ž†ˆ’…‹œŽ ”€‰‹Ž‚ Œ……… ‚›‘Ž’› ŽŠ€
 		LD A,B
 		AND A
@@ -63,21 +64,22 @@ REOUT_HOB	LD A,B
 		JR C,FINDBAS2
 		SET 2,(IY+55)			;”€‰‹Ž‚ Ž‹œ˜… ‚›‘Ž’› ŽŠ€
 		LD A,H_FILE-2
-FINDBAS2	LD (KOL4OUT),A			;“‘’€Ž‚Š€ ŠŽ‹ˆ—…‘’‚€ Žˆ‘€’…‹…‰ ‚ ŽŠŽ
+FINDBAS2	LD C,A
 		ADD A,2
 		LD (IX+2),A			;“‘’€Ž‚Š€ ‚›—ˆ‘‹…Ž‰ ‚›‘Ž’› ŽŠ€
 		LD (IX+3),V_FILE		;“‘’€Ž‚Š€ ˜ˆˆ› ŽŠ€
-FINDBAS6	LD HL,FLAGS
-		BIT 3,(HL)
+FINDBAS6	BIT 3,(HL)
 		JR Z,FINDBAS5			;…‘‹ˆ €Ž’€ ‘ TR-DOS, ’Ž ……•Ž„ˆŒ € ‚›‚Ž„ ŽŠ€
-		INC (IX+3)
-		LD A,(IX+2)			;…‘‹ˆ €Ž’€ ‘ FAT, ’Ž ŽŠŽ €„€ ‚›‚Ž„ˆ’œ ‚ Ž‹›‰ Ž‘’
-		PUSH AF				;‘Ž•€ˆ‹ˆ ‚›—ˆ‘‹…“ž ‚›‘Ž’“ ˆ ˜ˆˆ“ ŽŠ€
-		LD (IX+2),H_FILE
+		LD A,C
+		CP FH_FILE-1
+		JR C,FINDBAS9
+		LD C,FH_FILE-2
+FINDBAS9	LD A,C
+		LD (KOL4OUT),A
+		LD (IX+2),FH_FILE
+		LD (IX+3),FV_FILE
 		RST 8
 		DB Winw
-		POP AF
-		LD (IX+2),A
 		JR FINDBAS7
 
 FINDBAS5	LD A,(FLAGS)
@@ -119,7 +121,7 @@ FINDBAS4	LD A,(HL)
 		INC HL
 		CALL PRT_SYM
 		DJNZ FINDBAS4
-		LD DE,8				;8 ‘ˆŒ‚Ž‹Ž‚ €…—€’ˆ‹ˆ, Ž‘’€‹œ›… 8 Ž“‘Š€…Œ
+		LD DE,8				;8 ‘ˆŒ‚Ž‹Ž‚ €…—€’€‹ˆ, Ž‘’€‹œ›… 8 Ž“‘Š€…Œ
 		ADD HL,DE
 		POP DE
 		INC E
@@ -132,7 +134,6 @@ OUT_TEK_FAT	ADD HL,DE
 		LD D,(IX+0)
 		LD E,(IX+1)
 		INC D
-		INC D
 		INC E				;‚›—ˆ‘‹ˆ‹ˆ Ž‡ˆ–ˆž ‚›‚Ž„€ € Š€
 		LD C,0
 KOL4OUT		EQU $-1
@@ -144,10 +145,13 @@ OTF2		PUSH BC
 		PUSH HL
 		PUSH DE
 		LD A,6
-		CALL COM_FAT
-		DB Positf
-		CALL COM_FAT
-		DB Getfzap
+		RST 8
+		DB Com_fat
+		DB Pos_files
+		LD HL,BUF_FILEITEM
+		RST 8
+		DB Com_fat
+		DB Read_dir
 		POP DE
 		PUSH DE
 		LD BC,0X0B
@@ -157,8 +161,13 @@ OTF2		PUSH BC
 		AND 0X10
 		LD A,0				;‘ˆŒ‚Ž‹ €Šˆ
 		JR NZ,OTF4
-		LD A,1
+		LD A,1				;‘ˆŒ‚Ž‹ ”€‰‹€
 OTF4		CALL PRTSPECSYM
+		LD HL,OUT_NAME_FILET
+		RST 8
+		DB Com_fat
+		DB Get_longname
+		LD (LONG_NAME),A
 		CALL FILENAME8_3
 		POP DE
 		POP HL
@@ -168,21 +177,50 @@ OTF4		CALL PRTSPECSYM
 		JR NZ,OTF2
 		RET
 
-FILENAME8_3	LD B,8
+FILENAME8_3	LD A,(FLAGS)
+		AND 8
+		JR NZ,OTF5
+		LD B,8
 OTF1		LD A,(HL)
 		INC HL
 		CALL PRT_SYM
 		DJNZ OTF1
-		LD A," "
-		CALL PRT_SYM
-		LD A,(FLAGS)
-		AND 8
-		RET Z
-		LD B,3
-OTF3		LD A,(HL)
+		RET
+
+OTF5		EX DE,HL
+		ADD HL,HL
+		ADD HL,HL
+		ADD HL,HL
+		INC H
+		LD (OUT_NAME_FILE+1),HL
+		LD HL,OUT_NAME_FILET
+		LD BC,0
+LONG_NAME	EQU $-2
+		LD A,0X1E
+		CP C
+		JR Z,OTF7
+		JR NC,OTF6
+		EX DE,HL
+		LD HL,0X1E
+		ADD HL,DE
+		LD (HL),">"
 		INC HL
-		CALL PRT_SYM
-		DJNZ OTF3
+		LD (HL),0
+		JR OTF7
+
+OTF6		SUB C
+		ADD HL,BC
+		LD C,A
+		LD D,H
+		LD E,L
+		INC DE
+		LD (HL)," "
+		LDIR
+		XOR A
+		LD (DE),A
+OTF7		LD HL,OUT_NAME_FILE
+		RST 8
+		DB Print_message
 		RET
 
 NO_BAS		LD IX,NOBASIC
@@ -237,6 +275,7 @@ FOR_RUN		SET 3,(IY+1)
 		XOR A
 		LD (0X5C44),A
 		RET
+
 		LD HL,0X2EF
 		EI
 TODOS4RUN	PUSH HL
@@ -258,13 +297,12 @@ NEXTVIRT	LD HL,MAINLOP
 		RET Z
 		LD H,0X0F
 		CALL READCMOS
+		AND 3
 		INC A
 		CP 4
 		JR C,NEXTVIRT1
 		XOR A
 NEXTVIRT1	LD L,A
-		ADD A,"A"
-		LD (VIRT_DRIVE),A
 		CALL WRITECMOS
 		CALL REST2X2
 		CALL PRT_VIRTDRV
@@ -347,7 +385,7 @@ ONERR		EX (SP),HL
 
 RESET_VG	LD C,0XFF
 		XOR A
-		LD IX,0X2A53			;OUT(C),A
+		LD IX,0X3FF0;0X2A53			;OUT(C),A
 		CALL DOSIX
 		LD A,(DRV_SYM)
 		OR 0X3C

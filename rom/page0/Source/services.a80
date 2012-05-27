@@ -1,11 +1,11 @@
 
-;LAST UPDATE: 04.01.2011 savelij
+;LAST UPDATE: 26.05.2012 savelij
 
 		include ../../macros.a80
 		include ../../global_vars.a80
 
-DD		EQU 24				;„€’€
-MM		EQU 1				;Œ…‘Ÿ–
+DD		EQU 26				;„€’€
+MM		EQU 5				;Œ…‘Ÿ–
 YY		EQU 12				;ƒŽ„
 DATA		EQU DD+(MM<<5)+(YY<<9)+0X8000	;“†… “€ŠŽ‚€Ž
 
@@ -95,8 +95,7 @@ LOOP1		OUTI
 		JR Z,LOOP2
 RSTPAL		LD A,(HL)
 		LD IXH,A			;ŽŒ… ‘’€ˆ–› ‡€‚…˜…ˆŸ ˆˆ’€ Œ€€ƒ…€ 
-		LD DE,0XA30F
-;		LD A,%10100011			;ZX SCREEN MODE, TURBO OFF („‹Ÿ €’Œ)
+		LD DE,0XA30F			;ZX SCREEN MODE, TURBO OFF („‹Ÿ €’Œ)
 		LD BC,0XFD77			;ˆ „Ž‘’“ Š €‹ˆ’…
 		OUT (C),D
 		EI				;¯ «¨âà 
@@ -121,7 +120,7 @@ END_INIT	LD A,0XAB
 		OUT (C),A			;¢ëª«.PAL
 RSTKEYS		LD A,IXL
 		AND A
-		CALL NZ,SET_CMOS_DEFAULT
+		CALL NZ,SET_CMOS_DEFLT
 		LD A,IXH
 		LD BC,0
 		AND 0X3C
@@ -153,40 +152,30 @@ RSTKEYS2	LD BC,CMOSD_SET_ADR
 		AND 0XFC
 		OUT (C),A			;ˆ“„ˆ’…‹œŽ ‚›‘’€‚‹…ˆ… ‚ ŠŒŽ‘ ‘Ž‘€ € EVO SERVICE
 		LD BC,WIN_P2
-		LD A,1
-		OUT (C),A			
-		LD BC,WIN_A3
-		LD A,6
+		LD A,PAGE_EVODOS
 		OUT (C),A
+		LD B,HIGH (WIN_A3)
+		LD A,6
+		OUT (C),A			
 		LD HL,0XC000
 		LD DE,0X8000
 		LD BC,0X4000
-		LDIR				;……Ž‘ DOS ‚ …„Ž‘‹…„žž ‘’€ˆ–“
-		LD BC,WIN_P2
-		XOR A
-		OUT (C),A
-		LD HL,RAM_SEL
-		LD DE,0X8000+ADR_SEL_ROM
-		LD BC,ERAM_SEL-RAM_SEL
-		LDIR				;“‘’€Ž‚Š€ Ž€Ž’—ˆŠ€
-		LD HL,ERAM_SEL
-		LD DE,0X8000+NEW_STACK
-		LD BC,ENMI_SERVICE-ERAM_SEL
-		LDIR				;“‘’€Ž‚Š€ Ž€Ž’—ˆŠ€
-		LD BC,WIN_A3
-		LD A,0XFF
-		OUT (C),A
-		LD BC,WIN_A2
-		LD A,5
-		OUT (C),A
-		LD HL,0XB7F8
-		LD DE,0XF800
-		LD BC,0X0800
-		LDIR				;“‘’€Ž‚Š€ ˜ˆ”’€ ‘…‚ˆ‘€
+		LDIR				;……Ž‘ DOS
 		LD BC,WIN_A2
 		LD A,0X7D
 		OUT (C),A
-		LD BC,0XFEFF
+		LD B,HIGH (WIN_A3)
+		LD A,0XFF
+		OUT (C),A
+		LD HL,RSTKEYS4
+		PUSH HL
+		LD HL,0X0106
+		PUSH HL
+		LD BC,WIN_A0
+		LD A,4
+		JP ADR_SEL_ROM
+
+RSTKEYS4	LD BC,0XFEFF
 RSTKEYS1	LD A,B
 		IN A,(0XFE)
 		REPT 5
@@ -282,6 +271,8 @@ START_SELECT	EX AF,AF'			;‘Ž•€…ˆ… € ˆ ”‹€ƒŽ‚
 SET_MODE3	LD H,0X0E
 		CALL READCMOS
 		LD E,A				;“‘’€Ž‚Š€ „‹Ÿ 7.0/3.5Œƒ– ˆ ŒŽ„…‹œ €ŒŸ’ˆ
+		XOR A
+		OUT (PEVO_CONF),A
 		EXX
 CMPCFG2		JP (HL)
 
@@ -326,8 +317,7 @@ ERAM_CODE
 
 ;…‘‹ˆ ‚ €‰’… ŠŒŽ‘ Ž ‘Œ…™…ˆž 0X11 … 0XAA ˆ‹ˆ 0X55, ’Ž ŠŒŽ‘ ‘—ˆ’€…’‘Ÿ ‡€Ž‹… …ˆ‡‚…‘’Ž —…Œ
 ;ˆ‹ˆ ’Ž …‚Ž… ‚Š‹ž—…ˆŸ. ‡€ˆ‘›‚…Œ „…”Ž‹’›… ‡€—…ˆŸ ‚ ŠŒŽ‘.
-SET_CMOS_DEFAULT
-		LD DE,CMOS_DEFAULT
+SET_CMOS_DEFLT	LD DE,CMOS_DEFAULT
 		LD H,0X0A
 		LD B,8
 SCD1		EX DE,HL
@@ -338,6 +328,8 @@ SCD1		EX DE,HL
 		INC H
 		DJNZ SCD1
 		LD HL,0XEF00			;Ž“‹…ˆ… Ÿ—…‰Šˆ EF
+		CALL WRITECMOS
+		DEC H
 ;€ ‚•Ž„…: H-€„…‘ Ÿ—…‰Šˆ
 ;	   L-—’Ž ’“„€ ‡€ˆ‘€’œ
 WRITECMOS	PUSH BC
@@ -361,7 +353,6 @@ READCMOS	PUSH BC
 
 BONUADR		binclude cmosset_pack.rom
 LOADADR		binclude main_pack.rom
-		include nmi_service.a80
 
 ;„…”Ž‹’›… ‡€—…ˆŸ „‹Ÿ ‚ ŠŒŽ‘
 CMOS_DEFAULT	DB 0X20,0X02,0X00,0X80,0X00,0X00,0X00,0XAA

@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 15.01.2012 savelij
+;LAST UPDATE: 21.05.2012 savelij
 
 ;‡€ƒ“‡Š€ ‚›€ŽƒŽ ˜ˆ”’€
 LOAD_FONT	LD HL,FONTS
@@ -36,17 +36,27 @@ FATBOOT		LD HL,HOBETA
 FATBOOT4	DI
 		LD (GDE_EXT_FILES),HL
 		LD (CMP_FOUNDED),DE
-		LD HL,ADRTBLDIRL
-		LD (DIR_LEVEL),HL		;“‘’€Ž‚ˆ‹ˆ „Ž ‘’…Š€ ‘Ž•€…ˆ‰ ŽŠŽ˜…Š
+SELECT_DEVICE	DI
 		LD HL,FLAGS
 		SET 3,(HL)			;€Ž’€’œ “„…Œ ‘ FAT
+;		RST 8
+;		DB Com_dev			;‚›‡Ž‚ Œ……„†…€ “‘’Ž‰‘’‚
+;		DB Devfind			;‘Š€ˆŽ‚€ˆ… “‘’Ž‰‘’‚
+;		JP C,_STUPID			;Ž˜ˆŠ€, ˆ Ž„ŽƒŽ €‡„…‹€ … €‰„…Ž
+		RST 8
+		DB Com_dev
+		DB Kol_vol
+		LD A,E
+		AND A
+		JP Z,_STUPID
 		LD HL,ADR_CAT-0X100		;€„…‘ Š“„€ Ž‹Ž†ˆ’œ ’€‹ˆ–“ €‰„…›• €‡„…‹Ž‚
 		RST 8
 		DB Com_dev			;‚›‡Ž‚ Œ……„†…€ “‘’Ž‰‘’‚
-		DB Devfind			;‘Š€ˆŽ‚€ˆ… “‘’Ž‰‘’‚
-		JP C,_STUPID			;Ž˜ˆŠ€, ˆ Ž„ŽƒŽ €‡„…‹€ … €‰„…Ž
+		DB Get_fndvolume		;Ž‹“—…ˆ… ’€‹ˆ–› €‰„…›• €‡„…‹Ž‚
 		LD B,E				;‘—…’—ˆŠ ŠŽ‹ˆ—…‘’‚€ €‰„…›• €‡„…‹Ž‚
 		LD IX,SEL_FAT_DEV		;€„…‘ Žˆ‘€’…‹Ÿ ŽŠ€ ‚›Ž€ €‡„…‹Ž‚
+		LD (IX+7),D
+		LD (IX+8),D
 		LD (IX+0X0A),E			;ŠŽ‹ˆ—…‘’‚Ž “Š’Ž‚ ‚ ŽŠ…
 		INC E
 		INC E
@@ -141,26 +151,42 @@ FATBOOT2	LD (HL),LOW (SEL_FAT)		;”ŽŒˆŽ‚€ˆ… ’€‹ˆ–› €„…‘Ž‚ ‚›‡›‚Ž‚
 		DB Winw
 		JP _RULILKA			;‚Ž‡‚€™€…Œ‘Ÿ Š Ž™…Œ“ “€‚‹…ˆž
 
+FILES_BROWSE	LD HL,FILES_EXT
+		LD DE,CMP4TAPES
+		DI
+		LD (GDE_EXT_FILES),HL
+		LD (CMP_FOUNDED),DE
+		LD HL,FLAGS
+		SET 3,(HL)
+		JR SEL_FILES
+
 ;……Š‹ž—…ˆ… € “‘’Ž‰‘’‚€ ˆ ‚›‚Ž„ €‰„…ŽƒŽ € …Œ
 SEL_FAT		DI
 		LD A,(IX+8)			;‚‡Ÿ‹ˆ ŽŒ… ‚›€ŽƒŽ “‘’Ž‰‘’‚€
 		RST 8
 		DB Com_dev
 		DB Set_vol			;‚›€‹ˆ “‘’Ž‰‘’‚Ž Ž ŽŒ…“
-		CALL COM_FAT
-		DB Wc_fat			;ˆˆ–ˆ€‹ˆ‡€–ˆŸ ”€’ „€‰‚…€ „‹Ÿ ‚›€ŽƒŽ “‘’Ž‰‘’‚€
-		CALL SEARCH_FILE
-		LD HL,1
+SEL_FILES	RST 8
+		DB Com_dev
+		DB Kol_vol
+		LD A,E
 		AND A
-		SBC HL,BC			;€‰„…Ž —’Ž-’Ž Ž„Ž?
-		JR NZ,SEL_FAT1			;…‘‹ˆ €‰„…Ž >1, ’Ž Ž„Ž‹†€…Œ
+		JP Z,_STUPID
+		CALL SEARCH_FILE
+;		LD HL,1
+;		AND A
+;		SBC HL,BC			;€‰„…Ž —’Ž-’Ž Ž„Ž?
+;		JR NZ,SEL_FAT1			;…‘‹ˆ €‰„…Ž >1, ’Ž Ž„Ž‹†€…Œ
 		PUSH BC				;‘Ž•€ˆ‹ˆ ŠŽ‹ˆ—…‘’‚Ž €‰„…ŽƒŽ
 		LD BC,(ADR_CAT)			;‚‡Ÿ‹ˆ ŽŒ… …„ˆ‘’‚…ŽƒŽ €‰„…ŽƒŽ
 		LD A,6
-		CALL COM_FAT
-		DB Positf
-		CALL COM_FAT
-		DB Getfzap			;Ž‹“—ˆ‹ˆ Žˆ‘€’…‹œ
+		RST 8
+		DB Com_fat
+		DB Pos_files
+		LD HL,BUF_FILEITEM
+		RST 8
+		DB Com_fat
+		DB Read_dir			;Ž‹“—ˆ‹ˆ Žˆ‘€’…‹œ
 		POP BC				;‚…“‹ˆ ŠŽ‹ˆ—…‘’‚Ž €‰„…ŽƒŽ
 		LD DE,0X0B
 		ADD HL,DE
@@ -171,7 +197,7 @@ SEL_FAT		DI
 SEL_FAT1	LD IX,FAT_FILES			;…‘‹ˆ „ˆ€, ’Ž ‚›‚Ž„ˆŒ ‚ ŽŠŽ
 		JP OUT_HOB
 
-;‡€“‘Š ‚›€ŽƒŽ ŠŽ„Ž‚ŽƒŽ ”€‰‹€ ˆ‡ HOBETA ”€‰‹€
+;‡€“‘Š ‚›€ŽƒŽ ŠŽ„Ž‚ŽƒŽ ”€‰‹€ ˆ‡ HOBETA ”€‰‹€ ˆ‹ˆ ‚•Ž„/‚›•Ž„ ‚ „ˆ›
 RUN_HOB		DI
 		CALL SHUT2AY			;“ŒŠ€‹Š€ ‚ AY
 		LD L,(IX+8)
@@ -183,34 +209,64 @@ RUN_HOB1	LD DE,ADR_CAT
 		INC HL
 		LD B,(HL)			;Ž‹“—ˆ‹ˆ ’…Š“™ˆ‰ ‚›€›‰ ŽŒ…
 		LD A,6
-		CALL COM_FAT
-		DB Positf			;“‘’€Ž‚Š€ ‚“’……ƒŽ “Š€‡€’…‹Ÿ FAT „€‰‚…€
-		CALL COM_FAT
-		DB Getfzap			;Ž‹“—ˆ‹ˆ Žˆ‘€’…‹œ Ž “‘’€Ž‚‹…ŽŒ“ ŽŒ…“
+		RST 8
+		DB Com_fat
+		DB Pos_files			;“‘’€Ž‚Š€ ‚“’……ƒŽ “Š€‡€’…‹Ÿ FAT „€‰‚…€
+		LD HL,BUF_FILEITEM
+		RST 8
+		DB Com_fat
+		DB Read_dir			;Ž‹“—ˆ‹ˆ Žˆ‘€’…‹œ Ž “‘’€Ž‚‹…ŽŒ“ ŽŒ…“
 		LD DE,0X0B			;“†… €‰’ Ž ‘Œ…™…ˆž
 		ADD HL,DE
 		LD A,(HL)			;ˆ‡ ’ŽƒŽ €‰’€ “†… Ž„ˆ ˆ’
 		SBC HL,DE
 		AND 0X10			;Ž‚…ˆ‹ˆ
-		JR Z,GO_RUN_HOB			;…‘‹ˆ ’Ž ”€‰‹, ’Ž ‡€“‘Š€…Œ ŠŽ„Ž‚›‰ ‹ŽŠ
-		PUSH BC				;‘Ž•€ˆ‹ˆ ŽŒ…
-		CALL COM_FAT
-		DB Ent_dir			;‚Ž‰’ˆ/‚›‰’ˆ ‚/ˆ‡ „ˆ…Š’Žˆ‰
-		POP BC				;‚Ž‘‘’€Ž‚ˆ‹ˆ ’…Š“™ˆ‰ ŽŒ…
-		LD A,D				;“„…Œ Ž‚…Ÿ’œ …‚›‰ ‘ˆŒ‚Ž‹ ˆŒ…ˆ …„›„“™…ƒŽ Žˆ‘€’…‹Ÿ
-		LD HL,0				;€„…‘ ‘’…Š€ ŽŠŽ›• ‘Ž•€…ˆ‰ „‹Ÿ •Ž†„…ˆŸ Ž „ˆ€Œ
-DIR_LEVEL	EQU $-2
+		JP Z,GO_RUN_HOB			;…‘‹ˆ ’Ž ”€‰‹, ’Ž ‡€“‘Š€…Œ ŠŽ„Ž‚›‰ ‹ŽŠ
+		RST 8
+		DB Com_fat
+		DB Enter_dir
+		PUSH HL
+		LD HL,BUF_RDPATH
+		RST 8
+		DB Com_fat
+		DB Get_path
+		LD A,(HL)
+		SUB "E"
+		LD D,A
+		LD E,0
+		LD HL,BUF_LEVDIR
+		SRL D
+		RR E
+		SRL D
+		RR E
+		ADD HL,DE
+		EX (SP),HL
+		LD A,(HL)			;“„…Œ Ž‚…Ÿ’œ …‚›‰ ‘ˆŒ‚Ž‹ ˆŒ…ˆ …„›„“™…ƒŽ Žˆ‘€’…‹Ÿ
+		POP HL
 		CP "."				;…‘‹ˆ …‚›‰ ‘ˆŒ‚Ž‹ ˆŒ…ˆ … ".", ’Ž ‘Ž•€Ÿ…Œ ’…Š“™ˆ… ‡€—…ˆŸ ŽŠŽ˜Š€ ˆ  
 		JR NZ,SNYT0			;‚•Ž„ˆŒ ‚ „ˆ“
-		INC HL				;ˆ ‚›•Ž„… ˆ‡ „ˆ› ‚Ž‡‚€™€…Œ „€›… …„›„“™…ƒŽ ŽŠ€
+		LD C,(HL)
+		INC HL
+		LD B,(HL)
+		INC HL
+		PUSH HL
+		ADD HL,BC
+		DEC HL
 		LD A,(HL)
-		INC HL
-		LD E,(HL)
-		INC HL
-		LD D,(HL)
-		LD (DIR_LEVEL),HL		;‘Ž•€ˆ‹ˆ ˆ‡Œ…ˆ‚˜ˆ‰‘Ÿ €„…‘ ‘’…Š€ „ˆ…Š’Žˆ‰
-		LD (IX+8),E
-		LD (IX+9),D
+		DEC HL
+		LD C,(HL)
+		DEC HL
+		LD B,(HL)
+		POP DE
+		AND A
+		SBC HL,DE
+		EX DE,HL
+		DEC HL
+		LD (HL),D
+		DEC HL
+		LD (HL),E
+		LD (IX+8),C
+		LD (IX+9),B
 		LD (IX+7),A
 		CALL SEARCH_FILE
 		LD (IX+0X0A),C
@@ -218,33 +274,66 @@ DIR_LEVEL	EQU $-2
 		JP REOUT_HOB			;‚›‚…‹ˆ Ž‚Ž… ‘Ž„…†ˆŒŽ… ŽŠ€
 
 ;ˆ ‚•Ž„… ‚ „ˆ“ ‘Ž•€…ˆ… ’…Š“™ˆ• „€›• ŽŠ€
-SNYT0		LD D,(IX+9)
+SNYT0		LD C,(HL)
+		INC HL
+		LD B,(HL)			;BC=‘Œ…™…ˆ… „Ž …‚Ž‰ ‘‚ŽŽ„Ž‰ Ÿ—…‰Šˆ
+		INC HL
+		PUSH HL				;HL=€„…‘ €—€‹€ ‘€Œˆ• Ÿ—……Š
+		ADD HL,BC			;HL=€„…‘ …‚Ž‰ ‘‚ŽŽ„Ž‰ Ÿ—…‰Šˆ
+		LD D,(IX+9)
 		LD E,(IX+8)
 		LD A,(IX+7)
-		LD C,(IX+0X0A)
-		LD B,(IX+0X0B)
+		LD (HL),D
+		INC HL
+		LD (HL),E
+		INC HL
+		LD (HL),A
+		INC HL
+		POP DE				;DE=€„…‘ €—€‹€ ‘€Œˆ• Ÿ—……Š
+		AND A
+		SBC HL,DE
+		EX DE,HL
+		DEC HL
 		LD (HL),D
 		DEC HL
 		LD (HL),E
-		DEC HL
-		LD (HL),A
-		DEC HL
-		LD (DIR_LEVEL),HL		;‘Ž•€ˆ‹ˆ ˆ‡Œ…ˆ‚˜ˆ‰‘Ÿ €„…‘ ‘’…Š€
+		LD C,(IX+0X0A)
+		LD B,(IX+0X0B)
 		CALL SEARCH_FILE
 		JP OUT_HOB
 
-GO_RUN_HOB	PUSH HL				;‘Ž•€ˆ‹ˆ €„…‘ Žˆ‘€’…‹Ÿ
-		LD DE,FOUNDED_FILE
-		LD BC,0X20
-		LDIR				;ŠŽˆŽ‚€ˆ… Žˆ‘€’…‹Ÿ “Š€‡€ŽƒŽ ”€‰‹€ ‚ “”…
-		LD BC,(FOUNDED_FILE+0X14)	;‚‡Ÿ‹ˆ ‘’€˜ˆ… 16 ˆ’ ŽŒ…€ Š‹€‘’…€ €—€‹€ ”€‰‹€
-		LD DE,(FOUNDED_FILE+0X1A)	;‚‡Ÿ‹ˆ Œ‹€„˜ˆ… 16 ˆ’ ŽŒ…€ Š‹€‘’…€ €—€‹€ ”€‰‹€
-		LD IXL,0
-		CALL COM_FAT			;“‘’€Ž‚Š€ ‚“’…ˆ• €€Œ…’Ž‚ FAT „€‰‚…€
-		DB Load_file			;„‹Ÿ Ž‘‹…„Ž‚€’…‹œŽ‰ ‡€ƒ“‡Šˆ
-		POP HL
+SELMOUNT	LD IX,SEL_MOUNT
+		RST 8
+		DB Winw
+		JP _RULILKA
+
+MOUNT_A		XOR A
+MOUNT_ALL	RST 8
+		DB Mounter
+		DB Open_mount
+		JP RESTART
+
+MOUNT_B		LD A,1
+		JR MOUNT_ALL
+
+MOUNT_C		LD A,2
+		JR MOUNT_ALL
+
+MOUNT_D		LD A,3
+		JR MOUNT_ALL
+
+GO_RUN_HOB	RST 8
+		DB Com_fat
+		DB Open_file
 		LD DE,8
 		ADD HL,DE
+		PUSH HL
+		LD HL,(BUF_FILEITEM+8)
+		LD DE,"RT"
+		AND A
+		SBC HL,DE
+		POP HL
+		JR Z,SELMOUNT
 		LD A,(HL)
 		CP "$"
 		JR Z,GORUNHOB1			;……•Ž„ € ‡€ƒ“‡Š“ HOBETA
@@ -260,7 +349,10 @@ GORUNHOB1	RST 8
 		DB Com_dev
 		DB Kol_vol			;‡€Ž‘ “ Œ……„†…€ “‘’Ž‰‘’‚ Ž ’…Š“™…Œ “‘’Ž‰‘’‚…
 		LD A,D				;‚‡Ÿ‹ˆ ŽŒ… ’…Š“™…ƒŽ “‘’Ž‰‘’‚€
-		LD HL,ADR_CAT-0X100
+		LD HL,ADR_CAT
+		RST 8
+		DB Com_dev
+		DB Get_fndvolume
 		ADD A,A
 		ADD A,A
 		ADD A,A
@@ -269,34 +361,34 @@ GORUNHOB1	RST 8
 		ADD HL,BC
 		LD A,(HL)			;‚‡Ÿ‹ˆ ’ˆ €‡„…‹€
 		SUB 4				;Ž“‘Š€…Œ „ˆ‘ŠŽ‚Ž„›
-		LD (ERORDRV+0XFF),A		;ŽŒ… ’…Š“™…ƒŽ “‘’Ž‰‘’‚€
+		LD D,A				;ŽŒ… ’…Š“™…ƒŽ “‘’Ž‰‘’‚€
 		INC HL
-		LD A,(HL)			;‚‡Ÿ‹ˆ Œ…‘’ŽŽ‹Ž†…ˆ… Ž‘ˆ’…‹Ÿ (MASTER/SLAVE)
-		LD (ERORDRV+0XFE),A		;0/1=MASTER/SLAVE
+		LD E,(HL)			;‚‡Ÿ‹ˆ Œ…‘’ŽŽ‹Ž†…ˆ… Ž‘ˆ’…‹Ÿ (MASTER/SLAVE)
+		PUSH DE
 		LD HL,0X5800
 		LD DE,0X5801
 		LD BC,0X02FF
 		LD (HL),L
 		LDIR				;‡€—…ˆ‹ˆ Š€ „‹Ÿ Œ€‘ŠˆŽ‚Šˆ ‡€“‘Š€‹Šˆ
-		LD HL,ERORDRV
-		LD DE,0X4200
-		INC B
-		LDIR				;……Ž‘ ……Œ…›• ”€’€ „‹Ÿ MICROBOOT
 		LD HL,RUN_CODE
 		LD DE,0X5D3B
 		LD BC,ERUN_CODE-RUN_CODE
 		LDIR
 		CALL MEMSET			;‚›‘’€‚ˆ‹ˆ …†ˆŒ ŠŽŒ€
 		CALL FOR_RUN
+		LD HL,0X4200			;Š“„€ ‘ŠŽˆŽ‚€’œ ……Œ…›… FAT ’…Š“™…ƒŽ ‚›€ŽƒŽ €‡„…‹€
 		RST 8
 		DB Run_filecode
+		POP DE
+		LD (0X42FE),DE
 		JP 0X4300
 
 ;‡€ƒ“‡Š€ ˜ˆ”’€ „‹Ÿ ’…Š‘’ŒŽ„€
 LOAD_FNT	LD HL,ADR_CAT
-LOAD_FNT1	LD IXL,4
-		CALL COM_FAT
-		DB Load_file
+LOAD_FNT1	LD A,4
+		RST 8
+		DB Com_fat
+		DB Read_file
 		LD A,4
 		OUT (PEVO_CONF),A
 		LD HL,ADR_CAT
@@ -323,7 +415,7 @@ LOAD_FDI	LD A,E
 		CALL LOAD1SECFDI		;ˆ“„ˆ’…‹œ€Ÿ ‡€ƒ“‡Š€ …‚ŽƒŽ ‘…Š’Ž€
 		LD A,(0XC006)			;‚‡Ÿ‹ˆ ŠŽ‹ˆ—…‘’‚Ž ‘’ŽŽ
 		DEC A
-		LD A,(0XC004)			;‚‡Ÿ‹ˆ ŠŽˆ—…‘’‚Ž „ŽŽ†…Š
+		LD A,(0XC004)			;‚‡Ÿ‹ˆ ŠŽ‹ˆ—…‘’‚Ž „ŽŽ†…Š
 		JR Z,LOADFDI1
 		ADD A,A				;…‘‹ˆ ‘’ŽŽ 2, ’Ž “ŒŽ†ˆ‹ˆ ŠŽ‹ˆ—…‘’‚Ž „ŽŽ†…Š € 2
 LOADFDI1	LD C,A				;ŠŽ‹ˆ—…‘’‚Ž „ŽŽ†…Š
@@ -445,16 +537,18 @@ NACH_SECT	EQU $-2
 		EX AF,AF'
 		JP C,ELOAD_IMAGE
 		EX DE,HL
-		LD IXL,0X1F
-		CALL COM_FAT
-		DB Load_file
+		LD A,0X1F
+		RST 8
+		DB Com_fat
+		DB Read_file
 		JP C,ELOAD_IMAGE
 		PUSH HL
 		LD HL,0XC000
 		PUSH HL
-		LD IXL,1
-		CALL COM_FAT
-		DB Load_file
+		LD A,1
+		RST 8
+		DB Com_fat
+		DB Read_file
 		POP HL
 		POP DE
 		LD BC,0
@@ -567,9 +661,10 @@ LOAD1SECFDI	PUSH HL
 		PUSH DE
 		PUSH AF
 		LD HL,0XC000
-		LD IXL,1
-		CALL COM_FAT
-		DB Load_file
+		LD A,1
+		RST 8
+		DB Com_fat
+		DB Read_file
 		INC IXH
 		POP AF
 		POP DE
@@ -602,9 +697,10 @@ LOADIMAGE4	PUSH IX
 LOADIMAGE3	PUSH AF
 		CALL SET4MBPAGE
 		LD HL,0X4000
-		LD IXL,0X20
-		CALL COM_FAT
-		DB Load_file
+		LD A,0X20
+		RST 8
+		DB Com_fat
+		DB Read_file
 		JR C,END_LOAD_TAP
 		POP AF
 		INC A
@@ -621,7 +717,15 @@ END_LOAD_TAP	XOR A
 		LD SP,(LD_FILE_SP)
 		POP IY
 		POP IX
+		LD H,CMOS_BYTE_00
+		CALL READCMOS
+		OR EMUL_TAPE
+		LD L,A
+		CALL WRITECMOS
 		JP TAPELOAD1
+
+LOADIMAGE	LD DE,"TR"
+		JR LOADIMAGE2
 
 LOAD_IMAGE	DI
 		LD D,A
@@ -654,9 +758,10 @@ LOAD_IMAGE8	PUSH HL
 LOAD_IMAGE1	PUSH AF
 		CALL SET4MBPAGE
 		LD HL,0X4000
-		LD IXL,0X20
-		CALL COM_FAT
-		DB Load_file
+		LD A,0X20
+		RST 8
+		DB Com_fat
+		DB Read_file
 		JP C,END_LOAD_TRD
 		POP AF
 		INC A
@@ -676,9 +781,10 @@ LOAD_IMAGE2	LD HL,DSKINFO
 LOAD_IMAGE4	PUSH AF
 		CALL SET4MBPAGE			;‚Š‹ž—ˆ‹ˆ …‚“ž ‘’€ˆ–“ Ž’Š“„€ €Œ„ˆ‘Š €—ˆ€…’‘Ÿ
 		LD HL,0X5000
-		LD IXL,0X18
-		CALL COM_FAT			;‡€ƒ“‡ˆ‹ˆ …‚›… 0X18 ‘…Š’ŽŽ‚ SCL Ž€‡€
-		DB Load_file		
+		LD A,0X18
+		RST 8
+		DB Com_fat
+		DB Read_file
 		PUSH AF				;‘Ž•€ˆ‹ˆ ”‹€ƒ ŽŠŽ—€ˆŸ ‡€ƒ“‡Šˆ € ‘‹“—€‰ ŽŠŽ—€ˆŸ Ž€‡€
 		LD HL,0X4000
 		PUSH HL				;‘Ž•€ˆ‹ˆ €„…‘ €—€‹€ Š€’€‹Žƒ€
@@ -768,8 +874,9 @@ LOAD_IMAGE3	EX AF,AF'
 		SUB H
 		SRL A
 		LD IXL,A
-		CALL COM_FAT
-		DB Load_file
+		RST 8
+		DB Com_fat
+		DB Read_file
 		LD DE,0X8000
 		EX DE,HL
 LOAD_IMAGE7	AND A
@@ -794,15 +901,17 @@ NEXT4PAGE	EQU $-2
 		EX AF,AF'
 		JP C,END_LOAD_TRD
 		EX DE,HL
-		LD IXL,0X1F
-		CALL COM_FAT
-		DB Load_file
+		LD A,0X1F
+		RST 8
+		DB Com_fat
+		DB Read_file
 		JP C,END_LOAD_TRD
 LOAD_IMAGE5	LD HL,ADR_CAT
 		PUSH HL
-		LD IXL,1
-		CALL COM_FAT
-		DB Load_file
+		LD A,1
+		RST 8
+		DB Com_fat
+		DB Read_file
 		EX AF,AF'			;‘Ÿ’€‹ˆ ”‹€ƒ ‡€ƒ“‡Šˆ ‘…Š’Ž€
 		POP HL				;‚Ž‘‘’€Ž‚ˆ‹ˆ €„…‘ Š“„€ ‘…Š’Ž ‚ “”… ‡€ƒ“‡ˆ‹ˆ
 		LD DE,0
@@ -820,13 +929,12 @@ OST_HWOST	EQU $-2				;‘ŠŽ‹œŠŽ ……Ž‘ˆ’œ ‚ ŠŽ…– ‘’€ˆ–›
 ;€ ‚›•Ž„…: ”‹€ƒ ‘=1-… ‘ŽŽ’‚…‘’‚“…’
 CMP4HOBETA	SUB 1
 		RET NZ
-		LD A,(BUF_512+8)
+		LD A,(BUF_RDSEC+8)
 		CP "C"				;Ž‚…Š€ —’Ž ’Ž ŠŽ„Ž‚›‰ ‹ŽŠ, € … —’Ž-’Ž „“ƒŽ…
 		SCF
 		RET NZ
 		PUSH DE				;‘Ž•€ˆ‹ˆ €„…‘ ‘Š‹€„ˆŽ‚€ˆŸ „‹Ÿ „€‹œ…‰˜…‰ Ž‚…Šˆ
-		LD B,H
-		LD C,L				;‚Ž‡‚€™€…Œ‘Ÿ ‚ €—€‹Ž ‘…Š’Ž€
+		LD BC,BUF_RDSEC			;‚Ž‡‚€™€…Œ‘Ÿ ‚ €—€‹Ž ‘…Š’Ž€
 		CALL HOB_CRC			;‘—ˆ’€…Œ CRC HOBETA ‡€ƒŽ‹Ž‚Š€
 		LD A,(BC)
 		INC BC
@@ -839,14 +947,14 @@ CMP4HOBETA	SUB 1
 		SCF
 		RET NZ				;Ž“‘Š€…Œ ”€‰‹
 		EXX
-		LD HL,(BUF_512+9)		;‚‡Ÿ‹ˆ €„…‘ ‡€ƒ“‡Šˆ
+		LD HL,(BUF_RDSEC+9)
 		DEC HL				;„‹Ÿ ‡€ƒ“‡Šˆ Œ€‘ˆŒ“Œ 40960 €‰’ (160 ‘…Š’ŽŽ‚)
-		LD DE,(BUF_512+0X0B)		;‚‡Ÿ‹ˆ „‹ˆ“ ŠŽ„Ž‚ŽƒŽ ‹ŽŠ€
+		LD DE,(BUF_RDSEC+0X0B)
 		ADD HL,DE			;Ž‚…Ÿ…Œ ‚›•Ž„ ‡€ …„…‹› Ž‡“
 		EXX				;…‘‹ˆ ‚›‹…’ ‡€ …„…‹ Ž‡“
 		RET C				;Ž“‘Š€…Œ ”€‰‹
 		EXX
-		LD HL,(BUF_512+9)
+		LD HL,(BUF_RDSEC+9)
 		LD DE,0X6000			;Ž‚…Ÿ…Œ €„…‘ ‡€ƒ“‡Šˆ
 		AND A				;€„…‘ ‡€ƒ“‡Šˆ … „Ž‹†… ›’œ ˆ†… 0X6000
 		SBC HL,DE
@@ -878,38 +986,36 @@ HOBCRC1		EX AF,AF'
 		JR NZ,HOBCRC1
 		RET
 
-CMP4FONTS	EXX
-		LD A,B
-		OR C
+CMP4FONTS	LD DE,(BUF_FILEITEM+0X1C)
+		LD HL,(BUF_FILEITEM+0X1E)
+		LD A,H
+		OR L
 		OR E
 		JR NZ,CMP4IMAGE2
 		LD A,D
 		CP 8
 		JR NZ,CMP4IMAGE2
-		EXX
 		AND A
 		RET
 
-CMP4ROMS	EXX
-		LD A,B
+CMP4ROMS	LD DE,(BUF_FILEITEM+0X1C)
+		LD HL,(BUF_FILEITEM+0X1E)
+		LD A,H
 		OR D
 		OR E
 		JR NZ,CMP4IMAGE2
-		LD A,C
+		LD A,L
 		CP 8
 CMP_ROMSIZE	EQU $-1
 		JR NZ,CMP4IMAGE2
-		EXX
 CMP4ROMS1	AND A
 		RET
 
-CMP4IMAGE2	EXX
-		SCF
+CMP4IMAGE2	SCF
 		RET
 
-CMP4FDI		PUSH HL
-		EXX
-		POP HL
+CMP4FDI		EXX
+		LD HL,BUF_RDSEC
 		LD A,(HL)
 		CP "F"
 		JR NZ,CMP4IMAGE2
@@ -949,9 +1055,8 @@ CMP4IMAGE	CP 3
 		SUB 1
 		RET Z				;„‹Ÿ TRD Ž‚…Š€ … “†Š€
 ;„‹Ÿ SCL Ž‚…Š€ €‹ˆ—ˆŸ ‘‹Ž‚€ "SINCLAIR" ‚ …‚›• 8 €‰’€•
-		PUSH HL
 		EXX
-		POP HL
+		LD HL,BUF_RDSEC
 		LD DE,SIGN_SCL
 		LD B,8
 CMP4IMAGE1	LD A,(DE)
@@ -964,25 +1069,155 @@ CMP4IMAGE1	LD A,(DE)
 		AND A
 CMP4TAPES	RET
 
-SEARCH_FILE	LD DE,ADR_CAT			;€„…‘ Š“„€ ‘Š‹€„ˆŽ‚€’œ ŽŒ…€ €‰„…ŽƒŽ
-		LD HL,0				;ƒ„… ‘ˆ‘ŽŠ €‘˜ˆ…ˆ‰ „‹Ÿ Žˆ‘Š€
-GDE_EXT_FILES	EQU $-2
-		CALL COM_FAT
-		DB Find_file			;Žˆ‘Š ”€‰‹Ž‚ Ž ‡€„€ŽŒ“ €‘˜ˆ…ˆž
-		RET Z
-		JR SEARCHF2
+SEARCH_FILE	LD A,1
+		LD HL,(GDE_EXT_FILES)
+		RST 8
+		DB Com_fat
+		DB Set_mask_ext
+		LD DE,ADR_CAT
+		RST 8
+		DB Com_fat
+		DB Find_fileitem
+		LD H,A				;ŽŒ… ‘’€ˆ–› ƒ„… €‰„…Ž… €’œ
+		LD A,B
+		OR C
+		JR NZ,SEARCHF1
+		PUSH IX
+		LD IX,NOBASIC
+		RST 8
+		DB Winw
+		POP IX
+		RST 8
+		DB Com_dev
+		DB Kol_vol
+		DEC E
+		JP Z,NO_BAS
+		JP SELECT_DEVICE
 
-SEARCHF1	CALL COM_FAT
-		DB Next_find
-		RET Z
-SEARCHF2	CALL 0
+SEARCHF1	PUSH BC
+		PUSH HL
+		RST 8
+		DB Sort_find_files
+		LD A,1
+		OUT (PEVO_CONF),A
+		POP AF
+		LD BC,WIN_P1
+		OUT (C),A
+		LD HL,CPU1
+		LD DE,CPU3+0X1000
+		LD BC,0X1000
+		LDIR
+		LD BC,WIN_A1
+		LD A,0X7A
+		OUT (C),A
+		XOR A
+		OUT (PEVO_CONF),A
+		POP BC
+		LD DE,ADR_CAT
+		LD HL,ADR_CAT+0X1000
+SEARCHF3	PUSH BC
+		LD C,(HL)
+		INC HL
+		LD B,(HL)
+		DEC HL
+		LD A,6
+		RST 8
+		DB Com_fat
+		DB Pos_files
+		PUSH HL
+		LD HL,BUF_FILEITEM
+		RST 8
+		DB Com_fat
+		DB Read_dir
+		PUSH DE
+		LD DE,0X0B
+		ADD HL,DE
+		LD A,(HL)
+		AND 0X10
+		JR NZ,SEARCHF4
+		RST 8
+		DB Com_fat
+		DB Open_file
+		LD HL,BUF_RDSEC
+		LD A,1
+		RST 8
+		DB Com_fat
+		DB Read_file
+		LD HL,BUF_FILEITEM
+		CALL CP_EXT
+		CALL 0
 CMP_FOUNDED	EQU $-2
-		RLA
-		AND 1
-		JR SEARCHF1
+SEARCHF4	POP DE
+		POP HL
+		JR NC,SEARCHF5
+		INC HL
+		INC HL
+		JR SEARCH6
+
+SEARCHF5	LDI
+		LDI
+SEARCH6		POP BC
+		DEC BC
+		LD A,B
+		OR C
+		JR NZ,SEARCHF3
+		LD HL,ADR_CAT
+		EX DE,HL
+		SBC HL,DE
+		SRL H
+		RR L
+		LD B,H
+		LD C,L
+		RET
+
+CP_EXT		PUSH BC
+		PUSH DE
+		PUSH HL
+		LD C,0
+		LD DE,0
+GDE_EXT_FILES	EQU $-2
+CPETR2		LD A,(DE)
+		AND A
+		JR Z,CPETR1+1
+		INC C
+		PUSH DE
+		PUSH HL
+		CALL COMPARF
+		POP HL
+		POP DE
+		JR Z,CPETR1
+		INC DE
+		INC DE
+		INC DE
+		JR CPETR2
+
+CPETR1		LD A,C
+		AND A
+		POP HL
+		POP DE
+		POP BC
+		RET
+
+COMPARF		PUSH DE
+		LD DE,8
+		ADD HL,DE
+		POP DE
+COMPARF1	LD A,(DE)
+		CP (HL)
+		RET NZ
+		INC HL
+		INC DE
+		LD A,(DE)
+		CP (HL)
+		RET NZ
+		INC HL
+		INC DE
+		LD A,(DE)
+		CP (HL)
+		RET
 
 ;Ž˜ˆ‚€’…‹œ ‡“ ‘ ˆ„ˆŠ€–ˆ…‰ Ž–…‘‘€
-FLASHER		LD BC,0XEFF7
+FLASHER		LD BC,PENT_CONF
 		XOR A
 		OUT (C),A
 		LD A,1

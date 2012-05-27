@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 15.01.2012 savelij
+;LAST UPDATE: 13.05.2012 savelij
 
 ;Žˆ‘€’…‹œ ŽŠ€ (€„…‘ ‚ IX)
 ;+00 X ŠŽŽ„ˆ€’€
@@ -582,14 +582,18 @@ RESTCOL1	LD B,0
 		LDIR
 		RET
 
+REST_COLCURS	LD DE,(COL_CURSOR)
+		LD HL,COLBUF
+		LD C,(IX+3)
+		LD B,0
+		LDIR
+		RET
+
 ;ˆ‘Ž‚€‹Š€ –‚…’Ž‰ Ž‹Ž‘Šˆ ‚ Œ…ž
 COLOR_CURSOR	LD DE,0
 COL_CURSOR	EQU $-2
 		LD HL,COLBUF
 		LD C,(IX+3)
-;		BIT 2,(IY+55)		;”€‰‹Ž‚ Ž‹œ˜… ‚›‘Ž’› ŽŠ€?
-;		JR Z,COLCURS1
-;		DEC C			;–‚…’€Ÿ Ž‹Ž‘Š€ € 1 ŠŽŽ—…
 COLCURS1	LD B,0
 		LDIR
 SET_ADR_ATR	LD A,(IX+7)
@@ -604,9 +608,6 @@ SET_ADR_ATR	LD A,(IX+7)
 		LD (COL_CURSOR),HL	;Ž‹Ž†ˆ‹ˆ €„…‘ „‹Ÿ ‚Ž‘‘’€Ž‚‹…ˆŸ –‚…’€
 		LD DE,COLBUF
 		LD B,(IX+3)
-;		BIT 2,(IY+55)		;”€‰‹Ž‚ Ž‹œ˜… ‚›‘Ž’› ŽŠ€?
-;		JR Z,COLCURS2
-;		DEC B			;–‚…’€Ÿ Ž‹Ž‘Š€ € 1 ŠŽŽ—…
 COLCURS2	LD C,(IX+5)
 		LD A,(HL)
 		LD (DE),A
@@ -616,30 +617,30 @@ COLCURS2	LD C,(IX+5)
 		DJNZ $-5
 		RET
 
-PRTSYMALT	PUSH HL
-		PUSH DE
-		EX DE,HL
-		CALL ADRDIS
-		EX DE,HL
-		PUSH BC
-		LD BC,CHARS
-		LD L,A
-		LD H,0
-		ADD HL,HL
-		ADD HL,HL
-		ADD HL,HL
-		ADD HL,BC
-		POP BC
-		REPT 8
-		LD A,(HL)
-		LD (DE),A
-		INC L
-		INC D
-		ENDM
-		POP DE
-		POP HL
-		INC D
-		RET
+;PRTSYMALT	PUSH HL
+;		PUSH DE
+;		EX DE,HL
+;		CALL ADRDIS
+;		EX DE,HL
+;		PUSH BC
+;		LD BC,CHARS
+;		LD L,A
+;		LD H,0
+;		ADD HL,HL
+;		ADD HL,HL
+;		ADD HL,HL
+;		ADD HL,BC
+;		POP BC
+;		REPT 8
+;		LD A,(HL)
+;		LD (DE),A
+;		INC L
+;		INC D
+;		ENDM
+;		POP DE
+;		POP HL
+;		INC D
+;		RET
 
 PRT_SYM		PUSH HL
 		PUSH DE
@@ -730,17 +731,21 @@ DOWN4		CALL FILENAME8_3
 		RET Z
 		JP DRAW_MOUSE
 
-DOWN3		ADD HL,HL
+DOWN3		DEC D
+		ADD HL,HL
 		ADD HL,BC
 		LD C,(HL)
 		INC HL
 		LD B,(HL)
 		PUSH DE
 		LD A,6
-		CALL COM_FAT
-		DB Positf
-		CALL COM_FAT
-		DB Getfzap
+		RST 8
+		DB Com_fat
+		DB Pos_files
+		LD HL,BUF_FILEITEM
+		RST 8
+		DB Com_fat
+		DB Read_dir
 		LD BC,0X0B
 		ADD HL,BC
 		LD A,(HL)
@@ -751,6 +756,11 @@ DOWN3		ADD HL,HL
 		LD A,1
 DOWN5		POP DE
 		CALL PRTSPECSYM
+		LD HL,OUT_NAME_FILET
+		RST 8
+		DB Com_fat
+		DB Get_longname
+		LD (LONG_NAME),A
 		JR DOWN4
 
 CURSOR_DOWN	LD C,(IX+8)
