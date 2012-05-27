@@ -1,7 +1,5 @@
 @ECHO OFF
 
-cd page0\source
-
 ..\..\..\tools\asw\bin\asw -cpu z80undoc -U -L main.a80
 ..\..\..\tools\asw\bin\p2bin main.p main.rom -r $-$ -k
 
@@ -19,8 +17,6 @@ del main.rom
 del cmosset.rom
 del main_pack.rom
 del cmosset_pack.rom
-del ..\..\fat\source\micro_boot_fat.rom
-
 
 copy /B /Y ..\services.rom d:\unrealspeccy\
 

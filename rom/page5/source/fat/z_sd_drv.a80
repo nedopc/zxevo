@@ -1,20 +1,15 @@
 
-;LAST UPDATE: 09.02.2010 savelij
+;LAST UPDATE: 16.05.2012 savelij
 
-;Входные параметры общие:
-;HL-адрес загрузки в память
-;BCDE-32-х битный номер сектора
-;A-количество блоков (блок=512 байт)
-;только для многоблочной записи/чтении
+;ВХОДНЫЕ ПАРАМЕТРЫ ОБЩИЕ:
+;HL-АДРЕС ЗАГРУЗКИ В ПАМЯТЬ
+;BCDE-32-Х БИТНЫЙ НОМЕР СЕКТОРА
+;A-КОЛИЧЕСТВО БЛОКОВ (БЛОК=512 БАЙТ)
+;ТОЛЬКО ДЛЯ МНОГОБЛОЧНОЙ ЗАПИСИ/ЧТЕНИИ
 
-;Ошибки выдаваемые на выходе:
-;A=0-инициализация прошла успешно
-;A=1-карта не найдена или не ответила
-
-Sd_init		EQU 0
-Sd__off		EQU 1
-Rdsingl		EQU 2
-Rdmulti		EQU 3
+;ОШИБКИ ВЫДАВАЕМЫЕ НА ВЫХОДЕ:
+;A=0-ИНИЦИАЛИЗАЦИЯ ПРОШЛА УСПЕШНО
+;A=1-КАРТА НЕ НАЙДЕНА ИЛИ НЕ ОТВЕТИЛА
 
 ;ОБЩАЯ ТОЧКА ВХОДА ДЛЯ РАБОТЫ С SD
 COMSDZ		EX AF,AF'
@@ -60,11 +55,11 @@ RET4SD1		LD A,1
 		POP AF
 		RET
 
-TABLSDZ		DW SD_INIT			;0 параметров не требует, на выходе A
-						;смотри выше первые 2 значения
-		DW SD__OFF			;1 просто вырубает питание карты
-		DW RDSINGL			;2 чтение одного сектора
-		DW RDMULTI			;3 чтение секторов, кол-во в "A"
+TABLSDZ		DW SD_INIT			;0 ПАРАМЕТРОВ НЕ ТРЕБУЕТ, НА ВЫХОДЕ A
+						;СМОТРИ ВЫШЕ ПЕРВЫЕ 2 ЗНАЧЕНИЯ
+		DW SD_CMP			;1 ПРОСТО ВЫРУБАЕТ ПИТАНИЕ КАРТЫ
+		DW RDMULTI			;2 ЧТЕНИЕ СЕКТОРОВ, КОЛ-ВО В "A"
+		DW WRMULTI			;3 ЗАПИСЬ СЕКТОРОВ
 
 SD_INIT		CALL CS_HIGH
 		LD BC,P_DATA
@@ -136,6 +131,21 @@ CS_HIGH		PUSH AF
 
 ZAW003		CALL SD__OFF
 		INC A
+		RET
+
+SD_CMP		LD A,CMD_58
+		LD BC,P_DATA
+		CALL OUT_COM
+		CALL IN_OOUT
+		LD L,A
+		IN H,(C)
+		NOP
+		IN H,(C)
+		NOP
+		IN H,(C)
+		NOP
+		IN H,(C)
+		INC L
 		RET
 
 SD__OFF		XOR A
@@ -236,7 +246,7 @@ SECN200		POP AF
 		RET
 
 IN_OOUT		PUSH DE
-		LD DE,0X10FF
+		LD DE,0X20FF
 IN_WAIT		IN A,(P_DATA)
 		CP E
 		JR NZ,IN_EXIT
@@ -250,14 +260,52 @@ CMD08		DB 0X48,0X00,0X00,0X01,0XAA,0X87		;SEND_IF_COND
 CMD16		DB 0X50,0X00,0X00,0X02,0X00,0XFF		;SET_BLOCKEN
 
 RD_SECT		PUSH BC
+		LD A,IYL
+		BIT 1,A
+		JR NZ,RD_SECT3
+		AND A
+		JR NZ,RD_SECT2
+RD_SECT3	LD A,(R_7FFD)
+		LD BC,(B0_CPU2)
+		JR Z,RD_SECT1
+		LD BC,(B1_CPU2)
+RD_SECT1	LD A,1
+		OUT (PEVO_CONF),A
+		LD A,B
+		OR 0X3F
+		LD B,A
+		LD A,C
+		LD C,LOW (WIN_A0)
+		OUT (C),A
+		XOR A
+		OUT (PEVO_CONF),A
+RD_SECT2	LD BC,P_DATA
+		INIR
+		NOP
+		INIR
+		NOP
+		IN A,(C)
+		NOP
+		IN A,(C)
+		LD A,1
+		OUT (PEVO_CONF),A
+		LD BC,WIN_P2
+		XOR A
+		OUT (C),A
+		OUT (PEVO_CONF),A
+		POP BC
+		RET
+
+WR_SECT		PUSH BC
 		LD BC,P_DATA
-		INIR
+		OUT (C),A
+		OTIR
 		NOP
-		INIR
+		OTIR
+		LD A,0XFF
+		OUT (C),A
 		NOP
-		IN A,(C)
-		NOP
-		IN A,(C)
+		OUT (C),A
 		POP BC
 		RET
 
@@ -280,12 +328,25 @@ RDMULT1		EX AF,AF'
 		JR NZ,$-4
 		JP CS_HIGH
 
-RDSINGL		LD A,CMD_17
+WRMULTI		EX AF,AF'
+		LD A,CMD_25
 		CALL SECM200
 		CALL IN_OOUT
-		CP 0XFE
-		JR NZ,$-5
-		CALL RD_SECT
+		INC A
+		JR NZ,$-4
+		EX AF,AF'
+WRMULT1		EX AF,AF'
+		LD A,0XFC
+		CALL WR_SECT
+		CALL IN_OOUT
+		INC A
+		JR NZ,$-4
+		EX AF,AF'
+		DEC A
+		JR NZ,WRMULT1
+		LD C,P_DATA
+		LD A,0XFD
+		OUT (C),A
 		CALL IN_OOUT
 		INC A
 		JR NZ,$-4

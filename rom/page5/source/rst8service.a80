@@ -1,30 +1,31 @@
 
-;LAST UPDATE: 18.01.2012 savelij
+;LAST UPDATE: 17.05.2012 savelij
 
 		include ../../macros.a80
 		include ../../global_vars.a80
 		include ../../ports_ngs.a80
 		include ../../sdcomand.a80
-		include rst8_vars.a80
+		include ../../fat_vars.a80
 
-DD		EQU 13				;„€’€
-MM		EQU 12				;Œ…‘Ÿ–
-YY		EQU 11				;ƒŽ„
+DD		EQU 8				;„€’€
+MM		EQU 3				;Œ…‘Ÿ–
+YY		EQU 12				;ƒŽ„
 DATA		EQU DD+(MM<<5)+(YY<<9)+0X8000	;“†… “€ŠŽ‚€Ž
 
 TXTMODE_DEBUG	EQU 0
 
 		PHASE 0
-;Ž€Ž’Š€ €†€’ˆŸ MAGIC
+;Ž„Ž‹†…ˆ… Ž€Ž’Šˆ €†€’ˆŸ MAGIC
 		JP CONT_MAGIC			;0000
 
+		DUPL 0X0004-$,0XFF
+		JP NEXT_RST8
+		
 		DUPL 0X0008-$,0XFF
-;Ž„Ž‹†…ˆ… Ž€Ž’Šˆ RST8
-		JP NEXT_RST8			;0008
+		JP $				;0008
 
 		DUPL 0X0010-$,0XFF
-;—’…ˆ… €‰’€ ˆ‡ Ž‘Ž‚Ž‰ €ŒŸ’ˆ
-		JP RD_BYTE_48K			;0010
+		JP $			;0010
 
 		DUPL ADR_SEL_ROM-$,0XFF
 JUMP2PAGE	OUT (C),A
@@ -32,7 +33,10 @@ JUMP2PAGE	OUT (C),A
 		RET
 
 		DUPL 0X0018-$,0XFF
-		JP EXIT_RST8			;0018
+		JP $				;0018
+
+		DUPL 0X001C-$,0XFF
+		JP RST30_DOS
 
 		DUPL 0X0020-$,0XFF
 		JP $				;0020
@@ -48,49 +52,33 @@ JUMP2PAGE	OUT (C),A
 		EI
 		RET;JP KEYBOARDS			;0038
 
-;—’…ˆ… €‰’€ ˆ‡ Ž‹€‘’ˆ €ŒŸ’ˆ 0X4000-0XFFFF
-RD_BYTE_48K	PUSH HL
-		PUSH DE
-		PUSH BC
-		PUSH AF
-		LD BC,WIN_P2
-		LD DE,0XFD
-		LD HL,(RADRRET_L)
-		OUT (C),E
-		LD A,(HL)
-		INC HL
-		OUT (C),D
-		LD (RADRRET_L),HL
-		LD (NEXTBYTERST8),A
-		POP AF
-		POP BC
-		POP DE
-		POP HL
-		RET
-
 ;‚›•Ž„ ˆ‡ RST8
-EXIT_RST8	LD BC,ADR_EXITRST8		;€„…‘ ‚Ž‡‚€’€ ‚ Ž‘‹…„…‰ ‘’€ˆ–… RAM
+EXIT_RST8	LD BC,P4_EXIT_RST8		;€„…‘ ‚Ž‡‚€’€ ‚ Ž‘‹…„…‰ ‘’€ˆ–… RAM
 		PUSH BC
 		LD BC,WIN_P0
 		XOR A
 		JP JUMP2PAGE
 
+RST30_DOS	LD HL,ERST30_DOS
+		JP NEXT_RST
+
+ERST30_DOS	LD BC,WIN_A0
+		LD A,6
+		JP ADR_SEL_ROM
+
+RUN_FILECODE	LD BC,UNP_MICRO_BOOT		;€„…‘ ……•Ž„€
+JUMP2PAGE4	PUSH BC
+		LD BC,WIN_A0
+		LD A,4				;ŽŒ… ‘’€ˆ–› ‚›‡Ž‚€
+		JP JUMP2PAGE
+
 		DUPL 0X0066-$,0XFF
 ;‚›•Ž„ ˆ‡ MAGIC
 CONT_MAGIC	NOP
-		LD HL,CPU2+N_0WINA0
-		LD DE,(CPU2+N_DOS7FFD)
-		LD BC,CPU2+N_7FFD
-		CALL CONVERT_BPORT
-		LD A,(N_7FFD+CPU2)
-		AND %11110111
-		LD BC,0X7FFD
-		OUT (C),A
-		LD BC,0XFF77
+		LD HL,N_0WINA0
+		LD DE,(N_DOS7FFD)
 		LD A,(N_77)
-		AND 7
-		OR 0XA0
-		OUT (C),A
+		CALL CONVERT_BPORT
 		CALL STORE_TXTMODE
 		IF TXTMODE_DEBUG=0
 		CALL SCAN_FONT
@@ -102,7 +90,8 @@ CONT_MAGIC	NOP
 		CALL PRTT_MSG
 		CALL PRT_PORTREGS
 
-;		CALL COMPARE_FONT
+;		LD HL,PRINT_COLOR
+;		CALL PRTT_MSG
 
 CONTMAGIC1	LD A,0XFB
 		IN A,(0XFE)
@@ -117,11 +106,16 @@ CONTMAGIC2	XOR A
 		CALL RESTORE_TXTMODE
 		CALL RESTORE_FONT
 
-		LD BC,ADR_EXITMAGIC
+		LD BC,EXITNMISERVICE
 		PUSH BC
 		LD BC,WIN_P0
 		XOR A
 		JP JUMP2PAGE
+
+CRC16		LD BC,INT_ONLY_RET		;€„…‘ Š“„€ ‚…“’œ‘Ÿ ‚ ’Ž‰ ‘’€ˆ–…
+		PUSH BC
+		LD BC,CRC16FAST			;€„…‘ ‚›‡Ž‚€ ‚ 4 ‘’€ˆ–…
+		JR JUMP2PAGE4
 
 CODE_TABL	DW AY_PRN_INIT			;40
 		DW AY_PRN_A_			;41
@@ -135,9 +129,11 @@ CODE_TABL	DW AY_PRN_INIT			;40
 		DW SCRUP			;49
 		DW SCRDN			;4A
 		DW COM_DEV			;4B
-		DW RUN_FILECODE			;4C
-		DW WRITE_FONT			;4D
-		DW READ_FONT			;4E
+		DW COM_FAT			;4C
+		DW SORT_FIND_FILES		;4D
+		DW MOUNTER			;4E
+		DW LOADFILE			;4F
+		DW RUN_FILECODE			;50
 ECODE_TABL
 
 		DUPL 0X00FF-$,0XFF
@@ -147,13 +143,14 @@ ECODE_TABL
 
 ;Ž„Ž‹†…ˆ… Ž€Ž’Šˆ RST8
 NEXT_RST8	LD HL,EXIT_RST8
-		PUSH HL
+NEXT_RST	PUSH HL
 		LD (INTERNAL_SP),SP
-		LD HL,CPU2+R_0WINA0
-		LD DE,(CPU2+R_DOS7FFD)
-		LD BC,CPU2+R_7FFD
+		LD HL,R_0WINA0
+		LD DE,(R_DOS7FFD)
+		LD A,(R_77)
 		CALL CONVERT_BPORT
-		LD A,(RCODE_CALL)
+		CALL READ_BYTE
+		LD A,(NEXTBYTERST8)
 		AND 0X3F
 		LD L,A
 		LD H,0
@@ -166,26 +163,126 @@ NEXT_RST8	LD HL,EXIT_RST8
 		EX DE,HL
 		JP (HL)
 
-READ_FONT
+LOADFILE	
+		CALL ICOM_FAT
+		DB Open_file
 		RET
 
-WRITE_FONT	IN A,(PEVO_CONF)
-		PUSH AF
-		SET 2,A
-		OUT (PEVO_CONF),A
-		LD HL,(RREG_L)
-		LD DE,0
-		LD BC,0X0800
-		LDIR
-		POP AF
-		OUT (PEVO_CONF),A
-		RET
-
-RUN_FILECODE	LD BC,0X0100			;€„…‘ ……•Ž„€
+;—’…ˆ… €‰’€ ˆ‡ Ž‹€‘’ˆ €ŒŸ’ˆ ‚›‡‚€˜…‰ Žƒˆ
+READ_BYTE	PUSH HL
+		PUSH DE
 		PUSH BC
-		LD BC,WIN_A0
-		LD A,4				;‚›‡Ž‚ ŠŽ„€ ˆ‡ 4 ‘’€ˆ–›
+		PUSH AF
+		LD A,(RADRRET_H)		;‘’€˜ˆ‰ €‰’ €„…‘€ Ž’Š“„€ —ˆ’€’œ
+		CP 0X40
+		JR NC,READBYTE_03
+;…‘‹ˆ €„…‘ —’…ˆŸ ˆ†… 0X4000
+		LD A,(R_7FFD)			;ˆ‡ Š€ŠŽƒŽ Œ€…€ —ˆ’€’œ
+		AND 0X10
+		LD HL,B0_CPU0			;€‰’› ˆ €„…‘€ Ž’Ž‚ 0 Œ€…€
+		JR Z,READ_CPU0_01
+		LD HL,B1_CPU0			;€‰’› ˆ €„…‘€ Ž’Ž‚ 1 Œ€…€
+READ_CPU0_01	LD D,(HL)			;€‰’ „‹Ÿ ‡€ˆ‘ˆ ‚ Ž’
+		INC HL
+		LD A,(HL)			;‘’€˜ˆ‰ €‰’ €„…‘€ Ž’€ “†Ž‰ ‘’€ˆ–›
+		AND HIGH (WIN_A1)
+		OR HIGH (WIN_P1)		;…Ž€‡Ž‚€‹ˆ ‘’€˜ˆ‰ €‰’ €„…‘€ „‹Ÿ ‚Š‹ž—…ˆŸ ‚ 1 ŽŠ…	
+		LD B,A
+		LD C,LOW (WIN_A0)		;BC=€„…‘ Ž’€
+		LD A,(R_77)
+		LD E,0X3F
+		AND 0X10			;Ž…„…‹Ÿ…Œ DOS ˆ‹ˆ … DOS
+		JR Z,READ_CPU0_02
+		DEC E
+READ_CPU0_02	LD A,D
+		AND E
+		OUT (C),A			;‚Š‹ž—€…Œ €ƒ“ BASIC ˆ‹ˆ DOS
+		LD DE,CPU1			;‘Œ…™…ˆ… „Ž 1 ŽŠ€ Ž…–ˆŽ‚€ˆŸ
+		LD HL,(RADRRET_L)		;€„…‘ Ž’Š“„€ —ˆ’€’œ
+		ADD HL,DE			;—ˆ’€’œ —……‡ 1 ŽŠŽ Ž…–ˆŽ‚€ˆŸ
+		LD A,(HL)			;Ž—ˆ’€‹ˆ €‰’
+		SBC HL,DE			;‚…“‹ˆ €„…‘ €‰’€
+		INC HL				;“‚…‹ˆ—ˆ‹ˆ €„…‘ ‚Ž‡‚€’€
+		LD (RADRRET_L),HL		;‚…“‹ˆ €„…‘ ‚Ž‡‚€’€
+		JR READBYTE_02
+
+;…‘‹ˆ €„…‘ —’…ˆŸ ‚›˜… 0X4000
+READBYTE_03	LD A,(R_7FFD)			;ˆ‡ Š€ŠŽƒŽ Œ€…€ —ˆ’€’œ
+		AND 0X10
+		LD HL,B0_CPU0			;€‰’› ˆ €„…‘€ Ž’Ž‚ 0 Œ€…€
+		JR Z,READBYTE_01
+		LD HL,B1_CPU0			;€‰’› ˆ €„…‘€ Ž’Ž‚ 1 Œ€…€
+READBYTE_01	LD A,(RADRRET_H)		;‘’€˜ˆ‰ €‰’ €„…‘€ Ž’Š“„€ —ˆ’€’œ
+		AND 0XC0
+		LD C,A
+		RLCA
+		RLCA
+		RLCA
+		LD E,A
+		LD D,0			 	;DE=‘Œ…™…ˆ… ‚ ’€‹ˆ–… €‰’€ ˆ ‘’€˜…ƒŽ €‰’€ ‘’€ˆ–› —’…ˆŸ
+		ADD HL,DE
+		LD D,(HL)			;€‰’ „‹Ÿ ‡€ˆ‘ˆ ‚ Ž’
+		INC HL
+		LD A,(HL)
+		AND HIGH (WIN_A1)
+		OR HIGH (WIN_P1)
+		LD B,A
+		LD C,LOW (WIN_A1)		;BC=€„…‘ Ž’€ „‹Ÿ 1 ŽŠ€ Ž…–ˆŽ‚€ˆŸ
+		LD HL,(RADRRET_L)		;€„…‘ Ž’Š“„€ —ˆ’€’œ
+		OUT (C),D			;‚Š‹ž—ˆ‹ˆ ‘’€ˆ–“ „‹Ÿ —’…ˆŸ €‰’€
+		LD E,L				;Œ‹€„˜ˆ‰ €‰’ €„…‘€ —’…ˆŸ
+		LD A,H
+		AND HIGH (WIN_A1)
+		OR HIGH (CPU1)
+		LD D,A				;‘’€˜ˆ‰ €‰’ €„…‘€ —’…ˆŸ
+		LD A,(DE)			;Ž—ˆ’€‹ˆ €‰’
+		INC HL				;“‚…‹ˆ—ˆ‹ˆ €„…‘ ‚Ž‡‚€’€
+		LD (RADRRET_L),HL		;‚…“‹ˆ €„…‘ ‚Ž‡‚€’€
+READBYTE_02	LD (NEXTBYTERST8),A		;Ž‹Ž†ˆ‹ˆ Ž—ˆ’€›‰ €‰’
+		CALL MAIN_MEM13			;‚…“‹ˆ ‘’€ˆ–› ‚ 1 ˆ 3 ŽŠŽ Ž…–ˆŽ‚€ˆŸ
+		POP AF
+		POP BC
+		POP DE
+		POP HL
+		RET
+
+LDIR_BYTES	EXX
+		LD BC,INT_ONLY_RET
+		PUSH BC
+		LD BC,LDIR__BYTES
+		PUSH BC
+		LD BC,WIN_P0
+		XOR A
 		JP JUMP2PAGE
+
+;‚Ž‘‘’€Ž‚‹…ˆE ‘’€ˆ– ‚ ŽŠ€• Ž…–ˆŽ‚€ˆŸ 1 ˆ 3
+MAIN_MEM13	LD A,(R_7FFD)			;Ž‚…Š€ ‚ Š€ŠŽŒ Œ€……
+		AND 0X10
+		LD HL,B0_CPU1			;„‹Ÿ 0 Œ€…€
+		JR Z,MAINMEM1
+		LD HL,B1_CPU1			;„‹Ÿ 1 Œ€…€
+MAINMEM1	LD C,LOW (WIN_A0)
+		CALL MAINMEM3			;‚…“‹ˆ „‹Ÿ 1 ŽŠ€ Ž…–ˆŽ‚€ˆŸ
+		INC HL				;„€‹…… ‚Ž‡‚€™€…Œ „‹Ÿ 3 ŽŠ€ Ž…–ˆŽ‚€ˆŸ
+		INC HL
+MAINMEM3	LD E,(HL)
+		INC HL
+		LD D,(HL)
+		LD A,D
+		OR 0X3F
+		LD B,A
+		BIT 3,D
+		JR NZ,MAINMEM2
+		SET 3,B
+		LD A,D
+		AND 3
+		RRCA
+		RRCA
+		OUT (C),A
+		RES 3,B
+MAINMEM2	INC HL
+		OUT (C),E
+		RET
 
 CONTINUE_PROG	XOR A
 		IN A,(0XFE)
@@ -196,15 +293,37 @@ CONTINUE_PROG	XOR A
 		LD SP,(INTERNAL_SP)
 INT_ONLY_RET	RET
 
-CONVERT_BPORT	LD A,8
+;ŠŽ‚…‘ˆŸ ‘—ˆ’€›• ‡€—…ˆ‰ ˆ‡ Ž’Ž‚ ŠŽ”ˆƒ“€–ˆˆ
+;HL=€„…‘ Ž’Š“„€ €’œ ‘—ˆ’€›… ‡€—…ˆŸ „‹Ÿ ŠŽ‚…‘ˆˆ
+;DE=ˆ’› 7,6 „‹Ÿ „…ŠŽ„ˆŽ‚€ˆŸ
+;BC=Š“„€ ‘Š‹€„›‚€’œ „…ŠŽ„ˆŽ‚€Ž…
+;A=‘—ˆ’€Ž… ‡€—…ˆ… „‹Ÿ ŠŽ‚…‘ˆˆ „‹Ÿ Ž’€ XX77
+CONVERT_BPORT	PUSH AF
+		LD BC,B0_CPU0
+		LD IYL,HIGH (WIN_A3)&0XFC
+		LD A,8				;ŠŽ‚…’ˆ’œ 8 €‰’
 CBPORT03	EX AF,AF'
 		LD A,(HL)
-		AND 0X40
+		CP 0XC0
 		JR NC,CBPORT01
-		SRL D
+;…‘‹ˆ —ˆ‘‹Ž Œ………, ’Ž ‚Ž‘‘’€€‚‹ˆ‚€’œ ‚ Ž’› X7F7
+		LD (BC),A
+		INC BC
+		LD A,IYL
+		ADD A,0X40
+		LD IYL,A
+		AND 0XF7
+		RLCA
+		RLCA
 		SRL E
+		RLA
+		SRL D
+		RLA
+		LD (BC),A
+		INC BC
 		JR CBPORT02
 
+;…‘‹ˆ —ˆ‘‹Ž Ž‹œ˜…, ’Ž ‚Ž‘‘’€€‚‹ˆ‚€’œ ‚ Ž’› XFF7
 CBPORT01	LD A,(HL)
 		RLCA
 		RLCA
@@ -212,23 +331,157 @@ CBPORT01	LD A,(HL)
 		RRA
 		SRL E
 		RRA
-		LD (HL),A
+		LD (BC),A
+		INC BC
+		LD A,IYL
+		ADD A,0X40
+		LD IYL,A
+		LD (BC),A
+		INC BC
 CBPORT02	DEC HL
 		EX AF,AF'
 		DEC A
 		JR NZ,CBPORT03
-		LD A,(BC)
-		LD HL,N_0WINA0-N_7FFD
-		ADD HL,BC
-		AND 0X10
-		LD A,(RPAGE_CALL)
-		JR Z,CBPORT04
-		DEC HL
-		DEC HL
-		DEC HL
-		DEC HL
-CBPORT04	LD (HL),A
+		POP HL
+		LD L,0XBC
+		LD A,H
+		AND 0X0F
+		OR 0XA0
+		LD (BC),A
+		INC BC
+		LD A,H
+		AND 0X80
+		RRCA
+		OR L
+		LD L,A
+		LD A,H
+		AND 0X60
+		RLCA
+		RLCA
+		RLCA
+		OR L
+		LD (BC),A
 		RET
+
+SORT_FIND_FILES	LD HL,KOL_FOUNDED
+		LD A,H
+		OR L
+		RET Z
+		DEC HL
+		LD A,H
+		OR L
+		RET Z
+		LD BC,WIN_P1
+		LD A,PAGE_TEMP
+		OUT (C),A
+		LD HL,CPU1+0X1000		;€„…‘ …‚›• ‘ˆŒ‚Ž‹Ž‚
+		LD DE,0X1000
+		LD BC,SYMS4SORT
+		EXX
+		LD HL,CPU1+0X2000		;€„“‘ Š“„€ ‘Š‹€„ˆŽ‚€’œ ‘Ž’ˆŽ‚€Ž…
+		LD BC,(KOLFIND)
+		EXX
+;…‚›‰ Ž•Ž„ „‹Ÿ „ˆ…Š’Žˆ‰
+SORTIR03	LD A,(HL)
+		AND 0X10
+		JR Z,SORTIR01
+		INC HL
+		LD A,(BC)
+		CP (HL)
+		DEC HL
+		JR NZ,SORTIR01
+		SBC HL,DE			;……•Ž„ Š ŽŒ…€Œ
+		LD A,(HL)
+		INC HL
+		EXX
+		LD (HL),A
+		INC HL
+		EXX
+		LD A,(HL)
+		INC HL
+		EXX
+		LD (HL),A
+		INC HL
+		DEC BC
+		LD A,B
+		OR C
+		EXX
+		JR Z,SORTIR05			;…‘‹ˆ ŠŽ—ˆ‹Ž‘œ ’Ž ’Ž†… ‘€ŒŽ… „‹Ÿ ”€‰‹Ž‚
+		ADD HL,DE			;‚Ž‡‚€’ Š ”‹€ƒ€Œ ˆ ˆŒ…€Œ
+		JR SORTIR03
+
+;… „ˆ…Š’ŽˆŸ, ‘‹…„“ž™€Ÿ €€
+SORTIR01	INC HL
+		INC HL
+		EXX
+		DEC BC
+		LD A,B
+		OR C
+		EXX
+		JR NZ,SORTIR03
+SORTIR05	EXX
+		LD BC,(KOLFIND)
+		EXX
+		LD HL,CPU1+0X1000
+		INC BC
+		LD A,(BC)
+		AND A
+		JR NZ,SORTIR03
+		LD BC,SYMS4SORT
+		LD HL,CPU1+0X1000
+;‚’ŽŽ‰ Ž•Ž„ „‹Ÿ ”€‰‹Ž‚
+SORTIR02	LD A,(HL)
+		AND 0X10
+		JR NZ,SORTIR04
+		INC HL
+		LD A,(BC)
+		CP (HL)
+		DEC HL
+		JR NZ,SORTIR04
+		SBC HL,DE
+		LD A,(HL)
+		INC HL
+		EXX
+		LD (HL),A
+		INC HL
+		EXX
+		LD A,(HL)
+		INC HL
+		EXX
+		LD (HL),A
+		INC HL
+		DEC BC
+		LD A,B
+		OR C
+		EXX
+		JR Z,SORTIR07
+		ADD HL,DE
+		JR SORTIR02
+
+SORTIR04	INC HL
+		INC HL
+		EXX
+		DEC BC
+		LD A,B
+		OR C
+		EXX
+		JR NZ,SORTIR02
+SORTIR07	EXX
+		LD BC,(KOLFIND)
+		EXX
+		LD HL,CPU1+0X1000
+		INC BC
+		LD A,(BC)
+		AND A
+		JR NZ,SORTIR02
+		LD HL,CPU1+0X2000
+		LD DE,CPU1
+		LD BC,0X1000
+		LDIR
+		RET
+
+SYMS4SORT	DB ".!#$%&'()-0123456789@ABCDEFGHIJKLMNOPQRSTUVWXYZ^_`{}~",0X7F
+		DB "€‚ƒ„…†‡ˆ‰Š‹œŽ‘’“”•–—˜™š›œžŸð",0
 
 PRTT_HL_	LD A,H
 		CALL PRTT_A
@@ -248,94 +501,99 @@ PRTT_A_1	AND 0X0F
 		AND 0X7F
 		JP PRTT_A_
 
+COORDINAT_REGS	DW Y_OFFSET+1+(X_OFFSET+3)*0X100	;SP
+		DW Y_OFFSET+1+(X_OFFSET+3+9)*0X100	;PC
+		DW Y_OFFSET+2+(X_OFFSET+3)*0X100	;IR
+		DW Y_OFFSET+3+(X_OFFSET+3)*0X100	;AF
+		DW Y_OFFSET+3+(X_OFFSET+3+9)*0X100	;AF'
+		DW Y_OFFSET+4+(X_OFFSET+3)*0X100	;BC
+		DW Y_OFFSET+4+(X_OFFSET+3+9)*0X100	;BC'
+		DW Y_OFFSET+5+(X_OFFSET+3)*0X100	;DE
+		DW Y_OFFSET+5+(X_OFFSET+3+9)*0X100	;DE'
+		DW Y_OFFSET+6+(X_OFFSET+3)*0X100	;HL
+		DW Y_OFFSET+6+(X_OFFSET+3+9)*0X100	;HL'
+		DW Y_OFFSET+7+(X_OFFSET+3)*0X100	;IX
+		DW Y_OFFSET+7+(X_OFFSET+3+9)*0X100	;IY
+		DW Y_OFFSET+0X0A+(X_OFFSET+6)*0X100	;CPU3 MAP0
+		DW Y_OFFSET+0X0A+(X_OFFSET+6+3)*0X100	;CPU3 MAP1
+		DW Y_OFFSET+0X0B+(X_OFFSET+6)*0X100	;CPU2 MAP0
+		DW Y_OFFSET+0X0B+(X_OFFSET+6+3)*0X100	;CPU2 MAP1
+		DW Y_OFFSET+0X0C+(X_OFFSET+6)*0X100	;CPU1 MAP0
+		DW Y_OFFSET+0X0C+(X_OFFSET+6+3)*0X100	;CPU1 MAP1
+		DW Y_OFFSET+0X0D+(X_OFFSET+6)*0X100	;CPU0 MAP0
+		DW Y_OFFSET+0X0D+(X_OFFSET+6+3)*0X100	;CPU0 MAP1
+		DW Y_OFFSET+0X0F+(X_OFFSET+5)*0X100	;PORT 7FFD
+		DW Y_OFFSET+0X10+(X_OFFSET+5)*0X100	;PORT EFF7
+		DW Y_OFFSET+0X11+(X_OFFSET+0)*0X100	;PORT XX77
+		DW Y_OFFSET+0X11+(X_OFFSET+0+5)*0X100	;BYTE IN PORT XX77
+		DW Y_OFFSET+0X12+(X_OFFSET+5)*0X100	;PORT BF
+		DW Y_OFFSET+0X14+(X_OFFSET+11)*0X100	;BIT DOS ENABLE
+
+PRINT_REGS	LD E,(IX)
+		INC IX
+		LD D,(IX)
+		INC IX
+		JP PRTT_HL_
+
+PRINT_REG	LD E,(IX)
+		INC IX
+		LD D,(IX)
+		INC IX
+		JP PRTT_A
+
 PRT_PORTREGS	LD A,0X0F
 		LD (TXT_COLOR),A
-		LD DE,Y_OFFSET+1+(X_OFFSET+3)*0X100
-		LD HL,(NSAVE_SP)
-		CALL PRTT_HL_			;SP
-		LD A,5
-		ADD A,D
-		LD D,A
+		LD IX,COORDINAT_REGS
+		LD HL,(NMI_SAVE_SP)
+		CALL PRINT_REGS				;SP
 		LD HL,(NADRRET_L)
-		CALL PRTT_HL_			;PC
-		LD DE,Y_OFFSET+2+(X_OFFSET+3)*0X100
+		CALL PRINT_REGS				;PC
 		LD A,(NREG_I)
 		LD H,A
 		LD A,(NREG_R)
 		LD L,A
-		CALL PRTT_HL_			;IR
-		LD DE,Y_OFFSET+3+(X_OFFSET+3)*0X100
+		CALL PRINT_REGS				;IR
 		LD HL,(NREG_F)
-		CALL PRTT_HL_			;AF
-		LD A,5
-		ADD A,D
-		LD D,A
+		CALL PRINT_REGS				;AF
 		LD HL,(NREG_FF)
-		CALL PRTT_HL_			;AF'
-		LD DE,Y_OFFSET+4+(X_OFFSET+3)*0X100
+		CALL PRINT_REGS				;AF'
 		LD HL,(NREG_C)
-		CALL PRTT_HL_			;BC
-		LD A,5
-		ADD A,D
-		LD D,A
+		CALL PRINT_REGS				;BC
 		LD HL,(NREG_CC)
-		CALL PRTT_HL_			;BC'
-		LD DE,Y_OFFSET+5+(X_OFFSET+3)*0X100
+		CALL PRINT_REGS				;BC'
 		LD HL,(NREG_E)
-		CALL PRTT_HL_			;DE
-		LD A,5
-		ADD A,D
-		LD D,A
+		CALL PRINT_REGS				;DE
 		LD HL,(NREG_EE)
-		CALL PRTT_HL_			;DE'
-		LD DE,Y_OFFSET+6+(X_OFFSET+3)*0X100
+		CALL PRINT_REGS				;DE'
 		LD HL,(NREG_L)
-		CALL PRTT_HL_			;HL
-		LD A,5
-		ADD A,D
-		LD D,A
+		CALL PRINT_REGS				;HL
 		LD HL,(NREG_LL)
-		CALL PRTT_HL_			;HL'
-		LD DE,Y_OFFSET+7+(X_OFFSET+3)*0X100
+		CALL PRINT_REGS				;HL'
 		LD HL,(NREG_IXL)
-		CALL PRTT_HL_			;IX
-		LD A,5
-		ADD A,D
-		LD D,A
+		CALL PRINT_REGS				;IX
 		LD HL,(NREG_IYL)
-		CALL PRTT_HL_			;IY
-		LD DE,Y_OFFSET+0X0A+(X_OFFSET+6)*0X100
-		LD A,(0X8000+R_0WINA3)
-		CALL PRTT_A			;CPU3 MAP0
-		INC D
-		LD A,(0X8000+R_1WINA3)
-		CALL PRTT_A			;CPU3 MAP1
-		LD DE,Y_OFFSET+0X0B+(X_OFFSET+6)*0X100
-		LD A,(0X8000+R_0WINA2)
-		CALL PRTT_A			;CPU2 MAP0
-		INC D
-		LD A,(0X8000+R_1WINA2)
-		CALL PRTT_A			;CPU2 MAP1
-		LD DE,Y_OFFSET+0X0C+(X_OFFSET+6)*0X100
-		LD A,(0X8000+R_0WINA1)
-		CALL PRTT_A			;CPU1 MAP0
-		INC D
-		LD A,(0X8000+R_1WINA1)
-		CALL PRTT_A			;CPU1 MAP1
-		LD DE,Y_OFFSET+0X0D+(X_OFFSET+6)*0X100
-		LD A,(0X8000+R_0WINA0)
-		CALL PRTT_A			;CPU0 MAP0
-		INC D
-		LD A,(0X8000+R_1WINA0)
-		CALL PRTT_A			;CPU0 MAP1
-		LD DE,Y_OFFSET+0X0F+(X_OFFSET+5)*0X100
-		LD A,(0X8000+R_7FFD)
-		CALL PRTT_A			;PORT 7FFD
-		LD DE,Y_OFFSET+0X10+(X_OFFSET+5)*0X100
-		LD A,(0X8000+R_EFF7)
-		CALL PRTT_A			;PORT EFF7
-		LD DE,Y_OFFSET+0X11+(X_OFFSET+0)*0X100
-		LD A,(0X8000+R_77)
+		CALL PRINT_REGS				;IY
+		LD A,(B0_CPU3)
+		CALL PRINT_REG				;CPU3 MAP0
+		LD A,(B1_CPU3)
+		CALL PRINT_REG				;CPU3 MAP1
+		LD A,(B0_CPU2)
+		CALL PRINT_REG				;CPU2 MAP0
+		LD A,(B1_CPU2)
+		CALL PRINT_REG				;CPU2 MAP1
+		LD A,(B0_CPU1)
+		CALL PRINT_REG				;CPU1 MAP0
+		LD A,(B1_CPU1)
+		CALL PRINT_REG				;CPU1 MAP1
+		LD A,(B0_CPU0)
+		CALL PRINT_REG				;CPU0 MAP0
+		LD A,(B1_CPU0)
+		CALL PRINT_REG				;CPU0 MAP1
+		LD A,(N_7FFD)
+		CALL PRINT_REG				;PORT 7FFD
+		LD A,(N_EFF7)
+		CALL PRINT_REG				;PORT EFF7
+		LD A,(N_77)
 		AND %11100000
 		RRCA
 		LD B,A
@@ -345,25 +603,41 @@ PRT_PORTREGS	LD A,0X0F
 		RRCA
 		OR B
 		OR 0XBC
-		CALL PRTT_A			;PORT XX77
-		LD A,3
-		ADD A,D
-		LD D,A
-		LD A,(0X8000+R_77)
+		CALL PRINT_REG				;PORT XX77
+		LD A,(N_77)
 		AND 0X0F
-		CALL PRTT_A			;BYTE IN PORT XX77
-		LD DE,Y_OFFSET+0X12+(X_OFFSET+5)*0X100
-		LD A,(0X8000+R_BF)
-		CALL PRTT_A			;PORT BF
-		LD DE,Y_OFFSET+0X14+(X_OFFSET+11)*0X100
-		LD A,(0X8000+R_77)
+		CALL PRINT_REG				;BYTE IN PORT XX77
+		LD A,(N_BF)
+		CALL PRINT_REG				;PORT BF
+		LD E,(IX)
+		INC IX
+		LD D,(IX)
+		LD A,(N_77)
 		AND 0X10
 		RRCA
 		RRCA
 		RRCA
 		RRCA
 		ADD A,"0"
-		JP PRTT_A_			;DOS ENABLE
+		JP PRTT_A_				;BIT DOS ENABLE
+
+PRINT_COLOR	DB 0X16,0X03,0,0X17,0X00,"----------------"
+		DB 0X16,0X04,0,0X17,0X08,"----------------"
+		DB 0X16,0X05,0,0X17,0X10,"----------------"
+		DB 0X16,0X06,0,0X17,0X18,"----------------"
+		DB 0X16,0X07,0,0X17,0X20,"----------------"
+		DB 0X16,0X08,0,0X17,0X28,"----------------"
+		DB 0X16,0X09,0,0X17,0X30,"----------------"
+		DB 0X16,0X0A,0,0X17,0X38,"----------------"
+		DB 0X16,0X0B,0,0X17,0X80,"----------------"
+		DB 0X16,0X0C,0,0X17,0X88,"----------------"
+		DB 0X16,0X0D,0,0X17,0X90,"----------------"
+		DB 0X16,0X0E,0,0X17,0X98,"----------------"
+		DB 0X16,0X0F,0,0X17,0XA0,"----------------"
+		DB 0X16,0X10,0,0X17,0XA8,"----------------"
+		DB 0X16,0X11,0,0X17,0XB0,"----------------"
+		DB 0X16,0X12,0,0X17,0XB8,"----------------"
+		DB 0
 
 X_OFFSET	EQU 63
 Y_OFFSET	EQU 2
@@ -385,7 +659,7 @@ TEXT_PORTREGS	DB 0X17,0X0F
 		DB 0X16,Y_OFFSET+0X11,X_OFFSET+2,"77="
 		DB 0X16,Y_OFFSET+0X12,X_OFFSET+2,"BF="
 		DB 0X16,Y_OFFSET+0X14,X_OFFSET+0,"DOS ENABLE= "
-		DB 0X16,Y_OFFSET+0X18,0X43,0X17,0X39," E.EXIT "
+		DB 0X16,Y_OFFSET+0X16,0X40,0X17,0X39,"  E.EXIT  "
 		DB 0X16,1,0X10,0X17,0X32," EVO Magic Service prealfa ",0
 TXT_VERIFY_FONT	DB 0X16,0X18,0,0X17,0X22,"  VERIFY READING FONT ",0
 TXT_VERIFY_OK	DB " OK    ",0
@@ -394,26 +668,17 @@ TXT_VERIFY_ERR	DB "ERROR  ",0
 		include txtmode_proc.a80
 		include fontread.a80
 		include tape.a80
-		include input_keys.a80
 		include mouse.a80
-		include selector.a80
-		include koshak.a80
 		include call_cmos.a80
 		include window.a80
+		include ay_printer.a80
 		include rst8_data.a80
-;		include fat/ports_ngs.a80
-;		include fat/sdcomand.a80
+		include fat/mounter.a80
 		include fat/dev_drv.a80
 		include fat/ngs_sd_drv.a80
 		include fat/z_sd_drv.a80
 		include fat/nemo_drv.a80
-		IF SMUC=1
-		include fat/smuc_drv.a80
-		ENDIF
-
-COM_FAT		include fat/read_fat.a80
-
-		include ay_printer.a80
+		include fat/read_fat.a80
 
 		DUPL 0X37F8-$,0XFF
 CHARS		binclude altstd.bin
@@ -421,3 +686,5 @@ CHARS		binclude altstd.bin
 		DB "RST_08"
 		DW DATA
 		DEPHASE
+
+		include addons.a80

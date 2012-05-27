@@ -1,28 +1,17 @@
 
-;LAST UPDATE: 18.01.2012 savelij
-
-		include ../../macros.a80
-		include ../../global_vars.a80
-		include ../../ports_ngs.a80
-		include ../../sdcomand.a80
+;LAST UPDATE: 27.05.2012 savelij
 
 DRV_VAR		EQU 0X4000
 
-		include ../../fat_vars.a80
-
-DD		EQU 13				;ÑÄíÄ
-MM		EQU 12				;åÖëüñ
-YY		EQU 11				;ÉéÑ
-DATA		EQU DD+(MM<<5)+(YY<<9)+0X8000	;ìÜÖ ìèÄäéÇÄçé
-
-		ORG 0
+		PHASE 0
 		DUPL ADR_SEL_ROM-$,0XFF
-JUMP2PAGE	OUT (C),A
+		OUT (C),A
 		NOP
 		RET
 
-		DUPL 0X0066-$,0XFF
-		NOP
+		DUPL 0X0038-$,0XFF
+		EI
+		RET
 
 		DUPL 0X0080-$,0XFF
 UNPACK		include ../../dec40.a80
@@ -30,19 +19,27 @@ UNPACK		include ../../dec40.a80
 		DUPL 0X0100-$,0XFF
 		JP UNP_MICRO_BOOT		;êÄëèÄäéÇäÄ áÄèìëäÄãäà HOBETA à SPG îÄâãéÇ
 		JP CRC16			;íÄÅãàóçõâ êÄëóÖí CRC16
+		JP INSTALL_NMIRST		;ìëíÄçéÇäÄ éÅêÄÅéíóàäéÇ NMI à RST
+		JP UNP_MAGICFONT		;êÄëèÄäéÇäÄ òêàîíÄ Ñãü NMI åÖçû
 
 UNP_MICRO_BOOT	LD HL,MICRO_BOOT
 		LD DE,DRV_VAR+0X300
-		CALL UNPACK
-		LD BC,WIN_A0
+		CALL UNPACK			;êÄëèÄäéÇÄãà FAT BOOT
+		LD HL,BUF_TEKVOL
+		LD DE,(RREG_L)
+		LD BC,0X100
+		LDIR				;ëäéèàêéÇÄãà èÖêÖåÖççõÖ FAT ÑêÄâÇÖêÄ ÇõÅêÄççéÉé êÄáÑÖãÄ
+RET2PAGE5	LD BC,WIN_A0
 		LD A,5
 		JP JUMP2PAGE
 
-;FK0
+UNP_MAGICFONT	CALL UNPACK
+		JR RET2PAGE5
+
 ; ÅõëíêÄü (íÄÅãàóçÄü) îìçäñàü èéÑëóíÄ CRC-16,
 ; IX=*DATA, HL=SIZE
 ; çÄ ÇõïéÑÖ -> HL=èéÑëóàíÄççéÖ áçÄóÖçàÖ
-CRC16		LD B,H
+CRC16_FAST	LD B,H
 		LD C,L
 		LD HL,0XFFFF
 		EXX
@@ -73,11 +70,14 @@ CRC16F0		LD A,(IX)
 		EXX
 		POP HL
 		EXX
+		RET
+
+CRC16FAST	CALL CRC16_FAST
 		LD BC,WIN_A0
 		LD A,5
 		JP JUMP2PAGE
 
-		DUPL (HIGH ($)+1)*0X100,0XFF
+		DUPL (HIGH ($)+1)*0X100-$,0XFF
 BUF_CRC16_TABL	DB 0X00,0X10,0X20,0X30,0X40,0X50,0X60,0X70,0X81,0X91,0XA1,0XB1,0XC1,0XD1,0XE1,0XF1
 		DB 0X12,0X02,0X32,0X22,0X52,0X42,0X72,0X62,0X93,0X83,0XB3,0XA3,0XD3,0XC3,0XF3,0XE3
 		DB 0X24,0X34,0X04,0X14,0X64,0X74,0X44,0X54,0XA5,0XB5,0X85,0X95,0XE5,0XF5,0XC5,0XD5
@@ -113,10 +113,93 @@ BUF_CRC16_TABL	DB 0X00,0X10,0X20,0X30,0X40,0X50,0X60,0X70,0X81,0X91,0XA1,0XB1,0X
 
 MICRO_BOOT	binclude ../../fat/source/micro_boot_fat_pack.rom
 
-		DUPL 0X27F8-$,0XFF
-		binclude 8x8_ar.fnt
-		binclude 866_code.fnt
-		binclude atm_code.fnt
+INSTALL_NMIRST	LD BC,WIN_P2
+		XOR A
+		OUT (C),A
+		LD IX,CPU2+ADR_SEL_ROM+4
+		LD HL,0X20
+		CALL CRC16_FAST
+		PUSH HL
+		LD HL,CODE_NMIRST
+		LD DE,CPU2+ADR_SEL_ROM
+		LD BC,ENMI_SERVICE-ADR_SEL_ROM
+		LDIR
+		LD (BUF_TABLVOL+0XFE),BC
+		LD IX,CPU2+ADR_SEL_ROM+4
+		LD HL,0X20
+		CALL CRC16_FAST
+		POP BC
+		AND A
+		SBC HL,BC
+		JR Z,INSTALLNMIRST1
+		LD BC,RD_0WINA1
+		IN A,(C)
+		AND 0X3F
+		OR 0X40
+		EX AF,AF'
+		LD BC,WIN_P1
+		LD A,PAGE_MOUNTER
+		OUT (C),A
+		LD HL,MOUNT_DRIVES
+		LD D,H
+		LD E,L
+		INC DE
+		LD BC,0X1FFF
+		LD (HL),0
+		LDIR
+		LD HL,CPU1
+		LD D,H
+		LD E,L
+		INC DE
+		LD BC,0X3FFF
+		LD (HL),0
+		LDIR
+		LD BC,WIN_A1
+		EX AF,AF'
+		OUT (C),A
+INSTALLNMIRST1	CALL SET4RESETFONT
+		LD BC,WIN_A0
+		XOR A
+		JP ADR_SEL_ROM
 
+SET4RESETFONT	LD A,CMOS_BYTE_00
+		LD BC,CMOSD_SET_ADR
+		OUT (C),A
+		LD BC,CMOSD_RD_WR
+		IN A,(C)
+		LD L,A
+		AND RELOAD_FONT
+		RET NZ				;Öëãà 1, íé òêàîí çÖ èÖêÖáÄÉêìÜÄÖå
+		LD A,L
+LD_SET_FONT	AND TYPE_FONT			;éèêÖÑÖãÖçàÖ ÇõúêÄççéÉé òêàîíÄ
+		LD HL,ATM_FONT			;0=òêàîí ATM
+		JR NZ,SET_FONT1
+		LD HL,CP866_FONT		;1=òêàîí CP866
+SET_FONT1	LD BC,WIN_P2
+		XOR A
+		OUT (C),A
+		LD DE,CPU2+OFFSET_BUFSYM
+		PUSH DE
+		CALL UNPACK
+		POP HL
+		LD DE,0
+		LD BC,0X0800
+		LD A,5           
+		OUT (PEVO_CONF),A
+		LDIR
+		LD A,1
+		OUT (PEVO_CONF),A
+		LD BC,WIN_A2
+		LD A,0X7D
+		OUT (C),A
+		RET
+
+		include nmi_service.a80
+
+CP866_UTL	binclude 8x8_ar_pack.bin
+CP866_FONT	binclude 866_code_pack.bin
+ATM_FONT	binclude atm_code_pack.bin
+
+		DUPL 0X3FF8-$,0XFF
 		DB "ADDONS"
 		DW DATA
