@@ -1,5 +1,5 @@
 // simulate fpga top-level with external dram, rom, z80
-// (c) 2010 NedoPC
+// (c) 2010-2012 NedoPC
 
 `include "../include/tune.v"
 
@@ -593,6 +593,27 @@ module tb;
 	assign spick   = 1'b0;
 	assign spido   = 1'b1;
 `endif
+
+
+
+
+
+	// set up breakpoint
+	initial
+	begin
+		#(650_000_000); // wait 650ms = 650*1000*1000 ns
+
+		@(posedge fclk);
+
+		tb.DUT.zports.brk_ena  = 1'b1;
+		tb.DUT.zports.brk_addr = 16'h0041;
+	end
+
+
+
+
+
+
 
 
 

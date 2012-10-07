@@ -13,7 +13,8 @@ module znmi
 	input  wire        zneg,
 
 	input  wire        int_start, // when INT starts
-	input  wire [ 1:0] set_nmi,   // NMI request from slavespi
+	input  wire [ 1:0] set_nmi,   // NMI requests from slavespi and #BF port
+	input  wire        imm_nmi,   // immediate NMI from breakpoint
 
 	input  wire        clr_nmi, // clear nmi: from zports, pulsed at out to #xxBE
 
@@ -35,6 +36,10 @@ module znmi
 	reg  [1:0] set_nmi_r;
 	wire       set_nmi_now;
 
+	reg        imm_nmi_r;
+	wire       imm_nmi_now;
+
+
 	reg pending_nmi;
 
 	reg in_nmi_2; // active (=1) when NMIed to ROM, after 0066 M1 becomes 0,
@@ -52,6 +57,8 @@ module znmi
 
 	reg last_m1_0066;
 
+
+	wire nmi_start;
 
 
 
@@ -94,8 +101,13 @@ module znmi
 	always @(posedge fclk)
 		set_nmi_r <= set_nmi;
 	//
-	assign set_nmi_now = (set_nmi_r[0] && (!set_nmi[0])) ||
-	                     (set_nmi_r[1] && (!set_nmi[1])) ;
+	assign set_nmi_now = | (set_nmi_r & (~set_nmi) );
+
+	always @(posedge fclk)
+		imm_nmi_r <= imm_nmi;
+	//
+	assign imm_nmi_now = | ( (~imm_nmi_r) & imm_nmi );
+
 
 
 	always @(posedge fclk, negedge rst_n)
@@ -109,6 +121,9 @@ module znmi
 			pending_nmi <= 1'b1;
 	end
 
+
+	// actual nmi start
+	assign nmi_start = (pending_nmi && int_start) || imm_nmi_now;
 
 
 
@@ -130,7 +145,7 @@ module znmi
 		in_nmi_2 <= 1'b0;
 	else // posedge fclk
 	begin
-		if( pending_nmi && int_start && (!in_nmi) && last_m1_rom )
+		if( nmi_start && (!in_nmi) && last_m1_rom )
 			in_nmi_2 <= 1'b1;
 		else if( rfsh_n_reg[1] && (!rfsh_n_reg[0]) && last_m1_0066 )
 			in_nmi_2 <= 1'b0;
@@ -144,7 +159,7 @@ module znmi
 	begin
 		if( pending_clr && (!clr_count[1]) )
 			in_nmi <= 1'b0;
-		else if( (pending_nmi && int_start && (!in_nmi) && (!last_m1_rom))       ||
+		else if( (nmi_start && (!in_nmi) && (!last_m1_rom))                      ||
 		         (rfsh_n_reg[1] && (!rfsh_n_reg[0]) && last_m1_0066 && in_nmi_2) )
 			in_nmi <= 1'b1;
 	end
@@ -153,7 +168,7 @@ module znmi
 	always @(posedge fclk, negedge rst_n)
 	if( !rst_n )
 		nmi_count <= 3'b000;
-	else if( pending_nmi && int_start && (!in_nmi) )
+	else if( nmi_start && (!in_nmi) )
 		nmi_count <= 3'b111;
 	else if( nmi_count[2] && zpos )
 		nmi_count <= nmi_count - 3'd1;

@@ -71,14 +71,6 @@ add wave -noupdate /tb/DUT/sdclk
 add wave -noupdate /tb/DUT/sddo
 add wave -noupdate /tb/DUT/sddi
 add wave -noupdate -divider <NULL>
-add wave -noupdate /tb/spitest_print/sdclk
-add wave -noupdate /tb/spitest_print/sdcs_n
-add wave -noupdate /tb/spitest_print/sddi
-add wave -noupdate /tb/spitest_print/sddo
-add wave -noupdate /tb/spitest_print/shift_in
-add wave -noupdate -radix unsigned /tb/spitest_print/counter
-add wave -noupdate -radix unsigned /tb/spitest_print/pointer
-add wave -noupdate -radix ascii /tb/spitest_print/txt_buffer
 add wave -noupdate -divider <NULL>
 add wave -noupdate /tb/DUT/spics_n
 add wave -noupdate /tb/DUT/spick
@@ -169,6 +161,18 @@ add wave -noupdate -radix unsigned /tb/DUT/video_top/vred
 add wave -noupdate -radix unsigned /tb/DUT/video_top/vgrn
 add wave -noupdate -radix unsigned /tb/DUT/video_top/vblu
 add wave -noupdate -divider <NULL>
+add wave -noupdate /tb/DUT/znmi/set_nmi
+add wave -noupdate /tb/DUT/znmi/set_nmi_r
+add wave -noupdate /tb/DUT/znmi/set_nmi_now
+add wave -noupdate /tb/DUT/znmi/pending_nmi
+add wave -noupdate /tb/DUT/znmi/nmi_count
+add wave -noupdate /tb/DUT/znmi/gen_nmi
+add wave -noupdate /tb/DUT/znmi/imm_nmi
+add wave -noupdate /tb/DUT/znmi/imm_nmi_r
+add wave -noupdate /tb/DUT/znmi/imm_nmi_now
+add wave -noupdate -radix hexadecimal /tb/DUT/zbreak/a
+add wave -noupdate -radix hexadecimal /tb/DUT/zbreak/brk_addr
+add wave -noupdate /tb/DUT/zbreak/brk_ena
 add wave -noupdate -divider <NULL>
 add wave -noupdate -divider <NULL>
 add wave -noupdate -divider <NULL>
@@ -181,7 +185,7 @@ add wave -noupdate -divider <NULL>
 add wave -noupdate -divider <NULL>
 add wave -noupdate -divider <NULL>
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {447762029900 ps} 0} {{Cursor 2} {45952747000 ps} 0} {{Cursor 3} {760917722 ps} 0}
+WaveRestoreCursors {{Cursor 1} {650522851854 ps} 0}
 configure wave -namecolwidth 241
 configure wave -valuecolwidth 40
 configure wave -justifyvalue left
@@ -196,4 +200,4 @@ configure wave -griddelta 8
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {0 ps} {184414557 ps}
+WaveRestoreZoom {624869038311 ps} {658487099296 ps}

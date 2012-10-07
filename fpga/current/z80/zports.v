@@ -119,7 +119,11 @@ module zports(
 
 
 	// NMI generation
-	output reg         set_nmi
+	output reg         set_nmi,
+
+	// break enable & address
+	output reg         brk_ena,
+	output reg  [15:0] brk_addr 
 );
 
 
@@ -164,6 +168,7 @@ module zports(
 
 	localparam ZXEVBE = 8'hBE; // xxBE config-read and nmi-end port
 	localparam ZXEVBF = 8'hBF; // xxBF config port
+	localparam ZXEVBRK = 8'hBD; // xxBD breakpoint address port	
 
 	localparam COMPORT = 8'hEF; // F8EF..FFEF - rs232 ports
 
@@ -272,7 +277,7 @@ module zports(
 
 		    ( (loa==ATMF7)&&shadow ) || ( (loa==ATM77)&&shadow ) ||
 
-		    ( loa==ZXEVBF ) || ( loa==ZXEVBE) || ( loa==COMPORT )
+		    ( loa==ZXEVBF ) || ( loa==ZXEVBE) || ( loa==ZXEVBRK) || ( loa==COMPORT )
 		  )
 
 
@@ -392,7 +397,7 @@ module zports(
 		end
 
 		ZXEVBF: begin
-			dout = { 4'b0000, set_nmi, fntw_en_reg, romrw_en_reg, shadow_en_reg };
+			dout = { 3'b000, brk_ena, set_nmi, fntw_en_reg, romrw_en_reg, shadow_en_reg };
 		end
 
 		ZXEVBE: begin
@@ -422,6 +427,25 @@ module zports(
 
 	assign comport_wr   = ( (loa==COMPORT) && port_wr);
 	assign comport_rd   = ( (loa==COMPORT) && port_rd);
+
+	
+	assign zxevbrk_wr_fclk = ( (loa==ZXEVBRK) && port_wr_fclk);
+
+
+
+
+
+	// break address write
+	always @(posedge fclk)
+	if( zxevbrk_wr_fclk)
+	begin
+		if( !a[8] )
+			brk_addr[ 7:0] <= din;
+		else // a[8]==1
+			brk_addr[15:8] <= din;
+	end
+
+
 
 
 
@@ -755,6 +779,7 @@ module zports(
 		romrw_en_reg  <= 1'b0;
 		fntw_en_reg   <= 1'b0;
 		set_nmi       <= 1'b0;
+		brk_ena       <= 1'b0;
 	end
 	else if( zxevbf_wr_fclk )
 	begin
@@ -762,6 +787,7 @@ module zports(
 		romrw_en_reg  <= din[1];
 		fntw_en_reg   <= din[2];
 		set_nmi       <= din[3];
+		brk_ena       <= din[4];
 	end
 
 	assign romrw_en = romrw_en_reg;
@@ -824,33 +850,35 @@ module zports(
 	// port BE read
 
 	always @*
-	case( a[11:8] )
+	case( a[12:8] )
 
-	4'h0: portbemux = pages[ 7:0 ];
-	4'h1: portbemux = pages[15:8 ];
-	4'h2: portbemux = pages[23:16];
-	4'h3: portbemux = pages[31:24];
-	4'h4: portbemux = pages[39:32];
-	4'h5: portbemux = pages[47:40];
-	4'h6: portbemux = pages[55:48];
-	4'h7: portbemux = pages[63:56];
+	5'h0: portbemux = pages[ 7:0 ];
+	5'h1: portbemux = pages[15:8 ];
+	5'h2: portbemux = pages[23:16];
+	5'h3: portbemux = pages[31:24];
+	5'h4: portbemux = pages[39:32];
+	5'h5: portbemux = pages[47:40];
+	5'h6: portbemux = pages[55:48];
+	5'h7: portbemux = pages[63:56];
 
-	4'h8: portbemux = ramnroms;
-	4'h9: portbemux = dos7ffds;
+	5'h8: portbemux = ramnroms;
+	5'h9: portbemux = dos7ffds;
 
-	4'hA: portbemux = p7ffd_int;
-	4'hB: portbemux = peff7_int;
+	5'hA: portbemux = p7ffd_int;
+	5'hB: portbemux = peff7_int;
 
-	4'hC: portbemux = { ~atm_pen2, atm_cpm_n, ~atm_pen, dos, atm_turbo, atm_scr_mode };
+	5'hC: portbemux = { ~atm_pen2, atm_cpm_n, ~atm_pen, dos, atm_turbo, atm_scr_mode };
 
-	4'hD: portbemux = { ~palcolor[4], ~palcolor[2], ~palcolor[0], ~palcolor[5], 2'b11, ~palcolor[3], ~palcolor[1] };
+	5'hD: portbemux = { ~palcolor[4], ~palcolor[2], ~palcolor[0], ~palcolor[5], 2'b11, ~palcolor[3], ~palcolor[1] };
 //	assign atm_paldata = { ~din[4], ~din[7], ~din[1], ~din[6], ~din[0], ~din[5] };
 //  {GgRrBb} -> {grbG11RB}
 // was: 76543210 -> 471605
 // now:             543210 -> 4205xx31
 
-	4'hE: portbemux = fontrom_readback;
+	5'hE: portbemux = fontrom_readback;
 
+	5'h10: portbemux = brk_addr[7:0];
+	5'h11: portbemux = brk_addr[15:8];
 
 	default: portbemux = 8'bXXXXXXXX;
 

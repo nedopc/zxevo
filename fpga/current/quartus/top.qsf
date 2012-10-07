@@ -211,7 +211,6 @@ set_global_assignment -name MESSAGE_SUPPRESSION_RULE_FILE top.srf
 set_global_assignment -name SMART_RECOMPILE OFF
 set_global_assignment -name VERILOG_INPUT_VERSION SYSTEMVERILOG_2005
 set_global_assignment -name VERILOG_SHOW_LMF_MAPPING_MESSAGES OFF
-set_global_assignment -name VERILOG_FILE ../z80/znmi.v
 set_global_assignment -name VERILOG_FILE ../sound/sound.v
 set_global_assignment -name VERILOG_FILE ../video/video_fontrom.v
 set_global_assignment -name VERILOG_FILE ../video/video_vga_sync_h.v
@@ -234,6 +233,8 @@ set_global_assignment -name VERILOG_FILE ../z80/zclock.v
 set_global_assignment -name VERILOG_FILE ../z80/zint.v
 set_global_assignment -name VERILOG_FILE ../z80/zmem.v
 set_global_assignment -name VERILOG_FILE ../z80/zbus.v
+set_global_assignment -name VERILOG_FILE ../z80/znmi.v
+set_global_assignment -name VERILOG_FILE ../z80/zbreak.v
 set_global_assignment -name VERILOG_FILE ../vg93/vg93.v
 set_global_assignment -name VERILOG_FILE ../vg93/fapch_counter.v
 set_global_assignment -name VERILOG_FILE ../vg93/fapch_zek.v

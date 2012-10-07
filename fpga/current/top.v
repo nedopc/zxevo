@@ -162,13 +162,17 @@ module top(
 	// config signals
 	wire [7:0] not_used;
 	wire cfg_vga_on;
-	wire [1:0] set_nmi;
 
 	// nmi signals
 	wire gen_nmi;
 	wire clr_nmi;
 	wire in_nmi;
+	wire [1:0] set_nmi;
+	wire imm_nmi;
 
+	// breakpoint signals
+	wire brk_ena;
+	wire [15:0] brk_addr;
 
 
 	wire tape_in;
@@ -756,8 +760,10 @@ module top(
 
 		.external_port(external_port),
 
+		.set_nmi(set_nmi[1]),
 
-		.set_nmi(set_nmi[1])
+		.brk_ena (brk_ena ),
+		.brk_addr(brk_addr)
 	);
 
 
@@ -790,11 +796,32 @@ module top(
 		.int_start(int_start),
 
 		.set_nmi(set_nmi),
+		.imm_nmi(imm_nmi),
 		.clr_nmi(clr_nmi),
 
 		.in_nmi (in_nmi ),
 		.gen_nmi(gen_nmi)
 	);
+
+
+	zbreak zbreak
+	(
+		.rst_n(rst_n),
+		.fclk(fclk),
+		.zpos(zpos),
+		.zneg(zneg),
+
+		.m1_n  (m1_n  ),
+		.mreq_n(mreq_n),
+		.a     (a     ),
+
+		.imm_nmi(imm_nmi),
+
+		.brk_ena (brk_ena ),
+		.brk_addr(brk_addr)
+	);
+
+
 
 
 
