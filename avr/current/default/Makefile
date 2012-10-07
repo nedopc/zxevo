@@ -97,7 +97,7 @@ top.rbf: ../../../fpga/current/quartus/top.rbf
 
 $(FPGACORE): top.rbf
 	../../../tools/mhmt/mhmt -maxwin2048 top.rbf top.mlz
-	avr-objcopy -I binary -O elf32-avr --rename-section .data=.progmem.data,contents,alloc,load,readonly,data --redefine-sym _binary_top_mlz_start=fpga --redefine-sym _binary_top_mlz_end=fpga_end top.mlz top.o
+	avr-objcopy -I binary -O elf32-avr -B avr:51 --rename-section .data=.progmem.data,contents,alloc,load,readonly,data --redefine-sym _binary_top_mlz_start=fpga --redefine-sym _binary_top_mlz_end=fpga_end top.mlz top.o
 
 %.hex: $(TARGET)
 	avr-objcopy -O ihex $(HEX_FLASH_FLAGS)  $< $@
