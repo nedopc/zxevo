@@ -34,6 +34,7 @@ tb_top.v
 ../z80/znmi.v
 ../z80/zports.v
 ../z80/zwait.v
+../z80/zbreak.v
 
 ../sim_models/drammem.v
 rom_top.v		
