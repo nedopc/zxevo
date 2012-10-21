@@ -172,7 +172,7 @@ module zports(
 
 	localparam ZXEVBE = 8'hBE; // xxBE config-read and nmi-end port
 	localparam ZXEVBF = 8'hBF; // xxBF config port
-	localparam ZXEVBRK = 8'hDE; // xxDE breakpoint address port	
+	localparam ZXEVBRK = 8'hBD; // xxBD breakpoint address port	
 
 	localparam COMPORT = 8'hEF; // F8EF..FFEF - rs232 ports
 
