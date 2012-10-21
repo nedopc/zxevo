@@ -127,7 +127,11 @@ module zports(
 );
 
 
-
+`define IS_NIDE_REGS(x) ( (x[2:0]==3'b000) && (x[3]!=x[4]) ) 
+`define IS_NIDE_HIGH(x) ( x[7:0]==8'h11 )
+`define IS_PORT_NIDE(x) ( `IS_NIDE_REGS(x) || `IS_NIDE_HIGH(x) )
+`define NIDE_REGS 8'h10,8'h30,8'h50,8'h70,8'h90,8'hB0,8'hD0,8'hF0, \
+                  8'h08,8'h28,8'h48,8'h68,8'h88,8'hA8,8'hC8,8'hE8
 
 	localparam PORTFE = 8'hFE;
 	localparam PORTF6 = 8'hF6;
@@ -168,7 +172,7 @@ module zports(
 
 	localparam ZXEVBE = 8'hBE; // xxBE config-read and nmi-end port
 	localparam ZXEVBF = 8'hBF; // xxBF config port
-	localparam ZXEVBRK = 8'hBD; // xxBD breakpoint address port	
+	localparam ZXEVBRK = 8'hDE; // xxDE breakpoint address port	
 
 	localparam COMPORT = 8'hEF; // F8EF..FFEF - rs232 ports
 
@@ -261,8 +265,9 @@ module zports(
 		if( (loa==PORTFE) || (loa==PORTF6) ||
 		    (loa==PORTFD) ||
 
-		    (loa==NIDE10) || (loa==NIDE11) || (loa==NIDE30) || (loa==NIDE50) || (loa==NIDE70) ||
-		    (loa==NIDE90) || (loa==NIDEB0) || (loa==NIDED0) || (loa==NIDEF0) || (loa==NIDEC8) ||
+		    `IS_PORT_NIDE(loa) ||
+//		    (loa==NIDE10) || (loa==NIDE11) || (loa==NIDE30) || (loa==NIDE50) || (loa==NIDE70) ||
+//		    (loa==NIDE90) || (loa==NIDEB0) || (loa==NIDED0) || (loa==NIDEF0) || (loa==NIDEC8) ||
 
 		    (loa==KMOUSE) ||
 
@@ -359,7 +364,7 @@ module zports(
 			dout = { 1'b1, tape_read, 1'b0, keys_in };
 
 
-		NIDE10,NIDE30,NIDE50,NIDE70,NIDE90,NIDEB0,NIDED0,NIDEF0,NIDEC8:
+		`NIDE_REGS:
 			dout = iderdeven;
 		NIDE11:
 			dout = iderdodd;
@@ -467,10 +472,10 @@ module zports(
 
 	// IDE physical ports (that go to IDE device)
 	always @(loa)
-		case( loa )
-		NIDE10,NIDE30,NIDE50,NIDE70,NIDE90,NIDEB0,NIDED0,NIDEF0,NIDEC8: ide_ports = 1'b1;
-		default: ide_ports = 1'b0;
-		endcase
+	if( `IS_NIDE_REGS(loa) )
+		ide_ports = 1'b1;
+	else
+		ide_ports = 1'b0;
 
 
 	assign idein_lo_rd  = port_rd && (loa==NIDE10) && (!ide_rd_trig);
