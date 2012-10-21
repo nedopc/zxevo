@@ -89,6 +89,10 @@ Z80INLINE unsigned char m1_cycle(Z80 *cpu)
    if ((conf.mem_model == MM_PENTAGON) &&
       ((comp.pEFF7 & (EFF7_384 | EFF7_4BPP)) == (EFF7_384 | EFF7_4BPP)))
        temp.offset_hscroll++;
+
+	if( conf.mem_model==MM_ATM3 && (comp.pBF&0x10) && (comp.brk_addr==cpu->pc) )
+		nmi_pending = 1;
+
    cpu->r_low++;// = (cpu->r & 0x80) + ((cpu->r+1) & 0x7F);
    cpu->t += 4;
    return rm(cpu->pc++);
@@ -227,7 +231,15 @@ void z80loop()
 
       if(nmi_pending)
       {
-         if((conf.mem_model == MM_PROFSCORP || conf.mem_model == MM_SCORP))
+		if( conf.mem_model==MM_ATM3 && (comp.pBF&0x10) )
+		{
+			nmi_pending = 0;
+			cpu.nmi_in_progress = true;
+			set_banks();
+			m_nmi(RM_NOCHANGE);
+			continue;
+		}
+		else if((conf.mem_model == MM_PROFSCORP || conf.mem_model == MM_SCORP))
          {
              nmi_pending--;
              if(cpu.pc >= 0x4000)
