@@ -95,7 +95,7 @@ void out(unsigned port, unsigned char val)
 
    if(conf.mem_model == MM_ATM3)
    {
-       // Порт расширений АТМ3
+       // Порт расширений пентевы
        if((port & 0xFF) == 0xBF)
        {
            if((comp.pBF ^ val) & comp.pBF & 8) // D3: 1->0
@@ -111,6 +111,23 @@ void out(unsigned port, unsigned char val)
            comp.pBE = 2; // счетчик для выхода из nmi
            return;
        }
+	   
+	   // порт адреса брякпоинта
+	   if((port & 0xFF) == 0xBD)
+	   {
+			if( port&0x0100 )
+			{ // high part of address
+				comp.brk_addr &= 0x00FF;
+				comp.brk_addr |= ( ((u16)val) << 8 )&0xFF00;
+			}
+			else
+			{ // low part
+				comp.brk_addr &= 0xFF00;
+				comp.brk_addr |= ((u16)val)&0x00FF;
+			}
+			
+			return;
+	   }
    }
 
    if (comp.flags & CF_DOSPORTS)
@@ -714,6 +731,10 @@ __inline unsigned char in1(unsigned port)
            case 0xC: return (((comp.aFF77 >> 14) << 7) & 0x0080) | (((comp.aFF77 >> 9) << 6) & 0x0040) | (((comp.aFF77 >> 8) << 5) & 0x0020) | ((comp.flags & CF_TRDOS)?0x0010:0) | (comp.pFF77 & 0xF);
            case 0xD: return atm_readpal();
 		   case 0xE: return zxevo_readfont();
+		   
+		   // breakpoint address readback
+		   case 0x10: return comp.brk_addr&0x00FF;
+		   case 0x11: return (comp.brk_addr>>8)&0x00FF;
            }
        }
    }
