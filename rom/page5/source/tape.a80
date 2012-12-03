@@ -98,10 +98,4 @@ TAPE_INIT	XOR A
 		LD (HL),A
 		INC L
 		LD (HL),A
-;		LD HL,(RREG_L)
-;		LD DE,(RREG_E)
-;		SCF
-;		SBC HL,DE
-;		LD (RREG_L),HL
-;		LD (RREG_E),DE
 		RET

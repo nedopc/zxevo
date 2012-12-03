@@ -417,7 +417,7 @@ PC_KEYS		DB 0X16,PC_KEY_Y+1,PC_KEY_X+1, "зддд© зддбддбддбдд©зддбддбддбдд©зддбддд
 ;34	G	36	6	01	F9	4A	/	6C	HOME
 ;33	H	3D	7	09	F10			7D	PG UP
 ;43	I	3E	8	78	F11			71	DELETE
-;3B	J	46	9	 07	 F12			69	END
+;3B	J	46	9	07	F12			69	END
 ;42	K	0E	`	7E	SCROLL			7A	PG DN
 ;4B	L	4E	-	54	[			75	U ARROW
 ;3A	M	55	=	77	NUM			6B	L ARROW

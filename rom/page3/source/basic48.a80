@@ -1,9 +1,9 @@
 
 ;www.fruitcake.plus.com
 
-;LAST UPDATE: 20.04.2012 savelij
+;LAST UPDATE: 07.11.2012 savelij
 
-		include rst8_equ.a80
+		include ../../define.a80
 
 TAP_EMU_BORDER	EQU 0
 
@@ -1780,8 +1780,8 @@ L0556:  INC     D               ; reset the zero flag without disturbing carry.
         OR      $02             ; combine with red border colour.
 
 ;===============================
-		RST 0X08
-		DB TAPE_EMUL
+		RST 8
+		DB _TAPE_EMUL
 ;		LD C,A		; and store initial state long-term in C.
 ;		CP A		; set the zero flag.
 ;=============================== 
@@ -2361,14 +2361,9 @@ L0723:  LD      A,($5C74)       ; fetch command from T_ADDR
 L073A:  LD      (IX+$00),$00    ; place type zero - program in descriptor.
         LD      HL,($5C59)      ; fetch E_LINE to HL.
         LD      DE,($5C53)      ; fetch PROG to DE.
-
-;===============================
-;		RST 0X08
-;		DB TAPE_INIT
-;		NOP
-		SCF		; set carry flag to calculate from end of
+	SCF			; set carry flag to calculate from end of
 				; variables E_LINE -1.
-		SBC HL,DE	; subtract to give total length.
+	SBC	HL,DE		; subtract to give total length.
 
         LD      (IX+$0B),L      ; place total length
         LD      (IX+$0C),H      ; in descriptor.
@@ -4337,8 +4332,8 @@ L0E9B:  LD      A,$18           ; reverse the line number
 
 L0EAC:  DI                      ; disable interrupts as this is time-critical.
 ;===============================
-		RST 0X08
-		DB AY_PRN_SCR
+		RST 8
+		DB _AY_PRN_SCR
 ;		LD B,$B0		; top 176 lines.
 ;===============================
 
@@ -4451,8 +4446,8 @@ L0EE7:  LD      (HL),A          ; set addressed location to zero.
 ;===============================
 L0EF4		
 		LD A,(HL)
-		RST 0X08
-		DB AY_PRN_A_
+		RST 8
+		DB _AY_PRN_A_
 		RET
 ;		LD A,B			; fetch the counter 1-8 or 1-176
 ;		CP $03			; is it 01 or 02 ?.
@@ -5365,8 +5360,8 @@ L11CB:  LD      B,A             ; save the flag for later branching.
         NOP                     ;
 ;        NOP                     ;
 ;        NOP                     ;
-		RST 0X08
-		DB TAPE_INIT
+		RST 8
+		DB _TAPE_INIT
 
 ; ------------
 ; Check RAM
@@ -19277,12 +19272,12 @@ L3BDA		DC "PLAY"	;DEFM    "PLA"           ; PLAY token
 L3BDE:  JP      L3C01           ; This is not called from either ROM. It can be used to scan the keypad.
 
 ;===============================
-PRINTER_INITER	RST 0X08
-		DB AY_PRN_INIT
+PRINTER_INITER	RST 8
+		DB _AY_PRN_INIT
 		RET
 
-PRN_TOKEN	RST 0X08
-		DB AY_PRN_TOKEN
+PRN_TOKEN	RST 8
+		DB _AY_PRN_TOKEN
 		RET
 
 		DUPL 0X3BFF-$,0
@@ -19436,7 +19431,56 @@ L3C8F:  DB    $13, $00         ; Bright, off
         DB    $13, $01         ; Bright, on
         DB    $38, $36         ; '8', '6'
 
-		include new_proc.a80
+RST8_CMP	EX (SP),HL		;HL
+		PUSH AF			;AF
+		LD A,(HL)
+		CP 0X40
+		JR NC,RST8_YES
+RST8_NO		POP AF
+		EX (SP),HL
+		LD HL,($5C5D)
+		LD ($5C5F),HL
+		JP L0053
+
+RST8_YES	CP 80H
+		JR NC,RST8_NO
+		PUSH BC			;BC
+		LD A,R
+		JP PE,RST8YES1
+		LD A,R
+RST8YES1	DI
+		PUSH AF			;RF
+		PUSH HL			;ADR_RET
+		PUSH DE			;RAMNROM+DOS7FFD
+		LD BC,RD_1WINA0
+		IN H,(C)
+		IN A,(PEVO_CONF)
+		LD L,A
+		OR 1
+		OUT (PEVO_CONF),A
+		LD B,HIGH (RD_DOS7FFD)
+		IN E,(C)
+		DEC B
+		IN D,(C)
+		LD BC,WIN_A0
+		LD A,3
+		OUT (C),A
+		LD B,HIGH (WIN_P0)
+		XOR A
+		JP ADR_SEL_ROM
+
+		DUPL ADR_RST8END-$,0
+RST8_END	LD A,L
+		OUT (PEVO_CONF),A
+		POP DE
+		POP HL
+		POP AF
+		JP PO,RST8END1
+		EI
+RST8END1	POP BC
+		POP AF
+		EX (SP),HL
+		RET
 
 ; ------
 ; UNUSED

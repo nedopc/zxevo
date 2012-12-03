@@ -1,7 +1,8 @@
 
-;LAST UPDATE: 16.02.2011 savelij
+;LAST UPDATE: 25.11.2011 savelij
 
 		include ../../macros.a80
+		include ../../define.a80
 		include ../../global_vars.a80
 		include ../../ports_ngs.a80
 		include ../../sdcomand.a80

@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 23.01.2012 savelij
+;LAST UPDATE: 13.06.2012 savelij
 
 ;LINIT  - initialization (hook on "P"-channel and printer init)
 ;LPRINT - print ZX simbol (with token decode)
@@ -75,7 +75,7 @@ AY_PRN_A_	LD H,0XEF
 		LD (RADRRET_L),HL
 		RET
 
-AY_PRN_A_1	LD A,(RREG_A)	;(0X80FD)
+AY_PRN_A_1	LD A,(RREG_A)
 AY_PRN_BYTE	PUSH BC
 		PUSH HL
 		CALL LP01
@@ -112,7 +112,6 @@ AY_PRN_INIT1	LD DE,0XFFBF
 
 EXIT_09F4	LD HL,0X09F4
 		LD (RADRRET_L),HL
-		LD SP,(INTERNAL_SP)
 		RET
 
 AY_PRN_TOKEN	LD H,0XEF
@@ -170,7 +169,6 @@ LP05		LD HL,0X1B7B
 		LD (RADRRET_L),HL
 		LD HL,REI_DI
 		SET 2,(HL)
-		LD SP,(INTERNAL_SP)
 		RET
 
 ;Command code for 9-pin EPSON-compatibility printers

@@ -1,6 +1,6 @@
 @ECHO OFF
 
-cd ..\..\fat\source
+cd ..\..\fat_boot\source
 
 ..\..\..\tools\asw\bin\asw -cpu z80undoc -U -L make_micro_boot_fat.a80
 ..\..\..\tools\asw\bin\p2bin make_micro_boot_fat.p micro_boot_fat.rom -r $-$ -k
