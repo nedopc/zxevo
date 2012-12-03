@@ -1,59 +1,101 @@
 
-;LAST UPDATE: 26.05.2012 savelij
+;LAST UPDATE: 07.11.2012 savelij
 
 		include ../../macros.a80
+		include ../../define.a80
 		include ../../global_vars.a80
-
-DD		EQU 26				;„€’€
-MM		EQU 5				;Œ…‘Ÿ–
-YY		EQU 12				;ƒŽ„
-DATA		EQU DD+(MM<<5)+(YY<<9)+0X8000	;“†… “€ŠŽ‚€Ž
 
 KOL_MODES	EQU 4
 DEPKADR		EQU 0X6000
 
 		ORG 0X0000
 		DI
-		LD SP,DEPKADR
-		LD IY,0X5C3A
-		LD A,0X3F
-		LD I,A
-		IM 1
-		XOR A
-		OUT (0XFE),A
-		JR RSTRAM0
+		JP INITPAGE0
+
+		DUPL 0X0008-$,0XFF
+		JP DOS2RST8
 
 		DUPL ADR_SEL_ROM-$,0XFF
 		OUT (C),A
 		NOP
 		RET
 
-RSTRAM0		LD IXL,0
-		LD BC,CMOSD_SET_ADR
-		LD A,0X11
-		OUT (C),A
-		LD B,HIGH (CMOSD_RD_WR)
-		IN A,(C)
-		CP 0X55
-		JR Z,RSTRAM1
-		CP 0XAA
-		JR Z,RSTRAM1
-		LD IXL,1
-		JR RSTRAM1
-
 		DUPL 0X0038-$,0XFF
 		ORG 0X0038
 		EI
 		RET
-		
-RSTRAM1		LD HL,PAGES_CONF
-		JR NZ,RSTRAM
+
+		DUPL 0X0066-$,0XFF
+		NOP
+
+INITPAGE0	LD SP,DEPKADR
+		LD IY,0X5C3A
+		LD A,0X3F
+		LD I,A
+		IM 1
+		XOR A
+		OUT (0XFE),A
+		LD HL,PAGES_CONF
+		LD BC,0XBC77
+		LD A,2
+		OUT (C),A
+		LD DE,0X103F
+INITPAGE2	LD BC,0X7FFD
+		OUT (C),D
+		LD BC,0XF7
+INITPAGE1	OUTI
+		LD A,B
+		SUB E
+		LD B,A
+		JR NZ,INITPAGE1
+		LD BC,0X7FFD
+		LD A,D
+		XOR 0X10
+		LD D,A
+		JR Z,INITPAGE2
+		LD BC,0XFF77
+		LD A,0XAB
+		OUT (C),A
+		PEC_ON SHADOW_BF
+;		LD A,1
+;		OUT (PEVO_CONF),A
+		LD HL,INITPAGE3
+		PUSH HL
+		LD HL,INST_NMIRST
+		PUSH HL
+		LD BC,WIN_A0
+		LD A,P_ADDON1
+		JP ADR_SEL_ROM
+
+INITPAGE3	RST 8
+		DB _CMOS_RW
+		DB _INIT_CMOS
+		LD HL,PAGES_CONF
 		LD A,0XEF
 		IN A,(0XFE)
+		RRCA				;Ž‚…Š€ €†€’ˆŸ ŠŽŠˆ "0" ˆ ‘Ž‘…
+		JR NC,RSTRAM			;‘Ž‘ ‚ Ž‘Ž‚Ž… ‡“
 		RRCA
-		JR NC,RSTRAM
-		LD BC,CMOSD_SET_ADR
-		LD A,0XEF
+		RRCA
+		RRCA
+		RRCA				;Ž‚…Š€ €†€’ˆŸ ŠŽŠˆ "6" ˆ ‘Ž‘…
+		JR C,INITPAGE4
+;‚•Ž„ ‚ Ž’‹€„—ˆŠ
+		EXX
+		LD BC,WIN_P2
+		XOR A
+		OUT (C),A
+		LD HL,CPU2+DEBUG_ONOFF
+		SET 7,(HL)
+		EXX
+		IN A,(PEVO_CONF)
+		OR NMI_BF
+		OUT (PEVO_CONF),A
+		AND NMI_BF!0XFF
+		OUT (PEVO_CONF),A
+		HALT
+INITPAGE4	LD BC,CMOSD_SET_ADR
+		LD A,CMOS_BYTE_00
 		OUT (C),A
 		LD B,HIGH (CMOSD_RD_WR)
 		IN A,(C)
@@ -68,14 +110,11 @@ RSTRAM1		LD HL,PAGES_CONF
 		DEC A
 		LD HL,PAGES_PROFROM		;ŠŽ”ˆƒ“ˆŽ‚€’œ „‹Ÿ PROFROM
 		JR Z,RSTRAM
-
-		DUPL 0X0066-$,0
-		NOP 
 		LD HL,PAGES_CUSTOM		;ŠŽ”ˆƒ“ˆŽ‚€’œ „‹Ÿ USER ROM
 RSTRAM		LD A,0XEF
 		IN A,(0XFE)
-		RRCA
-		JR NC,RSTRAM
+		RRCA				;Ž‚…Š€ … €†€’Ž‘’ˆ ŠŽŠˆ "0" ˆ ‘Ž‘…
+		JR NC,RSTRAM			;…‘‹ˆ €†€’€ †„…Œ Ž’“‘Š€ˆŸ
 		LD BC,0XBC77
 		LD A,2
 		OUT (C),A
@@ -95,7 +134,7 @@ LOOP1		OUTI
 		JR Z,LOOP2
 RSTPAL		LD A,(HL)
 		LD IXH,A			;ŽŒ… ‘’€ˆ–› ‡€‚…˜…ˆŸ ˆˆ’€ Œ€€ƒ…€ 
-		LD DE,0XA30F			;ZX SCREEN MODE, TURBO OFF („‹Ÿ €’Œ)
+		LD DE,0XAB0F			;ZX SCREEN MODE, TURBO ON 14MHZ
 		LD BC,0XFD77			;ˆ „Ž‘’“ Š €‹ˆ’…
 		OUT (C),D
 		EI				;¯ «¨âà 
@@ -118,9 +157,6 @@ RSTPAL0		LD A,E
 END_INIT	LD A,0XAB
 		LD BC,0XFF77
 		OUT (C),A			;¢ëª«.PAL
-RSTKEYS		LD A,IXL
-		AND A
-		CALL NZ,SET_CMOS_DEFLT
 		LD A,IXH
 		LD BC,0
 		AND 0X3C
@@ -138,24 +174,27 @@ RSTKEYS3	PUSH BC
 		LD BC,WIN_A0
 		LD A,IXH
 		OUT (C),A
-		XOR A
-		OUT (PEVO_CONF),A
+		PEC_OFF SHADOW_BF
+;		XOR A
+;		OUT (PEVO_CONF),A
 		LD BC,0XFF77
 		LD A,0XA3
 		JP 0X3D2D
 
-RSTKEYS2	LD BC,CMOSD_SET_ADR
-		LD A,0XEF
-		OUT (C),A
-		LD B,HIGH (CMOSD_RD_WR)
-		IN A,(C)
-		AND 0XFC
-		OUT (C),A			;ˆ“„ˆ’…‹œŽ ‚›‘’€‚‹…ˆ… ‚ ŠŒŽ‘ ‘Ž‘€ € EVO SERVICE
+RSTKEYS2	LD H,CMOS_BYTE_00
+		RST 8
+		DB _CMOS_RW
+		DB _READ_CMOS
+		AND 0XFC			;‘Ž‘ „‹Ÿ Ž‘Ž‚ŽƒŽ ‡“
+		LD L,A
+		RST 8
+		DB _CMOS_RW
+		DB _WRITE_CMOS			;ˆ“„ˆ’…‹œŽ ‚›‘’€‚‹…ˆ… ‚ ŠŒŽ‘ ‘Ž‘€ € EVO SERVICE
 		LD BC,WIN_P2
 		LD A,PAGE_EVODOS
 		OUT (C),A
 		LD B,HIGH (WIN_A3)
-		LD A,6
+		LD A,P_ADD_DOS
 		OUT (C),A			
 		LD HL,0XC000
 		LD DE,0X8000
@@ -167,15 +206,7 @@ RSTKEYS2	LD BC,CMOSD_SET_ADR
 		LD B,HIGH (WIN_A3)
 		LD A,0XFF
 		OUT (C),A
-		LD HL,RSTKEYS4
-		PUSH HL
-		LD HL,0X0106
-		PUSH HL
-		LD BC,WIN_A0
-		LD A,4
-		JP ADR_SEL_ROM
-
-RSTKEYS4	LD BC,0XFEFF
+		LD BC,0XFEFF
 RSTKEYS1	LD A,B
 		IN A,(0XFE)
 		REPT 5
@@ -271,8 +302,9 @@ START_SELECT	EX AF,AF'			;‘Ž•€…ˆ… € ˆ ”‹€ƒŽ‚
 SET_MODE3	LD H,0X0E
 		CALL READCMOS
 		LD E,A				;“‘’€Ž‚Š€ „‹Ÿ 7.0/3.5Œƒ– ˆ ŒŽ„…‹œ €ŒŸ’ˆ
-		XOR A
-		OUT (PEVO_CONF),A
+		PEC_OFF SHADOW_BF
+;		XOR A
+;		OUT (PEVO_CONF),A
 		EXX
 CMPCFG2		JP (HL)
 
@@ -300,45 +332,22 @@ SET_MODE2	OUT (C),A
 		LD BC,0X7FFD
 		XOR A
 		OUT (C),A			;‚Š‹ž—ˆ‹ˆ Œ€… 0
-		INC A
-		OUT (0XBF),A			;€‡…˜ˆ‹ˆ „Ž‘’“ Š ’……‚›Œ Ž’€Œ
+		PEC_ON SHADOW_BF
+;		INC A
+;		OUT (PEVO_CONF),A			;€‡…˜ˆ‹ˆ „Ž‘’“ Š ’……‚›Œ Ž’€Œ
 		LD BC,WIN_A0
 		LD A,IXH
 		OUT (C),A			;‡€Žƒ€ŒŒˆŽ‚€‹ˆ ROM „‹Ÿ Œ€… 0
 		LD BC,0XFF77
 		OUT (C),D			;‚›‘’€‚ˆ‹ˆ ’“Ž ‚ ‡€‚ˆ‘ˆŒŽ‘’ˆ Ž’ “‘’€Ž‚ŽŠ
-		XOR A
-		OUT (0XBF),A			;‡€Š›‹ˆ „Ž‘’“ Š ’……‚›Œ Ž’€Œ
+		PEC_OFF SHADOW_BF
+;		XOR A
+;		OUT (PEVO_CONF),A			;‡€Š›‹ˆ „Ž‘’“ Š ’……‚›Œ Ž’€Œ
 		EX AF,AF'
 		LD BC,0X7FFD
 		OUT (C),A			;‚Š‹ž—ˆ‹ˆ Œ€… 1
 		RET
 ERAM_CODE
-
-;…‘‹ˆ ‚ €‰’… ŠŒŽ‘ Ž ‘Œ…™…ˆž 0X11 … 0XAA ˆ‹ˆ 0X55, ’Ž ŠŒŽ‘ ‘—ˆ’€…’‘Ÿ ‡€Ž‹… …ˆ‡‚…‘’Ž —…Œ
-;ˆ‹ˆ ’Ž …‚Ž… ‚Š‹ž—…ˆŸ. ‡€ˆ‘›‚…Œ „…”Ž‹’›… ‡€—…ˆŸ ‚ ŠŒŽ‘.
-SET_CMOS_DEFLT	LD DE,CMOS_DEFAULT
-		LD H,0X0A
-		LD B,8
-SCD1		EX DE,HL
-		LD E,(HL)
-		INC HL
-		EX DE,HL
-		CALL WRITECMOS
-		INC H
-		DJNZ SCD1
-		LD HL,0XEF00			;Ž“‹…ˆ… Ÿ—…‰Šˆ EF
-		CALL WRITECMOS
-		DEC H
-;€ ‚•Ž„…: H-€„…‘ Ÿ—…‰Šˆ
-;	   L-—’Ž ’“„€ ‡€ˆ‘€’œ
-WRITECMOS	PUSH BC
-		LD BC,CMOSD_SET_ADR
-		OUT (C),H
-		LD B,HIGH (CMOSD_RD_WR)
-		OUT (C),L
-		POP BC
-		RET
 
 ;€ ‚•Ž„…:  H-€„…‘ Ÿ—…‰Šˆ
 ;€ ‚›•Ž„…: L,A-Ž—ˆ’€Ž… ‡€—…ˆ…
@@ -354,12 +363,47 @@ READCMOS	PUSH BC
 BONUADR		binclude cmosset_pack.rom
 LOADADR		binclude main_pack.rom
 
-;„…”Ž‹’›… ‡€—…ˆŸ „‹Ÿ ‚ ŠŒŽ‘
-CMOS_DEFAULT	DB 0X20,0X02,0X00,0X80,0X00,0X00,0X00,0XAA
-
 ;ŠŽ”ˆƒ“€–ˆŸ „‹Ÿ Ž’„…‹œŽ Ž˜ˆ‚€…ŒŽ‰ 64Š Ž˜ˆ‚Šˆ (USER ROM)
 PAGES_CUSTOM	DB 0XFF,0X7D,0X7A,CONF4CUSTOM+3
 		DB 0XFF,0X7D,0X7A,0X00,CONF4CUSTOM+1
+
+		DUPL ADR_RST8END-$,0XFF
+EDOS2RST8	LD A,L
+		OUT (PEVO_CONF),A
+		POP DE
+		POP HL
+		POP AF
+		JP PO,EDOS2RST01
+		EI
+EDOS2RST01	POP BC
+		POP AF
+		EX (SP),HL
+		RET
+
+DOS2RST8	EX (SP),HL			;HL
+		PUSH AF				;AF
+		PUSH BC				;BC
+		LD A,R
+		JP PE,DOS2RST8_01
+		LD A,R
+DOS2RST8_01	DI
+		PUSH AF				;RF
+		PUSH HL				;ADR_RET
+		PUSH DE				;DE
+		IN A,(PEVO_CONF)
+		LD L,A
+		OR SHADOW_BF;1
+		OUT (PEVO_CONF),A
+		LD BC,RD_0WINA0
+		IN H,(C)
+		LD B,HIGH (RD_DOS7FFD)
+		IN E,(C)
+		RES 4,E
+		DEC B
+		IN D,(C)
+		LD BC,WIN_P0
+		XOR A
+		JP ADR_SEL_ROM
 
 	       	DUPL 0X3D2D-$,0XFF
 		OUT (C),A
@@ -398,26 +442,26 @@ EJMP2PROFROM
 ;1000 0001 81 0 BASIC 128	|EVO
 ;1000 0011 83 0 BASIC 48	|SERVICE
 
-;1000 0101 85 1 BASIC 128	|EVODOS EMUL 3D2F
-;1000 0111 87 1 BASIC 48	|RST8 SERVICE
+;1000 0101 85 1 BASIC 128	|ADDONS
+;1000 0111 87 1 BASIC 48 	|RST8 SERVICE
 
-;1000 1001 89 2 BASIC 128	|PROFROM 1
-;1000 1110 8B 2 BASIC 48 	|PROFROM 1
+;1000 1001 89 2 BASIC 128	|RESERVED
+;1000 1110 8B 2 BASIC 48	|EVODOS EMUL 3D2F
                                           
-;1000 1101 8D 3 BASIC 128	|PROFROM 0
-;1000 1111 8F 3 BASIC 48 	|PROFROM 0
+;1000 1101 8D 3 BASIC 128	|PROFROM 1
+;1000 1111 8F 3 BASIC 48 	|PROFROM 1
                                           
-;1001 0001 91 4 BASIC 128	|GLUK     
-;1001 0011 93 4 BASIC 48 	|GLUK     
+;1001 0001 91 4 BASIC 128	|PROFROM 0
+;1001 0011 93 4 BASIC 48 	|PROFROM 0
 
-;1001 0101 95 5 BASIC 128
-;1001 0111 97 5 BASIC 48
+;1001 0101 95 5 BASIC 128	|GLUK
+;1001 0111 97 5 BASIC 48 	|GLUK
 
-;1001 1001 99 6 BASIC 128
-;1001 1011 9B 6 BASIC 48
+;1001 1001 99 6 BASIC 128	|FREE
+;1001 1011 9B 6 BASIC 48	|FREE
 
-;1001 1101 9D 7 BASIC 128
-;1001 1111 9F 7 BASIC 48
+;1001 1101 9D 7 BASIC 128	|CUSTOM
+;1001 1111 9F 7 BASIC 48	|CUSTOM
 
 ;Ž‘Ž‚€Ÿ ŠŽ”ˆƒ“€–ˆŸ Ž ‘Ž‘“, ˆ‡Œ…Ÿ’œ Š€’…ƒŽˆ—…‘Šˆ … …ŠŽŒ…„“…’‘Ÿ
 PAGES_CONF	DB 0XFF,0X7D,0X7A,0X83
@@ -437,4 +481,4 @@ TRSTPAL		DB 0X00,0X21,0X42,0X63,0X90,0XB1,0XD2,0XF3
 
 		DUPL 0X3FF8-$,0XFF
 		DB "HEGLUK"
-		DW DATA
+		DW DATA_VERS

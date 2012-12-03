@@ -1,17 +1,13 @@
 
-;LAST UPDATE: 26.05.2012 savelij
+;LAST UPDATE: 13.11.2012 savelij
 
 		include ../../macros.a80
+		include ../../define.a80
 		include ../../global_vars.a80
 		include bas_trd_vars.a80
 
-DD		EQU 26				;„€’€
-MM		EQU 5				;Œ…‘Ÿ–
-YY		EQU 12				;ƒŽ„
-DATA		EQU DD+(MM<<5)+(YY<<9);+0X8000	;“†… “€ŠŽ‚€Ž
-
 ;		     0123456789012345678
-NUMBER_VERS	EQU " EVO-DOS Ver 0.3   "
+NUMBER_VERS	EQU " EVO-DOS Ver 0.31  "
 ZASTV_X		EQU 7					;ŠŽŽ„ˆ€’€ X …—€’ˆ €„ˆ‘ˆ BETA128
 ZASTV_Y		EQU 6					;ŠŽŽ„ˆ€’€ Y …—€’ˆ €„ˆ‘ˆ BETA128
 ZASTV_PIX	EQU ZASTV_Y*0X20+0X4000+ZASTV_X+9	;€„…‘ ‚›‚Ž„€ ‘ŠŽ˜…›• “ƒŽ‹ŠŽ‚
@@ -25,7 +21,7 @@ ZASTV_ATR	EQU ZASTV_Y*0X20+0X5800+ZASTV_X		;€„…‘ ‚›‚Ž„€ –‚…’€ „‹Ÿ ‘ŠŽ˜…›• “ƒŽ
 
 		DB 1				;‡€ƒ‹“˜Š€ „‹Ÿ DCU
 
-		JP DOS2RST30			;RST 08
+		JP DOS2RST8			;RST 08
 
 LOC_09		LD A,0X3F
 		JR LOC_24
@@ -1038,7 +1034,7 @@ CP_VARSTRDOS	CALL SET_RWPORT0
 		RET
 
 RUN_CODE	CALL RESTORE_SP
-		LD BC,(TRD_5CD9)
+		LD BC,(TRD_5CC6)		;€„…‘ ‡€ƒ“‡Šˆ ˆ‡ ŠŽŒ€„Ž‰ ‘’ŽŠˆLD BC,(TRD_5CD9)
 		PUSH BC
 		RET
 
@@ -2088,7 +2084,7 @@ CP_PARAMS	LD A,(TRD_5CD6)
 		LD HL,(TRD_5CE6)		;€„…‘ ‡€ƒ“‡Šˆ ˆ‡ Žˆ‘€’…‹Ÿ ”€‰‹€
 		JR Z,LOC_18B7
 		LD HL,(TRD_5CD9)		;€„…‘ ‡€ƒ“‡Šˆ ˆ‡ ŠŽŒ€„Ž‰ ‘’ŽŠˆ
-LOC_18B7	LD (TRD_5CD9),HL
+LOC_18B7	LD (TRD_5CC6),HL
 		LD DE,(TRD_5CEB)		;’…Š ˆ ‘…Š’Ž Œ…‘’ŽŽ‹Ž†…ˆŸ ”€‰‹€
 		CP 3
 		LD A,(TRD_5CEA)			;„‹ˆ€ ”€‰‹€ ‚ ‘…Š’Ž€•
@@ -4364,6 +4360,9 @@ TXT_NOFILES	DB "No File(s)",0X8D
 		JP EMU_LDIR
 
 		DUPL 0X2A4E-$,0XFF
+
+BCMP_EMU	EQU 0XF5
+
 		LD BC,0X7FFD
 		LD A,0X10
 LOC_2A53	IF EMU3D2F=1
@@ -4821,6 +4820,10 @@ LOC_3C06	JP LOC_3D00
 LOC_3C09	JP LOC_3D03
 
 ;===============FREE SPACE 3============
+		DUPL 0X3C30-$,0XFF
+		IN A,(0X1F)
+		RET
+
 		DUPL ADR_RST8END-$-0X40,0XFF
 IREG_E		DB 0
 IREG_D		DB 0
@@ -4861,7 +4864,7 @@ SAVED_RAM	DUPL 0X10,0		;10
 END_VARS
 
 		DUPL ADR_RST8END-$,0XFF
-		JP EDOS2RST30
+		JP EDOS2RST8
 ;===============FREE SPACE 3============
 
 		DUPL 0X3CFA-$,0XFF
@@ -5448,4 +5451,4 @@ FOR_RET		RET
 
 		DUPL 0X3FF8-$,0XFF
 		DB "EVODOS"
-		DW DATA
+		DW DATA_VERS
