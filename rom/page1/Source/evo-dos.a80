@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 08.12.2012 savelij
+;LAST UPDATE: 11.12.2012 savelij
 
 		include ../../macros.a80
 		include ../../define.a80
@@ -4836,6 +4836,8 @@ WR_FF		DB 0			;1 ŠŽˆŸ ‡€ˆ‘€ŽƒŽ ‚ Ž’ FF
 RD_FF		DB 0			;1 Ž’‚…’ „‹Ÿ —’…ˆŸ ˆ‡ Ž’€
 BUFF_SECT	DW 0			;2 €„…‘ —’…ˆŸ/‡€ˆ‘ˆ ‘…Š’Ž€
 ADDR_RET	DW 0			;2 €„…‘ ‚Ž‡‚€’€
+REG_IF		DB 0			;1
+REG_I		DB 0			;1
 REG_C		DB 0			;1 
 REG_B		DB 0			;1
 REG_F		DB 0			;1

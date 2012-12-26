@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 16.11.2012 savelij
+;LAST UPDATE: 10.12.2012 savelij
 
 		include ../../macros.a80
 		include ../../define.a80
@@ -638,6 +638,9 @@ SD_CARD_LOST	PEC_ON SHADOW_BF
 		LD IX,SDCARD_LOST
 		PCALL IWINW,P_ADDONS
 		JR $
+
+		DUPL 0X3BFF-$,0XFF
+		DW 0X0038
 
 		DUPL 0X3FF8-$,0XFF
 		DB "RST_08"
