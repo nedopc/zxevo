@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 15.11.2012 savelij
+;LAST UPDATE: 10.12.2012 savelij
 
 DRV_VAR		EQU 0X4000
 
@@ -28,13 +28,6 @@ DRV_VAR		EQU 0X4000
 		DUPL 0X00FF-$,0XFF
 		DW 0X0038
 
-		include txtmode_proc.a80
-		include window.a80
-		include selector.a80
-		include input_keys.a80
-		include mouse.a80
-		include file_browser.a80
-
 ;============================SD äÄêíÄ ìÑÄãÖçÄ============================
 SDCARD_LOST	DB 0X08,0X08,0X04,0X10,0X17,0,%00000000,0
 		DW 0,0
@@ -46,6 +39,16 @@ TXT_SDLOST	DB 0X17,0XFF,0X0D,3,"SD card lost",0X0D,3,"Press RESET",0
 SPRAR		DB 0X3F,0X00,0X1F,0X40,0X0F,0X60,0X07,0X50,0X03,0X48,0X01,0X4C,0X01,0X70,0X07,0X00
 SPRAR2		DB 0X3F,0X00,0X1F,0X40,0X0F,0X60,0X07,0X70,0X03,0X78,0X01,0X7C,0X01,0X70,0X07,0X00
 ;========================åõòàçõâ äìêëéê Ç ÑÇìï ÇàÑÄï=====================
+
+		DUPL 0X0200-$,0XFF
+CHARS		binclude altstd.bin
+
+		include txtmode_proc.a80
+		include window.a80
+		include selector.a80
+		include input_keys.a80
+		include mouse.a80
+		include file_browser.a80
 
 BUFTSC		DW 0X4000,0X4100,0X4200,0X4300,0X4400,0X4500,0X4600,0X4700
 		DW 0X4020,0X4120,0X4220,0X4320,0X4420,0X4520,0X4620,0X4720
@@ -155,9 +158,10 @@ TBUFTSC_C	DW 0XF1C0,0XE1C1	;00
 		DW 0XF780,0XE781	;23
 		DW 0XF7C0,0XE7C1	;24
 
-		DUPL 0X37F8-$,0XFF
-CHARS		binclude altstd.bin
+		DUPL 0X3BFF-$,0XFF
+		DW 0X0038
 
+		DUPL 0X3FF8-$,0XFF
 		DB "ADDONS"
 		DW DATA_VERS
 		DEPHASE
