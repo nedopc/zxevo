@@ -1,7 +1,7 @@
 
 ;www.fruitcake.plus.com
 
-;LAST UPDATE: 23.01.2012 savelij
+;LAST UPDATE: 10.02.2013 savelij
 
 		include ../../macros.a80
 
@@ -1048,7 +1048,7 @@ L0124:  JP   L07CA        ; RS232 text output routine.
 L0127:  JP   L08A3        ; RS232 byte output routine.
 L012A:  JP   L08F0        ; COPY (screen dump) routine.
 L012D:  RST  28H          ; Call keypad scan routine in ROM 1.
-        DEFW KP_SCAN;-$0100 ; $3B01. [*BUG* - The address jumps into the middle of the keypad decode routine in ROM 1. It
+        DEFW KP_SCAN-$0100 ; $3B01. [*BUG* - The address jumps into the middle of the keypad decode routine in ROM 1. It
         RET               ;                  looks like it is supposed to deal with the keypad and so the most likely
                           ;                  addresses are $3A42 (read keypad) or $39A0 (scan keypad). At $3C01 in
                           ;                  ROM 1 is a vector jump command to $39A0 to scan the keypad and this is
@@ -7334,7 +7334,7 @@ L1B2B:  CALL L1B53        ; Overwrite 'P' channel data to use the ZX Printer.
         LD   HL,MAIN_4    ; $1303. The main execution loop within ROM 1.
         PUSH HL           ;
 
-        LD   HL,3	  ; $0003. Address of a $FF byte within ROM 1, used to generate error report "0 OK".
+        LD   HL,0X13;3	  ; $0003. Address of a $FF byte within ROM 1, used to generate error report "0 OK".
         PUSH HL           ;
         LD   HL,ERROR_1   ; $0008. The address of the error handler within ROM 1.
         PUSH HL           ;

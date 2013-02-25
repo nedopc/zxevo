@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 05.01.2013 savelij
+;LAST UPDATE: 30.01.2013 savelij
 
 ;Ž‘‹…„Ž‚€’…‹œŽ‘’œ „‹Ÿ RST 8
 ;‘’€›‰ ‘’…Š	HL AF BC RF ADR_RET DE	->
@@ -440,7 +440,7 @@ FALSE_NMI	LD HL,ADR_MAGIC
 ;		OR 0XA0
 ;		LD D,A
 ;		LD BC,0XBD77			;„Ž‘’“ Š €‹ˆ’…
-;		OUT (C),D			;¢ª«.PAL
+;		OUT (C),D			;‚Š‹.PAL
 ;SETPAL0		LD A,E
 ;		BIT 3,E
 ;		OUT (0XFE),A

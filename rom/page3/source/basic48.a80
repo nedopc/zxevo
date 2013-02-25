@@ -1,7 +1,7 @@
 
 ;www.fruitcake.plus.com
 
-;LAST UPDATE: 07.11.2012 savelij
+;LAST UPDATE: 25.02.2013 savelij
 
 		include ../../define.a80
 
@@ -19434,7 +19434,7 @@ L3C8F:  DB    $13, $00         ; Bright, off
 RST8_CMP	EX (SP),HL		;HL
 		PUSH AF			;AF
 		LD A,(HL)
-		CP 0X40
+		CP _AY_PRN_INIT
 		JR NC,RST8_YES
 RST8_NO		POP AF
 		EX (SP),HL
@@ -19442,7 +19442,7 @@ RST8_NO		POP AF
 		LD ($5C5F),HL
 		JP L0053
 
-RST8_YES	CP 80H
+RST8_YES	CP _AY_PRN_INIT+0X40
 		JR NC,RST8_NO
 		PUSH BC			;BC
 		LD A,R

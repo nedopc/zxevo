@@ -12,6 +12,7 @@ cd ..\..\page5\source
 ..\..\..\tools\mhmt\mhmt -mlz 8x8_ar.fnt 8x8_ar_pack.bin
 ..\..\..\tools\mhmt\mhmt -mlz 866_code.fnt 866_code_pack.bin
 ..\..\..\tools\mhmt\mhmt -mlz atm_code.fnt atm_code_pack.bin
+..\..\..\tools\mhmt\mhmt -mlz perfpack.bin perfpack_pack.bin
 
 ..\..\..\tools\asw\bin\asw -cpu z80undoc -U -L rst8service.a80
 ..\..\..\tools\asw\bin\p2bin rst8service.p ..\rst8service.rom -r $-$ -k

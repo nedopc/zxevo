@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 06.01.2013 savelij
+;LAST UPDATE: 25.02.2013 savelij
 
 ;Žˆ‘€’…‹œ ŽŠ€ (€„…‘ ‚ IX)
 ;+00 X ŠŽŽ„ˆ€’€
@@ -162,19 +162,21 @@ MAINTXT		DB 0X17,0XFF,"Main menu"
 		DB 0X0D," T.Tape load"		;t
 		DB 0X0D," B.HDD boot"		;b
 		DB 0X0D," D.CD boot"		;d
+		DB 0X0D," X.Perfect Cmd"	;x
 		DB 0X0D," S.TR-DOS"		;s
 		DB 0X0D," I.48k basic"		;i
 		DB 0X0D," U.128k basic"		;u
 		DB 0X0D," C.Setup"		;c
 		DB 0X0D," R.Service"		;r
 		DB 0
-MAINMENU_KEY	DB LOW (MAIN1-$-1),"zftbdsiucrwmlg123489vyhejkn",0XAC
+MAINMENU_KEY	DB LOW (MAIN1-$-1),"zftbdxsiucrwmlg123489vyhejkn",0XAC
 
 MAIN1		DW GLUBOOT			;z „ˆ‘Š…’Ž‡€ƒ“‡—ˆŠ
 		DW FILES_BROWSE			;f ‡€ƒ“‡—ˆŠ ‘ ”€’€
 		DW TAPELOAD			;t ‡€ƒ“‡Š€ ‘ ‹…’›
 		DW HDD_BOOT			;b ‘’€›‰ ‡€ƒ“‡—ˆŠ ‘ ‚ˆ’€
 		DW CDBOOT			;d ‘’€›‰ ‡€ƒ“‡—ˆŠ ‘ ‘ˆ„žŠ€
+		DW PERFECT			;x PERFECT COMANDER
 		DW DOS128			;s ……•Ž„ ‚ TR-DOS
 		DW BAS48			;i ……•Ž„ ‚ …‰‘ˆŠ 48
 		DW BAS128			;u ……•Ž„ ‚ …‰‘ˆŠ 128
@@ -599,8 +601,8 @@ WAITINGH	DW 0		;‘—…’—ˆŠ Ž†ˆ„€ˆŸ €†€’›• Š‹€‚ˆ˜ ˆ‹ˆ „‚ˆ†…ˆŸ Œ›˜ˆ
 WAITINGL	DB 0		;‘—…’—ˆŠ €“‡› ……ˆ‘Ž‚Šˆ ”€‡› ŠŽ˜€Š€
 NUMKOSHAK	DB 0		;ŽŒ… ‚›‚Ž„ˆŒŽƒŽ ‘€‰’€ ŠŽ˜€Š€
 
-KOSHAK		BINCLUDE kot_anim.bin,9
-ICON		BINCLUDE icon.bin,9
-
-BAS_VAR		BINCLUDE bas_var.bin
+KOSHAK		binclude kot_anim.bin,9
+ICON		binclude icon.bin,9
+                        
+BAS_VAR		binclude bas_var.bin
 EBAS_VAR
