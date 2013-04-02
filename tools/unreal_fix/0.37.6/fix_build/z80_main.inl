@@ -91,7 +91,10 @@ Z80INLINE unsigned char m1_cycle(Z80 *cpu)
        temp.offset_hscroll++;
 
 	if( conf.mem_model==MM_ATM3 && (comp.pBF&0x10) && (comp.brk_addr==cpu->pc) )
+	{
 		nmi_pending = 1;
+		trdos_in_nmi = comp.flags&CF_TRDOS;
+	}
 
    cpu->r_low++;// = (cpu->r & 0x80) + ((cpu->r+1) & 0x7F);
    cpu->t += 4;

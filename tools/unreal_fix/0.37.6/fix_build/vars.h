@@ -241,3 +241,6 @@ extern unsigned vtxbuffilled;
 extern unsigned snapsize;
 
 extern unsigned char kbdpcEX[6]; //Dexus
+
+
+extern int trdos_in_nmi;

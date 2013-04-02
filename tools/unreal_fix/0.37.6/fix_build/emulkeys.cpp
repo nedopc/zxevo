@@ -298,6 +298,7 @@ void m_nmi(ROM_MODE page)
 void main_nmi()
 {
     nmi_pending  = 1;
+	trdos_in_nmi = comp.flags&CF_TRDOS;
     if(conf.mem_model != MM_ATM3)
         m_nmi(RM_NOCHANGE);
 }
