@@ -98,8 +98,11 @@ void out(unsigned port, unsigned char val)
        // Порт расширений пентевы
        if((port & 0xFF) == 0xBF)
        {
-           if((comp.pBF ^ val) & comp.pBF & 8) // D3: 1->0
-               nmi_pending  = 1;
+			if((comp.pBF ^ val) & comp.pBF & 8) // D3: 1->0
+			{
+				nmi_pending  = 1;
+				trdos_in_nmi = comp.flags&CF_TRDOS;
+			}
            comp.pBF = val;
            set_banks();
            return;
@@ -728,7 +731,8 @@ __inline unsigned char in1(unsigned port)
            case 0xB: return comp.pEFF7; // lvd - added EFF7 reading in pentevo (atm3)
 
            // lvd: fixed bug with no-anding bits from aFF77, added CF_TRDOS to bit 4
-           case 0xC: return (((comp.aFF77 >> 14) << 7) & 0x0080) | (((comp.aFF77 >> 9) << 6) & 0x0040) | (((comp.aFF77 >> 8) << 5) & 0x0020) | ((comp.flags & CF_TRDOS)?0x0010:0) | (comp.pFF77 & 0xF);
+		   // lvd: changed bit 4 to dos state, remembered during nmi
+           case 0xC: return (((comp.aFF77 >> 14) << 7) & 0x0080) | (((comp.aFF77 >> 9) << 6) & 0x0040) | (((comp.aFF77 >> 8) << 5) & 0x0020) | (/*(comp.flags & CF_TRDOS)*/trdos_in_nmi?0x0010:0) | (comp.pFF77 & 0xF);
            case 0xD: return atm_readpal();
 		   case 0xE: return zxevo_readfont();
 		   

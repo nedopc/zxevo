@@ -611,3 +611,5 @@ char presetbuf[0x4000], *setptr = presetbuf;
 */
 
 const char * const ay_schemes[] = { "no soundchip", "single chip", "pseudo-turbo", "quadro-AY", "turbo-AY // POS", "turbo-sound // NedoPC" };
+
+int trdos_in_nmi = 0;
