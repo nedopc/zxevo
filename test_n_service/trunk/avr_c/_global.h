@@ -45,6 +45,12 @@
 
 #ifdef __ASSEMBLER__
 /* ------------------------------------------------------------------------- */
+#define xl r26
+#define xh r27
+#define yl r28
+#define yh r29
+#define zl r30
+#define zh r31
 /* seed (32bit) */
 .extern _rnd
 /* буфер в RAM (размером 2048 байт) */

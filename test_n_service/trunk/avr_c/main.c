@@ -11,6 +11,7 @@
 #include "_t_ps2k.h"
 #include "_t_ps2m.h"
 #include "_t_rs232.h"
+#include "_t_sd.h"
 #include <avr/interrupt.h>
 #include <util/delay_basic.h>
 
@@ -31,7 +32,7 @@ PGM_VOID_P hndl_menu_main[8] PROGMEM = {Test_PS2Keyb,
                                         Test_Beep,
                                         Test_Video,
                                         Test_RS232,
-                                        nothing,
+                                        Test_SD_MMC,
                                         nothing};
 
 const MENU_DESC menu_main PROGMEM = {
