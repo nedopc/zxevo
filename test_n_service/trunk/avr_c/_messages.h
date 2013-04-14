@@ -1,11 +1,17 @@
 #ifndef _MESSAGES_H
-#define _MESSAGES_H
+#define _MESSAGES_H 1
 
 #define TOTAL_LANG 2
 
-#include "_types.h"
+#ifdef __ASSEMBLER__
+/* ------------------------------------------------------------------------- */
+.extern msg_tsd_out
+.extern msg_tsd_in
+.extern msg_tsd_skip
+/* ------------------------------------------------------------------------- */
+#else // #ifdef __ASSEMBLER__
 
-//-----------------------------------------------------------------------------
+#include "_types.h"
 
 extern const u8 msg_title1[] PROGMEM;
 extern const u8 msg_title2[] PROGMEM;
@@ -80,10 +86,34 @@ extern PGM_U8_P mlmsg_tsd_foundfat[] PROGMEM;
 extern PGM_U8_P mlmsg_tsd_detect[] PROGMEM;
 extern PGM_U8_P mlmsg_tsd_readfile[] PROGMEM;
 extern PGM_U8_P mlmsg_tsd_complete[] PROGMEM;
+extern const u8 msg_tsd_out[] PROGMEM;
+extern const u8 msg_tsd_in[] PROGMEM;
+extern const u8 msg_tsd_cmd[] PROGMEM;
+extern const u8 msg_tsd_acmd41[] PROGMEM;
+extern const u8 msg_tsd_csup[] PROGMEM;
+extern const u8 msg_tsd_csdown[] PROGMEM;
+extern const u8 msg_tsd_mmc[] PROGMEM;
+extern const u8 msg_tsd_sdv1[] PROGMEM;
+extern const u8 msg_tsd_sdsc[] PROGMEM;
+extern const u8 msg_tsd_sdhc[] PROGMEM;
+extern const u8 msg_tsd_ocr[] PROGMEM;
+extern const u8 msg_tsd_csd[] PROGMEM;
+extern const u8 msg_tsd_cid0[] PROGMEM;
+extern const u8 msg_tsd_cid1[] PROGMEM;
+extern const u8 msg_tsd_cid2[] PROGMEM;
+extern const u8 msg_tsd_cid3[] PROGMEM;
+extern const u8 msg_tsd_cid4[] PROGMEM;
+extern const u8 msg_tsd_cid5[] PROGMEM;
+extern const u8 msg_tsd_cid6[] PROGMEM;
+extern const u8 msg_tsd_cid6b[] PROGMEM;
+extern const u8 msg_tsd_cid6c[] PROGMEM;
+extern const u8 msg_tsd_crc[] PROGMEM;
+extern const u8 msg_tsd_readsector[] PROGMEM;
+extern const u8 msg_tsd_skip[] PROGMEM;
 extern const u8 msg_trs_1[] PROGMEM;
 
 extern const u8 str_menu_main[] PROGMEM;
 
-//-----------------------------------------------------------------------------
+#endif // #ifdef __ASSEMBLER__
 
-#endif
+#endif // #ifndef _MESSAGES_H

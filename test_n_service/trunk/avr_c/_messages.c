@@ -507,6 +507,33 @@ PGM_U8_P mlmsg_tsd_complete[] PROGMEM = {msg_tsd_complete_rus, msg_tsd_complete_
 
 //-----------------------------------------------------------------------------
 
+const u8 msg_tsd_out[] PROGMEM = "\r\nout ";
+const u8 msg_tsd_in[] PROGMEM = ", in ";
+const u8 msg_tsd_cmd[] PROGMEM = "\r\n;CMD";
+const u8 msg_tsd_acmd41[] PROGMEM = "\r\n;ACMD41";
+const u8 msg_tsd_csup[] PROGMEM = "\r\nCS up";
+const u8 msg_tsd_csdown[] PROGMEM = "\r\nCS down";
+const u8 msg_tsd_mmc[] PROGMEM = "MMC";
+const u8 msg_tsd_sdv1[] PROGMEM = "SD v1";
+const u8 msg_tsd_sdsc[] PROGMEM = "SD v2+ Standard Capacity";
+const u8 msg_tsd_sdhc[] PROGMEM = "SD v2+ High Capacity";
+const u8 msg_tsd_ocr[] PROGMEM = "OCR: ";
+const u8 msg_tsd_csd[] PROGMEM = "CSD: ";
+const u8 msg_tsd_cid0[] PROGMEM = "CID: ";
+const u8 msg_tsd_cid1[] PROGMEM = "Manufacturer ID    ";
+const u8 msg_tsd_cid2[] PROGMEM = "OEM/Application ID ";
+const u8 msg_tsd_cid3[] PROGMEM = "Product name       ";
+const u8 msg_tsd_cid4[] PROGMEM = "Product revision   ";
+const u8 msg_tsd_cid5[] PROGMEM = "Product serial #   ";
+const u8 msg_tsd_cid6[] PROGMEM = "Manufacturing date ";
+const u8 msg_tsd_cid6b[] PROGMEM = ".20";
+const u8 msg_tsd_cid6c[] PROGMEM = ".19";
+const u8 msg_tsd_crc[] PROGMEM = "CRC=";
+const u8 msg_tsd_readsector[] PROGMEM = "\r\n;Read sector ";
+const u8 msg_tsd_skip[] PROGMEM = "\r\n;512 operations is skiped";
+
+//-----------------------------------------------------------------------------
+
 const u8 msg_trs_1[] PROGMEM =
  "\x16\x14\x03"  "Â"
  "\x16\x0b\x04"  "pc/win32"

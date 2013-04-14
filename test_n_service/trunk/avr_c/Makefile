@@ -6,8 +6,8 @@ TARGET = $(BINDIR)/proga
 
 SRC = _messages.c _uart.c _pintest.c _ps2k.c _output.c _screen.c _global.c
 SRC += _t_video.c _t_dram.c _t_beep.c _t_zxkbd.c _t_ps2k.c _t_ps2m.c _t_rs232.c
-SRC += main.c
-ASRC = _global_asm.S _ps2k_asm.S _t_ps2m_asm.S _uart_asm.S _t_beep_asm.S
+SRC += _t_sd.c main.c
+ASRC = _global_asm.S _ps2k_asm.S _t_ps2m_asm.S _uart_asm.S _t_beep_asm.S _sd_asm.S
 
 TABLEDATA = tabl_sin.bin
 FPGADATA = fpgadat1.mlz

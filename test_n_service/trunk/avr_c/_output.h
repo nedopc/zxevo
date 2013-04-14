@@ -1,5 +1,12 @@
 #ifndef _OUTPUT_H
-#define _OUTPUT_H
+#define _OUTPUT_H 1
+
+#ifdef __ASSEMBLER__
+/* ------------------------------------------------------------------------- */
+.extern print_hexbyte
+.extern print_msg
+/* ------------------------------------------------------------------------- */
+#else // #ifdef __ASSEMBLER__
 
 #include "_types.h"
 
@@ -15,4 +22,6 @@ void print_msg(PGM_U8_P msg);
 void print_mlmsg(PGM_U8_P *mlmsg);
 void print_short_vers(void);
 
-#endif
+#endif // #ifdef __ASSEMBLER__
+
+#endif // #ifndef _OUTPUT_H
