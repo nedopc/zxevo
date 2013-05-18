@@ -45,12 +45,17 @@ cd ..\..\page3\source
 ..\..\..\tools\asw\bin\asw -U -L make_bas48_128.a80
 ..\..\..\tools\asw\bin\p2bin make_bas48_128.p ..\basic48.rom -r $-$ -k
 
+cd ..\..\msxdos\source
+
+..\..\..\tools\asw\bin\asw -U -L msxdos.a80
+..\..\..\tools\asw\bin\p2bin msxdos.p ..\msxdos.rom -r $-$ -k
+
 cd ..\..\sts\source
 
-..\..\..\tools\asw\bin\asw -U -L -s sts6.a80
-..\..\..\tools\asw\bin\p2bin sts6.p ..\sts6.rom -r $-$ -k
+..\..\..\tools\asw\bin\asw -U -L -s sts.a80
+..\..\..\tools\asw\bin\p2bin sts.p ..\sts.rom -r $-$ -k
 cd ..
-..\..\tools\mhmt\mhmt -mlz sts6.rom sts6_pack.rom
+..\..\tools\mhmt\mhmt -mlz sts.rom sts_pack.rom
 
 cd ..\page5\source
 
@@ -65,7 +70,7 @@ del atm_code_pack.bin
 
 cd ..\..\
 
-copy /B /Y page3\basic48.rom+page1\evo-dos_virt.rom+ff_16k.rom+ff_16k.rom+page5\rst8service.rom+page3\basic48.rom+page1\evo-dos_emu3d13.rom+page2\basic128.rom+page0\services.rom ers.rom
+copy /B /Y page3\basic48.rom+page1\evo-dos_virt.rom+msxdos\msxdos.rom+ff_16k.rom+page5\rst8service.rom+page3\basic48.rom+page1\evo-dos_emu3d13.rom+page2\basic128.rom+page0\services.rom ers.rom
 copy /B /Y page3\2006.rom+page1\dos6_12e_patch.rom+page2\basic128.rom+page0\glukpen.rom glukpent.rom
 
 cd profrom\source

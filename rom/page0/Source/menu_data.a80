@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 25.02.2013 savelij
+;LAST UPDATE: 02.05.2013 savelij
 
 ;ˆ‘€’…‹œ Š€ (€„…‘ ‚ IX)
 ;+00 X Š„ˆ€’€
@@ -308,7 +308,7 @@ ERR_VIRTUAL	DB 0X05,0X08,0X04,0X18,0X17,0X00,%00000000,0
 		DW 0,0
 		DW TXT_ERRVIRTUAL,0,0,0
 TXT_ERRVIRTUAL	DB 0X17,0XFF,0X0D,3,"Virtual drive not formatted"
-		DB 0X0D,3,"or image not loading",0
+		DB 0X0D,3,"or image not loaded",0
 ;============================VIRTUAL ERROR===============================
 
 ;==============================UPDATE ROM================================

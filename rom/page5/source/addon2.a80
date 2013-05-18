@@ -50,7 +50,7 @@ UNPACK_STS	LD BC,WIN_P1
 		LD DE,CPU1
 		JP UNPACK
 
-PACK_STS	binclude ../../sts/sts6_pack.rom
+PACK_STS	binclude ../../sts/sts_pack.rom
 		ELSE
 		RET
 		ENDIF
