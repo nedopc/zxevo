@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 25.11.2012 savelij
+;LAST UPDATE: 01.05.2013 savelij
 
 BUF_512_	EQU DRV_VAR			;200 “”… ‘…Š’Ž€
 NUM_DEVICE	EQU DRV_VAR+0X2FF		;1 ŽŒ… “‘’Ž‰‘’‚€ „‹Ÿ ‡€“‘Š€ ŠŽ„€
@@ -126,6 +126,8 @@ READ06		CALL LOADLST
 		LD A,B
 		AND 1
 		LD B,A
+		OR C
+		JR Z,RUNLOAD
 		LDIR
 ;‡€“‘Š ‡€ƒ“†…ŽƒŽ
 RUNLOAD		LD HL,0X2758
@@ -824,7 +826,7 @@ SINPRT		PUSH HL
 		JP 0X3D2F
 ;=============================================================
 
-;==================—’…ˆ… ‘ DIVEDE ‚ˆ’€======================
+;==================—’…ˆ… ‘ DIVIDE ‚ˆ’€======================
 PV1F7		EQU 0XBF			;…ƒˆ‘’ ‘Ž‘’ŽŸˆŸ/…ƒˆ‘’ ŠŽŒ€„
 PV1F6		EQU 0XBB			;CHS-ŽŒ… ƒŽ‹Ž‚› ˆ “‘’/LBA €„…‘ 24-27
 PV1F5		EQU 0XB7			;CHS-–ˆ‹ˆ„ 8-15/LBA €„…‘ 16-23

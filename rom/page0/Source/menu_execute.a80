@@ -180,7 +180,7 @@ HDD_BOOT	LD HL,ADR_CAT
 		RST 8
 		DB _COM_DEV
 		DB _COMHDDN
-		DB 0
+		DB _DEV_INIT
 		LD A,H
 		POP HL
 		AND A
@@ -211,7 +211,15 @@ PRT_RW		EQU P_1F0*256+P_HI		;Ž’› —’…ˆŸ/‡€ˆ‘ˆ Ž„ˆŒ ‘‹Ž‚ŽŒ
 
 HDDBOOT2	LD HL,0X6000			;ƒ“‡ˆ’œ “„…Œ Š€Š ˆ ›‹ €„…‘
 		PUSH HL				;Ž‘‹… ‡€ƒ“‡Šˆ ‡€“‘Š€…Œ ‡€ƒ“†…Ž…
-		LD DE,2				;ƒ“‡ˆŒ —ˆ€Ÿ ‘ ‘…Š’Ž€ 2 ˆŽ LBA
+		LD BC,0
+		LD DE,2
+		LD A,0X30
+		RST 8
+		DB _COM_DEV
+		DB _COMHDDN
+		DB _DEV_READ
+		RET
+		LD DE,2				;ƒ“‡ˆŒ €—ˆ€Ÿ ‘ ‘…Š’Ž€ 2 ˆŽ LBA
 		LD BC,0XFF00+P_1F6
 		LD A,0XE0			;‚›€‹ˆ Œ€‘’… ˆ LBA …†ˆŒ
 		OUT (C),A
