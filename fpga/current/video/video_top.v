@@ -43,6 +43,7 @@ module video_top(
 
 	input  wire        vga_on,     // vga mode ON - scandoubler activated
 
+	input  wire 	   mode_60hz,
 
 	// memory synchronization inputs
 	input  wire        cbeg,
@@ -165,6 +166,7 @@ module video_top(
 		.clk(clk),
 
 		.mode_atm_n_pent(mode_atm_n_pent),
+		.mode_60hz(mode_60hz),
 
 		.hsync_start(hsync_start),
 		.line_start(line_start),

@@ -162,6 +162,7 @@ module top(
 	// config signals
 	wire [7:0] not_used;
 	wire cfg_vga_on;
+	wire mode_60hz;
 
 	// nmi signals
 	wire gen_nmi;
@@ -625,6 +626,7 @@ module top(
 		.scr_page(p7ffd[3]),
 
 		.vga_on(cfg_vga_on),
+		.mode_60hz(mode_60hz),
 
 		.cbeg     (cbeg     ),
 		.post_cbeg(post_cbeg),
@@ -669,7 +671,7 @@ module top(
 		.wait_read(wait_read),
 		.wait_rnw(wait_rnw),
 		.wait_end(wait_end),
-		.config0( { not_used[7:4], beeper_mux, tape_read, set_nmi[0], cfg_vga_on} ),
+		.config0( { not_used[7:5], mode_60hz, beeper_mux, tape_read, set_nmi[0], cfg_vga_on} ),
 
 		.sd_lock_out(avr_lock_claim),
 		.sd_lock_in (avr_lock_grant),
