@@ -89,7 +89,7 @@ void zx_task(UBYTE operation) // zx task, tracks when there is need to send new 
 //			 ((kbmap[0x11*2] == NO_KEY) && (kbmap[0x11*2+1] == NO_KEY)) ||
 //			 ((kbmap_E0[0x11*2] == NO_KEY) && (kbmap[0x11*2+1] == NO_KEY)) )
 		if( (kbmap_get(0x14,0).tw == (UWORD)NO_KEY+(((UWORD)NO_KEY)<<8)) ||
-		    (kbmap_get(0x11,0).tw == (UWORD)NO_KEY+(((UWORD)NO_KEY)<<8)) ||
+			(kbmap_get(0x11,0).tw == (UWORD)NO_KEY+(((UWORD)NO_KEY)<<8)) ||
 			(kbmap_get(0x11,1).tw == (UWORD)NO_KEY+(((UWORD)NO_KEY)<<8)) )
 		{
 			//not mapped
@@ -327,8 +327,8 @@ void to_zx(UBYTE scancode, UBYTE was_E0, UBYTE was_release)
 		//additional functionality from ps/2 keyboard
 		switch( scancode )
 		{
-		   	//Alt Gr
-		   	case  0x11:
+			//Alt Gr
+			case  0x11:
 				if ( !was_release ) kb_status |= KB_ALT_MASK;
 				else kb_status &= ~KB_ALT_MASK;
 				break;
@@ -350,7 +350,7 @@ void to_zx(UBYTE scancode, UBYTE was_E0, UBYTE was_release)
 			case 0x71:
 				//Ctrl-Alt-Del pressed
 				if ( ( !was_release ) &&
-				     ( !(kb_status & KB_CTRL_ALT_DEL_MAPPED_MASK) ) &&
+					 ( !(kb_status & KB_CTRL_ALT_DEL_MAPPED_MASK) ) &&
 					 ( (kb_status & (KB_CTRL_MASK|KB_ALT_MASK)) == (KB_CTRL_MASK|KB_ALT_MASK) ) )
 				{
 					//hard reset
@@ -375,23 +375,23 @@ void to_zx(UBYTE scancode, UBYTE was_E0, UBYTE was_release)
 				//check key of tapeout mode switcher
 				if ( !was_release ) zx_mode_switcher(MODE_TAPEOUT);
 				break;
-		   	//Left Shift
-		   	case  0x12:
+			//Left Shift
+			case  0x12:
 				if ( !was_release ) kb_status |= KB_LSHIFT_MASK;
 				else kb_status &= ~KB_LSHIFT_MASK;
 				break;
-		   	//Right Shift
-		   	case  0x59:
+			//Right Shift
+			case  0x59:
 				if ( !was_release ) kb_status |= KB_RSHIFT_MASK;
 				else kb_status &= ~KB_RSHIFT_MASK;
 				break;
-		   	//Ctrl
-		   	case  0x14:
+			//Ctrl
+			case  0x14:
 				if ( !was_release ) kb_status |= KB_CTRL_MASK;
 				else kb_status &= ~KB_CTRL_MASK;
 				break;
-		   	//Alt
-		   	case  0x11:
+			//Alt
+			case  0x11:
 				if ( !was_release ) kb_status |= KB_ALT_MASK;
 				else kb_status &= ~KB_ALT_MASK;
 				break;
@@ -590,6 +590,8 @@ void zx_mode_switcher(UBYTE mode)
 	//invert mode
 	modes_register ^= mode;
 
+	if ( (mode==MODE_VGA) && ((modes_register&MODE_VGA)==0) ) modes_register^=MODE_60HZ;
+
 	//send configuration to FPGA
 	zx_set_config((flags_register&FLAG_LAST_TAPE_VALUE)?SPI_TAPE_FLAG:0);
 
@@ -604,9 +606,9 @@ void zx_set_config(UBYTE flags)
 {
 	//send configuration to FPGA
 	zx_spi_send(SPI_CONFIG_REG,
-		(modes_register&MODE_VGA) |
+		(modes_register&MODE_VIDEO_MASK) |
 		((modes_register&MODE_TAPEOUT)?SPI_TAPEOUT_MODE_FLAG:0) |
 		((flags_ex_register&FLAG_EX_NMI)?SPI_CONFIG_NMI_FLAG:0) |
-		(flags & ~(MODE_VGA|SPI_TAPEOUT_MODE_FLAG|SPI_CONFIG_NMI_FLAG)),
+		(flags & ~(MODE_VIDEO_MASK|SPI_TAPEOUT_MODE_FLAG|SPI_CONFIG_NMI_FLAG)),
 		0x7F);
 }

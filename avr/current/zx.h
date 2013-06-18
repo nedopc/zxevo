@@ -157,7 +157,7 @@ void zx_mouse_task(void);
 /**
  * Work with WAIT ports.
  * @param status [in] - bit 7 - CPU is 0 -write, 1-read wait port
- *		                bits 6..0 is index of port
+ *                      bits 6..0 is index of port
  */
 void zx_wait_task(UBYTE status);
 
@@ -169,8 +169,10 @@ void zx_mode_switcher(UBYTE mode);
 
 /**
  * Set configuration register on zx.
- * @param flags [in] - bit 0: not used (depend from MODE_VGA on modes_register)
- *		               bit 1: NMI
+ * @param flags [in] - bit 2: SPI_TAPE_FLAG
+ *                     bit 5: not used
+ *                     bit 6: not used
+ *                     bit 7: not used
  */
 void zx_set_config(UBYTE flags);
 

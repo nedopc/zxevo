@@ -22,6 +22,7 @@ module video_sync_v(
 	// atm video mode input
 	input  wire        mode_atm_n_pent,
 
+	input  wire 	   mode_60hz,
 
 
 	output reg         vblank,
@@ -44,17 +45,30 @@ module video_sync_v(
 	localparam INT_BEG = 9'd0;
 
 	// pentagon (x192)
-	localparam VPIX_BEG_PENT = 9'd080;//9'd064;
-	localparam VPIX_END_PENT = 9'd272;//9'd256;
+	localparam VPIX_BEG_PENT = 9'd080;
+	localparam VPIX_END_PENT = 9'd272;
 
 	// ATM (x200)
-	localparam VPIX_BEG_ATM = 9'd076;//9'd060;
-	localparam VPIX_END_ATM = 9'd276;//9'd260;
+	localparam VPIX_BEG_ATM = 9'd076;
+	localparam VPIX_END_ATM = 9'd276;
 
 	localparam VPERIOD = 9'd320; // pentagono foreva!
 
+	// ntsc
+	localparam VSYNC60_BEG = 9'd04;
+	localparam VSYNC60_END = 9'd07;
+	localparam VBLNK60_END = 9'd22;
+	// pentagon (x192)
+	localparam VPIX60_BEG_PENT = 9'd046;
+	localparam VPIX60_END_PENT = 9'd238;
+	// ATM (x200)
+	localparam VPIX60_BEG_ATM = 9'd042;
+	localparam VPIX60_END_ATM = 9'd242;
+	//
+	localparam VPERIOD60 = 9'd262;
 
 	reg [8:0] vcount;
+	reg mode60;
 
 
 
@@ -70,8 +84,11 @@ module video_sync_v(
 
 	always @(posedge clk) if( hsync_start )
 	begin
-		if( vcount==(VPERIOD-9'd1) )
+		if( vcount==((mode60?VPERIOD:VPERIOD60)-9'd1) )
+		begin
 			vcount <= 9'd0;
+			mode60 <= mode_60hz;
+		end
 		else
 			vcount <= vcount + 9'd1;
 	end
@@ -82,16 +99,16 @@ module video_sync_v(
 	begin
 		if( vcount==VBLNK_BEG )
 			vblank <= 1'b1;
-		else if( vcount==VBLNK_END )
+		else if( vcount==(mode60?VBLNK_END:VBLNK60_END) )
 			vblank <= 1'b0;
 	end
 
 
 	always @(posedge clk)
 	begin
-		if( (vcount==VSYNC_BEG) && hsync_start )
+		if( (vcount==(mode60?VSYNC_BEG:VSYNC60_BEG)) && hsync_start )
 			vsync <= 1'b1;
-		else if( (vcount==VSYNC_END) && line_start  )
+		else if( (vcount==(mode60?VSYNC_END:VSYNC60_END)) && line_start  )
 			vsync <= 1'b0;
 	end
 
@@ -108,9 +125,9 @@ module video_sync_v(
 
 	always @(posedge clk) if( hsync_start )
 	begin
-		if( vcount==(mode_atm_n_pent ? VPIX_BEG_ATM : VPIX_BEG_PENT) )
+		if( vcount==(mode60?(mode_atm_n_pent ? VPIX_BEG_ATM : VPIX_BEG_PENT):(mode_atm_n_pent ? VPIX60_BEG_ATM : VPIX60_BEG_PENT)) )
 			vpix <= 1'b1;
-		else if( vcount==(mode_atm_n_pent ? VPIX_END_ATM : VPIX_END_PENT) )
+		else if( vcount==(mode60?(mode_atm_n_pent ? VPIX_END_ATM : VPIX_END_PENT):(mode_atm_n_pent ? VPIX60_END_ATM : VPIX60_END_PENT)) )
 			vpix <= 1'b0;
 	end
 
