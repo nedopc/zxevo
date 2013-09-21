@@ -923,11 +923,11 @@ __inline unsigned char in1(unsigned port)
 			if( p1==0x1f )
 				return comp.wd_shadow_9f;
 			if( p1==0xff )
-				return comp.wd_shadow_af | 0x3F;
+				return comp.wd_shadow_af;
 			if( p1==0x9f )
 				return comp.wd_shadow_1f;
 			if( p1==0xaf )
-				return comp.wd_shadow_ff & 0x1f;
+				return comp.wd_shadow_ff;
 			// 3f,5f,7f -- act as r/w cells
 			return comp.wd.in(p1);
 		}
