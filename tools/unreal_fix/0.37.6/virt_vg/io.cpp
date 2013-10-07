@@ -325,16 +325,28 @@ void out(unsigned port, unsigned char val)
               return;
           }
       } // quorum
-      else if( p1==0x1F || p1==0x3f || p1==0x5f || p1==0x7f || p1==0x9f || p1==0xaf || p1==0xff ) // 1F, 3F, 5F, 7F, FF
-      {
+	else if( p1==0x1F ||
+	         p1==0x2f ||
+	         p1==0x3f ||
+	         p1==0x4f ||
+	         p1==0x5f ||
+	         p1==0x6f ||
+	         p1==0x7f ||
+	         p1==0x8f ||
+	         p1==0x9f ||
+	         p1==0xaf ||
+	         p1==0xff )
+	{
+//		      p1==0x3f || p1==0x5f || p1==0x7f || p1==0x9f || p1==0xaf || p1==0xff ) // 1F, 3F, 5F, 7F, FF
+//     {
           // standard output to VG93
-		if( comp.pBF & 0x20 )
+/*		if( comp.pBF & 0x20 )
 		{
 			comp.wd.out(p1, val);
 			return;
 		}
-		else // vg-emul
-		{
+		else // vg-emul*/
+/*		{
 			if( p1==0x1F )
 				comp.wd_shadow_1f = val;
 			else if( p1==0xff )
@@ -347,11 +359,65 @@ void out(unsigned port, unsigned char val)
 				comp.wd_shadow_ff = val;
 			else
 				comp.wd.out(p1,val);
-		}
+		}*/
           //comp.wd.out(p1, val);
           //return;
-      }
+
+		switch( p1 )
+		{
+		case 0x1f:
+			comp.wd_shadow_1f = val;
+			return;
+		break;
+		case 0x2f:
+			comp.wd.out(0x1f,val);
+			return;
+		break;
+		case 0x3f:
+			comp.wd_shadow[1] = val; // 3f->4f
+			comp.wd.out(0x3f,val);
+			return;
+		break;
+		case 0x4f:
+			comp.wd_shadow[1] = val;
+			return;
+		break;
+		case 0x5f:
+			comp.wd_shadow[2] = val; // 5f->6f
+			comp.wd.out(0x5f,val);
+			return;
+		break;
+		case 0x6f:
+			comp.wd_shadow[2] = val;
+			return;
+		break;
+		case 0x7f:
+			comp.wd_shadow[3] = val; // 7f->8f
+			comp.wd.out(0x7f,val);
+			return;
+		break;
+		case 0x8f:
+			comp.wd_shadow[3] = val;
+			return;
+		break;
+		case 0x9f:
+			comp.wd_shadow_9f = val;
+			return;
+		break;
+		case 0xaf:
+			comp.wd_shadow_af = val;
+			return;
+		break;
+		case 0xff:
+			comp.wd_shadow_ff = val;
+			comp.wd.out(0xff,val);
+			return;
+		break;
+		}
+	}
       // don't return - out to port #FE works in trdos!
+
+
    }
    else // не dos
    {
@@ -804,7 +870,7 @@ __inline unsigned char in1(unsigned port)
 
    if (comp.flags & CF_DOSPORTS)
    {
-      if(conf.mem_model == MM_ATM3 && (p1 & 0x1F) == 0x0F && !(((p1 >> 5) - 1) & 4))
+/*      if(conf.mem_model == MM_ATM3 && (p1 & 0x1F) == 0x0F && !(((p1 >> 5) - 1) & 4))
       {
           // 2F = 001|01111b
           // 4F = 010|01111b
@@ -812,7 +878,7 @@ __inline unsigned char in1(unsigned port)
           // 8F = 100|01111b
           return comp.wd_shadow[(p1 >> 5) - 1];
       }
-
+*/
 
       if (conf.ide_scheme == IDE_ATM && (port & 0x1F) == 0x0F)
       {
@@ -911,7 +977,7 @@ __inline unsigned char in1(unsigned port)
           // 7F = 0111|1111b
           // DF = 1101|1111b порт мыши
           // FF = 1111|1111b
-      else if( p1==0x1F || p1==0x3f || p1==0x5f || p1==0x7f || p1==0x9f || p1==0xaf || p1==0xFF) // 1F, 3F, 5F, 7F, FF
+/*      else if( p1==0x1F || p1==0x3f || p1==0x5f || p1==0x7f || p1==0x9f || p1==0xaf || p1==0xFF) // 1F, 3F, 5F, 7F, FF
 	{
 		if( comp.pBF & 0x20 )
 		{
@@ -930,6 +996,49 @@ __inline unsigned char in1(unsigned port)
 				return comp.wd_shadow_ff;
 			// 3f,5f,7f -- act as r/w cells
 			return comp.wd.in(p1);
+		}
+	}*/
+	else if( p1==0x1F ||
+	         p1==0x2f ||
+	         p1==0x3f ||
+	         p1==0x4f ||
+	         p1==0x5f ||
+	         p1==0x6f ||
+	         p1==0x7f ||
+	         p1==0x8f ||
+	         p1==0x9f ||
+	         p1==0xaf ||
+	         p1==0xff )
+	{
+		switch( p1 )
+		{
+		case 0x1f:
+			return comp.wd_shadow_9f;
+		break;
+		case 0x2f:
+			return comp.wd.in(0x1f);
+		break;
+		case 0x3f:
+		case 0x5f:
+		case 0x7f:
+			return comp.wd.in(p1);
+		break;
+		case 0x4f:
+		case 0x6f:
+		case 0x8f:
+			return comp.wd_shadow[ ( 1 + ((p1-0x4f)>>5) ) ];
+		break;
+		case 0x9f:
+			return comp.wd_shadow_1f;
+		break;
+		case 0xaf:
+			int tmp_vg;
+			tmp_vg = comp.wd.in(0xff);
+			return (comp.wd_shadow_ff & 0x3F) | (tmp_vg & 0xC0);
+		break;
+		case 0xff:
+			return comp.wd_shadow_af;
+		break;
 		}
 	}
    }
