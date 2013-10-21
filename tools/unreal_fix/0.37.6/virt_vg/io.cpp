@@ -334,7 +334,7 @@ void out(unsigned port, unsigned char val)
 	         p1==0x7f ||
 	         p1==0x8f ||
 	         p1==0x9f ||
-	         p1==0xaf ||
+//	         p1==0xaf ||
 	         p1==0xff )
 	{
 //		      p1==0x3f || p1==0x5f || p1==0x7f || p1==0x9f || p1==0xaf || p1==0xff ) // 1F, 3F, 5F, 7F, FF
@@ -404,10 +404,10 @@ void out(unsigned port, unsigned char val)
 			comp.wd_shadow_9f = val;
 			return;
 		break;
-		case 0xaf:
-			comp.wd_shadow_af = val;
-			return;
-		break;
+//		case 0xaf:
+//			comp.wd_shadow_af = val;
+//			return;
+//		break;
 		case 0xff:
 			comp.wd_shadow_ff = val;
 			comp.wd.out(0xff,val);
@@ -1007,13 +1007,13 @@ __inline unsigned char in1(unsigned port)
 	         p1==0x7f ||
 	         p1==0x8f ||
 	         p1==0x9f ||
-	         p1==0xaf ||
+//	         p1==0xaf ||
 	         p1==0xff )
 	{
 		switch( p1 )
 		{
 		case 0x1f:
-			return comp.wd_shadow_9f;
+			return comp.wd_shadow_1f;
 		break;
 		case 0x2f:
 			return comp.wd.in(0x1f);
@@ -1029,15 +1029,17 @@ __inline unsigned char in1(unsigned port)
 			return comp.wd_shadow[ ( 1 + ((p1-0x4f)>>5) ) ];
 		break;
 		case 0x9f:
-			return comp.wd_shadow_1f;
+			return comp.wd_shadow_9f;
 		break;
-		case 0xaf:
+//		case 0xaf:
+//			int tmp_vg;
+//			tmp_vg = comp.wd.in(0xff);
+//			return (comp.wd_shadow_ff & 0x3F) | (tmp_vg & 0xC0);
+//		break;
+		case 0xff:
 			int tmp_vg;
 			tmp_vg = comp.wd.in(0xff);
-			return (comp.wd_shadow_ff & 0x3F) | (tmp_vg & 0xC0);
-		break;
-		case 0xff:
-			return comp.wd_shadow_af;
+			return (comp.wd_shadow_ff&0x3f)|(tmp_vg&0xc0);
 		break;
 		}
 	}
