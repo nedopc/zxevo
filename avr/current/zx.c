@@ -368,7 +368,13 @@ void to_zx(UBYTE scancode, UBYTE was_E0, UBYTE was_release)
 			//Scroll Lock
 			case 0x7E:
 				//check key of vga mode switcher
-				if ( !was_release ) zx_mode_switcher(MODE_VGA);
+				if ( !was_release )
+				{
+					if (kb_status & (KB_LSHIFT_MASK | KB_RSHIFT_MASK))
+						zx_mode_switcher(MODE_VGA|(modes_register&MODE_60HZ));
+					else
+						zx_mode_switcher(MODE_VGA|(~modes_register&MODE_60HZ));
+				}
 				break;
 			//Num Lock
 			case 0x77:
@@ -385,12 +391,12 @@ void to_zx(UBYTE scancode, UBYTE was_E0, UBYTE was_release)
 				if ( !was_release ) kb_status |= KB_RSHIFT_MASK;
 				else kb_status &= ~KB_RSHIFT_MASK;
 				break;
-			//Ctrl
+			//Left Ctrl
 			case  0x14:
 				if ( !was_release ) kb_status |= KB_CTRL_MASK;
 				else kb_status &= ~KB_CTRL_MASK;
 				break;
-			//Alt
+			//Left Alt
 			case  0x11:
 				if ( !was_release ) kb_status |= KB_ALT_MASK;
 				else kb_status &= ~KB_ALT_MASK;
@@ -589,8 +595,6 @@ void zx_mode_switcher(UBYTE mode)
 {
 	//invert mode
 	modes_register ^= mode;
-
-	if ( (mode==MODE_VGA) && ((modes_register&MODE_VGA)==0) ) modes_register^=MODE_60HZ;
 
 	//send configuration to FPGA
 	zx_set_config((flags_register&FLAG_LAST_TAPE_VALUE)?SPI_TAPE_FLAG:0);
