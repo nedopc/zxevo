@@ -167,10 +167,17 @@ void set_banks()
          unsigned i = ((comp.p7FFD & 0x10) >> 2);
          for (unsigned bank = 0; bank < 4; bank++)
          {
-            switch (comp.pFFF7[i+bank] & 0x300)
+			// lvd added 6 or 3 bits from 7FFD to page number insertion in pentevo (was only 3 as in atm2)
+			unsigned int mem7ffd = (comp.p7FFD & 7) | ( (comp.p7FFD & 0xE0)>>2 );
+			unsigned int mask7ffd = 0x07;
+			
+			if( conf.mem_model==MM_ATM3 && ( !(comp.pEFF7 & EFF7_LOCKMEM) ) )
+				mask7ffd = 0x3F;
+			
+			switch (comp.pFFF7[i+bank] & 0x300)
             {
-               case 0x000: // RAM from 7FFD
-                  bankr[bank] = bankw[bank] = RAM_BASE_M + PAGE * ((comp.p7FFD & 7) | (comp.pFFF7[i+bank] & 0xF8 & temp.ram_mask));
+               case 0x000: // RAM from 7FFD (lvd patched)
+                  bankr[bank] = bankw[bank] = RAM_BASE_M + PAGE * ((mem7ffd & mask7ffd) | (comp.pFFF7[i+bank] & (~mask7ffd) & temp.ram_mask));
                   break;
                case 0x100: // ROM from 7FFD
                   bankr[bank] = ROM_BASE_M + PAGE*((comp.pFFF7[i+bank] & 0xFE & temp.rom_mask) + ((comp.flags & CF_TRDOS)?1:0));
@@ -185,8 +192,16 @@ void set_banks()
          }
          bank0 = bankr[0]; bank3 = bankr[3];
 
-         if(conf.mem_model == MM_ATM3 && cpu.nmi_in_progress)
-             bank0 = RAM_BASE_M + PAGE * 0xFF;
+//         if(conf.mem_model == MM_ATM3 && cpu.nmi_in_progress)
+//             bank0 = RAM_BASE_M + PAGE * 0xFF;
+		if( conf.mem_model==MM_ATM3 ) // lvd added pentevo RAM0 to bank0 feature if EFF7_ROCACHE is set
+		{
+			if( cpu.nmi_in_progress )
+				bank0 = RAM_BASE_M + PAGE * 0xFF;
+			else if( comp.pEFF7 & EFF7_ROCACHE )
+				bank0 = RAM_BASE_M + PAGE * 0x00;
+		}
+		
          break;
       }
 
@@ -422,6 +437,11 @@ unsigned char cmos_read()
       }
    }
 
+   if (input.buffer_enabled && reg >= 0xF0)    //thims zxevo_ps2
+   {
+       return input.buffer.Pop();
+   }
+
    switch (reg)
    {
       case 0:     return cmosBCD((BYTE)st.wSecond);
@@ -445,7 +465,13 @@ unsigned char cmos_read()
 void cmos_write(unsigned char val)
 {
    if (conf.cmos == 2) comp.cmos_addr &= 0x3F;
-   cmos[comp.cmos_addr] = val;
+	if (conf.mem_model == MM_ATM3 && comp.cmos_addr == 0x0C)
+	{
+		if (val & 0x01)
+		   input.buffer.Empty();
+		return;
+	}
+	cmos[comp.cmos_addr] = val;
 }
 
 void NVRAM::write(unsigned char val)

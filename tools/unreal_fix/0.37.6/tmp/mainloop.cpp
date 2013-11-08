@@ -12,6 +12,7 @@
 #include "emulkeys.h"
 #include "vs1001.h"
 #include "z80.h"
+#include "zxevo.h"
 
 #include "util.h"
 
@@ -23,6 +24,7 @@ void spectrum_frame()
    init_snd_frame();
    init_frame();
 
+   zxevo_set_readfont_pos(); // init readfont position to simulate correct font reading for zxevo -- lvd
    if(cpu.dbgchk)
    {
        cpu.SetDbgMemIf();
@@ -41,7 +43,7 @@ void spectrum_frame()
    showleds();
 
    if (!cpu.iff1 || // int disabled in CPU
-        ((conf.mem_model == MM_ATM710 || conf.mem_model == MM_ATM3) && !(comp.pFF77 & 0x20))) // int disabled by ATM hardware
+        ((conf.mem_model == MM_ATM710/* || conf.mem_model == MM_ATM3*/) && !(comp.pFF77 & 0x20))) // int disabled by ATM hardware -- lvd removed int disabling in pentevo (atm3)
    {
       unsigned char *mp = am_r(cpu.pc);
       if (cpu.halted)

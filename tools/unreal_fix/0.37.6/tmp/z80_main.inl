@@ -13,7 +13,7 @@ unsigned char rm(unsigned addr)
 #endif
 
 #ifdef MOD_GSZ80
-   if ((temp.gsdmaon!=0) && (conf.mem_model == MM_PENTAGON) && ((addr & 0xc000)==0) && ((comp.pEFF7 & EFF7_ROCACHE)==0))
+   if ((temp.gsdmaon!=0) && ( (conf.mem_model==MM_PENTAGON) || (conf.mem_model==MM_ATM3) ) && ((addr & 0xc000)==0) && ((comp.pEFF7 & EFF7_ROCACHE)==0))
     {
      unsigned char *tmp;
      tmp = GSRAM_M+((temp.gsdmaaddr-1) & 0x1FFFFF);
@@ -40,7 +40,7 @@ void wm(unsigned addr, unsigned char val)
 #endif
 
 #ifdef MOD_GSZ80
-   if ((temp.gsdmaon!=0) && (conf.mem_model == MM_PENTAGON) && ((addr & 0xc000)==0))
+   if ((temp.gsdmaon!=0) && ( (conf.mem_model==MM_PENTAGON) || (conf.mem_model==MM_ATM3) ) && ((addr & 0xc000)==0))
     {
      unsigned char *tmp;
      tmp = GSRAM_M+temp.gsdmaaddr;
@@ -58,9 +58,9 @@ void wm(unsigned addr, unsigned char val)
    }
 #endif
 
-   if((conf.mem_model == MM_ATM3) && (comp.pBF & 4) && ((addr & 0xF800) == 0)) // Ğàçğåøåíà çàãğóçêà øğèôòà äëÿ ATM3
+   if((conf.mem_model == MM_ATM3) && (comp.pBF & 4) /*&& ((addr & 0xF800) == 0)*/ ) // Ğàçğåøåíà çàãğóçêà øğèôòà äëÿ ATM3 // lvd: any addr is possible in ZXEVO
    {
-       unsigned idx = (addr >> 3) | ((addr & 7) << 8);
+       unsigned idx = ((addr&0x07F8) >> 3) | ((addr & 7) << 8);
        fontatm2[idx] = val;
        update_screen();
        return;
@@ -89,6 +89,13 @@ Z80INLINE unsigned char m1_cycle(Z80 *cpu)
    if ((conf.mem_model == MM_PENTAGON) &&
       ((comp.pEFF7 & (EFF7_384 | EFF7_4BPP)) == (EFF7_384 | EFF7_4BPP)))
        temp.offset_hscroll++;
+
+	if( conf.mem_model==MM_ATM3 && (comp.pBF&0x10) && (comp.brk_addr==cpu->pc) )
+	{
+		nmi_pending = 1;
+		trdos_in_nmi = comp.flags&CF_TRDOS;
+	}
+
    cpu->r_low++;// = (cpu->r & 0x80) + ((cpu->r+1) & 0x7F);
    cpu->t += 4;
    return rm(cpu->pc++);
@@ -179,7 +186,7 @@ void z80loop()
       }
 
       if (cpu.int_pend && cpu.iff1 && cpu.t != cpu.eipos && // int enabled in CPU not issued after EI
-           !((conf.mem_model == MM_ATM710 || conf.mem_model == MM_ATM3) && !(comp.pFF77 & 0x20))) // int enabled by ATM hardware
+           !((conf.mem_model == MM_ATM710/* || conf.mem_model == MM_ATM3*/) && !(comp.pFF77 & 0x20))) // int enabled by ATM hardware -- lvd added no int disabling in pentevo (atm3)
       {
          handle_int(&cpu, cpu.IntVec()); // Íà÷àëî îáğàáîòêè int (çàïèñü â ñòåê àäğåñà âîçâğàòà è ò.ï.)
       }
@@ -227,7 +234,15 @@ void z80loop()
 
       if(nmi_pending)
       {
-         if((conf.mem_model == MM_PROFSCORP || conf.mem_model == MM_SCORP))
+		if( conf.mem_model==MM_ATM3 && (comp.pBF&0x10) )
+		{
+			nmi_pending = 0;
+			cpu.nmi_in_progress = true;
+			set_banks();
+			m_nmi(RM_NOCHANGE);
+			continue;
+		}
+		else if((conf.mem_model == MM_PROFSCORP || conf.mem_model == MM_SCORP))
          {
              nmi_pending--;
              if(cpu.pc >= 0x4000)

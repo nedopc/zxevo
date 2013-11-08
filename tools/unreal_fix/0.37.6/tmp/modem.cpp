@@ -212,6 +212,7 @@ unsigned char ISA_MODEM::read(unsigned nreg)
 
    if (nreg == 0)
    { // read char from buffer
+      if(conf.mem_model == MM_ATM3)result = 0;
       if (rhead != rtail)
       {
            result = reg[0] = rcbuf[rtail++];

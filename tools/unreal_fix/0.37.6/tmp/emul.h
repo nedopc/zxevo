@@ -407,6 +407,7 @@ struct COMPUTER
    unsigned active_ay;
    u8 pBF; // ATM3
    u8 pBE; // ATM3
+   u16 brk_addr; // pentevo
 
    unsigned char flags;
    unsigned char border_attr;

@@ -10,6 +10,7 @@
 #include "sdcard.h"
 #include "zc.h"
 #include "tape.h"
+#include "zxevo.h"
 
 void out(unsigned port, unsigned char val)
 {
@@ -35,8 +36,11 @@ void out(unsigned port, unsigned char val)
    #endif
 
    // z-controller
-   if (conf.zc && (port & 0xFF) == 0x57)
+   if (conf.zc && (port & 0xFF) == 0x57 )
    {
+      if ((port & 0x80FF) == 0x8057 && conf.mem_model == MM_ATM3
+         &&(comp.flags & CF_DOSPORTS))
+         return;
        Zc.Wr(port, val);
        return;
    }
@@ -91,11 +95,14 @@ void out(unsigned port, unsigned char val)
 
    if(conf.mem_model == MM_ATM3)
    {
-       // Порт расширений АТМ3
+       // Порт расширений пентевы
        if((port & 0xFF) == 0xBF)
        {
-           if((comp.pBF ^ val) & comp.pBF & 8) // D3: 1->0
-               nmi_pending  = 1;
+			if((comp.pBF ^ val) & comp.pBF & 8) // D3: 1->0
+			{
+				nmi_pending  = 1;
+				trdos_in_nmi = comp.flags&CF_TRDOS;
+			}
            comp.pBF = val;
            set_banks();
            return;
@@ -107,6 +114,23 @@ void out(unsigned port, unsigned char val)
            comp.pBE = 2; // счетчик для выхода из nmi
            return;
        }
+	   
+	   // порт адреса брякпоинта
+	   if((port & 0xFF) == 0xBD)
+	   {
+			if( port&0x0100 )
+			{ // high part of address
+				comp.brk_addr &= 0x00FF;
+				comp.brk_addr |= ( ((u16)val) << 8 )&0xFF00;
+			}
+			else
+			{ // low part
+				comp.brk_addr &= 0xFF00;
+				comp.brk_addr |= ((u16)val)&0x00FF;
+			}
+			
+			return;
+	   }
    }
 
    if (comp.flags & CF_DOSPORTS)
@@ -119,6 +143,7 @@ void out(unsigned port, unsigned char val)
           // 8F = 100|01111b
           comp.wd_shadow[(p1 >> 5) - 1] = val;
       }
+
 
       if (conf.ide_scheme == IDE_ATM && (port & 0x1F) == 0x0F)
       {
@@ -195,7 +220,9 @@ void out(unsigned port, unsigned char val)
              return;
          }
 
-         u32 mask = (conf.mem_model == MM_ATM3) ? 0x3FFF : 0x00FF;
+         u32 mask = (conf.mem_model == MM_ATM3) ? /*0x3FFF*/ 0x0FFF : 0x00FF; // lvd fix: pentevo hardware decodes fully only low byte,
+                                                                              // so using eff7 in shadow mode lead to outting to fff7,
+                                                                              // unlike this was in unreal!
          if ((port & mask) == (0x3FF7 & mask)) // xff7
          {
              comp.pFFF7[((comp.p7FFD & 0x10) >> 2) | ((port >> 14) & 3)] = (((val & 0xC0) << 2) | (val & 0x3F)) ^ 0x33F;
@@ -480,8 +507,12 @@ set1FFD:
             if ((comp.pEFF7 & EFF7_LOCKMEM) && conf.mem_model == MM_PENTAGON && conf.ramsize == 1024)
                 return;
 
-            // if not pentagon-1024 or profi with #DFFD.4 set, apply lock
+			if ((comp.pEFF7 & EFF7_LOCKMEM) && conf.mem_model == MM_ATM3) // lvd added eff7 to atm3
+				return;
+
+            // if not pentagon-1024 or pentevo (atm3) --(added by lvd)-- or profi with #DFFD.4 set, apply lock
             if (!((conf.ramsize == 1024 && conf.mem_model == MM_PENTAGON) ||
+			      (conf.mem_model == MM_ATM3)                             ||
                   (conf.mem_model == MM_PROFI && (comp.pDFFD & 0x10)))) // molodcov_alex
                 return;
          }
@@ -573,7 +604,7 @@ set1FFD:
        return;
    }
 
-   if (port == 0xEFF7 && conf.mem_model == MM_PENTAGON)
+   if( (port == 0xEFF7) && ( (conf.mem_model==MM_PENTAGON) || (conf.mem_model==MM_ATM3) ) ) // lvd added eff7 to atm3
    {
       unsigned char oldpEFF7 = comp.pEFF7; //Alone Coder 0.36.4
       comp.pEFF7 = (comp.pEFF7 & conf.EFF7_mask) | (val & ~conf.EFF7_mask);
@@ -607,8 +638,28 @@ set1FFD:
       }
       if (port == (0xBFF7 & mask))
       {
-          cmos_write(val);
-          return;
+         if (comp.cmos_addr >= 0xF0 && val <= 2 && conf.mem_model == MM_ATM3)
+         {//thims added
+            if (val < 2)
+            {
+               input.buffer_enabled = false;
+               static unsigned version = 0;
+               if (!version)
+               {
+                  unsigned day, year;
+                  char month[8];
+                  static const char months[] = "JanFebMarAprMayJunJulAugSepOctNovDec"; 
+                  sscanf(__DATE__, "%s %d %d", month, &day, &year);
+                  version = day | ((strstr(months, month) - months) / 3 + 1) << 5 | (year - 2000) << 9;
+               }
+               
+               strcpy((char*)cmos + 0xF0, "UnrealSpeccy");
+               *(unsigned*)(cmos + 0xFC) = version;
+            }
+            else input.buffer_enabled = true;
+         }
+         else cmos_write(val);
+         return;
       }
    }
    if ((port & 0xF8FF) == 0xF8EF && modem.open_port)
@@ -639,7 +690,11 @@ __inline unsigned char in1(unsigned port)
 
    // z-controller
    if (conf.zc && (port & 0xFF) == 0x57)
-       return Zc.Rd(port);
+   {
+      // no shadow-mode ZXEVO patch here since 0x57 port in read mode is the same
+	  // as in noshadow-mode, i.e. no A15 is used to decode port.
+      return Zc.Rd(port);
+   }
 
    if(conf.mem_model == MM_ATM3)
    {
@@ -673,9 +728,17 @@ __inline unsigned char in1(unsigned port)
                return ~RamRomMask;
            }
            case 0xA: return comp.p7FFD;
-//           case 0xB:;
-           case 0xC: return ((comp.aFF77 >> 14) << 7) | ((comp.aFF77 >> 9) << 6) | ((comp.aFF77 >> 8) << 5) | (comp.pFF77 & 0xF);
+           case 0xB: return comp.pEFF7; // lvd - added EFF7 reading in pentevo (atm3)
+
+           // lvd: fixed bug with no-anding bits from aFF77, added CF_TRDOS to bit 4
+		   // lvd: changed bit 4 to dos state, remembered during nmi
+           case 0xC: return (((comp.aFF77 >> 14) << 7) & 0x0080) | (((comp.aFF77 >> 9) << 6) & 0x0040) | (((comp.aFF77 >> 8) << 5) & 0x0020) | (/*(comp.flags & CF_TRDOS)*/trdos_in_nmi?0x0010:0) | (comp.pFF77 & 0xF);
            case 0xD: return atm_readpal();
+		   case 0xE: return zxevo_readfont();
+		   
+		   // breakpoint address readback
+		   case 0x10: return comp.brk_addr&0x00FF;
+		   case 0x11: return (comp.brk_addr>>8)&0x00FF;
            }
        }
    }
@@ -728,6 +791,7 @@ __inline unsigned char in1(unsigned port)
           // 8F = 100|01111b
           return comp.wd_shadow[(p1 >> 5) - 1];
       }
+
 
       if (conf.ide_scheme == IDE_ATM && (port & 0x1F) == 0x0F)
       {

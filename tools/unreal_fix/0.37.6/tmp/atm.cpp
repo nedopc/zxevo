@@ -279,7 +279,7 @@ void set_atm_FF77(unsigned port, unsigned char val)
 
    comp.pFF77 = val;
    comp.aFF77 = port;
-   cpu.int_gate = (comp.pFF77 & 0x20) != false;
+   cpu.int_gate = ((comp.pFF77 & 0x20) != false) || (conf.mem_model==MM_ATM3); // lvd added no INT gate to pentevo (atm3)
    set_banks();
 }
 
