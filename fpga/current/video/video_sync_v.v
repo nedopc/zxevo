@@ -84,7 +84,7 @@ module video_sync_v(
 
 	always @(posedge clk) if( hsync_start )
 	begin
-		if( vcount==((mode60?VPERIOD:VPERIOD60)-9'd1) )
+		if( vcount==((mode60?VPERIOD60:VPERIOD)-9'd1) )
 		begin
 			vcount <= 9'd0;
 			mode60 <= mode_60hz;
@@ -99,16 +99,16 @@ module video_sync_v(
 	begin
 		if( vcount==VBLNK_BEG )
 			vblank <= 1'b1;
-		else if( vcount==(mode60?VBLNK_END:VBLNK60_END) )
+		else if( vcount==(mode60?VBLNK60_END:VBLNK_END) )
 			vblank <= 1'b0;
 	end
 
 
 	always @(posedge clk)
 	begin
-		if( (vcount==(mode60?VSYNC_BEG:VSYNC60_BEG)) && hsync_start )
+		if( (vcount==(mode60?VSYNC60_BEG:VSYNC_BEG)) && hsync_start )
 			vsync <= 1'b1;
-		else if( (vcount==(mode60?VSYNC_END:VSYNC60_END)) && line_start  )
+		else if( (vcount==(mode60?VSYNC60_END:VSYNC_END)) && line_start  )
 			vsync <= 1'b0;
 	end
 
@@ -125,9 +125,9 @@ module video_sync_v(
 
 	always @(posedge clk) if( hsync_start )
 	begin
-		if( vcount==(mode60?(mode_atm_n_pent ? VPIX_BEG_ATM : VPIX_BEG_PENT):(mode_atm_n_pent ? VPIX60_BEG_ATM : VPIX60_BEG_PENT)) )
+		if( vcount==(mode60?(mode_atm_n_pent ? VPIX60_BEG_ATM : VPIX60_BEG_PENT):(mode_atm_n_pent ? VPIX_BEG_ATM : VPIX_BEG_PENT)) )
 			vpix <= 1'b1;
-		else if( vcount==(mode60?(mode_atm_n_pent ? VPIX_END_ATM : VPIX_END_PENT):(mode_atm_n_pent ? VPIX60_END_ATM : VPIX60_END_PENT)) )
+		else if( vcount==(mode60?(mode_atm_n_pent ? VPIX60_END_ATM : VPIX60_END_PENT):(mode_atm_n_pent ? VPIX_END_ATM : VPIX_END_PENT)) )
 			vpix <= 1'b0;
 	end
 
