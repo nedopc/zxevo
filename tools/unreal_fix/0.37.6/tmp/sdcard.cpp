@@ -6,6 +6,8 @@
 
 #include "util.h"
 
+//-----------------------------------------------------------------------------
+
 void TSdCard::Reset()
 {
 //    printf(__FUNCTION__"\n");
@@ -17,32 +19,51 @@ void TSdCard::Reset()
     DataCnt = 0;
 
     CsdCnt = 0;
-    memset(Csd, 0, sizeof(Csd));
-    Csd[1] = (8 << 3); // TACC F=8.0 | 1ns
-    Csd[3] = 0x32; // TRAN_SPEED
+    //memset(Csd, 0, sizeof(Csd));
+    Csd[0] = 0x00;
+    Csd[1] = 0x0E;
+    Csd[2] = 0x00;
+    Csd[3] = 0x32;
     Csd[4] = 0x5B;
     Csd[5] = 0x59;
-    Csd[6] = (1 << 7);
-    Csd[15] = 1;
+    Csd[6] = 0x03;
+    Csd[7] = 0xFF;
+    Csd[8] = 0xED;
+    Csd[9] = 0xB7;
+    Csd[10] = 0xBF;
+    Csd[11] = 0xBF;
+    Csd[12] = 0x06;
+    Csd[13] = 0x40;
+    Csd[14] = 0x00;
+    Csd[15] = 0xF5;
 
     CidCnt = 0;
-    memset(Cid, 0, sizeof(Cid));
-
+    //memset(Cid, 0, sizeof(Cid));
+    Cid[0] = 0x00;
     Cid[1] = 'U';
     Cid[2] = 'S';
     Cid[3] = 'U';
     Cid[4] = 'S';
     Cid[5] = '3';
     Cid[6] = '7';
-    Cid[7] = '3';
-    Cid[8] = 0x37;
-    Cid[14] = 0x04;
-    Cid[15] = 1;
+    Cid[7] = '6';
+    Cid[8] = 0x03;
+    Cid[9] = 0x12;
+    Cid[10] = 0x34;
+    Cid[11] = 0x56;
+    Cid[12] = 0x78;
+    Cid[13] = 0x00;
+    Cid[14] = 0xC1;
+    Cid[15] = 0x0F;
 
-    Ocr = 0x80200000;
     OcrCnt = 0;
+
+    R7_Cnt = 0;
+
     AppCmd = false;
 }
+
+//-----------------------------------------------------------------------------
 
 void TSdCard::Wr(u8 Val)
 {
@@ -56,7 +77,7 @@ void TSdCard::Wr(u8 Val)
     switch(CurrState)
     {
         case ST_IDLE:
-        case ST_WR_DATA_SIG:
+        //case ST_WR_DATA_SIG:
         {
             if((Val & 0xC0) != 0x40) // start=0, transm=1
                break;
@@ -66,115 +87,29 @@ void TSdCard::Wr(u8 Val)
             {
                 switch(Cmd) // Check commands
                 {
-                case CMD_GO_IDLE_STATE:
-//                    printf(__FUNCTION__" CMD_GO_IDLE_STATE, Val = %X\n", Val);
-                    NextState = ST_RD_ARG;
-                    ArgCnt = 0;
-                break;
-
-                case CMD_SEND_OP_COND:
-//                    printf(__FUNCTION__" CMD_SEND_OP_COND, Val = %X\n", Val);
-                    NextState = ST_RD_ARG;
-                    ArgCnt = 0;
-                break;
-
-                case CMD_SET_BLOCKLEN:
-//                    printf(__FUNCTION__" CMD_SET_BLOCKLEN, Val = %X\n", Val);
-                    NextState = ST_RD_ARG;
-                    ArgCnt = 0;
-                break;
-
-                case CMD_READ_SINGLE_BLOCK:
-//                    printf(__FUNCTION__" CMD_READ_SINGLE_BLOCK, Val = %X\n", Val);
-                    NextState = ST_RD_ARG;
-                    ArgCnt = 0;
-                break;
-
-                case CMD_READ_MULTIPLE_BLOCK:
-//                    printf(__FUNCTION__" CMD_READ_MULTIPLE_BLOCK, Val = %X\n", Val);
-                    NextState = ST_RD_ARG;
-                    ArgCnt = 0;
-                break;
-
-                case CMD_WRITE_BLOCK:
-//                    printf(__FUNCTION__" CMD_WRITE_BLOCK, Val = %X\n", Val);
-                    NextState = ST_RD_ARG;
-                    ArgCnt = 0;
-                break;
-
-                case CMD_WRITE_MULTIPLE_BLOCK:
-//                    printf(__FUNCTION__" CMD_WRITE_MULTIPLE_BLOCK, Val = %X\n", Val);
-                    NextState = ST_RD_ARG;
-                    ArgCnt = 0;
-                break;
-
-                case CMD_STOP_TRANSMISSION:
-//                    printf(__FUNCTION__" CMD_STOP_TRANSMISSION, Val = %X\n", Val);
-                    NextState = ST_RD_ARG;
-                    ArgCnt = 0;
-                break;
-
-                case CMD_SEND_IF_COND:
-//                    printf(__FUNCTION__" CMD_SEND_IF_COND, Val = %X\n", Val);
-                    NextState = ST_RD_ARG;
-                    ArgCnt = 0;
-                break;
 
                 case CMD_SEND_CSD:
-//                    printf(__FUNCTION__" CMD_SEND_CSD, Val = %X\n", Val);
-                    NextState = ST_RD_ARG;
-                    ArgCnt = 0;
                     CsdCnt = 0;
                 break;
 
                 case CMD_SEND_CID:
-//                    printf(__FUNCTION__" CMD_SEND_CID, Val = %X\n", Val);
-                    NextState = ST_RD_ARG;
-                    ArgCnt = 0;
                     CidCnt = 0;
                 break;
 
-                case CMD_CRC_ON_OFF:
-//                    printf(__FUNCTION__" CMD_CRC_ON_OFF, Val = %X\n", Val);
-                    NextState = ST_RD_ARG;
-                    ArgCnt = 0;
-                break;
-
                 case CMD_READ_OCR:
-//                    printf(__FUNCTION__" CMD_READ_OCR, Val = %X\n", Val);
-//                    __debugbreak();
-                    NextState = ST_RD_ARG;
-                    ArgCnt = 0;
                     OcrCnt = 0;
                 break;
 
-                case CMD_APP_CMD:
-//                    printf(__FUNCTION__" CMD_APP_CMD, Val = %X\n", Val);
-                    NextState = ST_RD_ARG;
-                    ArgCnt = 0;
-                    AppCmd = true;
-                break;
+                case CMD_SEND_IF_COND:
+                    R7_Cnt = 0;
+                //break;
 
-                default:
-//                    printf(__FUNCTION__" Unknown CMD, Val = %X\n", Val);
-                    NextState = ST_RD_ARG;
-                    ArgCnt = 0;
+                //case CMD_APP_CMD:
+                //    AppCmd = true;
                 }
             }
-            else // AppCmd
-            {
-                switch(Cmd)
-                {
-                case CMD_SD_SEND_OP_COND:
-//                    printf(__FUNCTION__" CMD_SD_SEND_OP_COND, Val = %X\n", Val);
-                    NextState = ST_RD_ARG;
-                    ArgCnt = 0;
-                break;
-                default:
-//                    printf(__FUNCTION__" Unknown ACMD, Val = %X\n", Val);
-                    ;
-                }
-            }
+            NextState = ST_RD_ARG;
+            ArgCnt = 0;
         }
         break;
 
@@ -189,16 +124,20 @@ void TSdCard::Wr(u8 Val)
                 {
                     switch(Cmd)
                     {
+                    case CMD_SET_BLOCKLEN:
+                        if (Arg<=4096)  DataBlockLen = Arg;
+                    break;
+
                     case CMD_READ_SINGLE_BLOCK:
 //                        printf(__FUNCTION__" CMD_READ_SINGLE_BLOCK, Addr = 0x%X\n", Arg);
                         fseek(Image, Arg, SEEK_SET);
-                        fread(Buf, 512, 1, Image);
+                        fread(Buf, DataBlockLen, 1, Image);
                     break;
 
                     case CMD_READ_MULTIPLE_BLOCK:
 //                        printf(__FUNCTION__" CMD_READ_MULTIPLE_BLOCK, Addr = 0x%X\n", Arg);
                         fseek(Image, Arg, SEEK_SET);
-                        fread(Buf, 512, 1, Image);
+                        fread(Buf, DataBlockLen, 1, Image);
                     break;
 
                     case CMD_WRITE_BLOCK:
@@ -223,12 +162,13 @@ void TSdCard::Wr(u8 Val)
         break;
 
         case ST_RD_DATA_SIG:
-            NextState = ST_RD_DATA;
-/*
-            if(Val != 0xFE) // Проверка сигнатуры данных
-                __debugbreak();
-*/
-            DataCnt = 0;
+            if(Val==0xFE) // Проверка сигнатуры данных
+            {
+                DataCnt = 0;
+                NextState = ST_RD_DATA;
+            }
+            else
+                NextState = ST_RD_DATA_SIG;
         break;
 
         case ST_RD_DATA_SIG_MUL:
@@ -241,6 +181,7 @@ void TSdCard::Wr(u8 Val)
             break;
             case 0xFD: // Окончание передачи
 //                printf(__FUNCTION__" ST_RD_DATA_SIG_MUL, Stop\n");
+                DataCnt = 0;
                 NextState = ST_IDLE;
             break;
             default:
@@ -258,7 +199,7 @@ void TSdCard::Wr(u8 Val)
                 DataCnt = 0;
 //                printf(__FUNCTION__" ST_RD_DATA, Addr = 0x%X, write to disk\n", Arg);
                 fseek(Image, Arg, SEEK_SET);
-                fwrite(Buf, 512, 1, Image);
+                fwrite(Buf, DataBlockLen, 1, Image);
                 NextState = ST_WR_DATA_RESP;
             }
         }
@@ -274,8 +215,8 @@ void TSdCard::Wr(u8 Val)
                 DataCnt = 0;
 //                printf(__FUNCTION__" ST_RD_DATA_MUL, Addr = 0x%X, write to disk\n", WrPos);
                 fseek(Image, WrPos, SEEK_SET);
-                fwrite(Buf, 512, 1, Image);
-                WrPos += 512;
+                fwrite(Buf, DataBlockLen, 1, Image);
+                WrPos += DataBlockLen;
                 NextState = ST_RD_DATA_SIG_MUL;
             }
         }
@@ -296,6 +237,8 @@ void TSdCard::Wr(u8 Val)
 
     CurrState = NextState;
 }
+
+//-----------------------------------------------------------------------------
 
 u8 TSdCard::Rd()
 {
@@ -332,16 +275,34 @@ u8 TSdCard::Rd()
     case CMD_SEND_IF_COND:
         if(CurrState == ST_R7)
         {
-            CurrState = ST_IDLE;
-            return 5; // invalid command | idle state
+            switch (R7_Cnt++)
+            {
+             case 0: return 0x01; // R1
+             case 1: return 0x00;
+             case 2: return 0x00;
+             case 3: return 0x01;
+             default:
+                CurrState = ST_IDLE;
+                R7_Cnt = 0;
+                return ArgArr[0]; // echo-back
+            }
         }
     break;
 
     case CMD_READ_OCR:
-        if(CurrState == ST_R1)
+        if(CurrState == ST_R3)
         {
-            CurrState = ST_R3;
-            return 0;
+            switch (OcrCnt++)
+            {
+             case 0: return 0x00; // R1
+             case 1: return 0x80;
+             case 2: return 0xFF;
+             case 3: return 0x80;
+             default:
+                CurrState = ST_IDLE;
+                OcrCnt = 0;
+                return 0x00;
+            }
         }
     break;
 
@@ -373,6 +334,7 @@ u8 TSdCard::Rd()
         switch(CurrState)
         {
         case ST_R1:
+            DataCnt = 0;
             CurrState = ST_R1b;
             return 0;
         case ST_R1b:
@@ -385,10 +347,14 @@ u8 TSdCard::Rd()
         switch(CurrState)
         {
         case ST_R1:
+            CurrState = ST_DELAY_S;
+            return 0;
+        case ST_DELAY_S:
+            CurrState = ST_STARTBLOCK;
+            return 0xFF;
+        case ST_STARTBLOCK:
             CurrState = ST_WR_DATA;
-            return 0xFE;
-        case ST_WR_DATA_SIG:
-            CurrState = ST_WR_DATA;
+            DataCnt = 0;
             return 0xFE;
         case ST_WR_DATA:
         {
@@ -396,11 +362,17 @@ u8 TSdCard::Rd()
             if(DataCnt == DataBlockLen)
             {
                 DataCnt = 0;
-                CurrState = ST_IDLE;
-                Cmd = CMD_INVALID;
+                CurrState = ST_WR_CRC16_1;
             }
             return Val;
         }
+        case ST_WR_CRC16_1:
+            CurrState = ST_WR_CRC16_2;
+            return 0xFF; // crc
+        case ST_WR_CRC16_2:
+            CurrState = ST_IDLE;
+            Cmd = CMD_INVALID;
+            return 0xFF; // crc
         }
 //        Cmd = CMD_INVALID;
     break;
@@ -409,10 +381,43 @@ u8 TSdCard::Rd()
         switch(CurrState)
         {
         case ST_R1:
+            CurrState = ST_DELAY_S;
+            return 0;
+        case ST_DELAY_S:
+            CurrState = ST_STARTBLOCK;
+            return 0xFF;
+        case ST_STARTBLOCK:
             CurrState = ST_IDLE;
+            DataCnt = 0;
             return 0xFE;
+        case ST_IDLE:
+        {
+            if (DataCnt<DataBlockLen)
+            {
+                u8 Val = Buf[DataCnt++];
+                if(DataCnt == DataBlockLen)
+                    fread(Buf, DataBlockLen, 1, Image);
+                return Val;
+            }
+            else if (DataCnt>(DataBlockLen+8))
+            {
+                DataCnt=0;
+                return 0xFE; // next startblock
+            }
+            else
+            {
+                DataCnt++;
+                return 0xFF; // crc & pause
+            }
+        }
+
+/*
+        case ST_R1:
+            CurrState = ST_WR_DATA_SIG;
+            return 0;
         case ST_WR_DATA_SIG:
             CurrState = ST_IDLE;
+            DataCnt = 0;
             return 0xFE;
         case ST_IDLE:
         {
@@ -420,7 +425,7 @@ u8 TSdCard::Rd()
             if(DataCnt == DataBlockLen)
             {
                 DataCnt = 0;
-                fread(Buf, 512, 1, Image);
+                fread(Buf, DataBlockLen, 1, Image);
                 CurrState = ST_WR_CRC16_1;
             }
             return Val;
@@ -431,6 +436,7 @@ u8 TSdCard::Rd()
         case ST_WR_CRC16_2:
             CurrState = ST_WR_DATA_SIG;
             return 0xFF;
+*/
         }
     break;
 
@@ -438,9 +444,12 @@ u8 TSdCard::Rd()
         switch(CurrState)
         {
         case ST_R1:
-            CurrState = ST_WR_DATA;
-            return 0xFE;
-        case ST_WR_DATA_SIG:
+            CurrState = ST_DELAY_S;
+            return 0;
+        case ST_DELAY_S:
+            CurrState = ST_STARTBLOCK;
+            return 0xFF;
+        case ST_STARTBLOCK:
             CurrState = ST_WR_DATA;
             return 0xFE;
         case ST_WR_DATA:
@@ -462,9 +471,12 @@ u8 TSdCard::Rd()
         switch(CurrState)
         {
         case ST_R1:
-            CurrState = ST_WR_DATA;
-            return 0xFE;
-        case ST_WR_DATA_SIG:
+            CurrState = ST_DELAY_S;
+            return 0;
+        case ST_DELAY_S:
+            CurrState = ST_STARTBLOCK;
+            return 0xFF;
+        case ST_STARTBLOCK:
             CurrState = ST_WR_DATA;
             return 0xFE;
         case ST_WR_DATA:
@@ -515,19 +527,16 @@ u8 TSdCard::Rd()
     break;
     }
 
-    if(CurrState == ST_R3)
+    if(CurrState == ST_R1) // CMD_INVALID
     {
-        u8 Val = OcrArr[3 - OcrCnt++];
-
-        if(OcrCnt == 4)
-        {
-            CurrState = ST_IDLE;
-            OcrCnt = 0;
-        }
-        return Val;
+        CurrState = ST_IDLE;
+        return 0x05;
     }
+
     return 0xFF;
 }
+
+//-----------------------------------------------------------------------------
 
 TSdCard::TState TSdCard::GetRespondType()
 {
@@ -535,19 +544,21 @@ TSdCard::TState TSdCard::GetRespondType()
     {
         switch(Cmd)
         {
+        case CMD_APP_CMD:
+            AppCmd = true;
+            return ST_R1;
         case CMD_GO_IDLE_STATE:
         case CMD_SEND_OP_COND:
         case CMD_SET_BLOCKLEN:
         case CMD_READ_SINGLE_BLOCK:
         case CMD_READ_MULTIPLE_BLOCK:
-        case CMD_APP_CMD:
         case CMD_CRC_ON_OFF:
         case CMD_STOP_TRANSMISSION:
         case CMD_SEND_CSD:
         case CMD_SEND_CID:
             return ST_R1;
         case CMD_READ_OCR:
-            return ST_R1; // R3
+            return ST_R3;
         case CMD_SEND_IF_COND:
             return ST_R7;
 
@@ -559,16 +570,20 @@ TSdCard::TState TSdCard::GetRespondType()
     }
     else
     {
+        AppCmd = false;
         switch(Cmd)
         {
             case CMD_SD_SEND_OP_COND:
-                AppCmd = false;
                 return ST_R1;
         }
     }
 
-    return ST_IDLE;
+    Cmd = CMD_INVALID;
+    return ST_R1;
+    //return ST_IDLE;
 }
+
+//-----------------------------------------------------------------------------
 
 void TSdCard::Open(const char *Name)
 {
@@ -581,6 +596,8 @@ void TSdCard::Open(const char *Name)
     }
 }
 
+//-----------------------------------------------------------------------------
+
 void TSdCard::Close()
 {
     if(Image)
@@ -590,4 +607,8 @@ void TSdCard::Close()
     }
 }
 
+//-----------------------------------------------------------------------------
+
 TSdCard SdCard;
+
+//-----------------------------------------------------------------------------

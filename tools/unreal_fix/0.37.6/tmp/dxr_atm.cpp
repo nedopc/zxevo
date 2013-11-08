@@ -8,6 +8,7 @@
 #include "dxr_atm2.h"
 #include "dxr_atm6.h"
 #include "dxr_atm7.h"
+#include "dxr_pentatm7.h"
 #include "dxr_atmf.h"
 
 typedef void (*TAtmRendFunc)(unsigned char *dst, unsigned pitch);
@@ -110,15 +111,25 @@ void rend_atm_2(unsigned char *dst, unsigned pitch)
         return;
     }
 
-    if ( 7 == (comp.pFF77 & 7) ) //< Undocumented Sinclair Textmode VideoMode
+    if ( (7 == (comp.pFF77 & 7)) && (conf.mem_model!=MM_ATM3) ) //< Undocumented Sinclair Textmode VideoMode --lvd-- in ATM2
     {
         rend_atm7(dst, pitch);
         return;
     }
+
+	
     
     if (temp.oy > temp.scy && conf.fast_sl) 
         pitch *= 2;
     rend_atm_frame(dst, pitch);
+	
+	if ( (7 == (comp.pFF77 & 7)) && (conf.mem_model==MM_ATM3) ) // lvd: pentevo one-page textmode
+    {
+		for(int y=0; y<200; y++)
+			rend_pentatm7(dst, pitch, y, ((y>>3)+7)*64);
+
+		return;
+    }
 
     for (int y=0; y<200; y++)
     {

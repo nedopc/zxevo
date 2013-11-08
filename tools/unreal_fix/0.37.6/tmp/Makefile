@@ -53,6 +53,7 @@ SRCS=emul.cpp std.cpp atm.cpp cheat.cpp config.cpp dbgbpx.cpp dbgcmd.cpp dbglabl
         debug.cpp draw.cpp drawnomc.cpp draw_384.cpp dx.cpp dxerr.cpp dxovr.cpp \
         dxrcopy.cpp dxrend.cpp dxrendch.cpp dxrframe.cpp dxr_4bpp.cpp dxr_512.cpp \
         dxr_advm.cpp dxr_atm.cpp dxr_atm0.cpp dxr_atm2.cpp dxr_atm6.cpp dxr_atm7.cpp \
+		dxr_pentatm7.cpp \
         dxr_atmf.cpp dxr_prof.cpp dxr_rsm.cpp dxr_text.cpp dxr_vd.cpp \
         emulkeys.cpp emul_2203.cpp fntsrch.cpp font.cpp font14.cpp font16.cpp \
         font8.cpp fontatm2.cpp fontdata.cpp gs.cpp gshlbass.cpp gshle.cpp \
@@ -62,7 +63,7 @@ SRCS=emul.cpp std.cpp atm.cpp cheat.cpp config.cpp dbgbpx.cpp dbgcmd.cpp dbglabl
         snd_bass.cpp sound.cpp sshot_png.cpp tape.cpp util.cpp vars.cpp \
         vs1001.cpp wd93cmd.cpp wd93crc.cpp wd93dat.cpp wd93trk.cpp \
         wldr_fdi.cpp wldr_isd.cpp wldr_pro.cpp wldr_td0.cpp wldr_trd.cpp wldr_udi.cpp \
-        z80.cpp z80asm.cpp zc.cpp
+        z80.cpp z80asm.cpp zc.cpp zxevo.cpp
 
 OBJS=$(SRCS:.cpp=.obj)
 

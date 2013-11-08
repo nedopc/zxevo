@@ -211,7 +211,7 @@ const TMemModel mem_model[N_MM_MODELS] =
     { "PROFI", "PROFI",                      MM_PROFI, 1024, RAM_1024 },
     { "ATM-TURBO v4.50", "ATM450",           MM_ATM450, 512,  RAM_512 | RAM_1024 },
     { "ATM-TURBO 2+ v7.10", "ATM710",        MM_ATM710, 1024, RAM_128 | RAM_256 | RAM_512 | RAM_1024 },
-    { "ATM-TURBO 3", "ATM3",                 MM_ATM3, 4096, RAM_4096 },
+    { "ZX-EVO", "ATM3",                      MM_ATM3, 4096, RAM_4096 },
     { "Nemo's KAY", "KAY",                   MM_KAY, 256,  RAM_256 | RAM_1024 },
     { "ZX-Spectrum +3", "PLUS3",             MM_PLUS3, 128,  RAM_128 },
     { "QUORUM", "QUORUM",                    MM_QUORUM, 1024, RAM_128 | RAM_1024 },
@@ -611,3 +611,5 @@ char presetbuf[0x4000], *setptr = presetbuf;
 */
 
 const char * const ay_schemes[] = { "no soundchip", "single chip", "pseudo-turbo", "quadro-AY", "turbo-AY // POS", "turbo-sound // NedoPC" };
+
+int trdos_in_nmi = 0;
