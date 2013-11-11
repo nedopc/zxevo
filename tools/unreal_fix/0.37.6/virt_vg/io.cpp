@@ -366,11 +366,12 @@ void out(unsigned port, unsigned char val)
 		switch( p1 )
 		{
 		case 0x1f:
-			comp.wd_shadow_1f = val;
+			comp.wd_shadow[0] = val;
+			comp.wd.out(0x1f,val);
 			return;
 		break;
 		case 0x2f:
-			comp.wd.out(0x1f,val);
+			comp.wd_shadow[0] = val;
 			return;
 		break;
 		case 0x3f:
@@ -1013,10 +1014,10 @@ __inline unsigned char in1(unsigned port)
 		switch( p1 )
 		{
 		case 0x1f:
-			return comp.wd_shadow_1f;
+			return comp.wd.in(0x1f);
 		break;
 		case 0x2f:
-			return comp.wd.in(0x1f);
+			return comp.wd_shadow[0];
 		break;
 		case 0x3f:
 		case 0x5f:
