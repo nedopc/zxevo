@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 07.11.2012 savelij
+;LAST UPDATE: 28.06.2013 savelij
 
 X4DUMP		EQU 0X0C
 Y4DUMP		EQU 0X05
@@ -72,9 +72,8 @@ RAMKA4TXTSCR	PUSH IX
 		LD H,CMOS_BYTE_00
 		CALL READCMOS
 		AND TYPE_FONT
-		XOR TYPE_FONT
 		LD IX,BR_ATM
-		JR Z,R4TXTS5
+		JR NZ,R4TXTS5
 		LD IX,BR_866
 R4TXTS5		DEC B
 		DEC B
@@ -199,7 +198,7 @@ CUR_LEFT	PUSH AF
 		LD A,IXH
 		CP 0XF0
 		JR C,ECUR_RIGHT
-		LD IX,CMOS_BYTE_00*0X100+1
+		LD IX,CRCCMOSHIGH*0X100+1
 		JR ECUR_RIGHT
 
 HELP_REG	LD A,IXH
@@ -457,9 +456,6 @@ READCMOS	DI
 		OUT (C),H
 		LD B,HIGH (CMOS_RD_WR)
 		IN L,(C)
-		LD B,HIGH (CMOS_SET_ADR)
-		LD A,0XE0
-		OUT (C),A
 		LD A,CMOS_OFF			;‡€…’ „Ž‘’“€ Š ŠŒŽ‘“
 		LD B,HIGH (PENT_CONF)
 		OUT (C),A
@@ -470,8 +466,7 @@ READCMOS	DI
 
 ;€ ‚•Ž„…: H-€„…‘ Ÿ—…‰Šˆ
 ;	   L-—’Ž ’“„€ ‡€ˆ‘€’œ
-WRITECMOS	DI
-		RST 8
+WRITECMOS	RST 8
 		DB _CMOS_RW
 		DB _WRITE_CMOS
 		RET
@@ -479,68 +474,68 @@ WRITECMOS	DI
 ;—’…ˆ… ‚…‘ˆˆ FPGA ˆ‹ˆ BOOTLOADER, …‘‹ˆ ’Ž …’…‚€
 GET_VERS_EVO	LD C,L
 		LD H,0XF0
-		CALL WRITECMOS		;ˆ˜…Œ ‚ €„…‘ 0XF0 „‹Ÿ Ž‹“—…ˆŸ ‚…‘ˆˆ
-		CALL READCMOS		;—ˆ’€…Œ Ž’‚…’
-		CP C			;‘Ž‚€‹Ž ‘ ’…Œ —’Ž ‡€ˆ‘€Ž, … Ž„„…†ˆ‚€…’‘Ÿ
-		RET Z			;ˆ ’Ž … …’…‚€ (ˆ‹ˆ ‚…‘ˆŸ FPGA ‘’€€Ÿ). ‚›•Ž„ˆŒ
-		INC A			;ˆ˜…‹ 0XFF, ‡€—ˆ’ —€‘Ž‚ …’“
-		RET Z			;‚›•Ž„ˆŒ
+		CALL WRITECMOS			;ˆ˜…Œ ‚ €„…‘ 0XF0 „‹Ÿ Ž‹“—…ˆŸ ‚…‘ˆˆ
+		CALL READCMOS			;—ˆ’€…Œ Ž’‚…’
+		CP C				;‘Ž‚€‹Ž ‘ ’…Œ —’Ž ‡€ˆ‘€Ž, … Ž„„…†ˆ‚€…’‘Ÿ
+		RET Z				;ˆ ’Ž … …’…‚€ (ˆ‹ˆ ‚…‘ˆŸ FPGA ‘’€€Ÿ). ‚›•Ž„ˆŒ
+		INC A				;ˆ˜…‹ 0XFF, ‡€—ˆ’ —€‘Ž‚ …’“
+		RET Z				;‚›•Ž„ˆŒ
 		DI
-		DEC A			;‚Ž‡‚€™€…Œ ‘—ˆ’€Ž… ‡€—…ˆ…
+		DEC A				;‚Ž‡‚€™€…Œ ‘—ˆ’€Ž… ‡€—…ˆ…
 		PUSH DE
-		LD (DE),A		;Ž‹Ž†ˆ‹ˆ ‚ “”… “†… Ž—ˆ’€›‰ €‰’
+		LD (DE),A			;Ž‹Ž†ˆ‹ˆ ‚ “”… “†… Ž—ˆ’€›‰ €‰’
 		INC DE
-		LD B,0X0F		;Ž‘’€‹Ž‘œ Ž—ˆ’€’œ Ž‘’€‹œ›… …™… 15 €‰’
+		LD B,0X0F			;Ž‘’€‹Ž‘œ Ž—ˆ’€’œ Ž‘’€‹œ›… …™… 15 €‰’
 GVE1		INC H
-		CALL READCMOS		;—ˆ’€…Œ €‰’
+		CALL READCMOS			;—ˆ’€…Œ €‰’
 		LD (DE),A
 		INC DE
-		DJNZ GVE1		;—ˆ’€…Œ ŽŠ€ ‚‘… €‰’› … ŠŽ—€’‘Ÿ
-		POP DE			;Ž‚…ŸŒ ‚ “”…… 12 €‰’ ’…Š‘’€
+		DJNZ GVE1			;—ˆ’€…Œ ŽŠ€ ‚‘… €‰’› … ŠŽ—€’‘Ÿ
+		POP DE				;Ž‚…ŸŒ ‚ “”…… 12 €‰’ ’…Š‘’€
 		LD H,D
 		LD L,E
-		LD B,0X0C		;…‘‹ˆ ’…Š‘’ ŠŽŽ—… ˆ™…Œ €‰’ 0 (ˆ‡€Š ŠŽ–€ ’…Š‘’€)
+		LD B,0X0C			;…‘‹ˆ ’…Š‘’ ŠŽŽ—… ˆ™…Œ €‰’ 0 (ˆ‡€Š ŠŽ–€ ’…Š‘’€)
 GVE2		LD A,(DE)
 		AND A
 		JR Z,GVE3
 		INC DE
 		DJNZ GVE2
-GVE3		LD BC,0X0C		;‡€€‹ˆ ˆ‡ “”…€ 2 €‰’€ „€’› ‚ ‘…–”ŽŒ€’…
+GVE3		LD BC,0X0C			;‡€€‹ˆ ˆ‡ “”…€ 2 €‰’€ „€’› ‚ ‘…–”ŽŒ€’…
 		ADD HL,BC
 		LD C,(HL)
 		INC HL
 		LD B,(HL)
 		EX DE,HL
-		LD (HL)," "		;„Ž€‚‹Ÿ…Œ Š ’…Š‘’“ Ž…‹-€‡„…‹ˆ’…‹œ
+		LD (HL)," "			;„Ž€‚‹Ÿ…Œ Š ’…Š‘’“ Ž…‹-€‡„…‹ˆ’…‹œ
 		INC HL
 
 ;€‘€ŠŽ‚™ˆŠ „€’›
 UNVERS		LD A,C
-		AND 0X1F		;“†› 5 ˆ’-—ˆ‘‹Ž Œ…‘Ÿ–€
-		CALL A2TXT		;ŠŽ‚…‘ˆŸ ˆ “Š‹€„Š€ „€’›
+		AND 0X1F			;“†› 5 ˆ’-—ˆ‘‹Ž Œ…‘Ÿ–€
+		CALL A2TXT			;ŠŽ‚…‘ˆŸ ˆ “Š‹€„Š€ „€’›
 		SRL B
-		RR C			;‘„‚ˆ“‹ˆ „‹Ÿ –…‹Ž‘’Ž‘’ˆ ŽŒ…€ Œ…‘Ÿ–€
-		LD A,C			;‚‡Ÿ‹ˆ ˆ’› Œ…‘Ÿ–€
+		RR C				;‘„‚ˆ“‹ˆ „‹Ÿ –…‹Ž‘’Ž‘’ˆ ŽŒ…€ Œ…‘Ÿ–€
+		LD A,C				;‚‡Ÿ‹ˆ ˆ’› Œ…‘Ÿ–€
 		RRCA
 		RRCA
 		RRCA
-		RRCA			;‘„‚ˆ“‹ˆ ‚ Œ‹€„˜ˆ… ˆ’›
-		AND 0X0F		;€Œ “†› ’Ž‹œŠŽ 4 ˆ’€ Œ…‘Ÿ–€
-		LD (HL),"."		;€‡„…‹ˆ’…‹œ€Ÿ ’Ž—Š€
+		RRCA				;‘„‚ˆ“‹ˆ ‚ Œ‹€„˜ˆ… ˆ’›
+		AND 0X0F			;€Œ “†› ’Ž‹œŠŽ 4 ˆ’€ Œ…‘Ÿ–€
+		LD (HL),"."			;€‡„…‹ˆ’…‹œ€Ÿ ’Ž—Š€
 		INC HL
-		CALL A2TXT		;ŠŽ‚…‘ˆŸ ˆ “Š‹€„Š€ Œ…‘Ÿ–€
-		LD (HL),"."		;€‡„…‹ˆ’…‹œ€Ÿ ’Ž—Š€
+		CALL A2TXT			;ŠŽ‚…‘ˆŸ ˆ “Š‹€„Š€ Œ…‘Ÿ–€
+		LD (HL),"."			;€‡„…‹ˆ’…‹œ€Ÿ ’Ž—Š€
 		INC HL
 		LD (HL),"2"
 		INC HL
-		LD (HL),"0"		;„Ž€‚ˆ‹ˆ Š ƒŽ„“ „‚… –ˆ”…Šˆ
+		LD (HL),"0"			;„Ž€‚ˆ‹ˆ Š ƒŽ„“ „‚… –ˆ”…Šˆ
 		INC HL
-		LD A,B			;‚‡Ÿ‹ˆ ŽŒ… ƒŽ„€
-		AND 0X3F		;“†› ’Ž‹œŠŽ 6 ˆ’
-		CALL A2TXT		;ŠŽ‚…‘ˆŸ ˆ “Š‹€„Š€ ƒŽ„€
-		BIT 6,B			;…‘‹ˆ ˆ’ 6 (‘„‚ˆ“’›‰ ˆ’ 7) “‘’€Ž‚‹…
+		LD A,B				;‚‡Ÿ‹ˆ ŽŒ… ƒŽ„€
+		AND 0X3F			;“†› ’Ž‹œŠŽ 6 ˆ’
+		CALL A2TXT			;ŠŽ‚…‘ˆŸ ˆ “Š‹€„Š€ ƒŽ„€
+		BIT 6,B				;…‘‹ˆ ˆ’ 6 (‘„‚ˆ“’›‰ ˆ’ 7) “‘’€Ž‚‹…
 		RET NZ	;JR NZ,GVE4		;’Ž ‡€‚…˜€…Œ ‘’ŽŠ“
-		EX DE,HL		;ˆ€—… ‚…‘ˆŸ …’€, Ž —…Œ „Ž€‚‹Ÿ…Œ ’…Š‘’ ‚ “”…
+		EX DE,HL			;ˆ€—… ‚…‘ˆŸ …’€, Ž —…Œ „Ž€‚‹Ÿ…Œ ’…Š‘’ ‚ “”…
 		LD HL,TXT_BETA
 		LD BC,5
 		LDIR
@@ -555,10 +550,10 @@ PRINTTIME	LD A,(FLAGS)
 		CALL READCMOS
 		AND 0X10
 		RET Z				;…‘‹ˆ ‚…ŒŸ …™… … ŽŽ‚ˆ‹Ž‘œ, ‚›•Ž„ˆŒ ˆ—…ƒŽ … ‚›‚Ž„Ÿ
-		LD H,0X11
+		LD H,CMOS_BYTE_01
 		CALL READCMOS
-		CP 0X55
-		RET Z				;Ž’Ž€†…ˆ… ‚›Š‹ž—…Ž, ‚›•Ž„ˆŒ ˆ—…ƒŽ … ‚›‚Ž„Ÿ
+		AND CLOCK_VIEW
+		RET NZ				;Ž’Ž€†…ˆ… ‚›Š‹ž—…Ž, ‚›•Ž„ˆŒ ˆ—…ƒŽ … ‚›‚Ž„Ÿ
 		DI
 		EXX
 		LD BC,TXT_TIME			;—’…ˆ… ˆ …Ž€‡Ž‚€ˆ… ‚…Œ…ˆ
@@ -637,23 +632,15 @@ BYTE2TXT	LD L,A
 		RET
 
 TXTMODE_ON	PEC_ON SHADOW_BF
-;		LD A,1
-;		OUT (PEVO_CONF),A
 		LD BC,0XFF77
 		LD A,0XA6
 		CALL SET_C_A
 		PEC_OFF SHADOW_BF
-;		XOR A
-;		OUT (PEVO_CONF),A
 		RET
 
 TXTMODE_OFF	PEC_ON SHADOW_BF
-;		LD A,1
-;		OUT (PEVO_CONF),A
 		LD BC,0XFF77
 		LD A,0XA3
 		CALL SET_C_A
 		PEC_OFF SHADOW_BF
-;		XOR A
-;		OUT (PEVO_CONF),A
 		RET

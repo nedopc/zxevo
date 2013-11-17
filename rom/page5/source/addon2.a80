@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 25.02.2013 savelij
+;LAST UPDATE: 11.09.2013 savelij
 
 		PHASE CPU0
 		JP $
@@ -36,6 +36,10 @@
 		EI
 		RET
 
+		DUPL 0X003E-$,0XFF
+		EI
+		RET
+
 		DUPL 0X0080-$,0XFF
 		binclude ../../dec40.bin
 
@@ -63,6 +67,8 @@ UNP_MICRO_BOOT	LD HL,MICRO_BOOT
 		LD BC,0X100
 		LDIR				;‘Šˆ‚€‹ˆ ……Œ…›… FAT „€‰‚…€ ‚›€ƒ €‡„…‹€
 		RET
+
+		include fontread.a80
 
 MICRO_BOOT	binclude ../../fat_boot/source/micro_boot_fat_pack.rom
 

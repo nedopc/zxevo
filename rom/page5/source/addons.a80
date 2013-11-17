@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 10.03.2013 savelij
+;LAST UPDATE: 11.09.2013 savelij
 
 DRV_VAR		EQU 0X4000
 
@@ -425,8 +425,9 @@ SET_MODE5	LD A,(R_EFF7)
 		AND %11110111
 		OR H
 		LD (B_PORT77),A			;“‘’€Ž‚ˆ‹ˆ ’“Ž …†ˆŒ „‹Ÿ Ž’€ 77
-		LD H,TURBO_MEMORY
+		LD H,CMOS_BYTE_01
 		CALL READCMOS
+		AND %01111100
 		OR E
 		LD L,A
 		CALL IWRITECMOS
@@ -444,7 +445,7 @@ SET_MODE1	LD A,E
 ;‘Œ…€ …†ˆŒ€ €ŒŸ’ˆ
 		DEC A
 		LD D,A
-		LD H,TURBO_MEMORY
+		LD H,CMOS_BYTE_01
 		CALL READCMOS
 		AND 0XFC
 		OR D
@@ -456,11 +457,9 @@ SET_MODE4	LD A,(TEK_MODES)
 		RET
 
 ;„…”Ž‹’›… ‡€—…ˆŸ „‹Ÿ ‚ ŠŒŽ‘
-CMOS_DEFAULT	DB 0X00,0X00,0X00,0XAA,0X00,0X00
+CMOS_DEFAULT	DB 0X00,0X02,0X00
 ECMOS_DEFAULT
 
-		include fontread.a80
-		include call_cmos.a80
 		include tape.a80
 		include ay_printer.a80
 		include txtmode_proc.a80
@@ -469,6 +468,7 @@ ECMOS_DEFAULT
 		include input_keys.a80
 		include mouse.a80
 		include file_browser.a80
+		include call_cmos.a80
 
 		DUPL 0X3FF8-$,0XFF
 		DB "ADDONS"
