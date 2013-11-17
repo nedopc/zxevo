@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 10.03.2013 savelij
+;LAST UPDATE: 11.09.2013 savelij
 
 		PHASE CPU0
 		JP $
@@ -36,6 +36,10 @@
 ;		EX (SP),HL
 ;		RET
 
+		EI
+		RET
+
+		DUPL 0X003E-$,0XFF
 		EI
 		RET
 

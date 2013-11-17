@@ -25,9 +25,8 @@ del main.rom
 del cmosset.rom
 del main_pack.rom
 del cmosset_pack.rom
-del ..\..\fat_boot\source\micro_boot_fat.rom
 
-cd ..\..\page1\source
+cd ..\..\page1\evo-dos
 
 ..\..\..\tools\asw\bin\asw -U -L evo-dos_emu3d13.a80
 ..\..\..\tools\asw\bin\p2bin evo-dos_emu3d13.p ..\evo-dos_emu3d13.rom -r $-$ -k
@@ -70,6 +69,7 @@ del atm_code_pack.bin
 
 cd ..\..\
 
+REM copy /B /Y page3\basic48.rom+page1\trdos_emul.rom+msxdos\msxdos.rom+ff_16k.rom+page5\rst8service.rom+page3\basic48.rom+page1\trdos_real.rom+page2\basic128.rom+page0\services.rom ers.rom
 copy /B /Y page3\basic48.rom+page1\evo-dos_virt.rom+msxdos\msxdos.rom+ff_16k.rom+page5\rst8service.rom+page3\basic48.rom+page1\evo-dos_emu3d13.rom+page2\basic128.rom+page0\services.rom ers.rom
 copy /B /Y page3\2006.rom+page1\dos6_12e_patch.rom+page2\basic128.rom+page0\glukpen.rom glukpent.rom
 

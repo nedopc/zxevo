@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 22.04.2013 savelij
+;LAST UPDATE: 21.10.2013 savelij
 
 ;32 €‰’€ Žˆ‘€’…‹œ ˆŒŽ’ˆŽ‚€ŽƒŽ ”€‰‹€
 ;00...	| Žˆ‘€’…‹œ 
@@ -19,7 +19,7 @@
 ;+24	1 ŽŒ… ‚›€ŽƒŽ €‡„…‹€
 ;+25	2 €„…‘ ‚›‡›‚€…ŒŽƒŽ „€‰‚…€ „‹Ÿ €Ž’› ‘ ˆŒŽ’ˆŽ‚€›Œ Ž€‡ŽŒ
 ;+27	2 €„…‘ ‚›‡›‚€…ŒŽƒŽ „€‰‚…€ ’…Š“™…ƒŽ ‚›€ŽƒŽ €‡„…‹€
-;+28	1 ŽŒ… ŒŽ’ˆ“ŒŽƒŽ „ˆ‘ŠŽ‚Ž„€
+;+28	1 ŽŒ… ŒŽ’ˆ“…ŒŽƒŽ „ˆ‘ŠŽ‚Ž„€
 
 MOUNTER		CALL P5_READ_BYTE
 		LD A,(NEXTBYTERST8)
@@ -38,7 +38,7 @@ TAB_MOUNTER	DW OPEN_MOUNT			;ŒŽ’ˆŽ‚€ˆ… Ž€‡€
 		DW RDWR_MOUNT			;—’…ˆ…/‡€ˆ‘œ ˆŒŽ’ˆŽ‚€›• Ž€‡Ž‚
 		DW FIND_MOUNTED			;Žˆ‘Š ŒŽ’ˆ“…Œ›• Ž€‡Ž‚ Žˆ‘€›• ‚ IMAGE.FNT
 		DW GET_MOUNTED			;Ž‹“—…ˆ… “”…€ Žˆ‘€’…‹…‰ ˆŒŽ’ˆŽ‚€›• Ž€‡Ž‚
-		DW CLOSEMOUNT			;„…ŒŽ’ˆŽ‚€ˆ… Ž€‡Ž‚
+		DW CLOSEMOUNT			;„…ŒŽ’ˆŽ‚€ˆ… Ž€‡€
 		DW LOADIMAGE			;‡€ƒ“‡Š€ Ž€‡€ ‚ €Œ„ˆ‘Š
 
 LOADIMAGE	LD A,(RREG_A)
@@ -548,13 +548,13 @@ OPENMOUNT04	XOR A
 OPENMOUNT1	RLC H
 		DEC A
 		JR NZ,OPENMOUNT1
-		IN A,(RW_PORT0)
+		IN A,(VG_MEM)
 		AND H
 		LD L,A
 		LD A,H
 		CPL
 		OR L
-		OUT (RW_PORT0),A		;“‘’€Ž‚Š€ ˆ’€ ˆŒŽ’ˆŽ‚€ŽƒŽ „ˆ‘ŠŽ‚Ž„€
+		OUT (VG_MEM),A		;“‘’€Ž‚Š€ ˆ’€ ˆŒŽ’ˆŽ‚€ŽƒŽ „ˆ‘ŠŽ‚Ž„€
 		LD BC,WIN_P1
 		LD A,PAGE_MOUNTER
 		OUT (C),A			;‚Š‹ž—ˆ‹ˆ ‘’€ˆ–“ ‘ Žˆ‘€’…‹ŸŒˆ ˆŒŽ’ˆŽ‚€›• ”€‰‹Ž‚
@@ -743,7 +743,7 @@ RDWRMOUNT6	LD A,(RREG_A)			;ŽŒ… „ˆ‘ŠŽ‚Ž„€
 		JR Z,RDWRMOUNT3			;˜€ƒ Š‹€‘’…Ž‚ =1
 		LD B,A				;Œ€‘Š€ ‘Œ…™…ˆŸ ‚ ’€‹ˆ–… Š‹€‘’…Ž‚
 		EX AF,AF'
-		AND B				;A=‘Œ…™…ˆ… ‚ ’€ˆ‹ˆ–… Š‹€‘’…Ž‚
+		AND B				;A=‘Œ…™…ˆ… ‚ ’€‹ˆ–… Š‹€‘’…Ž‚
 		LD B,(HL)			;‚Ž‘‘’€Ž‚‹…ˆ… ŽŒ…€ Š‹€‘’…€
 		JR Z,RDWRMOUNT3
 RDWRMOUNT4	PUSH AF
@@ -986,7 +986,7 @@ FINDMNT5	LD BC,0X40
 		POP BC
 		DJNZ FINDMNTD2
 		LD A,IYH
-		OUT (RW_PORT0),A		;“‘’€Ž‚ˆ‹ˆ ‡€—…ˆ… Ž’€ „‹Ÿ EVO-DOS
+		OUT (VG_MEM),A			;“‘’€Ž‚ˆ‹ˆ ‡€—…ˆ… Ž’€ „‹Ÿ EVO-DOS
 		LD A,(SAVE_TEK_VOL)
 		PUSH IY
 		LD IYL,INTERNAL
@@ -1157,9 +1157,9 @@ CLOSEMOUNT	LD BC,WIN_P1
 		RLCA
 		DJNZ $-1
 		LD B,A
-		IN A,(RW_PORT0)
+		IN A,(VG_MEM)
 		AND B
-		OUT (RW_PORT0),A
+		OUT (VG_MEM),A
 		RET
 
 ;€‘€ŠŽ‚™ˆŠ “’ˆ Š ”€‰‹“
