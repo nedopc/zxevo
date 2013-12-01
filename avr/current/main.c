@@ -23,7 +23,7 @@
 #undef LOGENABLE
 
 /** FPGA data pointer [far address] (linker symbol). */
-extern ULONG fpga PROGMEM;
+extern const ULONG fpga PROGMEM;
 
 // FPGA data index..
 volatile ULONG curFpga;

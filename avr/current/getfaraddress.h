@@ -1,7 +1,9 @@
 #ifndef GETFARADDRESS_H
 #define GETFARADDRESS_H
 
-
+#ifdef pgm_get_far_address
+#define GET_FAR_ADDRESS pgm_get_far_address
+#else
 #define GET_FAR_ADDRESS(var)                          \
 ({                                                    \
     uint_farptr_t tmp;                                \
@@ -19,6 +21,6 @@
     );                                                \
     tmp;                                              \
 })
-
 #endif
 
+#endif
