@@ -22,6 +22,7 @@
 //-----------------------------------------------------------------------------
 
 const WIND_DESC wind_t_ps2k PROGMEM = { 3,5,47,16,0xdf,0x01 };
+#define p_wind_t_ps2k ((const P_WIND_DESC)&wind_t_ps2k)
 
 const u8 tpsk_tab[] PROGMEM = {
  0        , 0        ,    // 0x00
@@ -199,7 +200,7 @@ u8 tps2k_dump(u8 ptr, u8 data)
 
 void Test_PS2Keyb(void)
 {
- scr_window(&wind_t_ps2k);
+ scr_window(p_wind_t_ps2k);
  scr_print_mlmsg(mlmsg_tps2k0);
  scr_print_msg(msg_tps2k1);
  scr_fill_char(0xc4,45);                        // 'Ä'

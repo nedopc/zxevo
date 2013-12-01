@@ -12,6 +12,7 @@
 u16 t_beep_ptr, t_beep_delta;
 
 const WIND_DESC wind_t_beep PROGMEM = { 8,8,32,6,0xdf,0x01 };
+#define p_wind_t_beep ((const P_WIND_DESC)&wind_t_beep)
 
 const u16 t_beep_freqtab[] PROGMEM =
 {
@@ -38,7 +39,7 @@ void Test_Beep(void)
 {
  t_beep_ptr=0;
  t_beep_delta=0;
- scr_window(&wind_t_beep);
+ scr_window(p_wind_t_beep);
  scr_print_mlmsg(mlmsg_tbeep);
  fpga_reg(INT_CONTROL,0b00000001);
  u8 tbeep_n, go2;
@@ -47,8 +48,7 @@ void Test_Beep(void)
  {
   go2=GO_READKEY;
   scr_set_cursor(20,10);
-  const prog_uint16_t *ptr;
-  ptr=&t_beep_freqtab[tbeep_n*2];
+  const u16 *ptr=&t_beep_freqtab[tbeep_n*2];
   print_dec16(pgm_read_word(ptr));
   t_beep_delta=pgm_read_word(ptr+1);
   fpga_sel_reg(COVOX);

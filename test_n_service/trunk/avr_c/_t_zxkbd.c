@@ -32,6 +32,11 @@ const WIND_DESC wind_t_zxkbd_2 PROGMEM = {  9, 8,23, 6,0xdf,0x00 };
 const WIND_DESC wind_t_zxkbd_3 PROGMEM = { 34, 9, 9, 5,0xdf,0x00 };
 const WIND_DESC wind_t_zxkbd_4 PROGMEM = { 12,14,13, 3,0xdf,0x00 };
 const WIND_DESC wind_t_zxkbd_5 PROGMEM = { 28,14,12, 3,0xdf,0x00 };
+#define p_wind_t_zxkbd_1 ((const P_WIND_DESC)&wind_t_zxkbd_1)
+#define p_wind_t_zxkbd_2 ((const P_WIND_DESC)&wind_t_zxkbd_2)
+#define p_wind_t_zxkbd_3 ((const P_WIND_DESC)&wind_t_zxkbd_3)
+#define p_wind_t_zxkbd_4 ((const P_WIND_DESC)&wind_t_zxkbd_4)
+#define p_wind_t_zxkbd_5 ((const P_WIND_DESC)&wind_t_zxkbd_5)
 
 //-----------------------------------------------------------------------------
 
@@ -96,11 +101,11 @@ u8 * zxkbd1(u8 *ptr)
 
 void Test_ZXKeyb(void)
 {
- scr_window(&wind_t_zxkbd_1);
- scr_window(&wind_t_zxkbd_2);
- scr_window(&wind_t_zxkbd_3);
- scr_window(&wind_t_zxkbd_4);
- scr_window(&wind_t_zxkbd_5);
+ scr_window(p_wind_t_zxkbd_1);
+ scr_window(p_wind_t_zxkbd_2);
+ scr_window(p_wind_t_zxkbd_3);
+ scr_window(p_wind_t_zxkbd_4);
+ scr_window(p_wind_t_zxkbd_5);
  scr_print_mlmsg(mlmsg_tzxk1);
  scr_print_msg(msg_tzxk2);
 

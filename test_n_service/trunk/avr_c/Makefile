@@ -4,7 +4,7 @@ BINDIR = bin
 MCU = atmega128
 TARGET = $(BINDIR)/proga
 
-SRC = _messages.c _uart.c _pintest.c _ps2k.c _output.c _screen.c _global.c
+SRC = _dummy.c _messages.c _uart.c _pintest.c _ps2k.c _output.c _screen.c _global.c
 SRC += _t_video.c _t_dram.c _t_beep.c _t_zxkbd.c _t_ps2k.c _t_ps2m.c _t_rs232.c
 SRC += _t_sd.c main.c
 ASRC = _global_asm.S _ps2k_asm.S _t_ps2m_asm.S _uart_asm.S _t_beep_asm.S _sd_asm.S
@@ -73,8 +73,8 @@ OBJDUMP = avr-objdump
 SIZE = avr-size
 AR = avr-ar rcs
 NM = avr-nm
-REMOVE = rm -f
-REMOVEDIR = rm -rf
+REMOVE = -rm -f
+REMOVEDIR = -rm -rf
 COPY = cp
 WINSHELL = cmd
 
@@ -148,10 +148,10 @@ $(OBJDIR)/%.o : %.S
 	$(CC) -c $(ASFLAGS) $< -o $@
 
 $(OBJDIR)/%.o : %.mlz
-	$(OBJCOPY) -I binary -O elf32-avr --rename-section .data=.bigdata,contents,alloc,load,readonly,data --redefine-sym _binary_$(*F)_mlz_start=$(*F) $(*F).mlz $@
+	$(OBJCOPY) -I binary -O elf32-avr -B avr:51 --rename-section .data=.bigdata,contents,alloc,load,readonly,data --redefine-sym _binary_$(*F)_mlz_start=$(*F) $(*F).mlz $@
 
 $(OBJDIR)/%.o : %.bin
-	$(OBJCOPY) -I binary -O elf32-avr --rename-section .data=.tabledata,contents,alloc,load,readonly,data --redefine-sym _binary_$(*F)_bin_start=$(*F) $(*F).bin $@
+	$(OBJCOPY) -I binary -O elf32-avr -B avr:51 --rename-section .data=.tabledata,contents,alloc,load,readonly,data --redefine-sym _binary_$(*F)_bin_start=$(*F) $(*F).bin $@
 
 # Target: clean project.
 clean:

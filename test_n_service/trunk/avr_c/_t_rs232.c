@@ -42,6 +42,11 @@ const WIND_DESC wind_t_rs_2 PROGMEM = { 9, 3,34, 9,0xdf,0x00 };
 const WIND_DESC wind_t_rs_3 PROGMEM = { 9, 3,12, 3,0xdf,0x00 };
 const WIND_DESC wind_t_rs_4 PROGMEM = { 3,15,47, 6,0xdf,0x00 };
 const WIND_DESC wind_t_rs_5 PROGMEM = { 3,15,10, 3,0xdf,0x00 };
+#define p_wind_t_rs_1 ((const P_WIND_DESC)&wind_t_rs_1)
+#define p_wind_t_rs_2 ((const P_WIND_DESC)&wind_t_rs_2)
+#define p_wind_t_rs_3 ((const P_WIND_DESC)&wind_t_rs_3)
+#define p_wind_t_rs_4 ((const P_WIND_DESC)&wind_t_rs_4)
+#define p_wind_t_rs_5 ((const P_WIND_DESC)&wind_t_rs_5)
 
 //-----------------------------------------------------------------------------
 
@@ -98,11 +103,11 @@ void Test_RS232(void)
 {
  flags1&=0b11111100;
  flags1|=0b00000100;
- scr_window(&wind_t_rs_1);
- scr_window(&wind_t_rs_2);
- scr_window(&wind_t_rs_3);
- scr_window(&wind_t_rs_4);
- scr_window(&wind_t_rs_5);
+ scr_window(p_wind_t_rs_1);
+ scr_window(p_wind_t_rs_2);
+ scr_window(p_wind_t_rs_3);
+ scr_window(p_wind_t_rs_4);
+ scr_window(p_wind_t_rs_5);
  scr_print_msg(msg_trs_1);
  TRS trs;
  u8 go2;

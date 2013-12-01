@@ -110,7 +110,7 @@ void print_dec16(u16 w)
 
 //-----------------------------------------------------------------------------
 
-void print_msg(PGM_U8_P msg)
+void print_msg(const u8 *msg)
 {
  u8 ch;
  do
@@ -123,9 +123,9 @@ void print_msg(PGM_U8_P msg)
 
 //-----------------------------------------------------------------------------
 
-void print_mlmsg(PGM_U8_P *mlmsg)
+void print_mlmsg(const u8 * const *mlmsg)
 {
- print_msg((PGM_U8_P)pgm_read_word(mlmsg+lang));
+ print_msg((const u8 *)pgm_read_word(mlmsg+lang));
 }
 
 //-----------------------------------------------------------------------------
