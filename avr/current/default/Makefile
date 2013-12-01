@@ -109,7 +109,7 @@ $(FPGACORE): top.rbf
 	avr-objdump -h -S $< > $@
 
 size: ${TARGET}
-	@echo
+	@echo .
 	@avr-size -C --mcu=${MCU} ${TARGET}
 
 zxevo_beta.bin: core.hex core.eep

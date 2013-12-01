@@ -7,7 +7,6 @@
 #include "zx.h"
 #include "kbmap.h"
 #include "pins.h"
-#include "getfaraddress.h"
 #include "main.h"
 #include "spi.h"
 #include "rs232.h"
