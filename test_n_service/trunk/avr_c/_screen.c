@@ -25,7 +25,7 @@ void scr_set_cursor(u8 x, u8 y)
 
 //-----------------------------------------------------------------------------
 
-void scr_print_msg(PGM_U8_P msg)
+void scr_print_msg(const u8 *msg)
 {
  SetSPICS();
  fpga_sel_reg(SCR_CHAR);
@@ -56,14 +56,14 @@ void scr_print_msg(PGM_U8_P msg)
 
 //-----------------------------------------------------------------------------
 
-void scr_print_mlmsg(PGM_U8_P *mlmsg)
+void scr_print_mlmsg(const u8 * const *mlmsg)
 {
- scr_print_msg((PGM_U8_P)pgm_read_word(mlmsg+lang));
+ scr_print_msg((const u8 *)pgm_read_word(mlmsg+lang));
 }
 
 //-----------------------------------------------------------------------------
 
-void scr_print_msg_n(PGM_U8_P msg, u8 size)
+void scr_print_msg_n(const u8 *msg, u8 size)
 {
  SetSPICS();
  fpga_sel_reg(SCR_CHAR);
@@ -158,18 +158,15 @@ void scr_fade(void)
 
 //-----------------------------------------------------------------------------
 
-void scr_window(PGM_VOID_P ptr)
+void scr_window(const P_WIND_DESC pwindesc)
 {
- const WIND_DESC *desc;
- desc=(const WIND_DESC *)ptr;
-
  u8 x, y, width, height, wind_attr, wind_flag;
- x        =pgm_read_byte(&desc->x);
- y        =pgm_read_byte(&desc->y);
- width    =pgm_read_byte(&desc->width)-2;
- height   =pgm_read_byte(&desc->height)-2;
- wind_attr=pgm_read_byte(&desc->attr);
- wind_flag=pgm_read_byte(&desc->flag);
+ x        =pgm_read_byte(&pwindesc->x);
+ y        =pgm_read_byte(&pwindesc->y);
+ width    =pgm_read_byte(&pwindesc->width)-2;
+ height   =pgm_read_byte(&pwindesc->height)-2;
+ wind_attr=pgm_read_byte(&pwindesc->attr);
+ wind_flag=pgm_read_byte(&pwindesc->flag);
 
  scr_set_cursor(x,y);
  scr_set_attr(wind_attr);
@@ -204,18 +201,20 @@ void scr_window(PGM_VOID_P ptr)
 //-----------------------------------------------------------------------------
 
 const WIND_DESC wind_menu_help PROGMEM = { 3,13,37,9,0xcf,0x01 };
+#define p_wind_menu_help ((const P_WIND_DESC)&wind_menu_help)
 
 void menu_help(void)
 {
  scr_fade();
- scr_window(&wind_menu_help);
+ scr_window(p_wind_menu_help);
  scr_print_mlmsg(mlmsg_menu_help);
  waitkey();
 }
 
 //-----------------------------------------------------------------------------
 
-const WIND_DESC wind_menu_swlng PROGMEM = { 13,11,27,3,0x9f,0x01 };
+const WIND_DESC wind_swlng PROGMEM = { 13,11,27,3,0x9f,0x01 };
+#define p_wind_swlng ((const P_WIND_DESC)&wind_swlng)
 
 void menu_swlng(void)
 {
@@ -226,9 +225,9 @@ void menu_swlng(void)
   if (lang>=TOTAL_LANG) lang=0;
   save_lang();
   scr_fade();
-  scr_window(&wind_menu_swlng);
+  scr_window(p_wind_swlng);
   scr_set_attr(0x9e);
-  scr_print_mlmsg(mlmsg_menu_swlng);
+  scr_print_mlmsg(mlmsg_swlng);
   u16 to;
   set_timeout_ms(&to,2000);
   go2=GO_READKEY;
@@ -262,29 +261,24 @@ void menu_swlng(void)
 
 //-----------------------------------------------------------------------------
 
-void scr_menu(PGM_VOID_P ptr)
+void scr_menu(const P_MENU_DESC pmenudesc)
 {
- const MENU_DESC *desc;
- desc=(const MENU_DESC *)ptr;
-
- u8 menu_select, go2;
- menu_select=0;
+ u8 menu_select=0, go2;
  do
  {
   u8 x, y, width, items;
-  typedef void (*BKHNDL)(u8);
-  void (*BkHndl)(u8);
-  PGM_U8_P strptr;
+  PBKHNDL pBkHndl;
+  const u8 * strptr;
   u16 to, BkTO, key;
 
   scr_backgnd();
-  x      =pgm_read_byte(&desc->x);
-  y      =pgm_read_byte(&desc->y);
-  width  =pgm_read_byte(&desc->width);
-  items  =pgm_read_byte(&desc->items);
-  BkHndl =(BKHNDL)pgm_read_word(&desc->bkgnd_task);
-  BkTO   =pgm_read_word(&desc->bgtask_period);
-  strptr=(PGM_U8_P)( pgm_read_word(&desc->strings) + (u16)(lang*items*width) );
+  x      =pgm_read_byte(&pmenudesc->x);
+  y      =pgm_read_byte(&pmenudesc->y);
+  width  =pgm_read_byte(&pmenudesc->width);
+  items  =pgm_read_byte(&pmenudesc->items);
+  pBkHndl=(PBKHNDL)pgm_read_word(&pmenudesc->bkgnd_task);
+  BkTO   =pgm_read_word(&pmenudesc->bgtask_period);
+  strptr=(const u8 *)( pgm_read_word(&pmenudesc->strings) + (u16)(lang*items*width) );
   scr_set_cursor(x,y);
   scr_set_attr(WIN_ATTR);
   scr_putchar(0xda);                            // 'Ú'
@@ -313,7 +307,7 @@ void scr_menu(PGM_VOID_P ptr)
   scr_set_cursor(x+1,y+items+2);
   scr_fill_attr(WIN_SHADOW_ATTR,width+4);
 
-  if (BkHndl) { BkHndl(0); set_timeout_ms(&to,BkTO); }
+  if (pBkHndl) { pBkHndl(0); set_timeout_ms(&to,BkTO); }
 
   menu_draw_cursor(x+1,y+1+menu_select,CURSOR_ATTR,width+2);
   go2=GO_READKEY;
@@ -327,12 +321,9 @@ void scr_menu(PGM_VOID_P ptr)
      case KEY_ENTER:
        scr_fade();
        {
-        const prog_uint16_t *ptr;
-        ptr=(const prog_uint16_t *)pgm_read_word(&desc->handlers);
-        typedef void (*ITEMHNDL)(void);
-        void (*ItemHndl)(void);
-        ItemHndl=(ITEMHNDL)pgm_read_word(&ptr[menu_select]);
-        if (ItemHndl) ItemHndl();
+        const u16 *ptr=(const u16 *)pgm_read_word(&pmenudesc->handlers);
+        PITEMHNDL pItemHndl=(PITEMHNDL)pgm_read_word(&ptr[menu_select]);
+        if (pItemHndl) pItemHndl();
        }
        go2=GO_REDRAW;
        break;
@@ -382,9 +373,9 @@ void scr_menu(PGM_VOID_P ptr)
    }
    else
    {
-    if ( (BkHndl) && (check_timeout_ms(&to)) )
+    if ( (pBkHndl) && (check_timeout_ms(&to)) )
     {
-     BkHndl(1);
+     pBkHndl(1);
      set_timeout_ms(&to,BkTO);
     }
    }

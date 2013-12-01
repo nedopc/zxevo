@@ -26,14 +26,16 @@ void nothing(void)
 
 //-----------------------------------------------------------------------------
 
-PGM_VOID_P hndl_menu_main[8] PROGMEM = {Test_PS2Keyb,
-                                        Test_ZXKeyb,
-                                        Test_PS2Mouse,
-                                        Test_Beep,
-                                        Test_Video,
-                                        Test_RS232,
-                                        Test_SD_MMC,
-                                        nothing};
+const PITEMHNDL hndl_menu_main[8] PROGMEM = {
+  Test_PS2Keyb,
+  Test_ZXKeyb,
+  Test_PS2Mouse,
+  Test_Beep,
+  Test_Video,
+  Test_RS232,
+  Test_SD_MMC,
+  nothing
+};
 
 const MENU_DESC menu_main PROGMEM = {
   6,3,26,8,
@@ -42,6 +44,7 @@ const MENU_DESC menu_main PROGMEM = {
   hndl_menu_main,
   str_menu_main
 };
+#define p_menu_main ((const P_MENU_DESC)&menu_main)
 
 //-----------------------------------------------------------------------------
 
@@ -78,7 +81,7 @@ void TestFpgaExchange(void)
 
 //-----------------------------------------------------------------------------
 
-void PowerStatus(PGM_U8_P *mlmsg)
+void PowerStatus(const u8 * const *mlmsg)
 {
  print_mlmsg(mlmsg);
  print_msg(msg_power_pg);
@@ -176,7 +179,7 @@ int main(void)
  print_msg(msg_ready);
  ps2k_setsysled();
 
- while (1) scr_menu(&menu_main);
+ while (1) scr_menu(p_menu_main);
 }
 
 //-----------------------------------------------------------------------------

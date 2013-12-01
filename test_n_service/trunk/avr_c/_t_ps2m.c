@@ -47,6 +47,9 @@ u8 tpsm_id;
 const WIND_DESC wind_t_ps2m_1 PROGMEM = {  3, 2,47,19,0xdf,0x01 };
 const WIND_DESC wind_t_ps2m_2 PROGMEM = {  9,10,34, 4,0xaf,0x01 };
 const WIND_DESC wind_t_ps2m_3 PROGMEM = { 35,10,13,10,0xdf,0x00 };
+#define p_wind_t_ps2m_1 ((const P_WIND_DESC)&wind_t_ps2m_1)
+#define p_wind_t_ps2m_2 ((const P_WIND_DESC)&wind_t_ps2m_2)
+#define p_wind_t_ps2m_3 ((const P_WIND_DESC)&wind_t_ps2m_3)
 
 const u8 ps2msetup1[] PROGMEM = { 0xf3,200,0xf3,100,0xf3,80,0xff };
 const u8 ps2msetup2[] PROGMEM = { 0xe8,0x02,0xe6,0xf3,100,0xf4,0xff };
@@ -119,7 +122,7 @@ u8 ps2m_detect_send(u8 data)
 
 //-----------------------------------------------------------------------------
 
-u8 ps2m_detect_sendmulti(PGM_U8_P array)
+u8 ps2m_detect_sendmulti(const u8 * array)
 {
  u8 data;
  do
@@ -164,7 +167,7 @@ u8 t_psm_detect(void)
   ps2m_raw_ready=0;
   sei();
 
-  scr_window(&wind_t_ps2m_1);
+  scr_window(p_wind_t_ps2m_1);
   scr_set_cursor(4,3);
   uart_crlf();
   print_mlmsg(mlmsg_mouse_detect);
@@ -187,8 +190,7 @@ u8 t_psm_detect(void)
    }
   }while (go2==GO_REPEAT);
 
-  PGM_U8_P *errmlmsg;
-  errmlmsg=mlmsg_mouse_fail0;
+  const u8 * const *errmlmsg=mlmsg_mouse_fail0;
   go2=GO_ERROR;
   print_hexbyte_for_dump(0xff);
   if (ps2m_send_byte(0xff))
@@ -268,7 +270,7 @@ u8 t_psm_detect(void)
 
   if (go2!=GO_CONTINUE)
   {
-   scr_window(&wind_t_ps2m_2);
+   scr_window(p_wind_t_ps2m_2);
    scr_set_cursor(10,11);
    uart_crlf();
    print_mlmsg(errmlmsg);
@@ -306,7 +308,7 @@ void Test_PS2Mouse(void)
   flags1&=0b11111100;
   int6vect=0b00000010;
   fpga_reg(INT_CONTROL,int6vect);
-  scr_window(&wind_t_ps2m_3);
+  scr_window(p_wind_t_ps2m_3);
   if (tpsm_id)
    scr_print_msg(msg_tpsm_1);
   else

@@ -7,6 +7,8 @@
 //-----------------------------------------------------------------------------
 const WIND_DESC wind_tsd1 PROGMEM = { 10,10,32, 4,0x9f,0x01 };
 const WIND_DESC wind_tsd2 PROGMEM = {  0, 2,53,22,0xdf,0x00 };
+#define p_wind_tsd1 ((const P_WIND_DESC)&wind_tsd1)
+#define p_wind_tsd2 ((const P_WIND_DESC)&wind_tsd2)
 //-----------------------------------------------------------------------------
 
 void t_sd_log_crlf(void)
@@ -180,7 +182,7 @@ void testsd(void)
  t_sd_log_crlf();
  flags1|=ENABLE_SCR;
  t_sd_sensors();
- scr_window(&wind_tsd2);
+ scr_window(p_wind_tsd2);
  scr_set_cursor(1,3); tsd_y=3;
  t_sd_log_crlf();
  print_mlmsg(mlmsg_tsd_init);
@@ -394,7 +396,7 @@ void Test_SD_MMC(void)
   scr_fade();
   scr_set_cursor(0,1);
   scr_fill_char_attr(0x20,0x7f,53);
-  scr_window(&wind_tsd1);
+  scr_window(p_wind_tsd1);
   scr_print_mlmsg(mlmsg_tsd_menu);
   tsd_y=0;
   t_sd_putcursor(tsd_y);
