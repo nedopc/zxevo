@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 10.11.2013 savelij
+;LAST UPDATE: 13.12.2013 savelij
 
 GLUBOOT		LD HL,FLAGS
 		RES 3,(HL)			;‡€“‘Š ‘ „ˆ‘Š…’›
@@ -326,8 +326,8 @@ SELDRV1		SUB "1"				;Ž€’ˆ‹ˆ ‚ ˆ€›‰ ‚ˆ„ „‹Ÿ ‡€ˆ‘ˆ ‚ ……Œ…“ž
 		LD HL,MAINLOP			;€„…‘ Š“„€ ‚…“’œ‘Ÿ Ž‘‹… ‡€ˆ‘ˆ
 		PUSH HL
 SELDRVPP	LD (DRV_SYM),A			;‘Ž•€ˆ‹ˆ Ž‚›‰ ŽŒ… …€‹œŽƒŽ „ˆ‘ŠŽ‚Ž„€
-		RRCA
-		RRCA
+		RLCA
+		RLCA
 		LD D,A				;‘„‚ˆ“’›‰ ŽŒ… ‚ˆ’“€‹œŽƒŽ „ˆ‘ŠŽ‚Ž„€
 		LD A,(FLAGS)
 		AND 4

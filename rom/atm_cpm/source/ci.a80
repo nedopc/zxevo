@@ -1,0 +1,461 @@
+;.Z80
+;#INCLUDE "ALLVARS.ASH"
+
+CI_INIT:    JP      _CI_INIT
+CI_IN:      JP      _CI_
+;//CI_OUT
+CI_IOCTL:   JP      _IOCTL
+
+;		include kb_sh.a80;#INCLUDE "KB_SH.INC"
+
+;// TEMPORARY
+;EXTRN        KB_ENCODE,KB_INIT,KB_SCAN,KB_GET_SHIFTS,KB_SET_RUS
+
+;// END OF TEMPORARY
+
+_CI_INIT:    XOR     A
+             LD      (KS_UND),A
+             LD      (KS_UND+1),A
+             LD      (KS_UNDS),A
+             LD      (KS_UNDS1),A
+             JP      K_INIT
+
+CI_CVT:      LD      D,A
+             BIT     _KS_ALT,E
+             SCF
+             RET     NZ
+CIC_2:       LD      D,A
+             BIT     7,A
+             JR      Z,CIC_1
+             RES     7,D
+             XOR     A
+             CALL    CI_ENC1
+CIC_21:      INC     L
+             JR      Z,CIC_2
+             JR      CIC_RETA
+CIC_1:       LD      HL,CIC_TBL-1
+             LD      B,-1
+CIC_L1:      INC     HL
+             INC     B
+             CP      (HL)
+             INC     HL
+             JR      C,CIC_L1
+             CP      (HL)
+             JR      NC,CIC_L1
+             LD      C,0
+             BIT     _KS_CTRL,E
+             LD      A,3
+             JR      NZ,CIC_ST
+             BIT     _KS_RUS,E
+             JR      Z,CIC_S1
+             LD      C,4
+CIC_S1:      BIT     _KS_SHFT,E
+             LD      A,1
+             JR      NZ,CIC_ST
+             INC     A
+             BIT     _KS_SHFT2,E
+             JR      NZ,CIC_ST
+             XOR     A
+CIC_ST:      OR      C
+             ADD     A,A
+             ADD     A,A
+             ADD     A,A
+             ADD     A,A
+             OR      B
+             CP      32H
+             JR      NZ,CIC_CTRL
+             LD      A,1FH
+             AND     D
+             RET
+
+CIC_DOL_:    LD      A,D
+             BIT     _KS_CAPS,E
+             RET     Z
+CIC_DOS:     ADD     A,20H
+             RET
+
+CIC_DOS_:    LD      A,D
+             BIT     _KS_CAPS,E
+             RET     NZ
+             JR      CIC_DOS
+
+CIC_RET:     LD      A,D
+CIC_RETA:    OR      A
+             RET     NZ
+             SCF
+             RET
+
+CIC_ENC:     CALL    CI_ENC
+             INC     L
+             JR      NZ,CIC_RETA
+             JR      CIC_2
+
+CIC_CTRL:    CP      02H
+             JR      Z,CIC_DOL_
+             CP      12H
+             JR      Z,CIC_DOS_
+             LD      HL,CIC_TBL1
+             LD      BC,CIC_TBL1S
+             CPIR
+             JR      NZ,CIC_RET
+             LD      A,C
+             CP      8
+             JR      C,CIC_TRY
+CIC_3:       CALL    CI_ENC
+             JR      CIC_21
+
+CIC_TRY:     PUSH    AF
+             OR      1
+             CALL    CIC_ENC
+             POP     HL
+             RES     0,H
+             JR      C,CIC_NOLIT
+             BIT     7,A
+             JR      NZ,CIC_LIT
+             CP      "A"
+             BIT     _KS_RUS,E
+             JR      Z,CIC_51
+             CP      "@"
+CIC_51:      JR      C,CIC_NOLIT
+             CP      0X5A+1;'Z'+1
+             BIT     _KS_RUS,E
+             JR      Z,CIC_5
+             CP      60H
+CIC_5:       JR      NC,CIC_NOLIT
+CIC_LIT:     LD      C,A
+             LD      A,E
+             AND 0X11;    _KS_SHFT<<1+_KS_CAPS<<1;(1 SHL _KS_SHFT)+(1 SHL _KS_CAPS)
+             LD      A,C
+             RET     PO
+CIC_4:       LD      A,H
+             JR      CIC_3
+
+CIC_NOLIT:   OR      A
+             BIT     _KS_SHFT,E
+             JR      NZ,CIC_RETA
+             JR      CIC_4
+
+CI_ENC:      INC     A
+CI_ENC1:     PUSH    DE
+             PUSH    AF
+             CALL    KB_ENCODE
+             POP     AF
+             PUSH    HL
+             LD      C,A
+             ADD     A,A
+             ADD     A,6
+             CALL    ADD_HL_A;##
+             LD      B,(HL)
+             INC     HL
+             LD      H,(HL)
+             LD      L,B
+             EX      (SP),HL
+             LD      A,C
+             SRL     A
+             SRL     A
+             CALL    ADD_HL_A
+             LD      A,C
+             AND     3
+             LD      B,A
+             LD      A,(HL)
+             JR      Z,CIE_1
+CIE_L1:      RRA
+             RRA
+             DJNZ    CIE_L1
+CIE_1:       AND     3
+             JR      Z,CIE_PROC
+             DEC     A
+	LD L,0
+             JR      Z,CIE_2
+             DEC     L
+CIE_2:       EX      (SP),HL
+             LD      A,(HL)
+             INC     HL
+             OR      A
+             JR      NZ,CIE_SCAN
+             LD      A,D
+             CP      "A"
+             JR      C,CIE_B2
+             CP      "a"
+             JR      C,CIE_B9
+             SUB     20H
+CIE_B9:      SUB     0X41-0X30;'A'-'0'
+CIE_B2:      SUB     "0"
+CIE_B1:      CALL    ADD_HL_A
+             LD      A,(HL)
+CIE_DONE:    POP     HL
+             POP     DE
+             JP      CIC_RETA
+
+CIE_SCAN:    LD      C,A
+             BIT     7,C
+             JR      Z,CS__2
+             SCF
+CS__2:         RES     7,C
+             LD      E,C
+             LD      B,0
+             LD      A,D
+             CPIR
+             DEC     HL
+             JR      NZ,CIE_B3
+             LD      A,E
+             JR      CIE_B1
+CIE_B3:      JR      C,CIE_DONE
+             XOR     A
+             JR      CIE_DONE
+CIE_PROC:    POP     HL
+             LD      A,H
+             OR      L
+             JR      Z,CIE_INDIR
+             LD      A,D
+             CALL    INDIR
+             POP     DE
+             JP      CIC_RETA
+
+CIE_INDIR:   LD      A,C
+             DEC     A
+             CALL    CI_ENC1
+             POP     DE
+             INC     L
+             DEC     L
+             RET     NZ
+             XOR     20H
+             JP      CIC_RETA
+
+INDIR:       JP      (HL)
+CLE_NONE:    XOR     A
+             POP     DE
+             RET
+
+CIC_TBL:     DB      0,0X20+1;   " "+1
+             DB      "0",0X39+1; '9'+1
+             DB      "A",0X5A+1; 'Z'+1
+             DB      "a",0X7A+1; 'Z'+1
+             DB      0,   255
+
+CIC_TBL1:    DB      63H, 23H, 62H, 22H, 64H, 24H, 61H, 21H
+             DB      33H, 34H, 14H, 51H, 31H, 11H, 30H, 53H
+             DB      43H, 13H, 03H, 52H, 42H, 54H, 44H
+CIC_TBL1S    EQU     $-CIC_TBL1
+
+
+_RK_    BIT _FLEX_C,(IX-_FLAG)        ; READ KEY FOR CP/M
+        JR  Z,DO_CI
+        CALL _IOCTL
+        OR   A
+        JR  NZ,DO_CI
+        LD   A,1
+        RST  18H
+        PUSH AF
+        CALL CUR_AC;##
+        POP  AF
+        RST  18H
+        EI
+        CALL DO_CI
+        PUSH AF
+        LD   A,1
+        RST  18H
+        PUSH AF
+        CALL CUR_PA;##
+        POP  AF
+        RST  18H
+        EI
+        POP AF
+        RET
+
+DO_CI:       EI
+             HALT
+             CALL    _CI_
+             LD      (IX-_KS_UND),0
+             LD      (IX-_KS_UNDS),0
+             RET
+
+_CI_         
+		LD      (IX-_TMP_W),1
+_CI1         
+		LD      A,(KS_UND)
+             LD      (IX-_KS_UND),0
+             OR      A
+             RET     NZ
+_L1:         LD      E,(IX-_TMP_W)
+             CALL    KB_SCAN
+             OR      A
+             LD      A,0
+             SCF
+             RET     NZ
+             LD      A,E
+             XOR 0X10;    _KS_CAPS<<1;1 SHL _KS_CAPS
+             LD      E,A
+             LD      A,L
+             LD      (KS_UNDS1),A
+_1:          CALL    CI_CVT
+             LD      (IX-_KS_UND+1),E
+             LD      (IX-_KS_UNDS),D
+             RET     NC
+             LD      A,E
+             AND     _KS_CTRL<<1+_KS_ALT<<1;(1 SHL _KS_CTRL) + (1 SHL _KS_ALT)
+             CP      _KS_CTRL<<1+_KS_ALT<<1;(1 SHL _KS_CTRL) + (1 SHL _KS_ALT)
+             JR      Z,CHK_CA
+             CP      _KS_ALT<<1;1 SHL _KS_ALT
+             JR      Z,_L1_
+             LD      A,D
+             CP      "z"
+             JR      Z,RUS_LAT_SW
+             CP      "o"
+             JR      Z,TRY_RES
+             CP      "n"
+             JR      NZ,_2
+             LD      E,1
+             CALL    KB_SCAN
+             JR      _L1
+_2:          SUB     "p"
+             JR      C,_L1_
+             CP      0X5A-0X50+1;'Z'-'P'+1
+             JR      NC,_L1_
+             LD      HL,_CI_TAB
+             CALL    ADD_HL_A
+             LD      A,(HL)
+             OR      A
+             RET     NZ
+_L1_:        BIT     1,(IX-_TMP_W)
+             JR      Z,_L1
+             XOR     A
+             RET
+
+CHK_CA:      LD      A,D
+             CP      0X2B+0X80;'+'+80H
+             JR      Z,CHK_TUR
+             CP      0X2D+0X80;'-'+80H
+             JR      Z,CHK_NOR
+             CP      0X2E+0X80;'.'+80H
+             JP      Z,0
+             CP      "y"
+             JR      NZ,_L1
+             JP      0
+CHK_TUR:     SET     3,(IX-_SYS_P)
+             JR      CT_SET
+CHK_NOR:     RES     3,(IX-_SYS_P)
+CT_SET:      CALL    SET_SYS;##
+             JR      _L1
+
+TRY_RES:     BIT     _BREAK,(IX-_FLAG1)
+             JR      NZ,_L1_
+             JP      ENTR2;##
+
+RUS_LAT_SW:
+             LD      A,14
+             BIT     _KS_RUS,E
+             RET     NZ
+             INC     A
+             RET
+
+_CI_TAB:     DB      5,24,19,4,18,3,0,0,15,7
+
+_IOCTL:      LD      (IX-_TMP_W),0
+             CALL    _CI1
+             JR      C,ST_KEY_NO
+             LD      (KS_UND),A
+             LD      A,-1
+             RET
+ST_KEY_NO:   XOR     A
+             RET
+
+
+SC2OLD:      LD      A,(KS_UNDS)
+             OR      A
+             LD      H,0
+             SCF
+             RET     Z
+             CP      "x"
+             JR      Z,IS_INS
+             CP      "a"
+             JR      C,S2O_1
+             CP      "o"
+             JR      NC,S2O_1
+             SUB     "a"
+             LD      HL,S20T_1
+             CALL    ADD_HL_A
+             LD      H,(HL)
+             LD      D,0C0H
+             RET
+S20T_1:      DB      3,0BH,13H,1BH,23H,24H,1CH,14H,0CH,4
+
+S2O_1:       LD      HL,OLDSC_T
+             LD      BC,OLDSC_TL
+             CPIR
+             CALL    NZ,TRY_ALT
+             LD      A,OLDSC_TL
+             SUB     C
+             LD      H,A
+PAFRET:      LD      D,0
+             OR      A
+             BIT     _KS_SHFT,E
+             JR      Z,PFR_1
+             SET     7,D
+             RET
+PFR_1:       BIT     _KS_CTRL,E
+             RET     Z
+             SET     7,D
+             SET     6,D
+             RET
+
+IS_INS:      LD      (IX-_KS_UND),"^"
+             LD      H,33H
+             RET
+
+TRY_ALT:     LD      A,(KS_UNDS1)
+             LD      HL,OLDSC_T
+             LD      BC,OLDSC_TL
+             CPIR
+             RET     Z
+             POP     AF
+             LD      H,3FH
+             OR      A
+             RET
+
+OLDSC_T:     DB      "AQ10P",0DH," ZSW29OL",0,"XDE38IKMCFR47UJNVGT56YHB"
+             DB      "qrpzs",9,0,0,8,1BH,0X2A+80H,0,0X2F+80H,",",0X2D+80H
+             DB      "?.",0X2B+80H,"[`=;]:",0X22,"_"
+OLDSC_TL     EQU     $-OLDSC_T
+
+_RKNW_:       LD      (IX-_TMP_W),0
+             LD      A,(KS_UNDS)
+             OR      A
+             CALL    Z,DO_L1
+             LD      A,1
+             LD      C,0
+             JR      C,PAFRET
+             CALL    SC2OLD
+             LD      (IX-_KS_UNDS),0
+             LD      A,1
+             LD      C,0
+             JR      C,KNW_NO
+             XOR     A
+             LD      C,(IX-_KS_UND)
+KNW_NO:      LD      L,1
+             LD      (IX-_KS_UND),0
+             RET
+
+DO_L1:       CALL    _L1
+             LD      (IX-_KS_UND),0
+             RET     C
+             LD      (KS_UND),A
+             RET
+
+_KBT_        LD      (IX-_TMP_W),0
+             LD      A,(KS_UNDS)
+             OR      A
+             CALL    Z,DO_L1
+             LD      A,1
+             LD      L,A
+             LD      E,(IX-_KS_UND+1)
+             JR      C,PAFRET1
+             XOR     A
+PAFRET1:     JP      PAFRET
+
+IBMKEYB_T:  JP      _KB_INT;##
+             JP      _RK_
+             JP      _IOCTL
+             JP      _RKNW_
+             JP      _KBT_
+             JP	     KB_INIT

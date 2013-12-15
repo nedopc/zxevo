@@ -1,0 +1,146 @@
+
+;LAST UPDATE: 09.12.2013 savelij
+
+;       DISPLAY	"FREE BEFORE 0X3C30=",0X3C30-$
+;		DUPL 0X3C30-$,0XFF;        DS	0X3C30-$,0XFF
+       ;тут в 5.04 стоит IN A,(0X1F):RET
+       ;в 5.03 пусто
+        IN	A,(0X1F)
+        RET	
+		IF atm=3;       IFN	atm
+JUMP_RES
+        LD	BC,0XFFF7
+        OUT	(C),D
+        LD	BC,0X7FFD
+        OUT	(C),E
+        JP	(HL)
+RETURN_COM_END
+        PUSH	BC
+        PUSH AF
+        LD	A,R
+        JP	PO,$+6
+        NOP	
+        JR	$+4
+        LD	A,R
+        DI	
+        LD	BC,0XFFF7
+        OUT	(C),D
+        LD	BC,0X7FFD
+        OUT	(C),E
+        JP	0XDB0E ;после точки входа для аласма
+RES_WL
+        LD	BC,0XFFF7
+        OUT	(C),H
+        LD	BC,0X7FFD
+        OUT	(C),L
+        EXX	
+RWL_CKL
+        LD	A,(HL)
+        SUB	2
+      ;LD E,A ;for nextpage
+        JR	C,RWL_END;!!!
+        AND	0X3F
+        LD	E,A
+        INC	HL
+        LD	A,C
+        CP	(HL)
+        INC	HL
+        LD	A,(HL)
+        ADD	HL,DE
+        JR	NZ,RWL_CKL
+        CP	B
+        JR	NZ,RWL_CKL
+RWL_END EXX	
+        OUT	(C),E
+        LD	BC,0XFFF7
+        OUT	(C),D
+        RET	
+       ENDIF	
+
+		IF resident=1;       IFN	resident
+       ;ORG 0X3C48
+;NORESC000
+       ;JP PPNORESC000;0X379A
+;A7JP9
+       ;LD A,0X07
+       ;JP 0X0009
+NACALO
+;проверка резидентов (3 разных)
+;jp из 4
+;вместо a,7:jr 9
+        LD	SP,0X5BFF
+    ;проверка недокументированного резидента 0XC000
+        LD	A,0XC7;1F
+        CALL	MEMDRV_
+        LD	HL,0XC000
+        LD	A,(HL)
+        CP	0XC3
+NORESC000
+        JP	NZ,PPNORESC000
+        XOR	A
+LL3c61  ADD	A,(HL)
+        ADC	A,0
+        INC	HL
+        BIT	7,H
+        JR	NZ,LL3c61
+        DEC	A
+        JR	NZ,NORESC000
+        LD	A,0XAA
+        DEC	HL
+        CP	(HL)
+        JR	NZ,NORESC000
+        CPL	
+        DEC	HL
+        CP	(HL)
+        JR	NZ,NORESC000
+        LD	HL,0XD000
+        LD	DE,0X5B00
+        LD	BC,0X2500
+        LDIR	
+        LD	SP,0X5F00
+        LD	A,0XC6;1E
+       ;CALL MEMDRV
+        CALL	LDIfrC0
+        LD	A,0X03
+       ;CALL MEMDRV
+        CALL	LDItoC0
+        LD	A,0XC5;1D
+       ;CALL MEMDRV
+        CALL	LDIfrC0
+        LD	A,0X01
+       ;CALL MEMDRV
+        CALL	LDItoC0
+        LD	A,0XC4;1C
+       ;CALL MEMDRV
+        CALL	LDIfrC0
+        XOR	A
+       ;CALL MEMDRV
+        CALL	LDItoC0
+        LD	A,0XC3;1B
+       ;CALL MEMDRV
+        CALL	LDIfrC0
+        XOR	A
+        CALL	MEMDRV_
+        LD	SP,(0X5B73)
+        RET	
+LDItoC0
+       CALL	MEMDRV_
+       ;LD A,0XFF
+       ;OR A
+       SCF	
+        JR	LDIR40
+LDIfrC0
+       CALL	MEMDRV_
+        XOR	A
+LDIR40  LD	HL,0XC000
+        LD	DE,0X8000
+        LD	BC,0X4000
+        JR	NC,$+3
+		EX DE,HL;        EXD	
+        LDIR	
+        RET	
+       ENDIF	;resident
+
+;       DISPLAY	"FREE BEFORE 0X3CFA=",0X3CFA-$
+;		DUPL 0X3CFA-$,0XFF;        DS	0X3CFA-$,0XFF
+

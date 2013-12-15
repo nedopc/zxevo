@@ -1,0 +1,1173 @@
+
+;LAST UPDATE: 21.11.2013 savelij
+
+;		PHASE 0XEA00-0X31
+; FLAG'S BIT LAYOUT
+_VMODE EQU  0
+_C_STA EQU  1
+_FLEX_C EQU 2
+
+_CAPS  EQU  4
+_RUS   EQU  5
+_K_SS  EQU  6
+_K_CS  EQU  7
+
+; FLAG1'S BIT LAYOUT
+_OVER  EQU  0
+_TRANS EQU  1
+_FASTR EQU  2
+_BREAK EQU  3
+_ROLL  EQU  4
+
+UND_MUX
+IRG_FUN		XOR A
+		RET
+
+; CONVERT WIN-RELATIVE TO ABS & CHECK
+CHKCOR: LD   HL,(W_X1)
+       ADD  HL,BC
+       LD   B,H
+       LD   C,L
+_CHKCO: OR   A          ; ONLY CHECK
+       EX   AF,AF'
+       LD   A,(W_X1)
+       CP   C
+       JR   Z,_CHS1
+       JR   NC,_CHX
+_CHS1: LD   A,(W_X2)
+       CP   C
+       JR   NC,CHSH1
+_CHX:  LD   C,A
+       EX   AF,AF'
+       SCF
+       EX   AF,AF'
+CHSH1: LD   A,(W_Y1)
+       CP   B
+       JR   Z,_CHS2
+       JR   NC,_CHY
+_CHS2: LD   A,(W_Y2)
+       CP   B
+       JR   NC,CHSH2
+_CHY:  LD   B,A
+       SCF
+       RET
+
+CHSH2: EX   AF,AF'
+       RET
+
+; SET CURSOR (W-RELATIVE & CHECK)
+GOXY_:  CALL CHKCOR
+_GOXY: LD   (CUR_X),BC ;SET ABS & NO CHECK
+       CALL GOTO_XY;EV_COR
+;       LD   (SCR_AD),HL
+       RET
+
+CUR_IN
+;	DI
+       DEC  (IX-_C_CNT)
+       RET  NZ
+       LD   A,(C_MAX)
+       LD   (C_CNT),A
+       LD   A,(FLAG)
+       XOR  2         ;C_STAT BIT
+       LD   (FLAG),A
+		EX AF,AF'
+       LD   A,(C_ACT)
+       OR   A
+       RET  NZ
+		EX AF,AF'
+		RRA
+		AND 1
+		CALL CURS_OO
+		RET
+;C_INV: LD   HL,C_I
+;SW:    LD   (SW_DO+1),HL
+;       LD   HL,(SCR_AD)
+;       LD   DE,SV_ARE
+;       JP   SW_C
+
+CUR_AC1		LD (IX-_C_ACT),1
+CUR_AC
+;    DI
+       DEC  (IX-_C_ACT)
+       JR   Z,CA_SH
+       RET  P
+       LD   (IX-_C_ACT),0
+       RET
+
+CA_SH		BIT _C_STA,(IX-_FLAG)
+		RET Z
+		LD A,1
+		CALL CURS_OO
+		SET _C_STA,(IX-_FLAG)
+		RET
+; LD   HL,C_A
+;       CALL SW
+;       BIT  _C_STA,(IX-_FLAG)
+;       JR   NZ,C_INV
+;       RET
+
+CUR_PA
+;    DI
+       LD   A,(C_ACT)
+       INC  A
+       LD   (C_ACT),A
+       DEC  A
+       RET  NZ
+		BIT _C_STA,(IX-_FLAG)
+		RET Z
+		XOR A
+		CALL CURS_OO
+		RES _C_STA,(IX-_FLAG)
+		RET
+;       LD   HL,C_P
+;       JR   SW
+
+; ENCODING ROUTINE
+ENCODE:LD   B,A
+       RLCA
+       RLCA
+       RLCA
+       AND  7
+       LD   HL,SG_ENC
+       CALL ADD_HL_A
+       LD   A,(HL)
+       BIT  4,B
+       JR   Z,ESH
+       RLCA
+       RLCA
+       RLCA
+       RLCA
+ESH:   AND  0F0H
+       XOR  B
+       AND  0F0H
+       XOR  B
+       RET
+
+;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+;     PROTECTION
+ROM_CHK
+;		IF HACK_RBIOS=0
+;		LD BC,3FFFH
+;		ELSE
+		RET
+		DW 0X3FFF
+;		ENDIF
+       XOR  A
+       LD   H,A
+       LD   L,A
+RC_LP: ADD  A,(HL)
+       ADC  A,0
+       INC  HL
+       RRCA
+       XOR  0B9H
+       DEC  BC
+       LD   D,A
+       LD   A,B
+       OR   C
+       LD   A,D
+       JR   NZ,RC_LP
+       DEC  A
+       RET  Z
+       LD   A,R
+       LD   L,A
+       LD   H,0DCH                     ; IS BDOS ADRESS
+       INC  (HL)
+       AND  7FH
+       RET  NZ
+PROT       LD   HL,MES_RCK
+       XOR A
+RC_PLP:XOR  (HL)
+       INC  HL
+       CALL NZ,CONOUT
+       JR   NZ,RC_PLP
+       LD   A,1
+       RST  18H
+RC_HLT:LD   HL,PAL_BUF
+       LD   B,16
+RC__1: INC  (HL)
+       INC  HL
+       DJNZ RC__1
+       CALL SET_PAL
+       LD   B,25
+       EI
+RC__2: HALT
+       DJNZ RC__2
+       JR   RC_HLT
+MES_RCK:
+       DB   0DH,16H,0AH,58H,69H,43H,11H,13H,02H,08H,0EH,01H,4AH,0EH
+       DB   69H,69H,48H,09H,0DH,18H,11H,01H,4AH,0EH,70H,22H,17H,16H
+       DB   00H,53H,72H,17H,16H,16H,11H,74H,54H,1BH,4FH,43H,0CH,01H
+       DB   1AH,1DH,07H,1BH,10H,4BH,00H,00H,2EH
+;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+;--------------------------------
+; ROLL WINDOW UP
+ROLL: BIT  _ROLL,(IX-_FLAG1)
+       RET  NZ
+       XOR  A
+       JR   ROL_1
+
+;--------------------------------
+; WROLL PROCEDURE. DIRECTION: 0-UP, 1-DOWN, 2-RIGHT, 3-LEFT
+WROLL: CALL HEX_CVT
+       DB   6
+       DB   4
+       RET  C
+ROL_1		LD   BC,(W_X1)
+ROL_2: LD   HL,(W_X2)
+       SBC  HL,BC
+       INC  H
+       INC  L
+       EX   DE,HL
+       JP ROL_WIND
+
+;       OR   A
+;       JP   Z,ROLL
+;       DEC  A
+;       JP   Z,UROLL                     ; A=1 - RIGHT, A=2 - LEFT
+;       RRA
+;       CALL C,PRP_INS                   ; PROC'S PRP_INS DON'T CHANGE CF
+;       LD   C,(IX-_W_X1)
+;       JR   C,ROL_W
+;       CALL PRP_DEL
+;       LD   C,(IX-_W_X2)
+;ROL_W: LD   B,(IX-_W_Y1)
+;       CALL EV_COR
+;       LD   A,(W_Y2)
+;       SUB  (IX-_W_Y1)
+;       RET  C
+;       INC  A
+;       LD   B,A
+;       LD   C,(IX-_W_X1)
+;ROL_LW:LD   A,(W_X2)
+;       SUB  C
+;       RET  C
+;       INC  A
+;       LD   C,A
+;       LD   IY,ARR_CO
+;       JP   SW_RRL
+
+;-------------------------------
+; INS/DEL CHAR PROCS
+;I_CH:  CALL PRP_INS
+;       JR   ROL_L
+
+;D_CH:  CALL PRP_DEL
+;       LD   C,(IX-_W_X2)
+;ROL_L: CALL EV_COR
+;       LD   C,(IX-_CUR_X)
+;       LD   B,1
+;       JR   ROL_LW
+;-------------------------------
+; INS/DEL CHAR PROCS
+I_CH:  LD   D,2
+       DB   21H         ; LD HL,NN
+D_CH:  LD   D,3
+       CALL _PRP_L
+       JP ROL_WIND
+
+_PRP_L:LD   A,(W_X2)
+       SUB  C
+       LD   E,A
+       INC  E
+       LD   A,D
+       LD   D,1
+       RET
+
+;--------------------------------
+;CLEAR TO END OF SCREEN
+CLREOL: 
+       CALL _PRP_L
+_CLR:  LD   A,' '
+       JP CLW_WIND
+;	LD   HL,40
+;       LD   (TMP_W),HL
+;       LD   HL,FIL
+;       LD   (SW_CLR+1),HL
+;       LD   HL,(SCR_AD)
+;       LD   A,(W_X2)
+;       SUB  (IX-_CUR_X)
+;       RET  C
+;       INC  A
+;       LD   C,A
+;CESW1: LD   B,8
+;       LD   IY,ARR_CO
+;       JP   SW_CLL
+
+; INIT ENCODER
+ENC_INIT:
+        LD  HL,ENC_ITAB
+        LD  DE,SG_ENC
+        LD  BC,12
+        LDIR
+        RET
+ENC_ITAB:
+        DB   01H,23H,45H,67H
+        DB   01H,23H,0EFH,0CDH
+        DB   01H,23H,45H,67H
+
+;HOME CURSOR
+PHOME: CALL ROM_CHK
+HOME_  LD   BC,0
+       JP   GOXY_
+
+;RESET WHOLE SCREEN
+C_INIT_:                 ; CONSOLE INIT (A-DEEP)
+       CALL RESET
+
+    ; SET COLOR '70'
+       LD   DE,'07'
+       CALL SET_COLOR
+    ; SET ENCODER
+       CALL ENC_INIT
+    ; TURN ON CURSOR
+       LD   A,(C_ACT)
+       OR   A
+       CALL NZ,CUR_AC1
+    ; SET LAT MODE & CAPS
+       RES  _RUS,(IX-_FLAG)
+       CALL RL_BRD
+    ; RESET ALL CONIO FLAG
+       LD   (IX-_FLAG1),0
+
+CLRALL:
+       LD   (IX-_W_X1),0
+       LD   (IX-_W_Y1),0
+       LD   (IX-_W_X2),79
+       LD   (IX-_W_Y2),24
+
+CLRPG: CALL HOME_
+       LD   BC,(W_X1)
+
+;CLEAR REST OF PAGE
+CLR_EOP:
+       CALL CLREOL
+;/*
+;       LD   HL,(RTIME)
+	;#IFNDEF ATM
+;       LD   DE,-0F4BH
+	;#ELSE
+;       LD   DE,-0EE8H
+	;#ENDIF
+;       ADD  HL,DE
+;       LD   DE,-5
+;       ADD  HL,DE
+;       JR   NC,__1
+;       INC  (IX-_HSIGN)
+;__1:
+;*/
+       LD   B,(IX-_CUR_Y)
+       INC  B
+       LD   C,(IX-_W_X1)
+       LD   HL,(W_X2)
+       OR   A
+       SBC  HL,BC
+       INC  H
+       RET  Z
+       INC  L
+       EX   DE,HL
+       JP   _CLR
+
+;RESET WHOLE SCREEN
+;CLRALL: LD   (IX-_W_X1),0
+;       LD   (IX-_W_X2),79
+;       LD   (IX-_W_Y1),0
+;       LD   (IX-_W_Y2),24
+;       BIT  _VMODE,(IX-_FLAG)
+;       JR   NZ,DSX
+;       LD   (IX-_W_X2),39
+;DSX:
+;CLRPG: CALL HOME_
+
+;CLEAR REST OF PAGE
+;CLR_EOP:
+;       CALL CLREOL
+;       LD   A,(W_Y2)
+;       SUB  (IX-_CUR_Y)
+;       RET  C
+;       RET  Z
+;       LD   B,A
+;       LD   A,(W_X2)
+;       SUB  (IX-_W_X1)
+;       INC  A
+;       LD   C,A
+;       PUSH BC
+;       LD   B,(IX-_CUR_Y)
+;       INC  B
+;       LD   C,(IX-_W_X1)
+;       CALL EV_COR
+;       POP  BC
+;CLLP:  PUSH HL
+;       PUSH BC
+;       CALL $;CESW1
+;       POP  BC
+;       POP  HL
+;       LD   DE,320
+;       ADD  HL,DE
+;       DJNZ CLLP
+;       RET
+
+; OUT CHAR & ADVANCE POSITION
+PUT_CH:
+       CALL ENCODE
+_P_CHA: CALL _OUT_CH_
+__PCH: LD   A,(CUR_X)
+       CP   (IX-_W_X2)
+       JR   NC,N_POS
+       INC  A
+       LD   (CUR_X),A
+		JP ADV_POS
+;       CALL ADV
+;       LD   (SCR_AD),HL
+;       RET
+
+N_POS: LD   B,(IX-_CUR_Y)
+       LD   C,(IX-_W_X1)
+N_POS1: INC  B
+       CALL _CHKCO
+       PUSH BC
+       CALL C,ROLL
+       POP  BC
+_GOXY_: JP  _GOXY
+
+
+;OUTPUT CHAR
+OUT_CH: CP  " "
+       JP   NC,PUT_CH
+       LD   BC,(CUR_X)
+       CALL HEX_CVT1
+       DB   CCH_L*8
+CCH_T: DEFB 0DH,0AH,0EH,0FH,1BH,7,8,9
+CCH_L  EQU  $-CCH_T
+       RET
+
+       NOP
+       JR   TAB_P
+       JR   BS_P
+       JR   BELL_P
+       JR   ESC_P
+       JR   DC1_P
+       JR   DC3_P
+       JR   N_POS1
+
+CR_P:  LD   C,(IX-_W_X1)
+		JR   _GOXY_
+
+DC1_P: SET  _RUS,(IX-_FLAG)
+		LD A,1
+		CALL KB_SET_RUS
+       LD   HL,ENC_SI
+DCSH:  LD   DE,SG_ENC
+       LD   BC,4
+       LDIR
+       JP   RL_BRD
+
+DC3_P: RES  _RUS,(IX-_FLAG)
+		XOR A
+		CALL KB_SET_RUS
+       LD   HL,ENC_SO
+       JR   DCSH
+
+ESC_P: LD   HL,ELET_P
+SET_SW: LD   (OUT_SW+1),HL
+       RET
+
+TAB_P: LD   A," "
+       CALL _P_CHA
+       LD   A,(CUR_X)
+       AND  7
+       JR   NZ,TAB_P
+       RET
+
+BS_P:  DEC  C
+       CALL _CHKCO
+		JR   NC,_GOXY_
+       LD   C,(IX-_W_X2)
+       DEC  B
+       CALL _CHKCO
+		JR   NC,_GOXY_
+       LD   B,(IX-_W_Y2)
+		JR   _GOXY_
+
+BELL_P: LD   HL,(BEEP_D)
+BEEP:  LD   A,(BORDER)
+       LD   C,(IX-_FE_IMG)
+       DI
+BPLP:  LD   B,H
+       OUT  (C),A
+       DJNZ $
+       XOR  10H
+       DEC  L
+       JR   NZ,BPLP
+       EI
+       RET
+
+;ESC SEQUINCE CONTROL ROUTINE
+ELET_P: SUB  "@"
+       JR   NC,TST_L
+RES_OU: LD   HL,OUT_CH
+		LD (IX-_C_STAT),CS_ERSEC
+       JR   SET_SW
+
+TST_L: CP   NPAR_L
+       JR   NC,RES_OU
+       INC  A
+       LD   (FUNC),A
+       DEC  A
+       LD   HL,NPAR_T
+       CALL ADD_HL_A
+       LD   A,(HL)
+       OR   A
+       JR   Z,DO_PR
+ACP_1: LD   HL,PAR1
+       LD   (FCNT),A
+       LD   (PAR_PT),HL
+       LD   HL,ACC_PA
+       JR   SET_SW
+
+ACC_PA: LD   HL,(PAR_PT)
+       SUB  " "
+       JR   NC,AP_OK
+       LD   (IX-_FUNC),0FFH
+		LD (IX-_C_STAT),CS_UNPRN
+AP_OK: LD   (HL),A
+       INC  HL
+       LD   (PAR_PT),HL
+       DEC  (IX-_FCNT)
+       RET  NZ
+DO_PR:
+       LD   HL,OUT_CH
+       LD   (OUT_SW+1),HL
+       LD   A,(FUNC)
+       INC  A
+       RET  Z
+       DEC  A
+       CALL IRG_FUN
+       LD   BC,(CUR_X)
+       LD   A,(PAR1)
+       EX   AF,AF'
+       LD   A,(FUNC)
+       CALL _VJMP
+       DB   NPAR_L+1
+       DW   RES_OU
+JPAR_T:DEFW SETP_AUX  ; SET PALLET EXECUTABLE PART
+       DEFW PUT_CH, UP_P,   DN_P,   RT_P   ; @ABC
+       DEFW LT_P,   CLRPG,  SET_CO, GRAPH  ; DEFG
+       DEFW PHOME,  RLF_P,  CLR_EOP,CLREOL ; HIJK
+       DEFW SET_CA, MODE,   PALLET, PLAY   ; LMNO
+       DEFW I_CH,   D_CH,   SETENC, I_LIN  ; PQRS
+       DEFW D_LIN,  BORD_P, GET_ALL,WIND   ; TUVW
+       DEFW WROLL,  C_GOXY, S_CUR,  CUR_PAR; XYZ[
+       DEFW KEY_PA, CUR_LN, SET_MOD,CLRALL ; \]^_
+       DEFW SP_AUX, _CUR_PA,_KEY_PA,PRN_SC ; 'ABC
+
+;       LD   B,0
+;       LD   C,(IX-_FUNC)
+;       INC  C
+;       RET  Z
+;       DEC  C
+;       LD   HL,JPAR_T
+;IJMP:  ADD  HL,BC
+;       ADD  HL,BC
+;       LD   C,(HL)
+;       INC  HL
+;       LD   B,(HL)
+;       PUSH BC
+;       LD   BC,(CUR_X)
+;       LD   A,(PAR1)
+;       RET
+
+NPAR_T:DEFB 1, 0, 0, 0  ; @ABC
+       DEFB 0, 0, 2, 0  ; DEFG
+       DEFB 0, 0, 0, 0  ; HIJK
+       DEFB 16,1, 1, 1  ; LMNO
+       DEFB 0, 0, 9, 0  ; PQRS
+       DEFB 0, 2, 0, 4  ; TUVW
+       DEFB 1, 2, 1, 1  ; XYZ[
+       DEFB 2, 2, 2, 0  ; \]^_
+       DEFB 16,1, 2, 16 ; 'AB
+NPAR_L EQU  $-NPAR_T
+
+GET_ALL:
+GRAPH:
+PLAY:  LD   A,-1
+       RET
+
+UP_P:  DEC  B
+       CALL _CHKCO
+       JR   NC,GO
+       LD   B,(IX-_W_Y2)
+GO:    JP   _GOXY
+
+DN_P:  INC  B
+       CALL _CHKCO
+       JR   NC,GO
+       LD   B,(IX-_W_Y1)
+       JR   GO
+
+RT_P:  INC  C
+       CALL _CHKCO
+       JR   NC,GO
+       LD   C,(IX-_W_X1)
+       JR   GO
+
+LT_P:  DEC  C
+       CALL _CHKCO
+       JR   NC,GO
+       LD   C,(IX-_W_X2)
+       JR   GO
+
+RLF_P: INC  B
+       DEC  B
+       SCF
+       JR   Z,RLF_SK
+       DEC  B
+       CALL _CHKCO
+RLF_SK:PUSH BC
+		LD A,1
+       CALL C,ROL_1
+       POP  BC
+       JP   _GOXY
+
+SET_CA
+SET_CO		LD DE,(PAR1)
+SET_COLOR:
+       LD    A,E
+       LD    BC,(COLOR_P)
+;PATM 'NI' UC HEX
+		CALL HEX_CVT
+		DB 1+4+2*8             ; MATCH 2 LETTER , UPCASE, HEX
+		DB "NI"                ; N- OLD VALUE, I - INVERT
+       RET   C          ; NUM OR ERR
+       NOP
+       LD    B,A        ; INVERT OR NUM
+       NOP
+       LD    A,D        ; IGNORE
+;PATM 'NI' UC HEX
+		CALL HEX_CVT
+		DB 1+4+2*8             ; MATCH 2 LETTER , UPCASE, HEX
+		DB "NI"                ; N- OLD VALUE, I - INVERT
+       RET   C          ; NUM OR ERR
+       NOP
+       LD    C,A        ; INVERT OR NUM
+       NOP
+       LD    (COLOR_P),BC
+       BIT  7,B                 ; NOT CHANGE
+       JR   Z,SCHS1
+       LD   A,C
+       CALL INVERT
+       LD   B,A
+SCHS1: BIT  7,C
+       JR   Z,SCHS2
+       LD   A,B
+       CALL INVERT
+       LD   C,A
+SCHS2: CALL PCK
+       JP   CONV_COL
+
+
+PCK:   LD   A,B        ;IN B-INK, C-PAPER
+       XOR  C         ;OUT A-COLOR
+       AND  0F8H
+       XOR  C
+       RL   C
+       XOR  C
+       AND  0EFH
+       XOR  C
+       RLA
+       RLA
+       RLA
+       XOR  B
+       AND  0F8H
+       XOR  B
+       RET
+
+SET_MOD:CALL HEX_CVT
+       DB   1+M_LNG*8
+_M_S:  DB   "IRBFTO"
+M_LNG  EQU  $-_M_S
+       NOP
+       RET  C
+       AND  7FH
+       LD   B,A
+       INC  B
+       XOR  A
+       SCF
+SM_L:  RLA
+       DJNZ SM_L
+       LD   C,A
+       LD   A,(PAR2)
+       CALL HEX_CVT
+       DB   6
+       DB   2
+       RET  C
+       RRA
+       SBC  A,A
+       LD   B,(IX-_FLAG1)
+       XOR  B
+       AND  C
+       XOR  B
+       LD   (FLAG1),A
+       RET
+
+;MODE PROCEDURE
+MODE	LD   A,(PAR1)
+       SUB  '0'-' '
+       LD   B,A
+       CALL SET_MODE
+       LD   (SYS_P),A
+       CALL SET_SYS
+
+       LD   (IX-_C_ACT),1 ; FLAG 'CURSOR OFF'
+       LD   H,40H      ; CLEAR PHYSICAL SCREEN
+       CALL _MD1
+       LD   H,60H
+       CALL _MD1
+       LD   H,0C0H
+       CALL _MD1
+       LD   H,0E0H
+       CALL _MD1
+       ;CALL TST_RT
+       LD   A,2
+       JP   C_INIT_
+_MD1:  LD   L,0
+       LD   D,H
+       LD   E,1
+       LD   BC,8000-1
+       LD   (HL),L
+       LDIR
+       RET
+
+SET_MODE:
+       LD   A,(SYS_P)
+       AND  7!0XFF;NOT 7
+       DEC  B
+       JR   Z,MOD_TXT
+       DEC  B
+       RET  NZ
+       OR   2
+       RET
+MOD_TXT:
+       OR   6
+       RET
+
+
+;	BIT  0,(IX-_PAR1)
+;       LD   HL,ARR_CO
+;       JR   Z,MD_M
+;       SET  5,(IX-_FE_IMG)
+;       SET  _VMODE,(IX-_FLAG)
+;       LD   DE,ARR_CO+1
+;       LD   BC,8
+;       LD   (HL),7
+;       LDIR
+;       LD   (HL),0
+;       LD   BC,7
+;       LDIR
+;       LD   HL,$;HI_MOD
+;MD_SH: LD   DE,SW_C
+;       LD   BC,SW_SIZ
+;       LDIR
+;       CALL OUT_FE
+;       JP   CLRALL
+
+;MD_M:  RES  5,(IX-_FE_IMG)
+;       RES  _VMODE,(IX-_FLAG)
+;       LD   B,8
+;MD_M_L: LD   (HL),7
+;       INC  HL
+;       LD   (HL),0
+;       INC  HL
+;       DJNZ MD_M_L
+;       LD   HL,$;M_MODE
+;       JR   MD_SH
+
+;BORDER & BORD COLOR MANIP ROUTINES
+BORD_P:CALL HEX_CVT
+       DB   5;4
+       RET  C
+       LD   C,A
+       LD   A,(PAR2)
+       CALL HEX_CVT
+       DB   5;4
+       RET  C
+       RRCA
+       RRCA
+       RRCA
+       RRCA
+       XOR  C
+       AND  0F0H
+       XOR  C
+       LD   (BCOL),A
+
+RL_BRD: LD   A,(BCOL)
+       BIT  _RUS,(IX-_FLAG)
+       JR   NZ,SET_BR
+       RRA
+       RRA
+       RRA
+       RRA
+
+SET_BR:LD   C,A
+       XOR  (IX-_BORDER)
+       AND  7
+       XOR  (IX-_BORDER)
+       LD   (BORDER),A
+       LD   A,(FE_IMG)
+       XOR  C
+       AND  0F7H
+       XOR  C
+       XOR  8
+       LD   (FE_IMG),A
+
+OUT_FE:LD   C,(IX-_FE_IMG)
+       LD   A,(BORDER)
+       OUT  (C),A
+       RET
+
+;GOTOXY PROC
+C_GOXY: LD  C,(IX-_PAR2)
+       LD   B,A
+       JP   GOXY_
+
+
+;WINDOW PROC
+WIND:  LD   A,(PAR3)
+       CP   (IX-_PAR1)
+       RET  C
+       LD   L,A
+;       BIT  _VMODE,(IX-_FLAG)
+;       JR   NZ,$+4
+;       ADD  A,A
+;       RET  C
+       CP   80
+       RET  NC
+       LD   A,(PAR4)
+       CP   (IX-_PAR2)
+       RET  C
+       CP   25
+       RET  NC
+       LD   H,A
+       LD   (W_X2),HL
+       LD   HL,(PAR1)
+       LD   (W_X1),HL
+       JP   HOME_
+
+I_LIN: LD   A,1
+       DB   0EH         ; LD C,N
+D_LIN: XOR  A
+       LD   C,(IX-_W_X1)
+       JP   ROL_2
+
+;I_LIN: LD   HL,UROLL
+;ID_LIN:LD   A,(W_Y1)
+;       PUSH AF
+;       LD   (IX-_W_Y1),B
+;       CALL ID__1
+;       POP  AF
+;       LD   (W_Y1),A
+;       RET
+
+;ID__1: JP   (HL)
+;
+;D_LIN: LD   HL,ROLL
+;       JR   ID_LIN
+
+S_CUR: CALL HEX_CVT
+       DB   6
+       DB   3
+       RET  C
+       RES  _FLEX_C,(IX-_FLAG)
+       DEC  A
+       JP   Z,CUR_AC
+       INC  A
+       EX   AF,AF'
+       CALL CUR_PA
+       EX   AF,AF'
+       RET  Z
+       SET  _FLEX_C,(IX-_FLAG)
+       RET
+
+CUR_PAR:CALL HEX_CVT
+       DB   1+6
+       DB   32
+       RET  C
+       CALL LOG
+_CUR_PA:LD  (C_MAX),A
+       RET
+
+_KEY_PA:LD  (KEY_REP),A
+       LD   A,(PAR2)
+       JR   _KP_1
+
+KEY_PA:CALL HEX_CVT
+       DB   1+6
+       DB   32
+       RET  C
+       CALL LOG
+       LD   (KEY_REP),A
+       LD   A,(PAR2)
+       CALL HEX_CVT
+       DB   1+6
+       DB   32
+       RET  C
+       CALL LOG
+_KP_1: ADD  A,A
+       DEC  A
+       LD   (KEY_DEL),A
+       RET
+
+LOG:   INC  A
+       CP   16
+       RET  C
+       SUB  8
+       CP   16
+       JR   C,LOG1
+       SUB  8
+       ADD  A,A
+LOG1:  ADD  A,A
+       RET
+
+CUR_LN:CALL HEX_CVT
+       DB   6
+       DB   8
+       RET  C
+       LD   B,A
+       LD   A,(PAR2)
+       CALL HEX_CVT
+       DB   6
+       DB   8
+       RET  C
+       CP   B
+       RET  C
+		LD C,A
+		JP SET_CURS
+;       INC  A
+;       LD   (IX-_C_BEG),B
+;       LD   (C_END),A
+;       RET
+
+SETENC:CALL HEX_CVT
+       DB   6
+       DB   3
+       RET  C
+       ADD  A,A
+       LD   HL,SG_ENC
+       CALL ADD_HL_2A
+       LD   DE,PAR2
+       LD   B,8
+SEC_LP:LD   A,(DE)
+       INC  DE
+       CALL HEX_CVT
+       DB   5;4
+       RET  C
+       RLD
+       BIT  0,B
+       JR   Z,SEC_1
+       INC  HL
+SEC_1: DJNZ SEC_LP
+MY_RET:RET
+
+PRN_SC	LD   C,0
+       JP   UND_MUX
+;	LD   DE,PAR1
+;       LD   HL,ED_BUF
+;       LD   B,16
+;       CALL SEC_LP
+;       LD   DE,ED_BUF
+;       CALL _PT_CH
+;       JP   __PCH
+
+PALLET:CALL HEX_CVT
+       DB   1+4+8*2
+       DB   "RT"
+;       NOP
+       RET  C
+		NOP
+		JR PLT_1
+
+		JR SP_DEF
+
+PLT_1
+;       CP   81H
+;       JR   Z,SP_DEF
+       LD   (PAR4),A
+       XOR  A
+       LD   (FUNC),A
+SPA_S: LD   A,3
+       JP   ACP_1
+
+SP_DEF:LD   HL,PALN
+       JR   SP_AUX1
+
+SP_AUX:LD   HL,PAR1
+SP_DIR
+SP_AUX1:LD   DE,PAL_BUF
+       LD   BC,16
+       LDIR
+       JR   SET_PAL
+
+SETP_AUX:
+       LD   B,3
+       LD   D,0
+       LD   HL,PAR1
+PACC_: LD   A,(HL)
+       CALL HEX_CVT
+       DB   6
+       DB   4
+       RET  C
+       CPL
+       RRA
+       RRA
+       RL   D
+       RLA
+       SBC  A,A
+       AND  8
+       OR   D
+       LD   D,A
+       INC  HL
+       DJNZ PACC_
+       ADD  A,A
+       ADD  A,A
+       XOR  D
+       AND  0FCH
+       XOR  D
+       OR   0CH
+       LD   D,A
+       LD   HL,PAL_BUF
+       LD   A,(PAR4)
+       AND  7FH
+       CALL ADD_HL_A
+       LD   (HL),D                      ; PAGE 1 SETS ON ENTRY TO CONOUT
+       INC  (IX-_PAR4)
+       JP   P,SET_PAL
+       BIT  4,(IX-_PAR4)
+       JR   Z,SPA_S
+;----------------------
+; SET PALLET FROM PAL_BUF
+SET_PAL: DI
+       LD   A,I
+       PUSH AF
+       LD   A,HIGH (MY_R_ADR)           ; 3DH
+       LD   I,A
+       IM   2
+       LD      A,(SYS_P)
+       LD      BC,0BD77H
+       OUT     (C),A
+       LD   A,(BORDER)
+       AND  0F8H
+       LD   HL,PAL_BUF
+       LD   C,0XFF
+       LD   D,8
+       EXX
+       LD   C,(IX-_FE_IMG)
+       SET  3,C
+       EXX
+       EI
+       HALT
+		DI
+SPL:   EXX
+       OUT  (C),A
+       EXX
+       OUTI
+;       INC  B
+       INC  A
+       DEC  D
+       JR   NZ,SPL
+       EXX
+       RES  3,C
+       EXX
+       SUB  8
+       LD   D,8
+SPL1:  EXX
+       OUT  (C),A
+       EXX
+       OUTI
+;       INC  B
+       INC  A
+       DEC  D
+       JR   NZ,SPL1
+       ADD  A,0			; +7
+       CALL OUT_FE		; +71 / +78 = 13*6
+       POP  AF
+       LD   I,A
+       IM   1
+       CALL SET_SYS
+       EI
+       LD   BC,1000H                   ; FIND MIN&MAX COLORS
+       LD   DE,0FFH                    ; D - MAX, E - MIN
+       LD   HL,PAL_BUF
+FIV_LP:CALL CLT
+       CP   D
+       JR   C,FIV_NU
+       LD   D,A
+       LD   (IX-_I_MAX),C
+FIV_NU:CP   E
+       JR   NC,FIV_ND
+       LD   E,A
+       LD   (IX-_I_MIN),C
+FIV_ND:INC  C
+       INC  HL
+       DJNZ FIV_LP
+       LD   A,D
+       ADD  A,E
+       LD   (I_AVR),A
+       JP   RL_BRD
+
+INVERT:PUSH HL
+       LD   HL,PAL_BUF
+       CALL ADD_HL_A
+       CALL CLT
+       ADD  A,A
+       LD   HL,I_AVR
+       CP   (HL)
+       POP  HL
+       LD   A,(I_MIN)
+       RET  NC
+       LD   A,(I_MAX)
+       RET
+
+CLT:   PUSH HL
+       PUSH BC
+       LD   C,(HL)
+       LD   HL,CLT_TB
+       LD   B,6
+       XOR  A
+CLT_LP:RR   C
+       JR   C,CLT_1
+       ADD  A,(HL)
+CLT_1: INC  HL
+       DJNZ CLT_LP
+       POP  BC
+       POP  HL
+       RET
+
+CLT_TB:DB   2,6,0CH,1,3,6
+
+		DEPHASE
+
+;------------------------------------------------
+CONOUT PUSH BC       ;PRINT CHAR FROM A
+       PUSH DE       ;DESTROY ALL ALT REGS
+       PUSH HL       ;IX MAST POINT TO IX_BASE
+       PUSH IY
+       PUSH AF
+       EX   AF,AF'
+       LD   A,1
+       RST  18H
+       PUSH AF
+       CALL CUR_PA
+       EI
+       EX   AF,AF'
+       CALL OUT_SW
+       CALL CUR_AC
+       POP  AF
+       RST  18H
+       EI
+       POP  AF
+       POP  IY
+       POP  HL
+       POP  DE
+       POP  BC
+       RET

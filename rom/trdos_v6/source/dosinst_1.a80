@@ -1,0 +1,494 @@
+
+;LAST UPDATE: 09.12.2013 savelij
+
+		DUPL 0X0805-$,0XFF
+;        ORG	0X805
+       ;DB -1
+       ;DB " Message for hackers: "
+       ;DB "Base version 5.03, "
+       ;DB "High speed, Turbo Format. "
+       ;DB 127
+       ;DB "Copyright C.C. 1991"
+DOSSYM
+;jp из 0X3D82
+;то,что раньше было в 0X3D82
+        PUSH	HL
+        PUSH	BC
+        PUSH	DE
+        PUSH	AF
+        CALL	0X20F1
+        POP	AF
+        CALL	0X3D94
+        CALL	0X20F1
+        POP	DE
+        POP	BC
+        POP	HL
+        RET	
+		IF 0;       IFN	0
+DOSRUS
+;jp из 0X3D89 (вызова 0X3D89 не нахожу)
+        AND	0X3F
+        LD	L,A
+        LD	H,0X00
+        ADD	HL,HL
+        ADD	HL,HL
+        ADD	HL,HL
+        LD	BC,0X0C00 ;русские буквы,(C) вместо Ъ
+        ADD	HL,BC
+        LD	DE,0X5C92;23698
+        LD	BC,0X0008
+        LDIR	
+        LD	A,0XC9
+        LD	(0X5C9A),A
+        JP	0X5C9A
+       ENDIF	
+ASKREPFORM
+;jp из 0X1FB6
+;вместо 0X326B
+        LD	A,(0X5CF6)
+        CP	0X03
+        JR	Z,LLc848
+        LD	A,0X0D
+        RST	0X10
+        LD	HL,TPressR;0X335E
+        RST	0X18
+        CALL	0X1052 ;ввод клавиши с ожиданием
+        CP	0X52
+         JR	Z,LLc84b
+LLc848   JP	0X01D3
+LLc84b  RST	0X20
+        DW	3438;0XD6E ;CLS без чего-то
+LLc84e  RST	0X20
+        DW	0X28E ;KEY_SCAN
+        JR	NZ,LLc84e
+        RST	0X20
+        DW	0X31E ;K_TEST
+        JR	C,LLc84e
+        JP	wFORMAT ;продолжение...
+
+;       DISPLAY	"FREE BEFORE 0X900=",0X900-$
+		DUPL 0X900-$,0XFF;        DS	0X900-$,0XFF
+;родионовский вектор прерывания
+		DUPL 257,0XFF;        DS	257,0XFF
+       ;ORG 0XA01
+MAGSTOPDISK
+;call из 0X2A6F
+;вместо out (0Xff),0X3c
+        LD	A,0X3C
+        OUT	(0XFF),A
+      ;надо JP 0X2FC1
+         LD	A,0XD0
+         OUT	(0X1F),A
+         RET	
+;зачем 5C01?почему не коррекция сложением?
+MAGregR
+;jp из 0X2EBF
+        LD	(0X5C01),A
+        POP	AF
+        JP	L2EC2
+MAGsetR
+;jp из 0X2F03
+        LD	A,(0X5C01)
+        LD	R,A
+        POP	AF
+        JP	0X5C00
+MAGICER
+;jp из 0X2A56
+;вместо push af,bc,de
+        PUSH	AF
+        LD	A,R
+        BIT	7,A
+        JR	Z,LL8a27
+        SUB	0X1F
+        SET	7,A
+        JR	LL8a2b
+LL8a27  SUB	0X1F
+        RES	7,A
+LL8a2b  PUSH	AF
+      ;DS 25
+   ;опять защита от взлома Глюка!!!
+       ;LD A,(0X5C7F)
+       ;CP "D"
+       ;JR NZ,LL8a45
+       ;LD A,(0X5C80)
+       ;CP "S"
+       ;JR NZ,LL8a45
+       ;LD A,(0X5C81)
+       ;CP "C"
+       ;JR NZ,LL8a45
+       ;LD HL,(0X5CB3)
+       ;JP (HL)
+LL8a45  LD	A,0XF7
+        IN	A,(0XFE)
+        RRCA	
+        JR	NC,MAG1
+        RRCA	
+        JR	NC,MAG2
+        RRCA	
+        JR	NC,MAG3
+        RRCA	
+        JR	C,LL8a45
+;MAGIC+"4"=EXIT
+        POP	AF
+     ;надо RLCA:ADD A,0X17*2:RRCA
+         BIT	7,A
+         JR	Z,LL8a60
+         ADD	A,0X17
+         SET	7,A
+         JR	LL8a64
+LL8a60   ADD	A,0X17
+         RES	7,A
+LL8a64  LD	R,A
+        POP	AF
+        RETN	
+;MAGIC+"1"=стандарт
+MAG1
+        POP	AF
+        LD	R,A
+        POP	AF
+        JR	LL8a78
+;MAGIC+"2"=стек внизу экрана
+MAG2
+        POP	AF
+        POP	AF
+        LD	(0X57FE),SP
+        LD	SP,0X5800
+LL8a78  PUSH	AF
+        PUSH	BC
+        PUSH	DE
+        JP	L2A59
+;MAGIC+"3"=STS0X57
+MAG3
+        POP	AF
+        LD	R,A
+        PUSH	HL
+        LD	HL,0
+        ADD	HL,SP
+        INC	HL
+        INC	HL
+        LD	A,H
+        POP	HL
+        CP	0XC0
+        JR	NC,LL8ac4
+        LD	A,R
+     ;надо RLCA:SUB 9*2:RRCA
+         BIT	7,A
+         JR	Z,LL8a9a
+         SUB	9
+         SET	7,A
+         JR	LL8a9e
+LL8a9a   SUB	9
+         RES	7,A
+LL8a9e  LD	R,A
+        PUSH	BC
+        LD	BC,0XFFFD
+        LD	A,0X07
+        OUT	(C),A
+        LD	B,0XBF
+        LD	A,0XFF
+        OUT	(C),A ;глушит AY
+        LD	A,0X57
+        LD	BC,0X7FFD
+        OUT	(C),A
+        POP	BC
+        POP	AF
+        EX	(SP),HL
+        LD	(0XFEE4),HL
+        LD	(0XFEFE),HL
+        EX	(SP),HL
+LL8abf  INC	SP
+        INC	SP
+        JP	0XDB00
+LL8ac4  LD	A,R
+     ;надо RLCA:SUB 0X15*2:RRCA
+         BIT	7,A
+         JR	Z,LL8ad0
+         SUB	0X15
+         SET	7,A
+         JR	LL8ad4
+LL8ad0   SUB	0X15
+         RES	7,A
+LL8ad4  LD	R,A
+        POP	AF
+        LD	(0X5800),SP
+        EX	(SP),HL
+        LD	(0X5802),HL
+        EX	(SP),HL
+        LD	SP,0X5808
+        PUSH	AF
+        PUSH	BC
+        LD	BC,0XFFFD
+        LD	A,0X07
+        OUT	(C),A
+        LD	B,0XBF
+        LD	A,0XFF
+        OUT	(C),A ;глушит AY
+        LD	A,0X57
+        LD	BC,0X7FFD
+        OUT	(C),A
+        POP	BC
+        POP	AF
+        LD	SP,(0X5800)
+        LD	(0XC000),HL
+        LD	HL,(0X5802)
+        LD	(0XFEE4),HL
+        LD	(0XFEFE),HL
+        LD	HL,(0XC000)
+        JR	LL8abf
+		IF 0;       IFN	0
+;		DUPL 0X0C00-$,0XFF;        DS	0XC00-$,0XFF
+       ;ORG 0XC00
+;		binclude rusletts.bin;        INCBIN	"rusletts"
+bootkus1
+;       ENT	
+;его и 0X344D копирует 0X3AE7
+		PHASE 0XF500;       DISP	0XF500
+bootst1
+        DI	
+        PUSH	AF
+        PUSH	HL
+        PUSH	DE
+        PUSH	BC
+        EXX	
+        PUSH	HL
+        LD	HL,(0X5C3D)
+        LD	(0XF632),HL
+        LD	A,(0X5D19)
+        LD	(0X5CF6),A
+        ADD	A,0X3C
+        LD	(0X5D16),A
+        LD	HL,0X3C00
+        LD	DE,0X8000
+        PUSH	DE
+        LD	(0X5C36),DE
+        LD	BC,0X0400
+        LDIR	
+         LD	(IY+0X47),0X00
+        POP	HL
+        LD	BC,0X0080
+LL0e30  PUSH	BC
+        INC	HL
+        INC	HL
+        INC	HL
+        LD	B,0X03
+LL0e36  LD	D,(HL)
+        LD	A,D
+        RLA	
+        OR	D
+        LD	(HL),A
+        INC	HL
+        DJNZ	LL0e36
+        POP	BC
+        DEC	BC
+        INC	HL
+        INC	HL
+        LD	A,B
+        OR	C
+        JR	NZ,LL0e30
+        XOR	A
+        OUT	(0XFE),A
+        LD	A,0X44
+        LD	(0X5C48),A
+        DEC	A
+        DEC	A
+        LD	(0X5C8D),A
+        CALL	0X0D6B
+LL0e56  DI	
+        XOR	A
+        LD	(0XF86E),A
+        LD	HL,0XFA09
+        PUSH	HL
+        LD	(0X5C3D),SP
+         LD	(IY+0X00),0XFF
+        LD	A,(0X5D19)
+        LD	C,0X01
+        CALL	0X3D13
+        LD	HL,0X9000
+         LD	DE,0X0000
+        LD	BC,0X0805
+        CALL	0X3D13
+        LD	A,(IY+0X00)
+        CP	0XFF
+        JR	NZ,LL0e56
+        LD	HL,0XF556
+        LD	(0XF55C),HL
+        EXX	
+        LD	DE,0XA000
+        EXX	
+        LD	HL,0X9000
+        LD	DE,0X0008
+        LD	A,(HL)
+        OR	A
+        JP	Z,0XF887
+LL0e98  LD	DE,0X0008
+        ADD	HL,DE
+        LD	A,(HL)
+        CP	0X42
+        CALL	Z,0XF836
+        ADD	HL,DE
+        LD	A,(HL)
+        OR	A
+        JR	NZ,LL0e98
+        LD	A,(0XF86E)
+        OR	A
+        JP	Z,0XF887
+        LD	B,0X3F
+        SBC	A,B
+        JP	NC,0XF8A6
+        LD	A,(0XF86E)
+        DEC	A
+        LD	(0XF86F),A
+        CALL	0XF9BB
+        LD	(0XF653),A
+        CALL	0X0D6B
+        DI	
+        CALL	0XF870
+        LD	A,0X02
+        CALL	0XF8CB
+        LD	A,0X02
+        CALL	0X1601
+         LD	(IY+0X47),0X00
+        LD	DE,0XA000
+        LD	HL,0X0008
+LL0edc  LD	A,0X20
+        RST	0X10
+        LD	A,0X20
+        RST	0X10
+        LD	BC,0X0008
+        PUSH	DE
+        CALL	0X203C
+        POP	DE
+		EX DE,HL;        EXD	
+        ADC	HL,DE
+		EX DE,HL;        EXD	
+         LD	A,(0XF86E)
+         DEC	A
+         LD	(0XF86E),A
+        JR	Z,LL0f35
+        LD	A,0X20
+        RST	0X10
+        LD	A,0X20
+        RST	0X10
+        LD	BC,0X0008
+        PUSH	DE
+        CALL	0X203C
+        POP	DE
+		EX DE,HL;        EXD	
+        ADC	HL,DE
+		EX DE,HL;        EXD	
+         LD	A,(0XF86E)
+         DEC	A
+         LD	(0XF86E),A
+        JR	Z,LL0f35
+        LD	A,0X20
+        RST	0X10
+        LD	A,0X20
+        RST	0X10
+        LD	BC,0X0008
+        PUSH	DE
+        CALL	0X203C
+        POP	DE
+		EX DE,HL;        EXD	
+        ADC	HL,DE
+		EX DE,HL;        EXD	
+        LD	A,(0XF86E)
+        DEC	A
+        LD	(0XF86E),A
+        JR	Z,LL0f35
+        LD	A,0X06
+        RST	0X10
+        JR	LL0edc
+         NOP	
+         NOP	
+         NOP	
+LL0f35  LD	HL,0X5802
+        CALL	0XF816
+        LD	DE,0X000A
+        LD	IX,0XF634
+         LD	(IX+0X00),0X00
+LL0f46  EI	
+        RES	5,(IY+0X01)
+        HALT	
+        PUSH	HL
+        PUSH	IX
+        CALL	0XF9BB
+        CP	0X40
+        JP	NZ,0XF792
+        CALL	0XF989
+        POP	IX
+        POP	HL
+        BIT	5,(IY+0X01)
+        JR	Z,LL0f46
+        LD	A,(0X5C08)
+        CP	8
+        JP	Z,0XF6ED
+        CP	"o"
+        JR	Z,LL0fed
+        CP	"6"
+        JR	Z,LL0fed
+        CP	9
+        JP	Z,0XF70C
+        CP	"p"
+        JP	Z,0XF70C
+        CP	"7"
+        JP	Z,0XF70C
+        CP	11
+        JP	Z,0XF72E
+        CP	"q"
+        JP	Z,0XF72E
+        CP	"9"
+        JP	Z,0XF72E
+        CP	10
+        JP	Z,0XF764
+        CP	"a"
+        JP	Z,0XF764
+        CP	"8"
+        JP	Z,0XF764
+        CP	"d"
+        JP	Z,0XFA1B
+        CP	"1"
+        JR	Z,LL0fd0
+        CP	"2"
+        JR	Z,LL0fd0
+        CP	"3"
+        JR	Z,LL0fd0
+        CP	"4"
+        JR	Z,LL0fd0
+        PUSH	AF
+        LD	A,0XFE
+        IN	A,(0XFE)
+        RRA	
+        JR	NC,LL0f46
+        POP	AF
+        CP	13
+        JP	Z,0XF79D
+        CP	"0"
+        JP	Z,0XF79D
+        CP	32
+        JP	Z,0XF79D
+        JP	0XF646
+LL0fd0  PUSH	AF
+        CALL	0X0D6B
+        LD	A,0X03
+        CALL	0XF8CB
+        POP	AF
+        SUB	0X31
+        LD	C,0X01
+        LD	(0X5CF8),A
+        LD	(0X5CF9),A
+        LD	(0X5D19),A
+        CALL	0X3D13
+        JP	0XF556
+LL0fed
+        CALL	0XF870
+        CALL	0XF826
+		DB 0XDD,0X35;         DEC	(IX)
+;        ORG	$-1
+bootst2
+bootln1 := $-bootst1
+;       ENT	
+;        ORG	ROM
+;       DISP	0
+;        ORG	bootkus1+bootln1
+		DEPHASE
+       ENDIF	

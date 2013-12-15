@@ -1,0 +1,313 @@
+
+;LAST UPDATE: 21.11.2013 savelij
+
+;.Z80
+;-----------------------------------
+; NUMBER CONVERT/LETTER SEARCH SUB
+; USAGE: CALL HEX_CVT
+;        DB <CODE> - BIT 0  : UPCASE LETTER
+;                    BIT 1,2: 0-NO NUMBER CONVERT, 1-DEC NUM, 2-HEX NUM,
+;                             3-USE LIMIT
+;       [DB <MATCHED CHAR'S>] (IN REVERSE ORDER)
+;       [DB <LIMIT>] (EXCLUSIVE)
+;    NOP    OR    JR   NORM_RET
+;    ...          JR   FIRST LIT MATCH
+;                 JR   SECOND LIT MATCH AND SO ON
+; IN VALUE - A, OUT - A (NUMBER, OR N MATCHED CHAR+80H, OR LETER & CF (BOUND
+;                        ERROR OR NO MATCHED CHARS & NO NUMBER CONVERT SPECIF.)
+HEX_CVT: ADD   A," "
+HEX_CVT1: EX     (SP),HL
+        PUSH   BC
+        LD     C,(HL)
+	INC    HL
+        SRL    C
+        JR     NC,H_NOU
+        CP     "a"
+        JR     C,H_NOU
+        CP     0X7A+1;'Z'+1
+        JR     NC,H_NOU
+        SUB    20H
+H_NOU:  PUSH   BC
+        SRL    C
+        SRL    C
+        JR     Z,H_NOM
+        LD     B,0
+        CPIR
+        ADD    HL,BC
+        JR     NZ,H_NOM
+        LD     A,C
+        OR     80H
+H_NOM:  POP    BC
+        LD     B,"0"
+        RR     C
+        RR     C             ; SET CF & SF
+        JP     P,H_1
+        LD     C,10          ; SF=1
+        JR     NC,H_TST      ;  CF=0 => 1 IS DEC
+        LD     C,(HL)        ;  CF=1 => 3 IS LIMIT
+        INC    HL
+        JR     H_TST
+H_1:    LD     C,16
+        JR     C,H_TST       ; SF=0, CF=1 => 2 IS HEX
+        LD     C,0FFH        ;       CF=0 => 0 IS NO CONVERT
+        LD     B,0
+H_TST:  OR     A
+        JP     M,H_MTC       ; IS MATCHED CHAR - NO CONVERT
+        SUB    B
+        JR     C,H_OK
+        CP     10
+        JR     C,H_T2
+        SUB    7
+        CP     10
+        JR     C,H_OK
+H_T2:   CP     C             ; CHECK LIMIT
+        CCF
+        JR     H_OK
+
+H_MTC:  LD     C,(HL)        ; NOP ... VARIANT
+        INC    C
+        DEC    C
+        PUSH   AF
+        CALL   NZ,ADD_HL_2A-1
+        POP    AF
+H_OK:   POP    BC
+        EX     (SP),HL
+        RET
+
+;-----------------------------------
+; HL += A
+ADD_HL_2A_PRIM
+        INC    A
+ADD2_HL_A
+ADD_HL_2A: ADD A,A
+ADD_HL_A: ADD  A,L
+        LD     L,A
+        RET    NC
+        INC    H
+        RET
+
+;-----------------------------------
+; LDIR COMMAND FOR ALL PAGES
+; USAGE: RST 8
+;        DB <PAGE TO>, <PAGE FROM>
+;             - SPEC VALUE: FF-USE PREVIOS VALUE (FROM VARS R8_FR OR R8_TO)
+;                           FE-MOVE FROM USER MODE
+;   THIS CALL MAY DESTROY AF', BC' & ED_BUF AREA (IN CASE PAGE-PAGE MOVE)
+;    AND UNCONDITIONALY DESTROY AF
+RST8:   EX     (SP),HL
+        LD     A,(HL)
+        INC    HL
+        INC    A
+        JR     Z,_R8_1
+        DEC    A
+        LD     (R8_TO),A
+_R8_1:  LD     A,(HL)
+        INC    HL
+        INC    A
+        JR     Z,_R8_2
+        DEC    A
+        LD     (R8_FR),A
+_R8_2:  EX     (SP),HL
+        PUSH   HL
+        PUSH   DE
+        PUSH   BC
+        RES    6,H
+        RES    7,H
+        RES    6,D
+        RES    7,D
+        OR     A
+        SBC    HL,DE
+        ADD    HL,DE
+        JR     C,_R8_3
+        EX     DE,HL
+_R8_3:  LD     HL,4000H
+        OR     A
+        SBC    HL,DE
+        LD     (TMP_W),HL
+        SBC    HL,BC
+        POP    BC
+        POP    DE
+        JR     NC,_R8_4
+        LD     BC,(TMP_W)
+        EX     (SP),HL
+        CALL   _R8_5
+        POP    BC
+        PUSH   HL
+        XOR    A
+        LD     H,A
+        LD     L,A
+        SBC    HL,BC
+        LD     B,H
+        LD     C,L
+_R8_4:  POP    HL
+_R8_5:  PUSH   HL
+        PUSH   DE
+        PUSH   BC
+        CALL   _R8_DO
+        POP    BC
+        POP    HL
+        ADD    HL,BC
+        EX     DE,HL
+        POP    HL
+        ADD    HL,BC
+        LD     BC,0
+        RET
+
+_R8_DO: LD     A,(R8_TO)
+        EX     DE,HL
+        CALL   R8_CVRT
+        LD     (TMP_W),A
+        EX     DE,HL
+        LD     A,(R8_FR)
+        CALL   R8_CVRT
+        LD     (TMP_W+1),A
+        LD     A,H
+        AND    D
+        OR     3FH
+        INC    A             ;DEST & SRC BOTH IN UPPER PAGE ?
+        DI
+        LD     A,(MEMDSP)
+        PUSH   AF
+        JR     NZ,S_LDIR     ;NO - USE SIMPLE LDIR COMMAND
+        LD     A,(TMP_W+1)
+        CP     (IX-_TMP_W)   ;PAGE THE SAME?
+        JR     NZ,C_LDIR     ;NO - USE COMPLEX MOVE SUBROUTINE
+S_LDIR: LD     A,H
+        OR     3FH
+        INC    A
+        LD     A,(TMP_W+1)
+        JR     Z,R8_OK
+        LD     A,(TMP_W)
+R8_OK:  PUSH   BC
+        RST    18H           ;IS SET_PG ROUTINE
+        POP    BC
+        EI
+        LDIR
+R8_RET: POP    AF
+        RST    18H
+        EI
+        RET
+
+C_LDIR: RLC    C             ; PAGE-PAGE COPY THROUGH BUFFER
+        SRL    C
+        LD     A,B
+        RLA
+        JR     NZ,CL_SK
+        LD     C,128
+        DEC    A
+CL_SK:  INC    A
+        LD     B,0
+CL_LP:  EX     AF,AF'
+        EXX
+        LD     A,(TMP_W+1)
+        RST    18H
+        EI
+        EXX
+        LD     A,C
+        PUSH   DE
+        LD     DE,ED_BUF
+        LDIR
+        POP    DE
+        LD     C,A
+        EXX
+        LD     A,(TMP_W)
+        RST    18H
+        EI
+        EXX
+        PUSH   HL
+        LD     HL,ED_BUF
+        LDIR
+        POP    HL
+        EX     AF,AF'
+        DEC    A
+        JR     NZ,CL_LP
+        JR     R8_RET
+
+R8_CVRT		
+;		IF HACK_RBIOS=0
+;		BIT 5,A           ; CONVERT PAGE FROM CALL TO REAL PAGE NUM
+;		ELSE
+		BIT 7,A
+;		ENDIF
+        RET    Z
+R8_UH:  BIT    7,H
+        LD     A,3           ;       PAGE 3
+        RET    NZ            ;       PAGE 2  (IN SYS TOO)
+        INC    A             ; --->  PAGE 4
+        BIT    6,H           ;       PAGE 0
+        SET    6,H
+        SET    7,H
+        RET    NZ
+        XOR    A
+        RET
+
+;------------------------------------
+; SET PAGE FOR LDA/STA
+;
+ED_SET: CALL   ED_PG
+        LD     (R8_FR),A
+        LD     (R8_TO),A
+        RET
+
+;------------------------------------
+; VECTORIZE JUMP PROC
+;
+_VJMP:  EX     (SP),HL
+        CP     (HL)
+        INC    HL
+        JR     NC,VJ_OVR
+        INC    A
+        CALL ADD2_HL_A
+VJ_OVR: LD     A,(HL)
+        INC    HL
+        LD     H,(HL)
+        LD     L,A
+        EX     (SP),HL
+        EX     AF,AF'
+        RET
+
+;------------------------------------
+; PRINT PROC
+PRN_HL:	LD      A,(HL)
+        OR      A
+        INC     HL
+        RET     Z
+        RST	20H
+        JR      PRN_HL
+
+PRN:   EX      (SP),HL
+        PUSH    AF
+        CALL    PRN_HL
+        POP     AF
+        EX      (SP),HL
+        RET
+
+;.COMMENT @
+;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+PHEX:  PUSH   AF
+        CALL   PHEX1
+        LD      A,' '
+        RST    20H
+        POP    AF
+        RET
+
+PHEX1:  PUSH    AF
+        RRCA
+        RRCA
+        RRCA
+        RRCA
+        CALL   DHEX
+        POP     AF
+        CALL   DHEX
+        RET
+
+;
+; TYPE ONE HEX DIGIT
+;
+DHEX:   AND     0FH
+        ADD     A,90H
+        DAA
+        ADC     A,40H
+        DAA
+        RST    20H
+        RET

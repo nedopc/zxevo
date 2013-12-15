@@ -1,0 +1,103 @@
+
+;LAST UPDATE: 21.11.2013 savelij
+
+; ÑêÄâÇÖê ùãÖäíêéççéÉé ÑàëäÄ
+
+ED_DRV	DW      ED_RES
+	DW      ED_SEEK
+	DW      ED_FRM
+	DW      ED_REC
+	DW      ED_RD
+	DW      ED_NOP
+	DW      ED_WR
+
+;-------------------------
+; äéåÄçÑõ çÖ Çõèéãçüûíëü
+ED_RES:
+ED_REC:
+ED_NOP
+;	CALL    TST_RT
+        XOR     A
+        RET
+
+;-------------------------
+ED_SEEK: LD     A,(RQCYL)
+	 DEC	A
+         LD     (ED_CYL),A
+         XOR    A
+         RET
+
+;-------------------------
+; ÇõóàëãÖçàÖ ÄÑêÖëÄ
+ED_ADR		BIT ED_INI,(IX-_TST_IS1)
+		CALL NZ,ED_INIT
+		BIT 7,(IX-_ED_CYL)
+		JR NZ,ED_ERRA1
+	LD      A,(RQSECT)      ; 128 ëÖäíéêéÇ çÄ ÑéêéÜäì
+        RRA
+        LD      L,0
+        RR      L
+        OR      0C0H
+        LD      H,A
+        RET
+
+ED_INIT:RES     ED_INI,(IX-_TST_IS1)
+        XOR     A
+        CALL    ED_PG
+        RST     18H
+        EX      AF,AF'
+        LD      A,0E5H
+        JP      ED_CLR
+
+;-------------------------
+; óíÖçàÖ
+ED_RD:  CALL    ED_ADR          ; COPY FROM HL ...
+        LD      A,(ED_CYL)
+        CALL    ED_PG
+        LD      (R8_FR),A
+        LD      BC,128
+        LD      DE,(DCBUF)      ; ... TO DE 128 BYTE
+        RST     8
+        DB      3, 0FFH
+        EI
+        XOR     A
+        RET
+
+ED_ERRA1: POP   AF
+ED_ERRA:LD      A,_ADRERR
+        RET
+
+;------------------------
+; áÄèàëú
+ED_WR:  CALL    ED_ADR          ; COPY TO HL ...
+        LD      A,(ED_CYL)
+        CALL    ED_PG
+        LD      (R8_TO),A
+        LD      BC,128
+        EX      DE,HL
+        LD      HL,(DCBUF)      ; ... FROM DE 128 BYTE
+        RST     8
+        DB      0FFH, 3
+        EI
+        XOR     A
+        RET
+
+;----------------------------
+; FORMAT
+ED_FRM: LD      A,(RQCYL)
+        DEC     A
+		JP M,ED_ERRA
+        CALL    ED_PG
+        RST     18H
+        EX      AF,AF'
+        LD      A,(RQBLN)
+ED_CLR  LD      HL,0C000H
+        LD      DE,0C001H
+        LD      BC,03FFFH
+        LD      (HL),A
+        LDIR
+        EX      AF,AF'
+        RST     18H
+        EI
+        XOR     A
+        RET

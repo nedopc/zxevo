@@ -1,0 +1,405 @@
+
+	PHASE 0F800H
+_RUN:   JP  RUN              ; MAIN MENU OF LOADER
+_CI:    JP  CI               ; CONSOL IN
+_RI:    JP  RI               ; READER IN
+_CO:    JP  CO               ; CONSOL OUT
+_PO:    JP  POUT             ; PUNCH OUT
+_LO:    JP  LOUT             ; LIST OUT
+_CSTS:  JP  CSTS             ; CONSOL STATUS
+_IOCHK: JP  IOCHK            ; GET IO STATE
+_IOSET: JP  IOSET            ; SET IO STATE
+_MEMCK: JP  MEMCK            ; GET TOP OF RAM
+_IODEF: JP  RET_RAM          ; SET USER IO
+_REST:  JP  IRUN             ; INTERRUPT ENTRY
+_RQDIO: JP  RQDIO            ; CALL TO DISK MONITOR
+_RQRES: JP  RQRES            ; BUFFER RESET
+_RQSET: JP  RQSET            ; CHANALL ASSIGN
+_RQCHK: JP  RQCHK            ; GET CHANALL DESCRIPTION BLOCK
+_MUX:   JP  MUX
+
+; TEMPORARY
+RI:
+POUT:
+
+RET_RAM: NOP
+         RET
+
+RUN:    CALL S_ON
+	JP   ALL_INIT
+
+IRUN:	CALL S_ON
+	RST  0
+
+MUX:    CALL    SYS_ON
+	CALL	DO_MUX
+	CALL	SYS_OFF
+	EI
+	RET
+
+;	IF ROM
+LPORT   EQU     0FBH
+;	ELSE
+;LPORT   EQU     7BH
+;	ENDIF
+
+LOUT:   IN A,(LPORT)
+	RLCA
+	JR C,LOUT
+	LD A,C
+	OUT (0FBH),A
+	OUT (07BH),A
+	OUT (0FBH),A
+	RET
+
+MEMCK:  LD      B,0F8H
+        LD      A,0
+        RET
+
+ENTR1:  CALL    S_OFF
+        IM      2
+        JP      BIOS
+
+ENTR2:  CALL    S_OFF
+        IM      2
+	CALL    BIOS+3
+ENT_ADR EQU 	$-2
+        CALL    S_ON
+        IM      1
+        RET
+
+;----------------------
+RQRES:  CALL    SYS_ON
+        LD      (IX-_BUFT),0FFH
+        CALL    SYS_OFF
+        EI
+        RET
+;-----------------------
+RQSET:  LD      A,_SETCH
+        JR      SETCHK
+;-----------------------
+RQCHK:  LD      A,_GETCH
+SETCHK: CALL    SYS_ON
+        CALL    PSCHK
+
+;        EI
+;        LD      (RQCOM),A
+;        LD      (IX-_RQCHAN),C
+;        PUSH    DE
+;        PUSH    HL
+;        EX      DE,HL
+;        LD      (RQBADR),HL
+;        LD      DE,RQCHAN
+;        CALL    DISK
+;        POP     HL
+;        POP     DE
+
+        CALL    SYS_OFF
+        EI
+        RET
+
+;----------------------
+RQDIO:  CALL    SYS_ON
+        CALL    PDISK
+
+;        LD      HL,RQCHAN
+;        LD      (HL),C
+;        LD      B,8
+;        EX      DE,HL
+;RQLP:   INC     HL
+;        INC     DE
+;        CALL    MOVAM
+;        LD      (DE),A
+;        DJNZ    RQLP
+;        EI
+;        CALL    DISK
+
+        CALL    SYS_OFF
+        EI
+        RET
+
+;----------------------
+CO:     CALL    SYS_ON
+        EI
+        PUSH    AF
+        LD      A,C
+        CALL    CONOUT
+        POP     AF
+        CALL    SYS_OFF
+        EI
+        RET
+
+;----------------------
+CI:     CALL    SYS_ON
+        EI
+        CALL    READ_K
+        CALL    SYS_OFF
+        EI
+        RET
+
+;----------------------
+CSTS:   CALL    SYS_ON
+        CALL    STAT_K
+        CALL    SYS_OFF
+        EI
+        RET
+
+;----------------------
+;“‘’€Ž‚Š€ ‘ˆ‘’…Œ› ‚/‚
+IOSET:  LD      A,C
+        LD      (IOBYTE),A
+        RET
+;----------------------
+;‘Ž‘’ŽŸˆ… ‘ˆ‘’…Œ› ‚/‚
+IOCHK:  LD      A,(IOBYTE)
+        RET
+
+;----------------------
+;RQMOV:  CALL    S_OFF
+
+;LLLL:  LD      A,0FEH
+;       IN      A,(0FEH)
+;       AND     1
+;       JR      NZ,LLLL
+
+;        LDIR
+;        CALL    S_ON
+;        EI
+;        RET
+
+;RQGET:  LD      A,(HL)
+;        EX      DE,HL
+;        CALL    MOVMA
+;        EX      DE,HL
+;        INC     HL
+;        INC     DE
+;        DJNZ    RQGET
+;        EI
+;        RET
+
+;RQPUT:  CALL    MOVAM
+;        LD      (DE),A
+;        INC     HL
+;        INC     DE
+;        DJNZ    RQPUT
+;        EI
+;        RET
+
+;----------------------
+;Ž–…„“› „‹Ÿ ŽŒ…€ ‘ ŒŽˆ’ŽŽŒ
+;MOVAM:  CALL    S_OFF
+;        LD      A,(HL)
+;        CALL    S_ON
+;        RET
+
+;MOVMA:  CALL    S_OFF
+;        LD      (HL),A
+;        CALL    S_ON
+;        RET
+
+;----------------------
+;SYSTEM ON/OFF PROC'S
+S_ON:   DI
+		LD (RA_I),A
+		LD A,0X52
+SYS_SW		EX (SP),HL
+        LD      (R_ADR),HL
+        POP     HL
+		OUT (0XFD),A
+;        LD      (RA_I),A
+;        LD      A,C
+;        LD      (RC_I),A
+;        LD      C,0
+;FE_CPY  EQU     $-1
+;        SET     7,C
+;        LD      A,0
+;BOR_CPY EQU     $-1
+;        OUT     (C),A
+		LD A,0
+RA_I    EQU     $-1
+;        LD      C,0
+;RC_I    EQU     $-1
+        JP      0
+R_ADR   EQU     $-2
+
+SYS_ON: DI
+        EX      (SP),HL
+        LD      (R_1),HL
+        POP     HL
+        CALL    S_ON
+        LD      (OLD_SP),SP
+        LD      SP,SYS_SP
+        IM      1
+        PUSH    IX
+        LD      IX,IX_BASE
+        JP      0
+R_1     EQU     $-2
+
+S_OFF:  DI
+		LD (RA_I),A
+		LD A,0X42
+;        EX      (SP),HL
+;        LD      (R_ADR),HL
+;        POP     HL
+;        LD      (RA_I),A
+;        LD      A,C
+;        LD      (RC_I),A
+;        LD      A,(FE_IMG)
+;        LD      (FE_CPY),A
+;        RES     7,A
+;        LD      C,A
+;        LD      A,(BORDER)
+;        LD      (BOR_CPY),A
+;        OUT     (C),A
+        JR      SYS_SW
+
+SYS_OFF: DI
+        EX      (SP),HL
+        LD      (R_2),HL
+        POP     HL
+        POP     IX
+        CALL    S_OFF
+        LD      SP,(OLD_SP)
+        IM      2
+        JP      0
+R_2     EQU     $-2
+
+INT_R		DI
+        LD      (OLD_SP),SP
+        LD      SP,SYS_SP
+        IM      1
+        LD      (I_A_I),A
+		LD A,0X52
+		OUT (0XFD),A
+;        LD      A,C
+;        LD      (I_C_I),A
+;        LD      A,(FE_CPY)
+;        SET     7,A
+;        LD      C,A
+;        LD      A,(BOR_CPY)
+;        OUT     (C),A
+        CALL    DO_INT
+		LD A,0X42
+		OUT (0XFD),A
+;        LD      A,(FE_IMG)
+;        LD      (FE_CPY),A
+;        RES     7,A
+;        LD      C,A
+;        LD      A,(BORDER)
+;        LD      (BOR_CPY),A
+;        OUT     (C),A
+        LD      A,0
+I_A_I   EQU     $-1
+;        LD      C,0
+;I_C_I   EQU     $-1
+        DI
+        LD      SP,(OLD_SP)
+        IM      2
+        EI
+        RET
+
+PM_SET_PG	LD A,(TMP_W)
+		CP 3
+		JP NC,PM_ERR_3
+		POP BC
+		CALL SYS_OFF
+		RRCA
+		RRCA
+		AND 0XC0
+		LD B,A
+		LD A,D
+		XOR 0X80
+		CPL
+		LD C,LOW (WIN_A0)
+		OUT (C),A
+		XOR A
+		EI
+		RET
+
+CHTBL:  DW      CH0          ; CHANALL DESCRIPTIONS
+        DW      CHED
+        DW      CH2
+        DW      CH3
+        DW      CH4
+        DW      CH5
+        DW      CH6
+        DW      CH7
+        DW      CH8
+        DW      CH9
+
+;-----------------------
+;’€‹ˆ–€ „€‰‚…Ž‚
+DCTBL: DW      0       ;…‡…‚
+        DW      0       ;PD1207
+        DW      ED_DRV
+        DW      FDC_DRV
+        DW      HD_DRV       ;WD1207
+        DW      0       ;…‡…‚
+        DW      0       ;…‡…‚
+        DW      0       ;…‡…‚
+;-----------------------
+
+OLD_SP		DW 0
+
+QQ      EQU     $
+
+		DUPL (256*HIGH($+255))-$-1,0;        DEFS    (256*HIGH($+255))-$-1
+
+;PRINT <IDLE SPACE > %($-QQ)
+
+INTRADR: DW     INT_R
+
+;-----------------------
+;ƒˆŠˆ‰ Œ€ƒˆ’›‰ „ˆ‘Š 80X2
+CH0:    DB      0FFH    ;ˆ‡€Š „…‰‘’‚ˆ’…‹œŽ‘’ˆ
+        DB      3       ;ŠŽ„ “‘’Ž‰‘’‚€
+        DB      0       ;ŽŒ… ˆ‚Ž„€
+        DB      0       ;—ˆ‘‹Ž …“”…ˆ‡ˆ“…Œ›• ˆ ‘ˆ‘’…Œ›• „ŽŽ†…Š
+        DB      0       ;—ˆ‘‹Ž ”ˆŠ‘ˆŽ‚€›• ƒŽ‹Ž‚ŽŠ
+        DB      2       ;—ˆ‘‹Ž ‘Œ…›• ƒŽ‹Ž‚ŽŠ
+        DW      80      ;—ˆ‘‹Ž –ˆ‹ˆ„Ž‚ € „ˆ‘Š…
+        DB      16      ;—ˆ‘‹Ž ‘…Š’ŽŽ‚ € „ŽŽ†Š…
+        DW      256     ;—ˆ‘‹Ž €‰’Ž‚ ‚ ‘…Š’Ž…
+        DB      2       ;—ˆ‘‹Ž ‘ˆ‘’…Œ›• „ŽŽ†…Š
+        DW      0       ;ŽŒ… €—€‹œŽ‰ „ŽŽ†Šˆ
+        DW      5120    ;—ˆ‘‹Ž ‹ŽŠŽ‚ € „ˆ‘Š…
+        DW      32      ;—ˆ‘‹Ž ‹ŽŠŽ‚ € „ŽŽ†Š…
+        DW      160     ;—ˆ‘‹Ž „ŽŽ†…Š € „ˆ‘Š…
+        DB      8       ;„‹ˆ€ ŽŒ…€ ‹ŽŠ€ ‚ ‘…Š’Ž…
+        DW      128     ;—ˆ‘‹Ž ‡€ˆ‘…‰ ‚ „ˆ…Š’Žˆˆ
+        DB      2       ;€‡Œ…’Š€ …‚Ž‰ „ŽŽ†Šˆ
+        DB      2       ;€‡Œ…’Š€ ‚’ŽŽ‰ „ŽŽ†Šˆ
+        DB      2       ;€‡Œ…’Š€ ‚‘…• Ž‘’€‚˜ˆ•‘Ÿ „ŽŽ†…Š
+        DB      0       ;‘Œ…™…ˆ… …‚ŽƒŽ ‘…Š’Ž€
+        DB      0       ;ˆ‡€Š 8-„ž‰ŒŽ‚ŽƒŽ „ˆ‘Š€
+        DB      0FFH    ;‹Ž’Ž‘’œ ‡€ˆ‘ˆ
+        DB      1       ;€‡Œ… ‘…Š’Ž€
+        DB      80      ;GAP3 „‹Ÿ —’…ˆŸ/‡€ˆ‘ˆ
+        DB      80      ;GAP3 „‹Ÿ ”ŽŒ€’€
+        DB      0    ;‚…ŒŸ ˜€ƒ€
+        DB      0       ;‚…ŒŸ Ž“‘Š€ˆŸ ƒŽ‹Ž‚Šˆ
+        DB      0       ;ˆ‡€Š ‚Š‹ž—…ˆŸ ŒŽ’Ž€
+
+MON_SIZE EQU    $-_RUN+0X3A
+BSS_START	EQU $+0X3A
+
+CH2		EQU $
+CHED		EQU CH2+0X23
+CH3     EQU     CHED+0X23-5
+CH4     EQU     CH3+23H
+CH5     EQU     CH4+23H
+CH6     EQU     CH5+23H
+CH7     EQU     CH6+23H
+CH8     EQU     CH7+23H
+CH9     EQU     CH8+23H
+
+BUF_MON		EQU CH9+23H      ; DMON BUFFER (1024 BYTE)
+BSS_END		EQU BUF_MON+1024
+BSS_LNG		EQU BSS_END-BSS_START
+;NXT     EQU     BUF+1024
+
+;PRINT <MONITOR IMAGE SIZE - > %(MON_SIZE)
+;PRINT <TOTAL RAM-RESIDENT PART OF RBIOS - > %(NXT-_RUN)
+;PRINT <FREE RAM (FROM TOP) - > %(0FFFFH-NXT+1)
+
+		DEPHASE

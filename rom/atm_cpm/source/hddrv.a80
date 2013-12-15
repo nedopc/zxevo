@@ -1,0 +1,280 @@
+
+;LAST UPDATE: 14.12.2013 savelij
+
+;#INCLUDE "ALLVARS.ASH"
+;#INCLUDE "DDEF.ASM"
+
+P_1F7		EQU 0XF0			;êÖÉàëíê ëéëíéüçàü/êÖÉàëíê äéåÄçÑ
+P_1F6		EQU 0XD0			;CHS-çéåÖê ÉéãéÇõ à ìëíê/LBA ÄÑêÖë 24-27
+P_1F5		EQU 0XB0			;CHS-ñàãàçÑê 8-15/LBA ÄÑêÖë 16-23
+P_1F4		EQU 0X90			;CHS-ñàãàçÑê 0-7/LBA ÄÑêÖë 8-15
+P_1F3		EQU 0X70			;CHS-çéåÖê ëÖäíéêÄ/LBA ÄÑêÖë 0-7
+P_1F2		EQU 0X50			;ëóÖíóàä ëÖäíéêéÇ
+P_1F1		EQU 0X30			;èéêí éòàÅéä/ëÇéâëíÇ
+P_1F0		EQU 0X10			;èéêí ÑÄççõï
+P_3F6		EQU 0XC8			;êÖÉàëíê ëéëíéüçàü/ìèêÄÇãÖçàü
+P_HI		EQU 0X11			;ëíÄêòàÖ 8 Åàí
+PRT_RW		EQU P_1F0*0X100+P_HI		;èéêíõ óíÖçàü/áÄèàëà éÑçàå ëãéÇéå
+
+HD_DAT		EQU P_1F0;0FH		;P_1F0
+HD_ERR		EQU P_1F1;2FH		;P_1F1
+HD_SECCNT	EQU P_1F2;4FH		;P_1F2
+HD_SECT		EQU P_1F3;6FH		;P_1F3
+HD_CYLLO	EQU P_1F4;8FH		;P_1F4
+HD_CYLHI	EQU P_1F5;0AFH	;P_1F5
+HD_HEAD		EQU P_1F6;0CFH	;P_1F6
+HD_COMM		EQU P_1F7;0EFH	;P_1F7
+
+HD_DRV		DW      HD_RES                  ; RESET HD
+		DW      HD_SEEK                 ; SEEK HD
+		DW      HD_FRM                  ; FORMAT HD
+		DW      HD_REC                  ; RECALIBRATE HD
+		DW      HD_RD                   ; READ
+		DW      HD_NOP
+		DW      HD_WR                   ; WRITE
+
+HD_TST: BIT     6,(IY+_DDTYP)    ; 6 BIT - CHECKED
+        RET     NZ
+        BIT     7,(IY+_DDTYP)    ; 7 BIT - NO DISK
+        JR      NZ,_1ERR
+        LD      BC,HD_COMM
+        IN      A,(C)
+        INC     A
+        JR      Z,_1ERR
+        LD      D,0
+        CALL    HD_WT1
+        OR      A
+        JR      NZ,_1ERR
+;		IF HACK_RBIOS=0
+;		LD BC,HD_CYLHI
+;		ELSE
+		CALL WR_MAS_SLA
+;		ENDIF
+        LD      A,55H
+        OUT     (C),A
+        CPL
+        LD      C,HD_CYLLO
+        OUT     (C),A
+        LD      C,HD_CYLHI
+        IN      A,(C)
+        CP      55H
+        JR      NZ,_1ERR
+        LD      C,HD_CYLLO
+        IN      A,(C)
+        CP      0AAH
+        JR      NZ,_1ERR
+        SET     6,(IY+_DDTYP)
+HD_SCL: LD      HL,(RQCYL)
+        LD      BC,HD_CYLLO
+        OUT     (C),L
+        LD      C,HD_CYLHI
+        OUT     (C),H
+        RET
+
+_1ERR:  SET     7,(IY+_DDTYP)
+        POP     AF
+NR_ERR: LD      A,_NRDY
+        OR      A
+        RET
+
+HD_RES:
+HD_REC: CALL    HD_TST
+        LD      BC,HD_COMM
+        LD      A,10H
+        OUT     (C),A
+HD_WAIT:LD     D,64
+HD_WT1: LD      BC,HD_COMM
+        LD      HL,0
+HD_W_LP:IN      E,(C)
+        BIT     7,E
+        JR      Z,HD_W_DN
+        DEC     HL
+        LD      A,L
+        OR      H
+        JR      NZ,HD_W_LP
+        DEC     D
+        JR      NZ,HD_W_LP
+        JR      NR_ERR
+
+HD_W_DN:BIT     0,E
+        JR      NZ,IS_HD_ERR
+;        AND     50H
+;        SUB     50H
+;        JR      NZ,HD_W_LP
+HD_NOP: XOR     A
+        RET
+IS_HD_ERR:
+        LD      BC,HD_ERR
+        IN      B,(C)
+        BIT     0,B
+        LD      A,_NO_ADDR_MARK
+        RET     NZ
+        BIT     2,B
+        JR      NZ,HD_ERR_AB
+        BIT     4,B
+        LD      A,_NO_DATA
+        RET     NZ
+        BIT     6,B
+        JR      Z,HD_SH1
+        BIT     2,E
+        LD      A,_CRC_ERR
+        RET     Z
+        XOR     A
+        RET
+HD_SH1: BIT     7,B
+        LD      A,_FATAL_ERROR
+        RET     NZ
+        LD      A,_HRDERR
+        RET
+HD_ERR_AB:
+        BIT     6,E
+        LD      A,_NRDY
+        RET     NZ
+        BIT     5,E
+        LD      A,_WR_PROT
+        RET     NZ
+        BIT     4,E
+        LD      A,_IOERR
+        RET     NZ
+        LD      A,_COMERR
+        RET
+
+HD_SEEK:CALL    HD_TST
+        LD      HL,(RQCYL)
+        LD      A,H
+        OR      L
+        JR      Z,HD_REC
+        CALL    HD_SCL
+        LD      C,HD_COMM
+        LD      A,70H
+        OUT     (C),A
+        JR      HD_WAIT
+
+
+HD_SET_RW:
+        LD      A,(RQHEAD)
+        OR      0A0H
+;		IF HACK_RBIOS=0
+;		LD BC,HD_HEAD
+;		ELSE
+		CALL GET_MAS_SLA
+;		ENDIF
+        OUT     (C),A
+        LD      A,(RQSECT)
+        INC     A
+        LD      C,HD_SECT
+        OUT     (C),A
+        LD      A,D
+        LD      C,HD_SECCNT
+        OUT     (C),A
+        CALL    HD_SCL
+        LD      C,HD_COMM
+        RET
+
+HD_RD:  CALL    HD_TST
+        LD      D,1
+        CALL    HD_SET_RW
+        LD      A,20H
+        OUT     (C),A
+        CALL    HD_WAIT
+        OR      A
+        RET     NZ
+        LD      HL,(DCBUF)
+        LD      BC,HD_DAT
+        INIR
+        INIR
+        LD      BC,HD_COMM
+        IN      A,(C)
+        AND     8
+        RET     Z
+        LD      A,_OVERRUN
+        RET
+
+HD_SETWR:
+        CALL    HD_SET_RW
+        LD      A,30H
+        OUT     (C),A
+
+HD_W_W: IN      E,(C)
+        BIT     0,E
+        JP      NZ,IS_HD_ERR
+        BIT     3,E
+        JR      Z,HD_W_W
+        LD      BC,HD_DAT+256
+        RET
+
+HD_WR:  CALL    HD_TST
+        LD      D,1
+        CALL    HD_SETWR
+        LD      HL,(DCBUF)
+        DEC     D
+        INC     HL
+		LD C,P_HI
+HD_WLP:
+        LD      A,(HL)
+        OUT     (C),A
+        DEC     C;B
+        DEC     HL
+        LD      A,(HL)
+        OUT     (C),A
+        INC     C;B
+        INC     HL
+        INC     HL
+        INC     HL
+
+        PUSH BC
+        LD BC,HD_COMM
+        IN A,(C)
+        POP BC
+
+        DEC     D
+        JR      NZ,HD_WLP
+
+HD_WWAIT
+;		IF HACK_RBIOS=0
+;		LD BC,CONF_128;TLRD
+;HD_WLPD		IN A,(C)
+;		AND 40H
+;		JR Z,HD_WLPD
+;		ELSE
+		DUPL 9,0
+;		ENDIF
+		JP HD_WAIT
+
+HD_FRM:
+        CALL    HD_SEEK
+        OR      A
+        RET     NZ
+        LD      D,(IY+_DSECTT)
+        CALL    HD_SETWR
+
+HD_F2:  LD      A,(RQBLN)
+        OUT     (C),A
+        DEC     B
+        LD E,B
+HD_F1:
+        PUSH BC
+        LD BC,HD_COMM
+        IN B,(C)
+        POP BC
+
+        OUT     (C),A
+        ;LD      E,B
+
+
+        DEC     E
+        JR      NZ,HD_F1
+
+        LD      BC,CONF_128;TLRD
+HD_F3:  IN      A,(C)
+        AND     40H
+        JR      Z,HD_F3
+
+        LD      BC,HD_COMM
+        IN      E,(C)
+        BIT     0,E
+        JP      NZ,IS_HD_ERR
+        BIT     3,E
+        JP      Z,HD_WAIT
+        LD      BC,HD_DAT+256
+        JR      HD_F2

@@ -1,0 +1,201 @@
+
+;#INCLUDE "ALLVARS.ASH"
+
+_KB_INT:	RET
+
+KB_INIT:       JP      _KB_INIT
+KB_SCAN:       JP      _KB_SCAN
+KB_ENCODE:     JP      _KB_ENCODE
+KB_GET_SHIFTS: JP      _KB_GET_SH
+KB_SET_RUS:    JP      _KB_SET_RUS
+
+;#INCLUDE "KB_SH.INC"
+
+KB_TIME		EQU K_5CNT;#DEFINE KB_TIME K_5CNT
+_KB_TIME	EQU _K_5CNT;#DEFINE _KB_TIME _K_5CNT
+
+;#PRAGMA LOCAL
+
+;----------------------------------------
+; LOCALS
+_IN:      EX   AF,AF'
+           LD   A,55H
+           IN   A,(0FEH)
+           EX   AF,AF'
+           IN   A,(0FEH)
+           RET
+
+_IN        MACRO V
+           LD   A,V
+           CALL _IN
+           ENDM
+
+;----------------------------------------
+; INIT KEYBOARD (STANDARD ENTRY)
+_KB_INIT:  _IN  8
+           LD   A,8AH
+           IN   A,(0FEH)
+           _IN  1
+           CP   10H
+           JR   NC,ABORT
+           XOR  A
+           RET
+ABORT:     CALL PRN
+           DB   1BH,"M1VE31 not installed",0DH,0AH,0
+           DI
+           HALT
+;----------------------------------------
+; SCAN KEYBOARD
+; IN  E&1 - WAIT FOR SYM, E&2 - WAIT FOR SHIFTS
+;
+; RET A-FF NO,0-KEY, 1-SHIFT
+;     L-CHAR/0
+
+_KB_SCAN:
+	BIT	_INTOF,(IX-_FLAG1)
+	JR	Z,__NOCHECK
+	LD	A,(IX-_TIME_C)
+	CP	(IX-_KB_TIME)
+	LD	(KB_TIME),A
+	JR	Z,__NOALL
+__NOCHECK:
+
+           LD   BC,0FEH
+           IN   A,(C)
+           LD   B,40H
+           IN   L,(C)
+           LD   B,80H
+           IN   H,(C)
+           PUSH DE
+           LD   DE,(KS_ASH)
+           LD   (KS_ASH),HL
+           OR   A
+           SBC  HL,DE
+           POP  DE
+           JR   NZ,__SHIFT
+           OR   A
+           JR   NZ,__SYM
+__NOALL:   INC  E
+           DEC  E
+           JR   NZ,_KB_SCAN
+           LD   A,-1
+__R1:      LD   L,0
+__RET:     LD   DE,(KS_ASH)
+_RET1:     EX   AF,AF'
+           LD   A,D
+           AND  15
+           OR   E
+           LD   E,A
+           EX   AF,AF'
+           RET
+
+__SYM:     LD   L,A
+           LD   A,0
+           JR   __RET
+
+__SHIFT:   OR   A
+           JR   NZ,__SYM
+           BIT  1,E
+           JR   Z,_KB_SCAN
+           LD   A,1
+           JR   __R1
+
+;-------------------------------
+
+_KB_GET_SH:_IN  9
+           LD   E,A
+           _IN  49H
+           LD   D,A
+           LD   (KS_ASH),DE
+           XOR  A
+           JR   _RET1
+
+
+;---------------------------------------
+_KB_SET_RUS:
+           OR   A
+           LD   A,55H
+           IN   A,(0FEH)
+           LD   A,0BH
+           JR   Z,KSR_1
+           DEC  A
+KSR_1:       IN   A,(0FEH)
+           JP   _KB_GET_SH
+
+;---------------------------------------
+_KB_ENCODE:LD   HL,ENC_TABL
+           XOR  A
+           RET
+ENC_TABL
+	ENT_DEF ED_PROC,ED_CHAR,ED_CHAR,ED_CHAR
+           ENT_DEF ED_PROC,ED_PROC,ED_PROC,ED_PROC
+           ENT_DEF ED_PROC,ED_CHAR,ED_CHAR,ED_CHAR
+           ENT_DEF ED_CHAR,ED_CHAR,ED_PROC,ED_PROC
+
+           DB  0,0
+
+           DW   PALT                         ; HI BIT ENCODER
+           DW   TRP                          ; RUS      PUNCT
+           DW   TRSP                         ; RUS+SHFT PUNCT
+           DW   TRLET                        ; RUS      LETTER
+
+           DW   0                            ; RUS+SHFT LETTER
+           DW   NRET                         ;          OTHERS
+           DW   NRET                         ; SHFT     OTHERS
+           DW   NRET                         ; RUS      OTHERS
+
+           DW   NRET                         ; RUS+SHFT OTHERS
+           DW   TCCTRL                       ; CTRL     CONTROLL
+           DW   TSDIG                        ; SHFT     DIGITS
+           DW   TCDIG                        ; CTRL     DIGITS
+
+           DW   TRSDIG                       ; RUS+SHFT DIGITS
+           DW   TSP                          ; SHFT     PUNCT
+           DW   PCP                          ; CTRL     PUNCT
+           DW   NRET                         ; CTRL     OTHERS
+
+
+PALT:      LD   L,-1
+           BIT  _KS_NUM,(IX-_KS_ASH)
+           RET  NZ
+           CP   "."
+           JR   NZ,PALT_1
+           LD   A,"y"
+           RET
+PALT_1:       CP   "0"
+           RET  C
+           CP   0X39+1;'9'+1
+           RET  NC
+           LD   HL,TALT-0X30;'0'
+           CALL ADD_HL_A
+           LD   A,(HL)
+SRET:      LD   L,-1
+           RET
+NRET:      XOR  A
+CRET:      LD   L,0
+           RET
+TALT:      DB   "xwqur",0,"svpt"
+
+PCP:       CP   "@"
+           JR   C,NRET
+           AND  1FH
+           LD   L,0
+           RET
+
+TRP:       DB 0X88,	"`;',.[]",0X5C,"(v|b`h",0X7F,0
+;ED_tab "`;',.[]",0X5C <"(v|b`h", 127,0> 1
+TRSP:      DB 0X8A,	"`;',.[]=",0X5C,"/",")V",0X5C,"B@H_+",0,"?"
+;ED_tab "`;',.[]=",0X5C,"/" <")V\B@H_+",0,"?"> 1
+TRLET:     DB 0,	"fiswuapr{oldxt}zjkyegmc~nq"
+;ED_tab "fiswuapr{oldxt}zjkyegmc~nq"
+TCCTRL:    DB 0X81,	0X0D,0X0A
+;ED_tab 0dh 0ah 1
+TSDIG:     DB 0,	")!@#$%^&*("
+;ED_tab "")!@#$%^&*("
+TCDIG:     DB 1,	"6",0X1E
+;ED_tab "6" 1eh
+TRSDIG:    DB 0,	"%!",0X22,"/$:,.;?"
+;ED_tab "%!",0X22,"/$:,.;?"
+TSP:       DB 0X0B,	"`;',.[]-=",0X5C,"/","~:",0X22,"<>{}_+|?"
+;ED_tab "`;',.[]-=",0X5C,"/" "~:",0X22,"<>{}_+|?"
+       

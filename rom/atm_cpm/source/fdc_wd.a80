@@ -1,0 +1,625 @@
+
+;LAST UPDATE: 21.11.2013 savelij
+
+DG      MACRO   PAR
+        CALL    PRN
+        DB      PAR,0DH,0AH,0
+        ENDM
+
+
+; „€‰‚… 1818‚ƒ93
+
+FDC_DRV		DW      FD_RES
+		DW      FD_SEEK
+		DW      FD_FRM
+		DW      FD_REC
+		DW      FD_RD
+		DW      FD_NOP
+		DW      FD_WR
+
+;-----------------------
+; €„…‘€–ˆŸ Š ……Œ…›Œ FD
+FD_TVL: LD      HL,FD_TRKS
+        LD      A,(IY+_DUS)
+	JP	ADD_HL_A
+
+;-----------------------
+; €„…‘€–ˆŸ ŠŽ’Ž‹…€
+FD_ADR: LD      (SV_SP),SP
+FD_ADR1:
+;	CALL    RET_ROM
+        LD      C,(IY+_DUS)
+        XOR     A
+        SUB     (IX-_RQHEAD)
+        CPL
+        AND     10H
+        OR      C
+        LD      C,(IY+_DFMFM)
+        XOR     C
+        AND     0BFH
+        XOR     C
+        OR      0CH
+        OUT     (0FFH),A
+        CALL    FDREC1
+        CALL    FD_TVL
+        LD      A,(HL)
+        INC     A
+        JR      NZ,FD_SIT
+        CALL    FR_SK1
+        JP      NZ,ERR_PAS
+        LD      A,1
+FD_SIT: DEC     A
+        OUT     (3FH),A
+FD_NOP: XOR	A
+	RET
+
+;-----------------------
+; ‘Ž‘ ŠŽ’Ž‹…€
+FD_RES: 
+;	CALL    TST_RT
+        DI
+;        CALL    RET_ROM
+        LD      A,8
+        OUT     (0FFH),A
+;	LD	C,0
+;$1:	
+	LD	B,0
+	DJNZ	$
+;	DEC	C
+;	JR	NZ,$1
+	LD	A,0CH
+	OUT	(0FFH),A
+        LD      A,0D0H
+	OUT	(1FH),A
+        CALL    FD_PAS
+RET_OK: XOR     A
+        EI
+		RET
+;        JP      RET_RAM
+
+;.COMMENT @
+;-----------------------
+; DELAY
+;DELAY:  LD      B,50H
+;DELAY1: PUSH    AF
+;DLP1:   LD      C,-1
+;DLP2:   DEC     C
+;        JR      NZ,DLP2
+;        DEC     B
+;        JR      NZ,DLP1
+;        POP     AF
+;        RET
+;@
+
+FD_PAS: PUSH    AF
+        CALL    FD_TVL
+        LD      (HL),0FFH
+        POP     AF
+        RET
+
+
+;-----------------------
+; SEEK
+FR_SEEK: LD     A,(RQCYL)
+FR_SK1: LD      C,(IY+_DFSRHUT)
+	SET	3,C
+	OR	A
+        LD      (HL),A
+	JR	Z,FR_HM
+	OUT	(7FH),A
+        SET     4,C             ; SEEK COMMAND
+        LD      A,(RQCOM)
+        CP      _FORMAT         ; FORMAT
+        JR      Z,FRS_D
+        SET     2,C             ; 'VERIFY TRACK NUM' FLAG
+        JR      FRS_D
+FR_HM:  DEC     A
+        OUT     (3FH),A
+FRS_D:  LD      A,C
+FR_SW1: OUT     (1FH),A
+        JP      FD_WAIT
+
+FD_SEEK:CALL    FD_ADR
+	LD	A,(RQCYL)
+        CP      (HL)
+        JR      Z,RET_OK
+FD_SKAL:EX      AF,AF'
+        CALL    FR_SEEK
+        JR      Z,RET_OK
+	EX	AF,AF'
+        OR      A
+        JR      Z,ERR_PAS
+        LD      A,0C0H
+        LD      HL,ED_BUF
+        LD      BC,87FH
+        LD      DE,0
+        DI                      ; READ TRACK NUMBER
+        OUT     (1FH),A
+        CALL    FD_RM
+        EI
+        IN      A,(1FH)
+        AND     1CH
+        JR      NZ,ATT3         ; IF ERROR - SKIP ATEMPT 2
+        LD      A,(ED_BUF)
+        OUT     (3FH),A         ; ELSE - SET IT
+        CALL    FR_SEEK         ; ATEMPT 2
+        JR      Z,RET_OK        ; O'K
+ATT3:   XOR     A
+        CALL    FR_SK1          ; ATEMPT 3. HOME & SEEK
+        CALL    FR_SEEK
+        JR      NZ,ERR_PAS
+        JR      RET_OK
+
+;-----------------------
+; CALCULATE TIMEOUT VALUE
+EV_TOUT:LD      A,(SYS_P)
+        LD      B,4
+        AND 8
+        RET     Z
+        SLA     B
+        RET
+
+;-----------------------
+; WAIT FOR READY (WITH TIOME OUT CHECK)
+FD_WDN: POP     DE              ; END OF WAIT
+        POP     BC
+        IN      A,(1FH)
+        BIT     4,A
+        RET
+
+FD_WAIT:PUSH    BC              ; WAIT ITSELF
+        PUSH    DE
+        CALL    EV_TOUT
+        LD      DE,0
+FD_WL:  IN      A,(0FFH)
+        AND     80H
+        JR      NZ,FD_WDN
+        DEC     DE
+        LD      A,D
+        OR      E
+        JR      NZ,FD_WL
+        DJNZ    FD_WL
+;---------------------------
+;   SOME ERRORS
+; TIME OUT ERROR
+T_OUT:  LD      A,_NRDY
+        DB      21H             ; LD HL,...
+; UNKNOWN ERROR
+H_ERR:  LD      A,_HRDERR
+; ANY ERROR
+ERR_RET:LD      HL,(SV_SP)
+        INC     HL
+        INC     HL
+        LD      SP,HL
+        LD      H,A
+;        CALL    RET_ROM
+        LD      A,0D0H
+	OUT	(1FH),A
+        LD      A,H
+        OR      A
+		RET
+;        JP      RET_RAM
+; ERROR & PASSIVATE
+ERR_PAS:CALL    FD_PAS
+        JR      H_ERR
+
+;-----------------------
+; COMMON PART FOR READ/WRITE PROC'S
+FD_RW:  LD      (SV_SP),SP
+        CALL    FD_ADR1
+        IN      A,(1FH)
+        AND     20H             ; HEAD LOADED?
+        JR      NZ,FD_RWL       ; YES - JUMP
+        LD      A,(HL)          ; CURRENT TRACK
+        OUT     (7FH),A         ; SEEK IT
+        LD      A,(IY+_DFSRHUT)
+        OR      18H             ; SEEK WITH 15MS DELAY COMMAND
+        CALL    FR_SW1          ; SEEK & WAIT
+        JR      NZ,ERR_PAS      ; RET IF ERROR
+FD_RWL: LD      A,(RQSECT)
+        INC     A
+	OUT     (5FH),A
+        CALL    EV_TOUT
+	XOR     A
+	SUB     (IX-_RQHEAD)
+	AND     8
+	LD      HL,(DCBUF)
+        LD      C,7FH
+        LD      DE,0
+        EXX
+        RET
+
+;-----------------------
+; COMMAND 'READ'
+FD_RM:  IN      A,(0FFH)                ; READ LOOP
+        AND     0C0H
+        JP      M,TRY_ERR
+        JR      NZ,FD_R1
+        DEC     DE
+        LD      A,D
+        OR      E
+        JR      NZ,FD_RM
+        DJNZ    FD_RM
+        JP      T_OUT
+FD_R:   IN      A,(0FFH)
+        AND     0C0H
+        JR      Z,FD_R
+        RET     M
+FD_R1:  INI
+        JR      FD_R
+
+FD_RD:  CALL    FD_RW                   ; 'READ' COMMAND ITSELF
+        LD      C,1CH
+        EXX
+        OR      80H
+        DI
+        OUT     (1FH),A
+        CALL    FD_RM
+;-----------------------
+; TEST FOR R/W ERROR
+RW_ERR_:IN      A,(1FH)
+        EXX
+        AND     C
+RW_ERR1:EI
+		RET Z
+;        JP      Z,RET_RAM
+        LD      C,A
+ERR_R:  BIT     4,C
+        JR      NZ,TRY_SK
+;        CALL    RET_RAM
+        BIT     3,C
+        LD      A,_CRC_ERR
+        RET     NZ
+        BIT     2,C
+        LD      A,_OVERRUN
+        RET     NZ
+        BIT     5,C
+        LD      A,_IOERR
+        RET     NZ
+        BIT     6,C
+        LD      A,_WR_PROT
+        RET     NZ
+        LD      A,_FATAL_ERROR
+        OR      A
+        RET
+;--- IF 'NO ADDR MARK' ERROR - TRY TO SEEK
+TRY_SK: CALL    FD_TVL
+        LD      A,(RQCYL)
+        CALL    FD_SKAL
+        LD      A,_NO_DATA
+        OR      A
+        RET
+;--- IF NO ERROR & NO DATA - ERROR TOO
+TRY_ERR:IN      A,(1FH)
+        EXX
+        AND     C
+        JP      Z,H_ERR
+        POP     BC
+        JR      RW_ERR1
+
+;-----------------------
+; COMMAND 'WRITE'
+FD_WR:  CALL    FD_RW
+        LD      C,7CH
+        EXX
+        OR      0A0H
+        DI
+        OUT     (1FH),A
+        CALL    FD_WM
+        JR      RW_ERR_
+
+FD_WM:  IN      A,(0FFH)                ; WRITE LOOP
+        AND     0C0H
+        JP      M,TRY_ERR
+        JR      NZ,FD_W1
+        DEC     DE
+        LD      A,D
+        OR      E
+        JR      NZ,FD_WM
+        DJNZ    FD_WM
+        JP      T_OUT
+
+FD_W:   IN      A,(0FFH)
+        AND     0C0H
+        JR      Z,FD_W
+        RET     M
+FD_W1:  OUTI
+        JR      FD_W
+
+;-----------------------
+; RECALIBRATE SUBROUTINES
+FD_REC: CALL	FD_ADR
+        XOR     A
+        CALL    FR_SK1
+        JP      NZ,H_ERR
+        XOR     A
+		RET
+;	JP	RET_RAM
+
+FD_SK:  OUT     (7FH),A
+        LD      B,A
+        LD      A,C
+        OR      18H
+        OUT     (1FH),A
+        CALL    FD_WAIT
+        LD      E,A
+        SCF
+        RET     NZ
+        IN      A,(3FH)
+        CP      B
+        RET
+
+FDREC1: BIT	7,(IY+_DCYLN)
+	CALL	NZ,REC_TR
+	BIT	7,(IY+_DFSRHUT)
+	CALL	NZ,REC_TM
+	RET
+
+REC_TR:	LD      A,0FH
+        OUT     (1FH),A
+        CALL    FD_WAIT
+        JP      NZ,H_ERR
+        LD      D,80
+        LD      C,13H
+        LD      A,79
+        CALL    FD_SK
+        JP      C,ERR_PAS
+        JR      NZ,TR40
+        LD      A,1
+        CALL    FD_SK
+        JP      C,ERR_PAS
+        JR      Z,TR80
+TR40:   LD      D,40
+TR80:   BIT     1,(IY+_DHEADR)
+        LD      (IY+_DCYLN),D
+        LD      A,D
+        JR      Z,$+3
+        ADD     A,A
+        LD      (IY+_DTRACK),A
+        RET
+
+REC_TM: LD      C,0FFH
+FD_SLOW: INC    C
+        BIT     2,C
+        JP      NZ,H_ERR
+	LD	A,C
+	OR	8
+	OUT	(1FH),A		; HOME
+	CALL	FD_WAIT
+	JR	NZ,FD_SLOW
+        LD      A,20
+        CALL    FD_SK		; SEEK 20 TRACK
+        JR      NZ,FD_SLOW
+        LD      A,1
+        CALL    FD_SK		; SEEK 1 TRACK
+        JR      NZ,FD_SLOW
+        BIT     2,E
+	JR	NZ,FD_SLOW
+        LD      A,C
+        OR      38H
+        OUT     (1FH),A		; STEP -1
+        CALL    FD_WAIT
+        JR      NZ,FD_SLOW
+        BIT     2,A		; IS 0 TRACK ?
+        JP      Z,FD_SLOW	; IF NOT - SLOW
+        LD      (IY+_DFSRHUT),C
+        RET
+
+;-------------------------------------
+; FORMAT
+OUT_R1: LD	A,C
+	JR	OUT_R
+OUT_1:  LD      B,1
+OUT_R:  EX      AF,AF'
+_O_W:   IN      A,(0FFH)
+        AND     0C0H
+        JR      Z,_O_W
+        RET     M
+        EX      AF,AF'
+        OUT     (7FH),A
+        DJNZ    OUT_R
+        RET
+
+_FRM_TR: LD      A,(IY+_DFN)     ; SECTOR SIZE
+        LD      C,A             ; C - COUNTER
+        OR      A               ; CONVERT (0,1,2,3) -> (1,1,2,4)
+        JP      PO,$+4
+        INC     C
+        LD      B,0             ; B - SIZE OF FIRST BLOCK FORMAT
+        SUB     1               ;     FILLER  (0,1,2,3) -> (128,256,256,256)
+        RR      B
+        PUSH    BC              ; SAVE FOR LATE USE
+        LD      DE,ED_BUF       ; INTERLIVE TABLE
+        LD      A,0F4H
+        DI
+        OUT     (1FH),A
+        LD      A,04EH
+        LD      B,(IY+_DFGPF)    ; GAP3 X 4E
+        CALL    OUT_R
+	LD	BC,0C00H
+	CALL	OUT_R1
+	LD	BC,3F6H
+	CALL	OUT_R1
+	LD	A,0FCH
+        CALL    OUT_1
+FR_LP:  LD	BC,324EH
+	CALL	OUT_R1
+	LD	BC,0C00H
+	CALL	OUT_R1
+	LD	BC,3F5H
+	CALL	OUT_R1
+	LD	A,0FEH
+	CALL    OUT_1
+        LD      A,(RQCYL)       ; TRACK
+        CALL    OUT_1
+        LD      A,(RQHEAD)      ; SIDE
+        CALL    OUT_1
+        LD      A,(DE)          ; SECTOR
+        INC     DE
+        CALL    OUT_1
+        LD      A,(IY+_DFN)      ; SECTOR SIZE
+        CALL    OUT_1
+	LD	A,0F7H
+	CALL	OUT_1
+	LD	BC,164EH
+	CALL	OUT_R1
+	LD	BC,0C00H
+	CALL	OUT_R1
+	LD	BC,3F5H
+	CALL	OUT_R1
+	LD	A,0FBH
+        CALL    OUT_1
+        LD      A,(RQBLN)
+        POP     BC
+        PUSH    BC
+FR_L1:  CALL    OUT_R
+        DEC     C
+        JR      NZ,FR_L1
+        LD      A,0F7H
+        CALL    OUT_1
+        POP     HL
+        RET     M
+        PUSH    HL
+        LD      A,(DE)
+        OR      A
+        JR      NZ,FR_LP
+        POP     HL
+        LD      C,5
+FR_L2:  DEC     C
+        RET     M
+        LD      A,4EH
+        CALL    OUT_R
+        JP      P,FR_L2
+        XOR     A
+        RET
+
+FD_FRM		LD A,(SYS_P)
+		LD (TMP_W),A
+		RES 3,(IX-_SYS_P)
+		CALL SET_SYS
+	CALL	FD_ADR
+	CALL	FR_SEEK
+        LD      A,_HRDERR
+	RET	NZ
+	LD	A,(RQBADR)
+	CALL	FR_FIL
+        LD      B,8
+	DI
+FRM_1:  PUSH    BC
+        CALL    _FRM_TR
+        POP     BC
+        IN      A,(1FH)
+        LD      C,A
+        JP      P,FR_OK
+        BIT     0,C
+        JR      Z,F_SH1
+        LD      A,0D0H
+        OUT     (1FH),A
+F_SH1:  BIT     6,C
+        JP      NZ,ERR_R
+WER_FL: DJNZ    FRM_1
+        JP      ERR_R
+FR_OK:  LD      DE,ED_BUF+1
+WER_LP: LD      A,(DE)
+        OR      A
+        JR      NZ,$+3
+        INC     A
+	OUT     (5FH),A
+	LD      A,80H
+	OUT     (1FH),A
+WER_WT: IN      A,(0FFH)
+        AND     0C0H
+        JR      Z,WER_WT
+        IN      A,(1FH)
+	AND     18H
+	LD	C,A
+        LD      A,0D0H
+        OUT     (1FH),A
+        JR      NZ,WER_FL
+        LD      A,(DE)
+        INC     DE
+        OR      A
+	JR      NZ,WER_LP
+		LD A,(TMP_W)
+		LD (SYS_P),A
+		CALL SET_SYS
+        JP      RET_OK
+
+FR_FIL: LD      HL,ED_BUF       ; A - INTERLIVE FACTOR
+        LD      DE,ED_BUF+1
+        LD      C,(IY+_DSECTT)
+        LD      B,0
+        LD      (HL),0
+        LDIR
+        LD      HL,ED_BUF
+        LD      C,A
+        LD      B,(IY+_DSECTT)
+        LD      D,1
+        JR      FF_LP
+FF_2:   PUSH    BC
+        LD      C,1
+        CALL    FF_MOV
+        POP     BC
+FF_LP:  LD      A,(HL)
+        OR      A
+        JR      NZ,FF_2
+        LD      (HL),D
+        INC     D
+        PUSH    BC
+        CALL    FF_MOV
+        POP     BC
+        DJNZ    FF_LP
+        RET
+FF_MOV: PUSH    DE
+        LD      B,0
+        ADD     HL,BC
+        LD      C,(IY+_DSECTT)
+        EX      DE,HL
+        LD      HL,ED_BUF
+        ADD     HL,BC
+        DEC     HL
+        SBC     HL,DE
+        EX      DE,HL
+        JR      NC,FF_R1
+        OR      A
+        SBC     HL,BC
+FF_R1:  POP     DE
+        RET
+
+;.COMMENT @
+;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+;_PRN_M: LD      A,(HL)
+;        OR      A
+;        INC     HL
+;        RET     Z
+;        CALL    CONOUT
+;        JR      _PRN_M
+
+;PRN:    EX      (SP),HL
+;        PUSH    AF
+;        CALL    _PRN_M
+;        POP     AF
+;        EX      (SP),HL
+;        JP      RET_ROM
+
+;PHEX:
+;        PUSH    AF
+;        RRCA
+;        RRCA
+;        RRCA
+;        RRCA
+;	CALL	DHEX
+;        POP     AF
+;	CALL	DHEX
+;        LD      A,":"
+;        JP      CONOUT
+
+;
+; TYPE ONE HEX DIGIT
+;
+;DHEX:   AND     0FH
+;        ADD     A,90H
+;	DAA
+;        ADC     A,40H
+;	DAA
+;        JP      CONOUT

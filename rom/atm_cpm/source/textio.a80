@@ -1,0 +1,428 @@
+;#INCLUDE "ALLVARS.ASH"
+
+;------------------------------------------
+; RESET - RESET DRV. A 0-SCREEN, 1-MODE, 2-FULL RESET
+;
+RESET: SUB     2
+        JR      NZ,_RET_OK_
+        LD      (T_FLAG),A
+        LD      (IX-_CUR_VAL),"_"
+        LD      HL,41C0H
+        LD      (SCR_ADR),HL
+        RET
+
+;------------------------------------------
+; OUT_CH -  OUTPUT CHAR.  A - CHAR
+;
+_OUT_CH_:EX      AF,AF'
+        XOR     A
+        EX      AF,AF'
+        LD      C,A
+        LD      HL,(SCR_ADR)
+        BIT     _OVER,(IX-_FLAG1)
+        JR      Z,_PUT_CH_
+        CP      " "
+        JR      Z,SKP_CH
+        LD      A," "
+        CP      (HL)
+        JR      Z,_PUT_CH_
+        EX      AF,AF'
+        LD      A,CST_OVER
+        EX      AF,AF'
+        DB      3EH             ; LD A,N (SKIP NEXT COMMAND)
+_PUT_CH_: LD      (HL),C
+SKP_CH: BIT     _TRANS,(IX-_FLAG1)
+        JR      NZ,DONE_CH
+        CALL    ATTR_
+        LD      A,(COLOR_M)
+        LD      (HL),A
+DONE_CH:EX      AF,AF'
+        RET
+;
+ATTR_:  LD      A,H             ; CONVERT SCREEN ADDRESS TO ATTRIBUTE
+        OR      0C0H
+        JR      ADV_1
+
+;------------------------------------------
+; ADV_POS - ADVANCE POSITION
+;
+ADV_POS:LD      HL,(SCR_ADR)
+        CALL    ADV
+        LD      (SCR_ADR),HL
+_RET_OK_: XOR     A
+        RET
+
+ADV:    LD      A,H
+ADV_1:  XOR     20H
+        LD      H,A
+        AND     20H
+        RET     NZ
+        INC     HL
+        RET
+
+;------------------------------------------
+; GOTO_XY - DIRECT ADDRESSATION. C - X, B - Y
+;
+GOTO_XY:CALL    _GOXY__
+        LD      (SCR_ADR),HL
+        XOR     A
+        RET
+
+_GOXY__  XOR     A
+        LD      H,A
+        RRC     C       ; C>>1 & SET CF
+        RRA
+        RRA
+        RRA             ; A IS 20H IF CF
+        OR      41H
+        LD      L,B     ; HL IS Y
+        LD      B,A     ; BC IS (X>>1)+(X&1?2000H:0)+41C0H
+        SET     7,C
+        SET     6,C
+        ADD     HL,HL
+        ADD     HL,HL
+        ADD     HL,HL
+        ADD     HL,HL
+        ADD     HL,HL
+        ADD     HL,HL   ; Y*=64
+        ADD     HL,BC   ; HL IS ADDRESS
+        RET
+
+;------------------------------------------
+; CURS_OO - CURSOR TURN ON/OFF. A - CURS STATE
+;
+CURS_OO:OR      A
+        EX      AF,AF'
+        LD      HL,(SCR_ADR)
+        BIT     _TF_CURATR,(IX-_T_FLAG) ; IF FLEX ATTRIB...
+        CALL    NZ,ATTR_                ;  DEAL WITH ATTRIB ADDRESS
+        EX      AF,AF'
+        LD      A,(SAV_CUR)             ; CURSOR OFF - RESTORE BUF CONTENTS
+        CALL    NZ,CURS_ON
+        LD      (HL),A
+        XOR     A
+        RET
+
+CURS_ON:LD      A,(HL)
+        LD      (SAV_CUR),A
+        LD      A,(CUR_VAL)
+        BIT     _TF_CURATR,(IX-_T_FLAG) ; IF NO FLEX ATTRIB...
+        RET     Z                       ;  JUMP - SIMPLE PUT
+        XOR     (HL)                    ;  ELSE - XOR'ED VALUE
+        RET
+
+;------------------------------------------
+; CONV_COL - COLOR CONVERT. B-INK, C-PAPER, A-COLOR
+;
+CONV_COL:LD     (COLOR_M),A
+        XOR     A
+        RET
+
+;------------------------------------------
+; SET_CURS - SET CURSOR SCANS. B-BEG LINE, C-END LINE
+;
+SET_CURS:SET    _TF_CURATR,(IX-_T_FLAG) ; PRESUME 'FLEX ATTR' MODE
+        LD      A,7
+        CP      C
+        JR      NZ,SC_1
+        CP      B
+        LD      A,"_"
+        JR      Z,SET_CHR
+        INC     B
+        DEC     B
+        LD      A,3FH
+        JR      Z,SET_ATR
+SC_1:   BIT     2,B
+        LD      A,0X2C+0X80;","+80H       ; ABS CODE OF 'Ü'
+        JR      NZ,SET_CHR
+        LD      A,0X2F+0X80;"/"+80H       ; ABS CODE OF 'ß'
+        BIT     2,C
+        JR      Z,SET_CHR
+        DEC     A
+SET_CHR:RES     _TF_CURATR,(IX-_T_FLAG)
+SET_ATR:LD      (CUR_VAL),A
+        XOR     A
+        RET
+
+FF_ERR: LD      A,CS_UNKNO
+        RET
+
+;------------------------------------------
+; CIO_MUX - MUX INPUT.  B - FUNC
+;
+CIO_MUX:EX      AF,AF'
+        LD      A,B
+        ;VJMP    <FF_ERR,M_VER,M_CURSC,M_CURSA>
+		CALL _VJMP
+		DB 4
+		DW FF_ERR
+		DW M_VER
+		DW M_CURSC		; -74=5F4B
+		DW M_CURSA		; -74=5F4B
+
+M_VER:  LD      HL,100H         ; TEXT MODE DRIVER VERSION
+        XOR     A
+        RET
+
+M_CURSC EQU     SET_CHR         ; SET CHAR FROM A FOR CURSOR IMAGE
+M_CURSA:SET     _TF_CURATR,(IX-_T_FLAG) ; SET ATTRIB FOR CURSOR IMAGE
+        JR      SET_ATR
+
+
+;---- AUX PROC FOR CLR/ROLL PROCS ---------
+_SIZE:  LD      C,E     ; SIZE OF SET OF CHARS.
+        SRL     C       ; IN E-DX, OUT C-SIZE1, B-SIZE2
+        LD      B,C
+        RET     NC
+        INC     C
+        RET
+
+_PREP:  EX     AF,AF'   ; CHECK DX&DY, DETERM. SCREEN ADDR, EVALUATE SIZES
+        LD      A,CS_ERPAR
+        SCF
+        INC     D
+        DEC     D
+        RET     Z
+        INC     E
+        DEC     E
+        RET     Z       ; IF DX OR DY IS 0 - ERROR
+        CALL    _GOXY__
+        CALL    _SIZE
+        EX      AF,AF'
+        OR      A
+        RET
+
+;----------- ROLL/CLR LOOP ---------------
+;
+CLR_ROLL:LD     A,0C3H          ; HL-BUF, BC-SIZES, DE- -SHIFT
+        LD      (CL_SW),A      ;  C'-CHAR(IF NEED), B'-LINE COUNT
+        EXX
+CR_LP:  LD      A,C             ; IS VALUE
+        EXX
+        OR      A
+        CALL    NZ,_CLRMOV
+        BIT     _TRANS,(IX-_FLAG1)
+        JR      NZ,CR_SC
+        PUSH    HL
+        EX      AF,AF'
+        CALL    ATTR_
+        LD      A,(COLOR_M)
+        CALL    _CLRMOV
+        EX      AF,AF'
+        POP     HL
+CR_SC:  XOR     A
+        SBC     HL,DE
+        EXX
+        DJNZ    CR_LP
+        EXX
+        RET
+
+_CLRMOV:PUSH    DE
+        PUSH    HL
+        CALL    CL_SW           ; CALL FIRST PART
+        POP     HL
+        PUSH    HL
+        EX      AF,AF'
+        CALL    ADV
+        EX      AF,AF'
+        CALL    CL_SW           ; CALL SECOND PART
+        POP     HL
+        POP     DE
+        RET
+
+;------------------------------------------
+; CLW_WIND - CLEAR WINDOW. BC-Y1&X1, DE-DY&DX, A-CHAR
+;
+CLW_WIND:CALL   _PREP
+        RET     C
+        LD      E,A
+        PUSH    DE
+        EXX
+        POP     BC      ; B'-DY, C'-CHAR
+CLR_:   EXX
+        LD      DE,_CLR_ ; FORM 'JP _CLR' COMMAND INTO ED_BUF
+        LD      (CL_SW +1),DE
+        LD      DE,-64
+        CALL    CLR_ROLL
+        RET
+
+_CLR_:  PUSH    BC
+        DEC     C
+        JP      M,_CL_DN
+        LD      (HL),A
+        JR      Z,_CL_DN
+        LD      D,H
+        LD      E,L
+        INC     DE
+        LD      B,0
+        LDIR
+_CL_DN: POP     BC
+        LD      E,B
+        LD      B,C
+        LD      C,E
+        RET
+
+;------------------------------------------
+; ROL_WIND - ROLL WINDOW. BC-Y1&X1, DE-DY&DX, A-DIR:
+;                          0-UP,1-DOWN,2-RIGHT,3-LEFT
+;
+ROL_WIND:CALL    _PREP
+        RET     C       ; HL - ADDR, BC-SIZE 2&1
+        CP      2
+        JR      NC,ROLL_HOR ; HORIZONTAL ROLL
+        RRA
+        DEC     D
+        JR      Z,ROL_SC; 1 LINE DON'T ROLL
+        LD      A,D
+        EXX
+        LD      B,A     ; B' IS LINE COUNT
+        LD      C,1     ; C' NOT ZEROED
+        EXX
+        LD      DE,_MOVE; FORM 'JP _MOVE' COMMAND INTO ED_BUF
+        LD      (CL_SW +1),DE
+        LD      DE,-64  ; PRESUME 'ROLL UP'
+        JR      NC,IS_UPP ; JUMP IF WAS 'ROLL UP' COMMAND
+        EX      DE,HL
+        LD      L,A
+        LD      H,0
+        ADD     HL,HL
+        ADD     HL,HL
+        ADD     HL,HL
+        ADD     HL,HL
+        ADD     HL,HL
+        ADD     HL,HL   ; .. AND MULTIPLY IT BY 64
+        ADD     HL,DE
+        LD      DE,64   ; HL -> END OF WINDOW, DE - 64
+IS_UPP: PUSH    BC
+        CALL    CLR_ROLL
+        POP     BC
+        EXX
+ROL_SC: LD      BC,0X100+0X20;256+" "
+        JR      CLR_
+
+ROLL_HOR:LD     A,B
+        LD      BC,ADV  ; INC PROC IN 'ROLL RIGHT' CASE
+        JR      Z,RH_OK
+        CALL    ADD_HL_A
+        LD      BC,DEG  ; ELSE DEC PROC
+        BIT     0,E
+        CALL    Z,DEG
+RH_OK:  LD      (CL_SW +1),BC
+        LD      A,0C3H
+        LD      (CL_SW ),A
+RH_LP:  LD      A," "
+        PUSH    HL
+        CALL    RH_DO   ; PULL SYMBOL ' ' TO SCREEN LINE
+        POP     HL
+        BIT     _TRANS,(IX-_FLAG1)
+        JR      NZ,RH_SC
+        PUSH    HL
+        CALL    ATTR_
+        LD      A,(COLOR_M)
+        CALL    RH_DO   ; AND PULL ATTRIBUTE (IF NEED)
+        POP     HL
+RH_SC:  LD      BC,64
+        ADD     HL,BC
+        DEC     D
+        JR      NZ,RH_LP
+        XOR     A
+        RET
+
+RH_DO:  LD      B,E     ; IS DX
+        LD      C,A     ; IS PULLED VALUE
+RH_PULL:LD      A,(HL)  ; PULL LOOP
+        LD      (HL),C
+        LD      C,A
+        CALL    CL_SW
+        DJNZ    RH_PULL
+        RET
+
+DEG:    LD      A,H
+        XOR     20H
+        LD      H,A
+        AND     20H
+        RET     Z
+        DEC     HL
+        RET
+
+_MOVE:  PUSH    DE      ; C-SIZE, DE-DISP. HL,DE,BC,A-PRESERVE
+        PUSH    BC
+        PUSH    HL
+        PUSH    HL
+        OR      A
+        SBC     HL,DE
+        POP     DE
+        LD      B,0
+        INC     C
+        DEC     C
+        JR      Z,_MV1
+        LDIR
+_MV1:   POP     HL
+        POP     BC
+        LD      E,B
+        LD      B,C
+        LD      C,E
+        POP     DE
+        RET
+
+;.COMMENT @
+;------------------------------------------
+; IMG_PG - PUT/GET IMAGE. BC-Y1&X1, DE-DY&DX, HL-BUF
+;                         A.[0:6]-PAGE, A.[7]-FUNC:
+;                               0-GET/1-PUT IMAGE
+;
+;IMG_PG: PUSH    HL
+;        CALL    _PREP
+;        EX      AF,AF'
+;        AND     1FH
+;        CALL $;   ED_SET
+;        EX      AF,AF'
+;        LD      B,D     ; B-DY
+;        LD      C,E     ; C-DX
+;        POP     DE      ; DE-BUF ADDR, HL-SCREEN ADDR
+;        RET     C       ; RET IF ERROR INTO '_PREP'
+;        ADD     A,A
+;        EXX
+;        LD      HL,PUT_PRG
+;        JR      C,PUT_IM
+;        LD      HL,GET_PRG
+;PUT_IM: LD      DE,ED_BUF
+;        LD      BC,LEN_PRG
+;        LDIR
+;        EXX
+;        EX      DE,HL   ; HL-BUF, DE-SCREEN
+;IMG_LP: PUSH    BC
+;        PUSH    DE
+;I_LLP:  CALL    ED_BUF  ; MOVE ONE CHAR
+;        PUSH    DE
+;        EX      DE,HL
+;        CALL    ATTR_
+;        EX      DE,HL
+;        CALL    ED_BUF  ; ... AND ONE ATTRIBUTE
+;        POP     DE
+;        EX      DE,HL
+;        CALL    ADV
+;        EX      DE,HL
+;        DEC     C
+;        JR      NZ,I_LLP
+;        EXX             ; NEXT LINE
+;        POP     HL
+;        LD      BC,64
+;        ADD     HL,BC
+;        PUSH    HL
+;        EXX
+;        POP     HL
+;        POP     BC
+;        DJNZ    IMG_LP
+;        XOR     A
+;        RET
+
+;GET_PRG:LD      A,(DE)
+        ;STA     PP
+;        RET
+
+;PUT_PRG:;LDA     PP
+;        LD      (DE),A
+;        RET
+
+;LEN_PRG EQU     PUT_PRG-GET_PRG

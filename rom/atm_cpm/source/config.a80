@@ -1,0 +1,213 @@
+;#INCLUDE "ALLVARS.ASH"
+;#INCLUDE "DDEF.ASM"
+
+; BOOT SECTOR FORMAT:
+;  0:  JP BOOT         < NEED FOR BOOT
+;  3:  55,AAH          < NEED FOR CONFIG
+;  5...  CONFIG
+; 7F:  5AH             < NEED FOR BOOT&CONFIG
+; CYCLIC CHECKSUM = 1  < NEED FOR BOOT&CONFIG
+
+; CONFIG RECORD FORMAT:
+; DB TYPE
+; DB SIZE
+; ...
+; DATUM
+; ....
+
+; INITIAL CHANNEL ASSIGMENT:
+;   CH0  - FLOPPY
+;   CH1  - EDISK
+;   CH2  - HDD
+
+TRY_LOD:LD      (IX-_RQCOM),_RESET
+        CALL    DMON_E
+        RET     NZ
+        LD      (IX-_RQCOM),_RECAL
+        CALL    DMON_E
+        RET     NZ
+        LD      (IX-_RQCOM),_READ
+        LD      HL,FLP_LOAD
+        LD      DE,RQCOM+1
+        LD      BC,7
+        LDIR
+        JP      DMON_E
+FLP_LOAD:
+        DB      1               ; 1 BLOCK
+        DW      0               ; 0 TRACK
+        DW      1               ; 1ST BLOCK (1-BASED)
+        DW      8000H
+
+CFG_LOAD:LD    (IX-_RQCHAN),0        ; TRY TO LOAD FROM FLOPPY (CH0)
+        CALL    TRY_LOD
+        JR      Z,CL_CHK
+        LD      (IX-_RQCHAN),2        ; TRY TO LOAD FROM HARD (CH2)
+        CALL    TRY_LOD
+        RET     NZ                    ; CAN'T LOAD CONFIG
+CL_CHK: LD      HL,8000H
+        LD      B,80H
+        XOR     A
+CLC_LP: ADD     A,(HL)
+        ADC     A,0
+        INC     HL
+        DJNZ    CLC_LP
+        DEC     A
+        RET     NZ
+        LD      A,(8003H)
+        CP      55H
+        RET     NZ
+        LD      A,(8004H)
+        CP      0AAH
+        RET     NZ
+;        LD      A,(807FH)
+;        CP      5AH
+;        RET     NZ
+
+CONF:  LD      A,0C9H          ; RET
+        LD      (SYS_ON),A
+        LD      (SYS_OFF),A
+        LD      IY,8005H
+CFG_I:  LD      A,(IY)
+;        VCALL   <_DONE,TERM,SKIP,LOAD,ASS,CINIT,EXEC_,GO_,FORMAT>
+		CALL CONF2
+		JR CONF1
+CONF2		CALL _VJMP
+		DB 9
+		DW _DONE
+		DW TERM
+		DW SKIP
+		DW LOAD
+		DW ASS
+		DW CINIT
+		DW EXEC_
+		DW GO_
+		DW FORMAT
+
+CONF1        OR      A
+        JR      Z,DONE
+ERR:    CALL    PRN
+        DB      0DH,0AH,"Config error ",0
+        CALL    PHEX
+        CALL    PRN
+        DB      "startup aborted!",0DH,0AH,0
+        SCF
+        JR      ST_RET
+
+_DONE:  POP     AF
+DONE:   LD      B,0
+DONE1:  LD      C,(IY+1)
+        ADD     IY,BC
+        JR      CFG_I
+TERM:   POP     AF
+        OR      A
+ST_RET: LD      A,0F3H          ; DI
+        LD      (SYS_ON),A
+        LD      (SYS_OFF),A
+        RET
+
+SKIP:   POP	AF
+	LD      B,(IY+2)        ; DB HI(SIZE)
+        JR      DONE1
+
+G_DAT:  EX      (SP),HL
+        LD      E,(HL)
+        INC     HL
+        EX      (SP),HL
+        LD      D,0
+        PUSH    IY
+        EX      (SP),HL
+        ADD     HL,DE
+        EX      (SP),HL
+        POP     DE
+        RET
+
+LOAD:   CALL    G_DAT           ; DB NUM OF 128-BYTES BLOCKS
+        DB      3               ; DS ... CHANAL FOR LOAD
+        LD      A,_SETCH
+        LD      C,9
+        CALL    PSCHK
+        OR      A
+        RET     NZ
+        LD      DE,RQCHAN
+        LD      HL,RQIMG
+        LD      BC,9
+        LDIR
+        LD      A,(IY+2)
+        LD      (RQBLN),A
+DMON_E: PUSH    IY
+        CALL    DISK
+        POP     IY
+        OR      A
+        RET
+
+RQIMG:  DB      9                    ;RQCHAN  - äÄçÄã
+        DB      _READ                ;RQCOM   - äéåÄçÑÄ
+        DB      1                    ;RQBLN   - óàëãé ÅãéäéÇ
+        DW      0                    ;RQTRACK - ÑéêéÜäÄ
+        DW      2                    ;RQBLOCK - Åãéä
+        DW      8080H                ;RQBADR  - ÄÑêÖë ÅìîÖêÄ
+
+ASS:    CALL    G_DAT           ; DB DRIVE (OR -1 FOR CHANAL ONLY)
+        DB      4               ; DB CHAN_NUM (+HI BIT - NOT SET CH)
+        LD      C,(IY+3)        ; DS ... < CHANAL ITSELF
+        BIT     7,C
+        JR      NZ,NOT_ASS_CH
+        PUSH    DE
+        LD      A,_SETCH
+        CALL    PSCHK
+        POP     DE
+        OR      A
+        RET     NZ
+        JR      ASS_IT
+NOT_ASS_CH:
+        LD      DE,0
+ASS_IT: LD      B,(IY+2)
+        BIT     7,B
+        RET     NZ
+        LD      C,(IY+3)
+        SET     7,B
+        RES     7,C
+        JP      BIOS+33H
+
+CINIT:  CALL    G_DAT           ; DB 'STR',0
+        DB      2
+CINI_L: LD      A,(DE)
+        INC     DE
+        OR      A
+        RET     Z
+        RST     20H
+        JR      CINI_L
+
+EXEC_   LD      L,(IY+2)        ; DW PROC, CALL IT (IF 0 - CALL IY+4)
+        LD      H,(IY+3)
+	LD	A,H
+	OR	L
+	JR	NZ,EXE_OK
+	CALL	G_DAT
+	DB	4
+	EX	DE,HL
+EXE_OK: JP      (HL)
+
+GO_     CALL    G_DAT
+        DB      2
+        LD      A,(IY+1)        ; DB 'RUN STR'
+        SUB     2
+        LD      (CCP+7),A
+        LD      C,A
+        LD      B,0
+        EX      DE,HL
+        LD      DE,CCP+8
+        LDIR
+        XOR     A
+        RET
+
+FORMAT: LD      A,(IY+2)        ; DB CHAN NUM
+        LD      (RQCHAN),A      ; DB TRACK NUM
+        LD      A,(IY+3)        ; DB FILLER
+        LD      (RQTRACK),A
+        LD      A,(IY+4)
+        LD      (RQBLN),A
+        LD      (IX-_RQTRACK+1),0
+        LD      (IX-_RQBADR),2
+        LD      (IX-_RQCOM),_FORMAT
+        JP      DMON_E

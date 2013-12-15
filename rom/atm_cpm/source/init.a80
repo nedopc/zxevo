@@ -1,0 +1,465 @@
+
+;LAST UPDATE: 21.11.2013 savelij
+
+C_INIT		EX AF,AF'
+		LD A,3
+		RST 0X18
+		EX AF,AF'
+       LD   (PAR1),A
+       LD   A,HIGH (INTRADR)
+       LD   I,A
+       LD   IX,IX_BASE
+       LD   HL,VAR1_I
+       LD   DE,IX_BAS
+       LD   BC,VAR1_S
+       LDIR
+       LD   A,1
+       RST  18H
+       LD   A,0C3H
+       LD   (SW_DO),A
+;       LD   (OUT_SW),A
+;       LD   (SW_CLR),A
+       LD   HL,OUT_CH
+       LD   (OUT_SW+1),HL
+;       LD   DE,SG_ENC
+;       LD   HL,SGENCI
+;       LD   BC,12
+;       LDIR
+;       CALL MODE
+;       LD   HL,PALN
+		CALL MODE;       CALL SP_AUX1
+		CALL SP_DEF;       CALL CUR_AC
+       LD   A,3
+;       JP   SET_PG
+		RST 0X18
+		RET
+
+M_INIT: LD      A,3
+        RST     18H
+        LD      DE,0F800H
+        LD      HL,MON_IMG
+        LD      BC,MON_SIZE
+        LDIR
+		LD HL,BSS_START
+		LD DE,BSS_START+1
+		LD BC,BSS_LNG-1
+		LD (HL),0
+		LDIR
+		RET
+
+;        LD      HL,CH2
+;        LD      DE,23H
+;        LD      B,8
+;M_I_LP: LD      (HL),0
+;        ADD     HL,DE
+;        DJNZ    M_I_LP
+;	IF ROM
+;        LD      HL,0C000H
+;        XOR     A
+;        RST 18H
+;        LD      D,(HL)
+;        LD      (HL),55H
+;        LD      A,8
+;        RST 18H
+;        LD      E,(HL)
+;        LD      (HL),0AAH
+;        XOR     A
+;        RST 18H
+;        LD      A,55H
+;        CP      (HL)
+;        EX      AF,AF'
+;        LD      (HL),D
+;        LD      A,8
+;        RST 18H
+;        LD      (HL),E
+;        LD      A,3
+;        RST     18H
+;        EX      AF,AF'
+;        RET     Z
+;        LD      BC,CH1_5
+;        LD      (CHTBL+2),BC
+;	ENDIF
+;        RET
+
+SWP:    EX      (SP),HL
+        LD      DE,BUF+3
+        LD      BC,3
+        LDIR
+        EX      (SP),HL
+        LD      DE,-1
+	LD	A,3FH
+	CALL	__S1
+	LD	A,1FH
+	CALL	__S1
+	LD	A,7
+__S1:   RST     18H
+        CALL    BUF+3
+        INC     HL
+        RET
+
+__READ: CALL    SWP
+            LD      A,(DE)
+            LD      (HL),A
+            RET
+        RET
+__WRITE:CALL    SWP
+            LD      A,(HL)
+            LD      (DE),A
+            RET
+        RET
+
+MTEST:  LD      HL,BUF+6
+        CALL    __READ
+        LD      HL,__SRC
+        CALL    __WRITE
+        LD      HL,BUF
+        CALL    __READ
+        LD      HL,BUF+6
+        CALL    __WRITE
+        CALL    __TST
+__SRC:  DB      49H, 92H, 24H
+	SET	_RU5,(IX-_FLAG)
+	DEC	C
+	LD	DE,M_128
+	RET	Z
+	RES	_RU5,(IX-_FLAG)
+	DEC	C
+	LD	DE,M_512
+	RET	Z
+	LD	DE,M_1024
+	DEC	C
+	RET	Z
+;/*
+;        DW      M_1024
+;        CALL    __TST
+;        DB      92H, 92H, 24H
+;        DW      M_512
+;        SET     _RU5,(_FLAG+IX)
+;        CALL    @@TST
+;        DB      24H, 24H, 24H
+;        DW      M_128
+;*/
+        CALL    PRN
+        DB      "fault. (",0
+	LD	A,(BUF)
+	CALL	PHEX
+	LD	A,(BUF+1)
+	CALL	PHEX
+	LD	A,(BUF+2)
+	CALL	PHEX1
+	CALL	PRN
+	DB	")",0DH,0AH,0
+        DI
+        HALT
+;/*
+;@@TST:  POP     HL
+;        LD      DE,BUF
+;        LD      BC,3FFH
+;@@LP:   LD      A,(DE)
+;        CP      (HL)
+;	INC	HL
+;	INC	DE
+;        JR      Z,@@1
+;        INC     C
+;@@1:    DJNZ    @@LP
+;        LD      E,(HL)
+;        INC     HL
+;        LD      D,(HL)
+;        INC     HL
+;        INC     C
+;        RET	Z
+;        JP      (HL)
+;*/
+
+__TST:  POP     HL
+        LD      DE,BUF
+        LD      BC,300H
+__LP:   LD      A,(DE)
+        CP      (HL)
+	INC	HL
+	INC	DE
+        JR      NZ,__2
+        INC     C
+	JR	__1
+__2:	LD	C,0
+__1:    DJNZ    __LP
+        JP      (HL)
+
+M_128:  DB      3
+        DW      384
+        DB      "128",0
+M_512:  DB      1BH
+        DW      3456
+        DB      "512",0
+M_1024: DB      3BH
+        DW      7552
+        DB      "1024",0
+
+MEM_SIZE:
+        CALL    PRN
+        DB      "Memory ",0
+        CALL    MTEST
+	LD	A,3
+	RST	18H
+        EX      DE,HL
+        LD      A,(HL)
+        INC     HL
+        LD      (CHED+_DCYLN),A
+        LD      (CHED+_DTRACK),A
+        LD      E,(HL)
+        INC     HL
+        LD      D,(HL)
+        INC     HL
+        LD      (CHED+_DBLDR),DE
+        CALL    PRN
+        DB      "size is ",0
+        CALL    PRN_HL
+        CALL    PRN
+        DB      "k.",0DH,0AH,0
+        RET
+
+CPM_LOAD:
+	LD	BC,CPM_SIZE
+CPM_L1
+;	PUSH	BC
+;        CALL    TST_RT
+;        CALL    _SIGN
+;        DW      32EH, 101H
+;	IF ROM
+;        DW      0FFF4H-0FF72H
+;	ELSE
+;        DW      0FFF4H-0EFEFH
+;	ENDIF
+;					LD	HL,0FFF4H
+;.COMMENT @
+;        EX      DE,HL
+;        INC     DE
+;	LD	HL,0FFFEH
+;	ADD	HL,DE
+;	SBC	HL,HL			; HL=0 IF ERR, ELSE HL=FFFF
+;LPL1:	LD	A,D
+;	XOR	E
+;	XOR	L
+;	LD	(ED_BUF),A
+;	LD	A,(ED_BUF+10)
+;	ADD	A,D
+;	DAA
+;	LD	E,A
+;	DEC	D
+;	JR	NZ,LPL1
+;	XOR	L
+;	XOR	E
+;	LD	L,A
+;@
+;	CALL	MS
+;	DB 0DH,0AH,'SIGN:',0
+;	LD	A,H
+;	CALL	HEX2
+;	LD	A,L
+;	CALL	HEX1
+;	CALL	MS
+;	DB 0DH,0AH,'TIME:',0
+;	LD	A,(RTIME+1)
+;	CALL	HEX2
+;	LD	A,(RTIME)
+;	CALL	HEX1
+;	CALL	CRLF
+
+;	LD	C,0
+;	EXX
+;	POP	BC
+	LD      DE,CCP
+        LD      HL,CPM_IMG
+
+	LDIR
+	RET
+
+;CPMLLP: LD	A,(HL)
+;	EXX
+;	XOR	C
+;	XOR	L
+;	LD	C,A
+;	ADD	HL,HL
+;	JR	NC,$+3
+;	INC	HL
+;	EXX
+;	LD	(DE),A
+;	INC	DE
+;	CPI
+;	JP	PE,CPMLLP
+;        RET
+
+;SUB_1: 	DI
+;        POP     HL
+;	LD	A,3
+;        RST     18H
+;	PUSH	AF
+;	LD	BC,(INTRADR)
+;	PUSH	BC
+;        LD      BC,PTST_1
+;        LD      (INTRADR),BC
+;        PUSH    HL
+;        LD      HL,1
+;	IM	2
+;	RET
+
+;TST_RT: CALL    SUB_1      ; RET HL & RTIME
+;	EI
+;	HALT
+;	LD B,20
+;	DJNZ $
+;	OR A
+;	EI
+;PTST_L:	INC	HL
+;	JR	NC,PTST_L
+;	LD	(RTIME),HL
+;PTST_E:	DI
+;	IM	1
+;        POP     DE
+;        LD      (INTRADR),DE
+;	POP	AF
+;        RST     18H
+;	EI
+;	RET
+
+;PTST_1: SCF
+;	RET
+
+;SIGN:   CALL    SUB_1      ; DE - CONST, RET - HL
+;        LD      HL,1
+;        EI
+;	HALT
+;        NOP
+;__L:    DEC     DE
+;        LD A,D
+;        OR E
+;        JR      NZ,__L
+;LL:     IN      A,(0FEH)
+;	ADD	A,A
+;	ADC	HL,HL
+;        JR      NC,LL
+;	JR	PTST_E
+
+
+;_SIGN:  POP     HL        ; CALL _SIGN\DW<TUR-CONST>,<NOR-CONST>\DW<ADD-IF-TURBO>
+;        LD      E,(HL)
+;        INC     HL
+;        LD      D,(HL)
+;        INC     HL
+;        PUSH    DE           ; PUSH TUR CONST 
+;        LD      E,(HL)
+;        INC     HL
+;        LD      D,(HL)
+;        INC     HL           ; DE <- NOR CONST
+;        LD      C,(HL)
+;        INC     HL
+;        LD      B,(HL)       ; BC <- ADD
+;        INC     HL
+;        EX      (SP),HL      ; HL <- TUR CONST
+;        BIT     4,(IX-_RTIME+1) ; NZ IF TURBO
+;        JR      Z,SIGN
+;        EX      DE,HL
+;	PUSH	BC
+;        CALL    SIGN
+;	POP	BC
+;        ADD     HL,BC
+;        RET
+
+SET_SYS:LD      A,(SYS_P)
+SET_ASYS:
+        LD      BC,0FD77H
+        OUT     (C),A
+        RET
+
+PTST_1: DI
+        SCF
+	RET
+
+H_INIT
+        LD  BC,077H
+        LD  A,2
+        OUT (C),A
+        IM      1
+        DI
+        RCALL   PG_SET
+        LD BC,77H
+        LD A,6H ;!!!
+        OUT (C),A
+        RCALL    PG_SET
+
+        LD      SP,SYS_SP
+        LD A,10H
+        OUT (C),A
+        LD A,6H ;!!!
+        LD BC,177H
+        OUT (C),A
+
+PENTEVO_START
+          LD HL,DSK_TAB
+          LD DE,610H ;!!!
+          LD C,77H
+          LD  A,8
+          OUT (0FFH),A
+DSK_1:    LD  A,(HL)
+          INC HL
+          OUT (0FFH),A
+          LD  B,41H
+          OUT (C),D
+          OR  8
+          OUT (0FFH),A
+          LD  B,1
+          OUT (C),D
+          DEC E
+          JR  NZ,DSK_1
+
+
+          LD  BC,4177H
+          LD  A,6H ;!!!
+          OUT (C),A
+
+          LD A,0FFH
+          OUT (0FFH),A
+		JP ENTRY
+
+;          LD HL,0C000H
+;          LD A,(HL)
+;          CP 0C3H
+;          JR NZ,_ENT
+;          XOR A
+;CH_LP:    ADD A,(HL)
+;          ADC A,0
+;          INC HL
+;          BIT 7,H
+;          JR  NZ,CH_LP
+;          DEC A
+;          JR  NZ,_ENT
+;          LD  A,0AAH
+;          DEC HL
+;          CP  (HL)
+;          JR  NZ,_ENT
+;          CPL
+;          DEC HL
+;          CP  (HL)
+;          JP  Z,0C000H
+;_ENT:     JP  ENTRY
+
+PG_SET:   LD HL,PAGE_D
+          LD DE,40H
+PAGE_L2:  LD BC,0FF7H
+PAGE_L1_  OUTI
+          LD A,B
+          ADD A,E
+          LD B,A
+          JR NC,PAGE_L1_
+          LD BC,7FFDH
+          LD A,D
+          XOR 10H
+          LD D,A
+          OUT (C),A
+          JR NZ,PAGE_L2
+          RET
+
+PAGE_D		DB 0X7F,0X7B,0X7D,0X7C,0X00,0X07A,0X7D,0X60
+
+DSK_TAB		DB 0F1H, 0E1H, 0D1H, 0C1H, 0C1H, 0B1H, 0A1H,  91H
+		DB 041H, 021H, 031H, 011H, 001H, 001H, 0F1H, 0E1H
