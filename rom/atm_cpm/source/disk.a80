@@ -1,0 +1,349 @@
+;---------------------------------------------------------------
+;  „€‰‚… „ˆ‘ŠŽ‚Ž‰ ‘ˆ‘’…Œ›
+;  ‚•Ž„ :
+;	RQCHAN		- Š€€‹
+;	RQCOM		- ŠŽŒ€„€
+;	RQBLN		- —ˆ‘‹Ž ‹ŽŠŽ‚
+;	RQTRACK		- „ŽŽ†Š€
+;	RQBLOCK		- ‹ŽŠ
+;	RQBADR		- €„…‘ “”…€
+;
+
+;----------------------------------
+; ƒ‹Ž€‹œ›… ŠŽ‘’€’›
+;
+_REPN   EQU     5       ; —ˆ‘‹Ž Ž‚’ŽŽ‚ ˆ …“„€—…
+
+PDISK: LD      (IX-_RQCHAN),C
+        LD      HL,RQCHAN+1
+        INC     DE
+        LD      BC,8
+        EX      DE,HL
+        RST     8
+        DB      3,0FEH
+        EI
+        PUSH    IY
+        CALL    DISK
+        POP     IY
+        RET
+
+PSCHK: EI
+        LD      (RQCOM),A
+        LD      (IX-_RQCHAN),C
+	PUSH	HL
+	PUSH	DE
+        PUSH    IY
+        LD      (RQBADR),DE
+        CALL    DISK
+        POP     IY
+	POP	DE
+	POP	HL
+        RET
+
+;
+; ‘’€’Ž‚›‰ ‚•Ž„
+;
+DISK:
+        LD      A,(RQCHAN)      ;ŽŒ… Š€€‹€
+	LD	HL,CHTBL 	;’€‹ˆ–€ Š€€‹Ž‚
+        CALL    _IND
+        PUSH    HL              ;Žˆ‘€’…‹œ
+        POP     IY
+
+	LD	A,(RQCOM)	;ŠŽŒ€„€
+	CP	_SETCH
+	JP	Z,CHSET		;€‡€—ˆ’œ Š€€‹
+
+        LD      A,(IY+DVALID)   ;ˆ‡€Š „…‰‘’‚ˆ’…‹œŽ‘’ˆ ‹ŽŠ€
+	CP	0FFH		;‹ŽŠ „…‰‘’‚ˆ’…‹…?
+
+	LD	A,_CHNFND	;Š€€‹ … ˆ‘Ž…„ˆ…
+	RET	NZ
+
+	LD	A,(RQCOM)	;ŠŽŒ€„€
+	CP	_GETCH		;ŠŽ’Ž‹œ?
+	JP	Z,CHCHK		;Ž‹“—ˆ’œ Žˆ‘€’…‹œ
+
+	CP	_RESET		;‘Ž‘?
+	JR	Z,DISK4		;€„…‘€–ˆŸ …„…‰‘’‚ˆ’…‹œ€
+
+	CP	_RECAL		;…Š€‹ˆŽ‚Š€?
+	JR	Z,DISK4		;€„…‘€–ˆŸ …„…‰‘’‚ˆ’…‹œ€
+
+        DEC     (IX-_RQBLOCK)   ;ŽŒ… ‹ŽŠ€ ˆ‚…„…
+
+	LD	DE,(RQTRACK)	;ŽŒ… „ŽŽ†Šˆ
+        LD      L,(IY+_DTRACK)
+        LD      H,(IY+_DTRACK+1) ;—ˆ‘‹Ž „ŽŽ†…Š € „ˆ‘Š…
+	DEC	HL		;HL - ŽŒ… Ž‘‹…„…‰ „ŽŽ†Šˆ
+	XOR	A		;CLC
+	SBC	HL,DE
+	LD	A,_ADRERR	;Ž˜ˆŠ€ €„…‘€–ˆˆ
+	RET	C
+				;DE - ŽŒ… „ŽŽ†Šˆ
+        LD      A,(IY+_DHEADF)   ;—ˆ‘‹Ž ”ˆŠ‘ˆŽ‚€›• ƒŽ‹Ž‚ŽŠ
+        ADD     A,(IY+_DHEADR)   ;Ž™…… —ˆ‘‹Ž ƒŽ‹Ž‚ŽŠ
+	LD	C,A
+	LD	B,0
+				;DE-ŽŒ… „ŽŽ†Šˆ
+				;BC-—ˆ‘‹Ž ƒŽ‹Ž‚ŽŠ
+	CALL	DIV		;DE/BC=DE.HL
+				;DE-ŽŒ… –ˆ‹ˆ„€
+				;HL-ŽŒ… ƒŽ‹Ž‚Šˆ
+        LD      (IX-_RQHEAD),L  ;ŽŒ… ƒŽ‹Ž‚Šˆ
+
+        LD      L,(IY+_DBEGCYL)  ;€—€‹œ›‰ –ˆ‹ˆ„
+        LD      H,(IY+_DBEGCYL+1)
+
+	ADD	HL,DE
+	LD	(RQCYL),HL	;ŽŒ… –ˆ‹ˆ„€
+
+DISK4: LD      A,_REPN
+        LD      (REP),A         ;‘—…’—ˆŠ —ˆ‘‹€ Ž‚’ŽŽ‚
+
+DISK5:	LD	A,(RQCOM)
+	PUSH	AF
+	CALL	DEXEC		;ˆ‘Ž‹…ˆ… ŠŽŒ€„›
+	LD	E,A
+	POP	AF
+	LD	(RQCOM),A
+	LD	A,E
+	OR	A
+	RET	Z		;A = 00H - “„€—€
+        LD      (IX-_BUFT),0FFH ;‘Ž‘ “”…€
+	AND	80H
+	LD	A,E
+	RET	Z		;”€’€‹œ€Ÿ Ž˜ˆŠ€
+        DEC     (IX-_REP)
+	JR	NZ,DISK5	;‘‹…„“ž™€Ÿ Ž›’Š€
+	RET			;A-ŠŽ„ Ž˜ˆŠˆ
+
+;-----------------------
+;„…‹…ˆ… DE:C=DE.HL
+DIV:	LD	HL,0
+	LD	A,16		;‘—…’—ˆŠ –ˆŠ‹Ž‚
+DIV1:
+	EX	AF,AF'
+
+	ADD	HL,HL		;‘„‚ˆƒ HL
+
+	XOR	A		;A=0
+	SLA	E		;‘„‚ˆƒ DE
+	RL	D
+	ADC	A,L
+	LD	L,A
+	SBC	HL,BC
+
+	INC	DE
+	JR	NC,DIV2
+	ADD	HL,BC		;‚Ž‘‘’€Ž‚‹…ˆ… Ž‘’€’Š€
+	DEC	DE
+DIV2:	EX	AF,AF'
+	DEC	A		;‘—…’—ˆŠ –ˆŠ‹Ž‚
+	JR	NZ,DIV1
+	RET
+
+;-----------------------
+;ˆ‘Ž‹…ˆ… ŠŽŒ€„›
+DEXEC: LD      A,(RQCOM)       ;ŠŽŒ€„€
+	LD	H,A
+	CP	_WRITE+1
+	LD	A,_COMERR
+	RET	NC
+	LD	A,H
+	LD	HL,CMTBL	;’€‹ˆ–€ ŠŽŒ€„
+        CALL    _IND
+	JP	(HL)
+;-----------------------
+;’€‹ˆ–€ ŠŽŒ€„
+CMTBL:	DW	DRES		;‘Ž‘
+	DW	DJMP		;Ž‡ˆ–ˆŽˆŽ‚€ˆ…
+	DW	DJMP		;”ŽŒ€’ˆŽ‚€ˆ…
+	DW	DJMP		;…Š€‹ˆŽ‚Š€
+	DW	DRD		;—’…ˆ…
+	DW	DWRS		;‡€ˆ‘œ ‘…Š’Ž€Œˆ
+	DW	DWR		;‡€ˆ‘œ
+;-----------------------
+;……„€—€ “€‚‹…ˆŸ „€‰‚…“
+DJMP:	PUSH    IY
+	POP	BC
+        LD      A,(IY+_DTYP)     ;’ˆ „€‰‚…€
+	CP	MAXDRVN+1	;„Ž“‘’ˆŒ›‰ ŽŒ…?
+	JR	C,DJMP1
+	LD	A,_DTYPER	;…„Ž“‘’ˆŒ›‰ ŽŒ…
+	RET
+DJMP1: LD      HL,DCTBL        ;’€‹ˆ–€ „€‰‚…Ž‚
+        CALL    _IND            ;’ˆ „€‰‚…€
+	LD	A,L
+	OR	H
+	LD	A,_DRNFND	;„€‰‚… Ž’‘“’‘’‚“…’
+	RET	Z
+	LD	A,(RQCOM)	;ŠŽŒ€„€
+        CALL    _IND
+	JP	(HL)		;……•Ž„ Š „€‰‚…“
+;-----------------------
+;‘Ž‘
+DRES:  LD      (IX-_BUFT),0FFH ;‘Ž‘ “”…€
+	JR	DJMP
+;-----------------------
+;—’…ˆ…
+DRD:	CALL	FIND		;Žˆ‘Š ‹ŽŠ€ ‚ “”……
+	JR	Z,DRD1		;‹ŽŠ ‚ “”……
+        LD      (IX-_RQCOM),_SEEK ;Ž‡ˆ–ˆŽˆŽ‚€ˆ…
+	CALL	DJMP
+;        OR      A
+	RET	NZ		;Ž˜ˆŠ€ Ž‡ˆ–ˆŽˆŽ‚€ˆŸ
+        LD      (IX-_RQCOM),_READ ;—’…ˆ…
+	CALL	DJMP
+;        OR      A
+	RET	NZ		;Ž˜ˆŠ€ —’…ˆŸ
+DRD1:	CALL	BLKRD		;—’…ˆ… “”…€
+	JR	NZ,DRD		;‘‹…„“ž™ˆ‰ ‹ŽŠ
+	RET
+;-----------------------
+;‡€ˆ‘œ
+DWR:   LD      (IX-_RQCOM),_SEEK ;Ž‡ˆ–ˆŽˆŽ‚€ˆ…
+	CALL	DJMP
+;        OR      A
+	RET	NZ		;Ž˜ˆŠ€ Ž‡ˆ–ˆŽˆŽ‚€ˆŸ
+DWR1:	CALL	FIND		;Žˆ‘Š ‹ŽŠ€ ‚ “”……
+	JR	Z,DWR2		;‹ŽŠ ‚ “”……
+        LD      (IX-_RQCOM),_READ ;—’…ˆ…
+	CALL	DJMP
+;        OR      A
+	RET	NZ		;Ž˜ˆŠ€ —’…ˆŸ
+DWR2:	CALL	BLKWR		;‡€ˆ‘œ ‚ “”…
+        LD      (IX-_RQCOM),_WRITE ;‡€ˆ‘œ
+	CALL	DJMP
+	POP	HL		;€„…‘ ‚ “”……
+;        OR      A
+	RET	NZ		;Ž˜ˆŠ€ ‡€ˆ‘ˆ
+	CALL	BLKF
+	JR	NZ,DWR1		;‘‹…„“ž™ˆ‰ ‹ŽŠ
+	RET
+;-----------------------
+;‡€ˆ‘œ ‘…Š’Ž€Œˆ
+DWRS:	LD	A,_COMERR	;‡€…™…€Ÿ ŠŽŒ€„€
+	OR	A
+	RET
+;-----------------------
+;Žˆ‘Š ‹ŽŠ€ ‚ “”……
+;‚•Ž„:(BC)-‹ŽŠ Žˆ‘€ˆŸ Š€€‹€
+;‚›•Ž„: € - …‡“‹œ’€’ Žˆ‘Š€
+;	  0 - ‹ŽŠ €‰„…
+;	0FFH- ‹ŽŠ … €‰„…
+;
+FIND:  PUSH    BC
+        LD      B,(IY+_DFN)      ;€‡Œ… ‘…Š’Ž€
+        LD      C,0FFH
+        LD      A,(RQBLOCK)     ;ˆ‚…„…›‰ ŽŒ… ‹ŽŠ€
+        INC     B
+        JR      FIND2           ;‘…Š’Ž=128 €‰’?
+FIND1: SRL     A               ;‚›—ˆ‘‹…ˆ… ˆ‚…„…ŽƒŽ ŽŒ…€ ‘…Š’Ž€
+        SLA     C               ;CALACULATE ~MASK
+FIND2:  DJNZ    FIND1
+        LD      (RQSECT),A      ;ˆ‚…„…›‰ ŽŒ… ‘…Š’Ž€
+        LD      A,(RQBLOCK)
+        OR      C
+        XOR     C               ;RQBLOCK & MASK => A
+        LD      C,0
+        SRL     A
+        RR      C
+        LD      B,A
+        LD      HL,BUF_MON
+	LD	(DCBUF),HL	;€„…‘ “”…€
+        ADD     HL,BC
+	LD	(LOCBUF),HL	;€„…‘ ‹ŽŠ€ ‚ “”……
+;
+	LD	A,(RQCHAN)	;ŽŒ… Š€€‹€ “”…€
+        CP      (IX-_BUFT)      ;ŽŒ…€ Š€€‹Ž‚ ‘Ž‚€„€ž’?
+	JR	NZ,FIND3	;…’
+
+	LD	HL,(RQTRACK)	;„ŽŽ†Š€ ‚ ‡€Ž‘…
+        LD      BC,(BUFTRK)     ;„ŽŽ†Š€ ‚ “”……
+        SBC     HL,BC           ;(CY=0)
+	JR	NZ,FIND3	;ŽŒ…€ „ŽŽ†…Š … ‘Ž‚€„€ž’
+
+	LD	A,(RQSECT)	;ŽŒ… ‘…Š’Ž€ ‚ ‡€Ž‘…
+        CP      (IX-_BUFSEC)    ;…‘’œ ‘Ž‚€„…ˆ…?
+	JR	NZ,FIND3	;…’
+	XOR	A		;ˆ‡€Š ‘Ž‚€„…ˆŸ
+	JR	FIND4
+FIND3:
+	LD	A,(RQCHAN)	;ŽŒ… Š€€‹€
+	LD	(BUFT),A	;‘Ž‘’ŽŸˆ… “”…€
+
+	LD	HL,(RQTRACK)	;„ŽŽ†Š€(LB)
+	LD	(BUFTRK),HL
+
+	LD	A,(RQSECT)	;
+	LD	(BUFSEC),A	;‘…Š’Ž
+	LD	A,0FFH
+	AND	A		;”‹€ƒ Ž‚ŽƒŽ ‘…Š’Ž€
+FIND4: POP     BC
+	RET
+
+;-----------------------
+;—’…ˆ… ‹ŽŠ€ ‚ “”……
+BLKRD:	PUSH	AF
+	PUSH	DE
+	LD	BC,128		;€‡Œ… ‹ŽŠ€
+	LD	DE,(RQBADR)	;ˆ…ŒˆŠ
+	LD	HL,(LOCBUF)	;ˆ‘’Ž—ˆŠ
+        RST     8               ;……‘›‹Š€
+        DB      0FEH,3
+	EX	DE,HL		;€„…‘ Ž‹œ‡Ž‚€’…‹Ÿ
+	POP	DE
+	POP	AF
+BLKF:	LD	(RQBADR),HL	;€„…‘ Ž‹œ‡Ž‚€’…‹Ÿ
+        LD      L,_REPN
+        LD      (IX-_REP),L     ;ŽŽ‚ˆ’œ ‘—…’—ˆŠ Ž‚’ŽŽ‚
+        INC     (IX-_RQBLOCK)
+        DEC     (IX-_RQBLN)     ;‹ŽŠ Ž‘‹…„ˆ‰?
+	RET
+;-----------------------
+;‡€ˆ‘œ ‹ŽŠ€ ‚ “”…
+BLKWR:	PUSH	DE
+	LD	BC,128		;€‡Œ… ‹ŽŠ€
+	LD	DE,(LOCBUF)	;ˆ…ŒˆŠ
+	LD	HL,(RQBADR)	;ˆ‘’Ž—ˆŠ
+        RST     8               ;……‘›‹Š€
+        DB      3,0FEH
+	POP	DE
+	EX	(SP),HL		;€„…‘ Ž‹œ‡Ž‚€’…‹Ÿ
+	JP	(HL)
+;-----------------------
+;€‡€—…ˆ… Š€€‹€
+CHSET: LD      (IY),0FFH       ;ˆ‡€Š …€‹œŽ‘’ˆ
+        PUSH    IY
+	POP	DE
+	INC	DE
+	LD	HL,(RQBADR)
+	LD	BC,22H
+        RST     8
+        DB      3,0FEH
+        EI
+        LD      (IX-_RQCOM),_RESET ;‘Ž‘ Š€€‹€
+	CALL	DISK
+        LD      (IX-_RQCOM),_RECAL ;…Š€‹ˆŽ‚Š€
+        JP      DISK
+;-----------------------
+;Ž‹“—ˆ’œ ‹ŽŠ Žˆ‘€ˆŸ Š€€‹€
+CHCHK: PUSH    IY
+	POP	HL
+	INC	HL
+	LD	DE,(RQBADR)
+	LD	BC,22H
+        RST     8
+        DB      0FEH,3
+        EI
+	XOR	A		;“‘…•
+	RET
+;-----------------------
+; ˆ„…Š‘ˆŽ‚€ˆ…
+_IND:   CALL    ADD_HL_2A
+	LD	E,(HL)
+	INC	HL
+	LD	D,(HL)
+	EX	DE,HL
+        RET

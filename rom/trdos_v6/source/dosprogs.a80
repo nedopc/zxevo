@@ -1,0 +1,1401 @@
+
+;LAST UPDATE: 09.12.2013 savelij
+
+;        MAIN	"DOSI*",0XC6
+;        ORG	0X321C
+SETERRAD
+;call из 0X246
+;вместо 0X21D
+        LD	A,0X0D
+        LD	(0X5D20),A
+        JP	0X21D
+POSIT
+;call из 0X20CC
+;вместо 0X3E44
+        PUSH	HL
+        PUSH	BC
+        PUSH	AF
+        PUSH	DE
+        LD	A,0XED
+        LD	(0X5C86),A
+        LD	A,0X0C
+        LD	(0X5C8A),A
+        LD	A,E
+         JR	LL323d
+LL3235
+        LD	A,(HL)
+        CP	0XFF
+        RET	Z
+        RST	0X10
+        INC	HL
+        JR	LL3235
+LL323d
+        LD	B,"0"
+LL323f  SUB	10
+         JR	C,LL3246
+        INC	B
+         JR	LL323f
+LL3246
+        PUSH	AF
+        LD	A,B
+        RST	0X10
+        POP	AF
+		ADD A,0X30+10;        ADD	A,"0"+10
+        RST	0X10
+        POP	DE
+        POP	AF
+        POP	BC
+        POP	HL
+        EI	
+        JP	0X3E44 ;позиционирование
+
+       ;DS 3,0XFF
+
+TFormTS
+        DB	"Format track       Side",0
+
+       ;DS 3,0XFF
+
+TFile
+        DB	0X16,0,0
+        DB	"File ",34
+        DB	0X13,1,0XFF
+TExists
+        DB	0X13,0
+        DB	34,0XD
+       ;DB "Exists... Over write?(Y/N)"
+        DB	"Exists!Overwrite?(Y/N/Add)"
+        DB	0XFF
+TComplete
+        DB	"Complete"
+        DB	0XD
+        DB	"Name:",0
+TFORMAT
+        DB	"FORMAT:   1 - Normal   "
+        DB	0XD,0X17,0XA
+        DB	" 2 - Turbo"
+        DB	0XD,0X17,0XA
+        DB	" 3 - Fast turbo"
+        DB	0
+
+       ;DS 6,0XFF
+CHECKON
+;call из 0X20C1
+;вместо XOR A:INC HL:LD (HL),A ;0X5CD8
+        INC	HL
+        LD	A,(0X5CE8)
+        LD	(HL),A
+        XOR	A
+        RET	
+PRHD1
+;call из 0X20DE
+;вместо 0X330F
+        PUSH	AF
+        LD	A,"1"
+        JR	LL32f9
+PRHD0
+;call из 0X20D2
+;вместо 0X32DD
+        PUSH	AF
+        LD	A,"0"
+LL32f9
+        PUSH	AF
+        LD	A,0XF8
+        LD	(0X5C86),A
+        LD	A,0X17
+        LD	(0X5C8A),A
+        POP	AF
+        RST	0X10
+        POP	AF
+        JP	0X1FFD ;форматирование дорожки
+LL330a
+;кнопка для Overwrite
+        CALL	0X1D9F ;очистка низа экрана
+        LD	HL,TFile
+        CALL	LL3235
+        CALL	LL3329
+        LD	HL,TExists
+        CALL	LL3235
+        LD	HL,0X4000
+LL331f  DEC	HL
+        LD	A,H
+        OR	L
+        JR	NZ,LL331f
+        CALL	0X1052 ;ввод клавиши с ожиданием
+        JR	LL3338
+LL3329
+        LD	A,(0X5CF6)
+        ADD	A,"A"
+        RST	0X10
+        LD	A,":"
+        RST	0X10
+        LD	HL,0X5CDD ;адрес имени
+        JP	0X2938 ;печать имени с расширением
+LL3338
+        PUSH	AF
+        CALL	0X1D9F ;очистка низа экрана
+        POP	AF
+        CP	"Y"
+        RET	Z
+        CP	"A";0XD
+        RET	
+LL3343
+;если при записи есть такой файл
+;из 1AC1, SVNASTRDSK
+        CALL	0X165D ;перенос описателя из буфера в память
+        LD	HL,0X5CE5
+        SET	7,(HL) ;включает overwrite=ON
+        RET	
+FORMDISK
+;call из 0X1F1B
+;вместо 0X20BD
+        CALL	0X1D9F ;очистка низа экрана
+        LD	HL,TFormTS
+        RST	0X18
+        CALL	0X20BD ;форматирование диска
+        CALL	0X1D9F ;очистка низа экрана
+        LD	HL,TComplete
+        RST	0X18
+        RET	
+TPressR
+;для ASKREPFORM
+        DB	"Press R to repeat";,"."+0X80,0
+		DC "."
+		DB 0
+SAVEFIL
+;jp из 0X290C
+;еще jr ниже
+;вместо 0X1B53
+        CALL	0X1D9F ;очистка низа экрана
+        CALL	0X3E11 ;выборка типа дисковода
+         RET	
+SELFORMAT
+;call из 0X1EDD
+;вместо 0X3200
+        CALL	0X1D9F ;очистка низа экрана
+        LD	HL,TFORMAT
+        RST	0X18
+LL337f  CALL	0X1052 ;ввод клавиши с ожиданием
+        CP	0X11
+        JR	Z,LL3395
+         CP	0X12
+        JR	Z,LL33a1
+         CP	0X13
+        JR	Z,LL33a6
+         CP	0
+        JP	Z,0X01D3 ;п/п завершения
+         JR	LL337f
+LL3395
+        LD	HL,0X1FB9 ;табл.секторов SLOW диска
+LL3398  XOR	A
+LL3399  LD	(0X5CE8),A
+        LD	(0X5CE6),HL
+        JR	SAVEFIL
+LL33a1
+        LD	HL,LL33ad ;табл.сект.FAST
+        JR	LL3398
+LL33a6
+        LD	A,0X01
+        LD	HL,LL33ad ;табл.сект.FAST
+        JR	LL3399
+LL33ad
+;надо 0X325A
+        DB	1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,1
+SUB14
+        LD	A,L
+        SUB	0X0E
+        LD	L,A
+        RET	NC
+        DEC	H
+        RET	
+
+       ;DS 9,0XFF
+
+PARAMZAG
+;call из 0X18AB
+;вместо a,(0X5CD6)
+;якобы фикс PEEK, но заглючивает Wolfed
+        LD	A,(0X5CE5)
+        CP	"B"
+        JR	Z,LL33e2
+        CP	"D"
+        JR	Z,LL33e2
+        CP	"#"
+        JR	Z,LL33e2
+        LD	A,"C"
+       ;LD (0X5CE5),A ;зачем???
+LL33e2  LD	A,(0X5CD6)
+        RET	
+SVNASTRDSK
+        CALL	0X1CF0 ;поиск файла
+        CALL	Z,LL3343 ;перенос опис.из буф.в пам.и вкл.Overwr=ON
+LL33ec  CALL	0X0405 ;настр.на диск.Меняет перем-ю с типом диск-да
+        CALL	0X1AC4 ;проверка =128 файлов
+        JP	0X1B53 ;запись файла и инфы о нем
+SAVER
+;call из 0X1B53
+;было 0X1B59
+        LD	HL,0X5CE5 ;тип файла + "file exist" flag
+        BIT	7,(HL)
+        RES	7,(HL)
+        ;JR NZ,LL33ff
+        JP	Z,0X1B59
+LL33ff
+        CALL	LL330a ;Y/N
+        JP	NZ,0X01D3 ;п/п завершения
+       CP	"A"
+       JP	Z,0X1B59
+        LD	DE,(0X5CD9)
+       DEC	DE
+       INC	D
+       ;LD A,E
+       ;OR A
+       ;JR Z,$+3
+       ;INC D
+        LD	A,(0X5CEA)
+        CP	D
+        JR	Z,LL341b
+        CALL	0X2926 ;стирание файла
+        JR	LL33ec
+
+LL341b  LD	B,D
+        LD	HL,(0X5C59)
+        LD	(HL),0XAA
+        INC	HL
+        LD	DE,(0X5CD1)
+        LD	(HL),E
+        INC	HL
+        LD	(HL),D
+        LD	C,0X06
+        LD	HL,(0X5CDB)
+        LD	(0X5CE8),HL
+        LD	HL,(0X5CD7)
+        LD	(0X5CE6),HL
+        LD	DE,(0X5CEB)
+        CALL	0X1E4D
+        LD	BC,(0X5D1E)
+        CALL	0X1BBF
+         CALL	0X1665
+         RET	
+OBROSH
+;jp из 0X3D17
+;вместо 0X2F69
+        EI	
+        JP	0X2F69
+
+		IF 0;       IFN	0
+bootkus2
+;       DISP	bootst2
+         NOP	;посл.байт DEC (IX)
+         LD	A,(IX+0X00)
+        CP	0XFF
+        JR	NZ,LL345b
+        LD	A,(0XF86F)
+         LD	(IX+0X00),A
+LL345b  CALL	0XF7FA
+        CALL	0XF816
+        JP	0XF646
+
+        CALL	0XF870
+        CALL	0XF826
+         INC	(IX+0X00)
+        LD	A,(0XF86F)
+        INC	A
+         CP	(IX+0X00)
+         LD	A,(IX+0X00)
+        JR	NZ,LL347d
+        XOR	A
+         LD	(IX+0X00),A
+LL347d  CALL	0XF7FA
+        CALL	0XF816
+        JP	0XF646
+
+        CALL	0XF870
+        CALL	0XF826
+         DEC	(IX+0X00)
+         DEC	(IX+0X00)
+         DEC	(IX+0X00)
+         BIT	7,(IX+0X00)
+         LD	A,(IX+0X00)
+        JR	Z,LL34b3
+LL349e  LD	B,0X03
+        ADD	A,B
+        LD	B,A
+        PUSH	BC
+        LD	A,(0XF86F)
+        SUB	B
+        JR	C,LL34ac
+        POP	AF
+        JR	LL349e
+LL34ac
+        POP	AF
+         DEC	A
+         DEC	A
+         DEC	A
+        LD	(IX+0X00),A
+LL34b3  CALL	0XF7FA
+        CALL	0XF816
+        JP	0XF646
+
+        CALL	0XF870
+        CALL	0XF826
+         INC	(IX+0X00)
+         INC	(IX+0X00)
+         INC	(IX+0X00)
+        LD	A,(0XF86F)
+         SBC	A,(IX+0X00)
+         LD	A,(IX+0X00)
+        JR	NC,LL34e1
+        LD	B,0X03
+LL34d8  SUB	B
+        JR	NC,LL34d8
+         INC	A
+         INC	A
+         INC	A
+        LD	(IX+0X00),A
+LL34e1  CALL	0XF7FA
+        CALL	0XF816
+        JP	0XF646
+
+        CALL	0X0D6B
+        LD	A,0X03
+        CALL	0XF8CB
+        JP	0XF556
+
+        LD	BC,0XFFFD
+        LD	A,0X07
+        OUT	(C),A
+        LD	B,0XBF
+        LD	A,0XFF
+        OUT	(C),A ;глушит AY
+        CALL	0XF870
+        LD	A,0X07
+        LD	(0X5C48),A
+        LD	(0X5C8D),A
+        CPL	
+        LD	(0X5D3B),A
+        LD	HL,0X3C00
+        LD	(0X5C36),HL
+        LD	L,(IX+0X00)
+         LD	H,0X00
+        ADD	HL,HL
+        ADD	HL,HL
+        ADD	HL,HL
+        LD	DE,0XA000
+        ADD	HL,DE
+        LD	DE,0XF7F0
+        LD	BC,0X0008
+        LDIR	
+        LD	HL,(0XF632)
+        LD	(0X5C3D),HL
+        LD	HL,0XF7EC
+        LD	(0X5C5D),HL
+        CALL	0X0D6B
+        DI	
+        POP	HL
+        EXX	
+        POP	BC
+        POP	DE
+        POP	HL
+        POP	AF
+        CALL	0X3D03
+        JP	PE,0XF73A
+        LD	(0X6F62),HL
+        LD	L,A
+        LD	(HL),H
+         JR	NZ,LL356e
+         JR	NZ,LL3570
+         LD	(0XD50D),HL
+        INC	A
+        LD	HL,0X5802
+        LD	DE,0X000A
+LL355a  DEC	A
+        JR	Z,LL356c
+        ADD	HL,DE
+        DEC	A
+        JR	Z,LL356c
+        ADD	HL,DE
+        DEC	A
+        JR	Z,LL356c
+        INC	DE
+        INC	DE
+        ADD	HL,DE
+        DEC	DE
+        DEC	DE
+        JR	LL355a
+LL356c
+        POP	DE
+        RET	
+LL356e
+        PUSH	HL
+        EXX	
+LL3570  POP	HL
+        LD	A,0X70
+        PUSH	HL
+        POP	DE
+        INC	DE
+        LD	BC,0X0007
+        LD	(HL),A
+        LDIR	
+        EXX	
+        RET	
+
+        PUSH	HL
+        EXX	
+        POP	HL
+        LD	A,0X42
+        PUSH	HL
+        POP	DE
+        INC	DE
+        LD	BC,0X0007
+        LD	(HL),A
+        LDIR	
+        EXX	
+        RET	
+
+        PUSH	HL
+        PUSH	DE
+        SBC	HL,DE
+        LD	A,(HL)
+        LD	B,0X20
+        SBC	A,B
+        JR	C,LL35c3
+        LD	IX,0XF981
+        PUSH	HL
+        LD	BC,0X0800
+LL35a0  LD	A,(HL)
+        CP	(IX+0X00)
+        JR	NZ,LL35a7
+        INC	C
+LL35a7  INC	HL
+        INC	IX
+        DJNZ	LL35a0
+        LD	A,C
+        CP	0X08
+        JR	NZ,LL35b4
+        POP	HL
+        JR	LL35c3
+LL35b4
+        EXX	
+        POP	HL
+        LD	BC,0X0008
+        LDIR	
+        EXX	
+        LD	A,(0XF86E)
+        INC	A
+        LD	(0XF86E),A
+LL35c3  POP	DE
+        POP	HL
+        RET	
+
+        NOP	
+        NOP	
+
+        PUSH	AF
+        PUSH	BC
+        LD	B,0XD2
+LL35cc  PUSH	BC
+        XOR	A
+        OUT	(0XFE),A
+        RR	B
+LL35d2  DJNZ	LL35d2
+        SET	4,A
+        OUT	(0XFE),A
+        POP	BC
+        DEC	B
+        DJNZ	LL35cc
+        POP	BC
+        POP	AF
+        RET	
+
+        XOR	A
+        CP	(IY+0X47)
+        JP	NZ,0XF556
+        CALL	0X0D6E
+        LD	A,0X02
+        CALL	0X1601
+        XOR	A
+        CALL	0XF8CB
+        LD	A,0X01
+        CALL	0X1601
+        LD	(IY+0X47),0XFE
+        JP	0XF795
+
+        XOR	A
+        CP	(IY+0X47)
+        JP	NZ,0XF556
+        CALL	0X0D6E
+        LD	A,0X02
+        CALL	0X1601
+        LD	A,0X01
+        CALL	0XF8CB
+        LD	A,0X3F
+        LD	(0XF86E),A
+        LD	BC,0XFFFF
+LL361a  NOP	
+        DJNZ	LL361a
+        DEC	C
+        JR	NZ,LL361a
+        JP	0XF5B4
+
+        LD	DE,0XF8D1
+        JP	0X0C0A
+
+        DB	0X80
+        DB	0X16,0X0A,0X05
+        DB	"!!! NO  PROGRAMS !!!"
+		DC " ";        DB	" "+0X80
+
+        DB	0X16,0X0A,0X03,0X10,0X04
+        DB	"MORE THAN 63 BASIC FILES"
+;than!!!
+		DC " ";        DB	" "+0X80
+
+        DB	0X11,0X00,0X10,0X04,0X13,0X01
+        DB	"     -=New ROM boot v1.06=-"
+        DB	0X06
+        DB	"Remix by CompoWellcome 05.02.99"
+		DC ".";        DB	"."+0X80
+
+        DB	0X10,0X02,0X13,0X01
+        DB	"       INSERT NEW DISK"
+        DB	0X06
+        DB	"     FOR READING CATALOGUE."
+;catalogue!
+		DC " ";        DB	" "+0X80
+
+        DB	"boot    "
+
+        LD	HL,0X5AE1
+        PUSH	HL
+        POP	DE
+        DEC	DE
+        LD	BC,0X001F
+        LDIR	
+        LD	HL,0X5AFF
+        LD	A,(0XF9BA)
+        OR	A
+        JR	Z,LL3703
+        LD	A,(HL)
+        AND	0X07
+        INC	A
+        CP	0X08
+        JR	NZ,LL3710
+        XOR	A
+        LD	(0XF9BA),A
+        LD	A,0X07
+LL3703  LD	A,(HL)
+        AND	0X07
+        DEC	A
+        OR	A
+        JR	NZ,LL3710
+        CPL	
+        LD	(0XF9BA),A
+        LD	A,0X01
+LL3710  LD	(HL),A
+        RET	
+LL3712
+         NOP	
+        LD	A,0XC3
+        LD	(0X5CC2),A
+        LD	HL,0XF9E6
+        LD	(0X5CC3),HL
+        LD	IX,0X2FC1
+        CALL	0XFA20
+        LD	A,0X08
+        LD	C,0X1F
+        LD	IX,0X2A53
+        CALL	0XFA20
+        LD	(0XF9E7),SP
+        LD	DE,0X0000
+        LD	IX,0X2740
+        CALL	0XFA20
+        LD	SP,0X0000
+        LD	IX,0X1FF3
+        CALL	0XFA20
+        LD	IX,0X1FEB
+        CALL	0XFA20
+        LD	IX,0X2FC1
+        CALL	0XFA20
+        LD	A,0XC9
+        LD	(0X5CC2),A
+        LD	A,(0X5CCD)
+        AND	0X40
+        RET	
+LL3761
+        LD	A,0X30
+        INC	A
+        CP	0X33
+        LD	(0XFA0A),A
+        JP	NZ,0XF6D0
+        LD	A,0X30
+        LD	(0XFA0A),A
+        JR	LL3761
+
+        DI	
+        LD	IX,0X0000
+        PUSH	IX
+        JP	0X3D2F
+		DUPL 3,0XFF;        DS	3,0XFF
+bootln2 := $-bootst2
+;       ENT	
+;        ORG	ROM
+;       DISP	0
+;        ORG	bootkus2+bootln2
+       ENDIF	
+POSITPP
+;jp из 0X3E4E
+        PUSH	AF
+        LD	A,(0X5CCE) ;0=READ,0XFF=WRITE
+        OR	A
+        JR	Z,POSppRD
+        POP	AF
+        PUSH	BC
+        LD	B,A
+        IN	A,(0X3F)
+         CP	B ;в 0X3E52 это уже есть!
+         POP	BC
+        JP	POSITCONT;0X3E54
+POSppRD
+        POP	AF
+        IN	A,(0X1F)
+        AND	0X80
+         JP	POSITCONT;0X3E54
+       ;DB 0XFF
+
+		IF resident=1;       IFN	resident
+PPNORESC000
+;если нет резидента 0XC000
+;jp из 0X3C48
+    ;проверка резидента 0XFFF0
+        LD	HL,0XFFF0
+        XOR	A
+LL379e  XOR	(HL)
+        ADC	A,H
+        INC	L
+        JR	NZ,LL379e
+        CP	0X06 ;"RESIDENTPRESENT!"
+               ;идиотизм - опять 8bit!
+        JP	Z,0XC000
+       IF	atm-3
+        JP	9
+       ELSE	
+        XOR	A
+        CALL	MEMDRV_
+    ;проверка недокументированного резидента 0X5B00
+        LD	B,0X13
+        LD	H,0X5B
+        XOR	A
+LL37b1  XOR	(HL)
+        ADC	A,L
+        ADC	A,(HL)
+        INC	L
+        DJNZ	LL37b1
+        CP	0X68
+               ;идиотизм - опять 8bit!
+       ;JP NZ,A7JP9;0X3C4B
+       LD	A,7
+       JP	NZ,9
+        XOR	A
+        LD	(0X5B04),A
+        LD	(0X5B0D),A
+		IF madrom=1;       IFN	madrom
+        LD	HL,0XFE00
+       ELSE	
+        LD	HL,0X00C7
+       ENDIF	
+        LD	(0X5B11),HL
+        JP	0X5B00
+       ENDIF	;~atm3
+       ENDIF	;resident
+
+       ;DB 0XFF
+
+USEmovSPD
+;call из 0X3EBF
+;вместо 0X3E44
+        PUSH	HL
+        PUSH	AF
+        CALL	0X3E08 ;взять время перемещ.головки тек.дисковода
+        LD	B,A
+        POP	AF
+        POP	HL
+        JP	0X3E44
+NEWER
+;вместо 0X1DCD
+        LD	HL,(0X5D11)
+        INC	HL
+        LD	A,(HL)
+        CP	0XD
+        JR	Z,NEWRel
+        CALL	0X1DCD ;NEW new,old
+        JP	L53D
+NEWRel
+        LD	HL,TRel
+        RST	0X18
+        JP	0X01D3 ;п/п завершения
+TRel
+       ;DB "Rel: 08.10.99",0XD,0
+        DB	"Rel: 10.04.06",0XD,0
+
+       ;DS 0X3800-$,0XFF
+       ;ORG 0X3800
+TCH1
+;1-ая основная точка входа
+        LD	A,(0X5CF6)
+        CP	0X03
+        JR	Z,L1
+        LD	A,(0X5CCE)
+        CALL	0X1E36 ;загрузка регистра дорожки
+        JP	TCH1Q;0X1E70
+L1
+        PUSH	DE
+        CALL	TEST_R
+        JP	NZ,0X3EE1;NO DISK
+        POP	DE
+        POP HL
+        POP BC
+        XOR	A
+        OR	B
+        RET	Z
+RD_SV
+        PUSH	BC
+        PUSH HL
+        CALL	SECTR
+        POP	HL
+        INC	H
+        PUSH	HL
+        LD	HL,0X5CF4
+        LD	A,0X10
+        INC	(HL)
+        CP	(HL)
+        JR	NZ,LL3838
+        LD	(HL),0X00
+        INC	HL
+        INC (HL)
+LL3838  POP	HL
+	POP BC
+        DJNZ	RD_SV
+        RET	
+
+;Тест наличия Ram-Disk'а
+;точнее, памяти под него
+;для 128K - вроде как дисковод D
+TEST_R
+        DI	
+       IF	atm=0
+        LD	HL,0XFF10
+        CALL	FPG
+        OUT	(C),L
+        LD	D,(HL)
+        LD	(HL),H
+        LD	A,0X90
+        OUT	(C),A
+        LD	E,(HL)
+        LD	(HL),L
+        OUT	(C),L
+        LD	B,H
+        LD	A,B
+        CP	(HL)
+        JR	NZ,L2
+        LD	B,0X7F
+        LD	(HL),D
+        LD	A,0X90
+        OUT	(C),A
+        LD	(HL),E
+        OUT	(C),L
+       ENDIF	
+        LD	A,0X08
+        LD	B,0X83
+L2
+        PUSH	AF
+        LD	(0X5CFD),A
+        LD	A,B
+        LD	(0X5CCB),A
+        XOR	A
+        OUT	(0XFF),A
+        LD	A,(0X5CF6)
+        ADD	A,0X3C
+        LD	(0X5D16),A
+        OUT	(0XFF),A
+        LD	A,0XD0
+        OUT	(0X1F),A
+       IF	atm=0
+        LD	A,(F_PAGE)
+        LD	BC,0X7FFD
+        OUT	(C),A
+       ENDIF	
+        POP	AF
+        RET	
+SECTR
+        LD	DE,(0X5CF4)
+        LD	A,H
+        CP	0XBF
+        JR	C,RED_SAV
+        LD	A,0XFF
+        CALL	LL38A6
+        LD	A,(0X5CCE)
+        AND	A
+        JR	Z,LL38C0
+        LD	DE,0X5D25
+        LD BC,0X0100
+        LDIR	
+        LD	HL,0X5D25
+        LD DE,(0X5CF4)
+        CALL	RED_SAV
+LL38A4  LD	A,0X00
+LL38A6		EX AF,AF';  EXA	
+        LD	A,(0X5CCE)
+		EX AF,AF';        EXA	
+        LD	(0X5CCE),A
+        PUSH	HL
+        PUSH DE
+        LD	HL,0X5D25
+        LD DE,0X000F
+        CALL	RED_SAV
+        POP	DE
+        POP HL
+        EX	AF,AF'
+        LD	(0X5CCE),A
+        RET	
+LL38C0
+        PUSH	HL
+        LD	HL,0X5D25
+        CALL	RED_SAV
+        LD	HL,0X5D25
+        POP	DE
+        LD	BC,0X0100
+        LDIR	
+        JR	LL38A4
+
+;Собственно чтение-запись из/в RAM-DISK
+RED_SAV
+        DI	
+        CALL	FPG ;ищем тек.страницу на каждом секторе...
+                 ;BC=7ffd (для ATM BC=fff7)
+        LD	A,D ;лог.дорожка
+;---Если RD расположен в верхних 512К---
+		IF 0;       IFN	0
+       CPL	;растет сверху
+        RLCA	
+        AND	0XC0
+        LD	C,A
+        LD	A,D
+        RRCA	
+        RRCA	
+        AND	0X07
+        OR	0X30
+        OR	C
+        LD	C,0XFD
+        OUT	(C),A
+       ENDIF	
+;----Если RD расположен во всех 896К----
+		IF 1;       IFN	1
+;		IF atm=1;       IFN	atm
+       IF	atm=3
+        RRCA	
+        RRCA	
+        AND	0X3F
+       ADD	A,PAGE_DATARAMD;9 ;Savelij RAMDISK
+       ;OR 64 ;ОЗУ, не 7ffd
+        OUT	(C),A
+        LD	B,0XF7
+        OUT	(C),A
+       ELSE	;atm2
+        RRCA	
+        RRCA	
+        AND	0X3F
+        OR	64 ;ОЗУ, не 7ffd
+        OUT	(C),A
+       ENDIF	
+       ELSE	
+       CPL	;растет сверху
+        RRCA	
+        RRCA	
+        AND	0X3F
+      ;ADD A,8
+        PUSH	AF
+        AND	0X27
+        OR	0X10
+        LD	C,A
+        POP	AF
+        RLCA	
+        RLCA	
+        RLCA	
+        AND	0XC0
+        OR	C
+        LD	C,0XFD
+        OUT	(C),A
+       ENDIF	
+;       ENDIF	
+;----Если RD размером 384К (при 512К)---
+		IF 0;       IFN	0
+        RRCA	
+        RRCA	
+        AND	0X3F
+        ADD	A,8
+        LD	C,A
+        OR	0X10
+        SLA	C
+        SLA	C
+        SLA	C
+        OR	C
+        AND	0XD7
+        LD	C,0XFD
+        OUT	(C),A
+       ENDIF	
+;---------------------------------------
+
+        LD	A,D
+        RLCA	
+        RLCA	
+        RLCA	
+        RLCA	
+        AND	0X30
+        ADD	A,E
+        OR	0XC0
+        LD	D,A
+        LD E,0X00
+        LD	A,(0X5CCE)
+        AND	A
+        JR	NZ,LL38F9
+        EX	DE,HL
+LL38F9  LD	BC,0X0100
+        LDIR	
+;		IF atm=1;       IFN	atm
+       IF	atm=3
+;адресация по 7FFD (FFF7, F7F7 неизвестно как восстановить)
+        LD	A,0XFF ;7ffd used
+        LD	BC,0XFFF7
+        OUT	(C),A
+        LD	A,(F_PAGE)
+        LD	BC,0X7FFD
+        OUT	(C),A
+       ELSE	;atm2
+        LD	A,(F_PAGE)
+        AND	0XF
+        OR	0X10
+        LD	BC,0X7FFD
+        OUT	(C),A
+        LD	A,(F_PAGE)
+        AND	0XE0 ;5,7,6
+        LD	C,A
+        RRA	
+        RRA	
+        RRA	
+        OR	C
+        AND	0X38 ;5,4,3
+        CPL	;7ffd used
+        LD	BC,0XFFF7
+        OUT	(C),A
+       ENDIF	
+;       ELSE	
+;        LD	A,(F_PAGE)
+;        LD	BC,0X7FFD
+;        OUT	(C),A
+;       ENDIF	
+        EI	
+        RET	
+
+		IF resident=1;       IFN	resident
+MEMDRV_
+;Драйвер памяти (используется HONEY резидентом /и не только/)
+;6.05 %00abcdef
+;6.11 %bca0?def (7FFD)
+		IF atm=1;       IFN	atm
+       IF	atm-3
+        XOR	0X7F
+        LD	BC,0XFFF7
+        OUT	(C),A ;7ffd off
+;а кто будет включать 7ffd обратно?
+       ELSE	;atm2
+        PUSH	AF
+        AND	0XF
+        OR	0X10
+        LD	BC,0X7FFD
+        OUT	(C),A
+        POP	AF
+        AND	0XE0 ;5,7,6
+        LD	C,A
+        RRA	
+        RRA	
+        RRA	
+        OR	C
+        AND	0X38 ;5,4,3
+        CPL	;7ffd used
+        LD	BC,0XFFF7
+        OUT	(C),A
+       ENDIF	
+       ELSE	
+       ;AND 0XDF  ;Если памяти полметра.
+        OR	0X10
+        LD	BC,0X7FFD
+        OUT	(C),A
+       ENDIF	
+        RET	
+       ENDIF	
+
+TCH2
+;2-ая точка входа - инициализация
+        LD	(0X5CF6),A
+        CP	0X03
+        JP	NZ,TCH2Q;0X3DCE
+        CALL	TEST_R
+        JP	NZ,0X3EE1 ;ошибку игнорировать?etc
+        RET	
+
+TCH3
+;3-я точка входа - форматирование
+        CALL	0X1C57 ;установка имени файла
+        LD	A,(0X5CF6)
+        CP	0X03
+        RET	NZ
+        POP	AF
+        CALL	FILL
+        LD	DE,0X0000
+        LD	(0X5CF4),DE
+        LD	BC,0X0010
+FORMT
+        PUSH	BC
+        LD	A,0XFF
+        LD	(0X5CCE),A
+        LD HL,0X5D25
+        LD B,0X01
+        CALL	RD_SV
+        POP	BC
+        DEC	BC
+        LD	A,B
+        OR	C
+        JR	NZ,FORMT
+  ;free=...
+       ;LD HL,0X05F0  ;для 384К
+        LD	HL,0X07F0  ;для 512К
+       ;LD HL,0X0DF0  ;для 896К
+
+        LD	A,0X16
+        JP	0X1F55 ;продолж.FORMAT после LD HL,2544
+FILL
+        LD	HL,0X5D25
+        LD DE,0X5D26
+        LD	BC,0X00FF
+        LD (HL),B
+        LDIR	
+        RET	
+
+FPG
+;Определение текущей PAGE 0-31 памяти
+		IF 0;       IFN	0
+        PUSH	DE
+        PUSH HL
+        LD	DE,(0XC000)
+        LD	BC,0X7FFD
+        LD	(0XC000),BC
+        LD	A,0XD7
+FPG1    INC	A
+        BIT	3,A
+        JR	Z,$+4
+        ADD	A,0X38
+        OUT	(C),A
+        LD	HL,(0XC000)
+        AND	A
+        SBC	HL,BC
+        JR	NZ,FPG1
+        LD	(0XC000),DE
+        LD	(F_PAGE),A
+        POP	HL
+        POP DE
+        RET	
+       ELSE	
+        PUSH	DE
+        PUSH HL
+        LD	DE,(0XC000)
+        LD	HL,(0XFFFD)
+        PUSH	HL
+		IF atm=3;       IFN	atm
+        LD	BC,0XFFF7
+       ELSE	
+        LD	BC,0X7FFD
+       ENDIF	
+        LD	(0XC000),BC
+        LD	(0XFFFD),BC
+		IF atm=3;       IFN	atm
+        LD	A,0X7F+1 ;D6=1 (ОЗУ), D7=0 (no 7ffd)
+       ELSE	
+        XOR	A
+       ENDIF	
+FPG1
+		IF atm=3;       IFN	atm
+        DEC	A
+        OR	A ;CY=0
+       ELSE	
+        AND	0XC7
+        DEC	A
+        AND	0XC7
+        OR	16
+       ENDIF	
+        OUT	(C),A
+        LD	HL,(0XC000)
+        SBC	HL,BC
+        JR	NZ,FPG1
+        LD	HL,(0XFFFD)
+        SBC	HL,BC
+        JR	NZ,FPG1
+        LD	(0XC000),DE
+        POP	HL
+        LD	(0XFFFD),HL
+		IF atm=3;       IFN	atm
+       ;%01abcdef (abcdef inverted)
+  ;надо %bca10def
+        CPL	;7ffd used
+        LD	L,A
+        AND	0X38 ;5,4,3
+        LD	H,A
+        RLA	
+        RLA	
+        RLA	
+        OR	H
+        XOR	L
+        AND	0XE0 ;5,7,6
+        XOR	L
+        AND	0XE7
+        OR	0X10
+       ENDIF	
+        LD	(F_PAGE),A
+        POP	HL
+        POP DE
+        RET	
+       ENDIF	
+
+TCH4
+;Установка типов дисководов 80DS (а-ля 5.04)
+;Убрать,если необходимо автоопределение (а-ля 5.03)
+        LD	HL,0X8383
+        LD	(0X5CC8),HL
+        LD (0X5CCA),HL
+
+;Выбор дисковода при сбросе
+        LD	A,0XF7
+        IN	A,(0XFE)
+        LD	B,0
+        RRA	
+        JR	NC,DRV11
+        INC	B
+        RRA	
+        JR	NC,DRV11
+        INC	B
+        RRA	
+        JR	NC,DRV11
+        INC	B
+        RRA	
+        JR	NC,DRV11
+		IF cmos=1;       IFN	cmos
+        LD	BC,0XEFF7
+      ;IN A,(C) ;если есть чтение из EFF7
+      ;PUSH AF
+        LD	A,0X80
+        OUT	(C),A
+        LD	B,0XDF,A,0X10
+        OUT	(C),A
+        LD	B,0XBF
+        IN	A,(C)
+		EX AF,AF';        EXA	
+        LD	B,0XEF
+        XOR	A
+      ;POP AF
+        OUT	(C),A
+		EX AF,AF';        EXA	
+        LD	B,A
+       ELSE	
+        JR	L3
+       ENDIF	
+DRV11
+        LD	A,B
+        LD (0X5CF6),A
+        LD (0X5D19),A
+        OR	0X3C
+        LD	(0X5D16),A
+        OUT	(0XFF),A
+L3      JP	0X106E ;вывод цветных полос для заставки
+		IF 0;       IFN	0
+		DUPL 0X3ADB-$,0XFF;        DS	0X3ADB-$,0XFF
+;        ORG	0X3ADB
+BOOTER
+;выполнялка ком."8"
+;вместо 0X29AE
+        LD	BC,0XF4FF
+        RST	0X20
+        DW	0X1EAF ;CLEAR_RUN
+        LD	A,1
+        RST	0X20
+       ;DW 0X229C ;нет такой точки!
+       DW	0X229B ;border и 23624
+        DI	
+        LD	HL,bootkus1;0XE00
+        LD	DE,0XF500
+        LD	BC,bootln1;0X1F5
+        PUSH	DE
+        LDIR	
+        LD	HL,bootkus2;0X344D
+        LD	BC,$;bootln2+1;0X334
+        LDIR	
+        SET	3,(IY+0X01)
+        RET	
+       ENDIF	
+MOVEPP
+        LD	HL,(0X5CE1)
+LL3b03  LD	A,(HL)
+         CP	0X00
+        RET	Z
+         CP	0X01
+         JR	Z,LL3b0e
+         CALL	LL3b14
+LL3b0e  LD	DE,0X0010
+        ADD	HL,DE
+        JR	LL3b03
+LL3b14  PUSH	HL
+        LD	DE,0X000D
+        ADD	HL,DE
+        LD	C,(HL)
+        INC	HL
+        LD	E,(HL)
+        INC	HL
+        LD	D,(HL)
+        LD	HL,(0X5CD7)
+        AND	A
+        SBC	HL,DE
+        ADD	HL,DE
+        JR	Z,LL3b56
+        LD	(0X5CD5),DE
+        LD	A,C
+        LD	(0X5CD3),A
+        CALL	0X17A5 ;перемещение файла
+LL3b32  POP	HL
+        PUSH	HL
+        LD	DE,(0X5CDF)
+        LD	BC,0X0010
+        LDIR	
+        LD	(0X5CDF),DE
+		EX DE,HL;        EXD	
+        LD	DE,(0X5CDD)
+        DEC	HL
+        LD	(HL),D
+        DEC	HL
+        LD	(HL),E
+        LD	HL,(0X5CD7)
+        LD	(0X5CDD),HL
+        LD	HL,0X5CE3
+        INC	(HL)
+        POP	HL
+        RET	
+LL3b56
+        LD	A,C
+        AND	0X0F
+        ADD	A,E
+        BIT	4,A
+        RES	4,A
+        LD	E,A
+        JR	Z,$+3
+        INC	D
+        LD	A,C
+
+;        RRC	A
+;        RRC	A
+;        RRC	A
+;        RRC	A
+		REPT 4
+		DB 0XCB
+		RRCA
+		ENDM
+
+        AND	0X0F
+        ADD	A,D
+        LD	D,A
+        LD	(0X5CD7),DE
+        JR	LL3b32
+
+       ;DS 0X3B80-$,0XFF
+GETCOM
+;jp из 0X2154
+;вместо 0X1D90 - зачем???
+        RES	5,(IY+0X01)
+        RST	0X20
+        DW	0X15D4 ;WAIT_KEY
+        CP	7
+        JR	NZ,LL3bad
+        LD	HL,0X00C8
+        LD	D,H
+        LD	E,(IY-0X01)
+        RST	0X20
+        DW	0X3B5 ;beep
+        CALL	0X212A ;восстановление командной строки
+        LD	HL,(0X5C59)
+        LD	A,0X0D
+         LD	BC,0
+        CPIR	
+        DEC	HL
+        LD	(0X5C5B),HL
+        INC	HL
+        INC	HL
+        LD	(HL),0X80
+LL3baa  RST	0X20
+        DW	0X15D4 ;WAIT_KEY
+LL3bad
+        PUSH	AF
+        LD	HL,0X00C8
+        LD	D,H
+        LD	E,(IY-0X01)
+        RST	0X20
+        DW	0X3B5 ;beep
+        POP	AF
+        CP	0X18
+        JR	NC,LL3bca
+        CP	0X07
+        JR	C,LL3bca
+        CP	0X10
+        JR	C,LL3bcf
+        RST	0X20
+        DW	0XF58 ;в ED_LOOP: sym>=16
+        JR	LL3baa
+LL3bca
+        RST	0X20
+        DW	0XF81 ;ADD_CHAR
+        JR	LL3baa
+LL3bcf
+        CP	0X07
+        JR	Z,LL3baa
+        CP	0X0D
+        RET	Z
+        CP	0X0A
+        JR	Z,LL3baa
+        CP	0X0B
+        JR	Z,LL3baa
+        RST	0X20
+        DW	0XF92 ;ED_KEYS
+        JR	LL3baa
+
+       ;DS 0X3BF0-$,0XFF
+WHOD
+;вход в TR-DOS
+;jp из 0X3D35
+;вместо 0X239
+        CALL	0X1D9F ;очистка низа экрана
+        JP	0X239 ;вход в командный процессор
+
+       ;DS 0X3C00-$,0XFF
+       ;тут стоят дубли 0X3D00/3D03
+       ;дубля 0X3D13 нет и не было
+       ;ORG 0X3C10
+OUTDE
+        LD	C,D
+        OUT	(C),E
+        RET	
+INED
+        LD	C,D
+        IN	E,(C)
+        RET	
+JPWRITE
+        LD	C,0X7F
+        JP	16314
+JPREAD
+        LD	C,0X7F
+        JP	16341

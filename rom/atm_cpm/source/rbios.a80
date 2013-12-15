@@ -1,0 +1,577 @@
+
+;LAST UPDATE: 11.12.2013 savelij
+
+		include ../../macros.a80
+		include ../../global_vars.a80
+
+		include all_vars.a80
+
+VERSBIOS	EQU "1.07.15pe"
+
+		ORG 0
+		DI
+		JP $;H_INIT
+
+PM_RUN_4000	OUT (C),E
+
+		DUPL 8-$,0
+		JP RST8
+
+		DUPL 0X0C-$,0
+		JP PENTEVO_START
+
+		DUPL 0X14-$,0
+		OUT (C),A
+		NOP
+		RET
+
+		DUPL 0X18-$,0
+		JP SET_PG
+
+		DUPL 0X20-$,0
+		JP CONOUT
+
+		DUPL 0X38-$,0
+		JP DO_INT
+
+PAL_MN		DB 0XFF,0XEC,0XBD,0X8D,0X0C,0XFF,0XEC,0XCF,0X4C,0XCC,0X6F,0X4E,0XBD,0X9C,0X2D,0X0C
+
+; CONVERT PAGE NUMBER
+ED_PG		ADD A,6
+		RET
+
+; SET PAGE NUMBER
+SET_PG		DI
+		PUSH BC
+		LD B,(IX-_MEMDSP)
+		LD (MEMDSP),A
+		AND 0X3F
+		CALL S_PG1
+		POP BC
+		RET
+
+S_PG1		DI
+		OR 0X80
+		PUSH BC
+		CPL
+;		LD BC,0XFC77
+;		PUSH DE
+;		LD E,(IX-_SYS_P)
+;		OUT (C),E
+		LD BC,WIN_A3
+		OUT (C),A
+;		LD BC,0XFD77
+;		OUT (C),E
+;		POP DE
+		POP AF
+		RET
+
+ENTRY:  LD      SP,SYS_SP       ; MUST BE CPSYS
+        IM      1
+        LD      HL,(TST_1RUN)
+	LD	DE,55AAH
+	XOR A
+	SBC	HL,DE
+	LD (TST_1RUN),DE
+	JR Z,ALL_INIT
+	LD (IX-_TST_IS1),-1
+ALL_INIT	LD A,0X11
+        CALL    C_INIT
+	CALL    M_INIT
+		LD A,0X11
+        CALL    C_INIT
+	CALL	M_INIT
+		LD A,0X55
+		IN A,(0XFE)
+		LD A,1
+		IN A,(0XFE)
+		LD A,0X55
+		IN A,(0XFE)
+		LD A,8
+		IN A,(0XFE)
+		XOR A
+		IN A,(0XFE)
+		EI
+		LD HL,PAL_MN
+		CALL SP_DIR
+		LD    SP,0B000H
+		LD A,3
+		RST 0X18
+;---------------------------------
+; MAIN MENU MANAGER.
+;
+; IN:  A - 1 FOR RU7, 0 FOR RU5
+;      E - IBMPC KEYBOARD LOCKS STATUS
+; OUT: A - SELECTION (0-CP/M,1-TR-DOS,2-S128,3-S48)
+;      D - 1 FOR 'TURBO' MODE, 0 IN OTHER CASE
+;      E - IBMPC KEYBOARD LOCKS STATUS
+;      L - 1 FOR IMBPC KEYBOARD, 0 FOR SPECTRUM KEYBOARD
+		LD E,(IX-_KS_SHIFTS)
+		DI
+		XOR A
+		LD DE,0X100
+		PUSH AF
+		LD IX,IX_BASE
+		LD (IX-_KS_SHIFTS),E
+		DEC D
+		JR NZ,_NO_TUR
+		SET 3,(IX-_SYS_P)
+_NO_TUR		LD A,0X55
+		IN A,(0XFE)
+		LD A,8
+		IN A,(0XFE)
+		LD A,0X8A
+		IN A,(0XFE)
+		LD A,0X55
+		IN A,(0XFE)
+		LD A,1
+		IN A,(0XFE)
+		EX AF,AF'
+		LD A,0X55
+		IN A,(0XFE)
+		LD A,8
+		IN A,(0XFE)
+		XOR A
+		IN A,(0XFE)
+		EX AF,AF'
+		CP 0X0A
+		JR NC,ALLINIT2
+		LD A,0X55
+		IN A,(0XFE)
+		LD A,7
+		IN A,(0XFE)
+		LD HL,IBMKEYB_T
+		JR ALLINIT3
+
+ALLINIT2	LD HL,SPKEYB_T
+ALLINIT3	LD DE,KEYBOARD
+		LD BC,6*3
+		DI
+		LDIR
+		EI
+		LD A,3
+		RST 0X18
+		CALL SP_DEF
+		POP AF
+		CALL CI_INIT
+		LD SP,SYS_SP
+		CALL PRN
+		DB 0X1B,0X5F,0
+		CALL MEM_SIZE
+		CALL CPM_LOAD
+		CALL CFG_LOAD
+		JP ENTR1
+
+DO_INT		PUSH AF                 ; TEST TRDOS ACTIVITY
+       PUSH BC
+       PUSH DE
+       PUSH HL
+       EX   AF,AF'
+       EXX
+       PUSH AF
+       PUSH BC
+       PUSH DE
+       PUSH HL
+       PUSH IX
+       LD   IX,IX_BASE
+       LD   A,1
+       RST  18H
+       PUSH AF
+       LD   HL,TIME_C
+       LD   B,4
+TM_L:  INC  (HL)
+       INC  HL
+       JR   NZ,TM_DN
+       DJNZ TM_L
+TM_DN: CALL CUR_IN
+		CALL KEYBOARD
+       POP  AF
+       RST  18H
+       POP  IX
+       POP  HL
+       POP  DE
+       POP  BC
+       POP  AF
+       EXX
+       EX   AF,AF'
+       POP  HL
+       POP  DE
+       POP  BC
+       POP  AF
+       EI
+       RET
+
+;---------------------------
+; MULTYPLEXOR CALL
+;
+DO_MUX: EI
+	PUSH HL
+        PUSH DE
+	PUSH AF
+	LD   A,MUX_LNG-1
+	CP   C
+	JR   NC,MUX_OK
+	POP  AF
+	LD   A,0FFH
+        POP  DE
+	POP  HL
+	RET
+
+MUX_OK: LD   A,C
+	LD   HL,MUX_TBL
+        CALL _IND
+	POP  AF
+        POP  DE
+	EX   (SP),HL
+	RET
+
+MUX_TBL		DW R_VER
+		DW CPM_L
+		DW SET_RST		; FUNC 0,1,2
+		DW READA_KNW		; (3) READ KEY (NO WAIT) (SEE SCANKEY)
+		DW KB_TYP		; (4) READ KEYB TYPE (L) & FLAGS (D)
+		DW G_TIME		; (5) GET CURRENT TIME
+		DW WR_FE		; (6) WRITE TO 'FE' PORT
+		DW ADR_FE
+		DW WR_SYS
+		DW ADR_SYS
+		DW PAGE_MAN
+;         DW ADR_FE             ; (7) GET ADDRESS & DEFAULT OF 'FE' PORT
+;         DW WR_SYS             ; (8) WRITE TO SYS PORT ('TON' & 'TNAB' BITS)
+;         DW ADR_SYS            ; (9) GET ADDRESS & DEFAULT OF SYS PORT
+         ;!!!!!!!!!!!!!!!!!!!!!!!
+;         DW TST_RT     ; RET HL & RTIME
+;         DW SIGN       ; D - CONST
+                        ; RET - HL
+         ;!!!!!!!!!!!!!!!!!!!!!!!
+MUX_LNG  EQU ($-MUX_TBL)/2
+
+
+R_VER:  LD      HL,107H ; MUX FUNC 0 - GET VERSION (HL-VERSION)
+		LD DE,-1
+	XOR	A
+	RET
+
+CPM_L:  LD	BC,1600H; MUX FUNC 1 - LOAD CPM IMAGE
+	CALL	CPM_L1
+	XOR	A
+	RET
+
+SET_RST:LD      DE,(ENT_ADR)    ; MUX FUNC 2 - SET RESTART ADRESS
+        LD      (ENT_ADR),HL    ; HL - ADRESS FOR RESTART (RET IN HL OLD)
+        EX      DE,HL
+	XOR	A
+	RET
+
+G_TIME: LD      DE,(TIME_C)     ; MUX FUNC 5 - GET TIME INTO HL:DE
+        LD      HL,(TIME_C+2)
+        XOR     A
+        RET
+
+ADR_SYS
+WR_SYS
+ADR_FE
+WR_FE
+ERR_FF	LD A,0XFF
+        RET
+
+CHK_SUM	
+;		IF HACK_RBIOS=0
+;		LD HL,0XC000
+;		ELSE
+		RET
+		DW 0XC000
+;		ENDIF
+		XOR A
+CS_LP		ADD A,(HL)
+		ADC A,0
+		INC HL
+		BIT 7,H
+		JR NZ,CS_LP
+		DEC A
+		RET Z
+		JP PROT
+
+;---------------------------------------
+; PAGE MANIPULATION
+PAGE_MAN	LD A,E
+		CP 7
+		JR Z,PM_TST_RU5
+		JR NC,PM_ERR_1
+PM_2		LD (TMP_W),HL
+		LD HL,PM_ROM_TAB
+		CP 4
+		JR NC,PM_1
+		LD HL,PM_RAM_RU5
+		BIT 0,(IX-_FLAG)
+		JR NZ,PM_1
+		LD HL,PM_RAM_RU7
+PM_1		BIT 0,A
+		JR Z,PM_3
+		LD A,6
+		CALL ADD_HL_A
+PM_3		LD A,B
+		CALL _VJMP
+		DB 4
+		DW ERR_FF
+		DW PM_GET_INF
+		DW PM_SET_PG
+		DW PM_GO
+PM_TST_RU5	BIT 0,(IX-_FLAG)
+		JR Z,PM_2
+PM_ERR_1	LD A,1
+		RET
+
+PM_ERR_2	LD A,2
+		RET
+
+PM_ERR_3	LD A,3
+		RET
+
+PM_GET_INF	LD A,D
+		CP 6
+		JR NC,PM_ERR_2
+		CALL ADD_HL_A
+		LD D,(HL)
+		XOR A
+		RET
+
+PM_GO		LD A,D
+		PUSH HL
+		POP IY
+		INC HL
+		EXX
+		LD HL,PM_GO_TAB
+		CP 3
+		JR NC,PM_ERR_3
+		CALL _IND
+		LD DE,4004H
+		LD BC,32-4
+		LDIR
+		LD E,(IX-_SYS_P)
+		DI
+		IM 0
+		LD BC,0C077H
+		XOR A
+		OUT (C),A
+		LD BC,CONF_128
+		OUT (C),A
+		LD A,(IY+4)
+		RCALL PM_SET
+		LD A,10H
+		LD BC,CONF_128
+		OUT (C),A
+		LD A,(IY+0)
+		RCALL PM_SET
+		LD BC,0C077H
+		LD A,6
+		OUT (C),A
+		LD A,(IY+5)
+		RCALL PM_SET
+		XOR A
+		LD BC,CONF_128
+		OUT (C),A
+		LD A,(IY+5)
+		RCALL PM_SET
+		LD BC,0FF77H
+		LD A,E
+		AND 0F8H
+		OR 3
+		LD E,A
+		JP PM_RUN_4000
+
+PM_SET		EXX
+		LD E,L
+		LD D,H
+		LD BC,0F7H
+		JR PM_S_1
+
+PAGE_L1		LD A,(DE)
+		INC DE
+PM_S_1		XOR 80H
+		CPL
+		OUT (C),A
+		LD A,B
+		ADD A,40H
+		LD B, A
+		JR NC,PAGE_L1
+		EXX
+		RET
+
+MON_IMG		include mon.a80
+
+CH1:            ; EDISK  RU7
+		DB 0XFF		;0FFH    ;+ ˆ‡€Š „…‰‘’‚ˆ’…‹œŽ‘’ˆ
+		DB 4		;2       ;+ ŠŽ„ “‘’Ž‰‘’‚€
+		DB 0		;0       ;+ ŽŒ… ˆ‚Ž„€
+		DB 0		;1       ;- ŠŽ„ ˆ‚Ž„€
+		DB 5		;1       ;+ —ˆ‘‹Ž ”ˆŠ‘ˆŽ‚€›• ƒŽ‹Ž‚ŽŠ
+		DB 0		;0       ;+ —ˆ‘‹Ž ‘Œ…›• ƒŽ‹Ž‚ŽŠ
+		DW 0X96		;1AH     ;+ —ˆ‘‹Ž –ˆ‹ˆ„Ž‚ € „ˆ‘Š…
+		DB 0X11		;128     ;+ —ˆ‘‹Ž ‘…Š’ŽŽ‚ € „ŽŽ†Š…
+		DW 0X200	;128     ;+ —ˆ‘‹Ž €‰’Ž‚ ‚ ‘…Š’Ž…
+		DB 1		;1       ;+ —ˆ‘‹Ž ‘ˆ‘’…Œ›• „ŽŽ†…Š
+		DW 0		;0       ;+ ŽŒ… €—€‹œŽƒŽ –ˆ‹ˆ„€
+		DW 0XC5E4	;3328    ;+ —ˆ‘‹Ž ‹ŽŠŽ‚ € „ˆ‘Š…
+		DW 0X44		;128     ;+ —ˆ‘‹Ž ‹ŽŠŽ‚ € „ŽŽ†Š…
+		DW 0X2EE	;1AH     ;+ —ˆ‘‹Ž „ŽŽ†…Š € „ˆ‘Š…
+		DB 8		;8       ;+ „‹ˆ€ ŽŒ…€ ‹ŽŠ€ ‚ ‘…Š’Ž…
+		DW 0X80		;128     ;+ —ˆ‘‹Ž ‡€ˆ‘…‰ ‚ „ˆ…Š’Žˆˆ
+		DB 2
+		DB 2
+		DB 2
+		DW 0
+		DB 0XFF
+		DB 2
+		DB 0X50
+		DW 0X50
+		DW 0
+
+CH1_5:          ; EDISK RU5 (ROM)
+        DB      0FFH    ;+ ˆ‡€Š „…‰‘’‚ˆ’…‹œŽ‘’ˆ
+        DB      2       ;+ ŠŽ„ “‘’Ž‰‘’‚€
+        DB      0       ;+ ŽŒ… ˆ‚Ž„€
+        DB      1       ;- ŠŽ„ ˆ‚Ž„€
+        DB      1       ;+ —ˆ‘‹Ž ”ˆŠ‘ˆŽ‚€›• ƒŽ‹Ž‚ŽŠ
+        DB      0       ;+ —ˆ‘‹Ž ‘Œ…›• ƒŽ‹Ž‚ŽŠ
+		DW 0	;3H      ;+ —ˆ‘‹Ž –ˆ‹ˆ„Ž‚ € „ˆ‘Š…
+        DB      128     ;+ —ˆ‘‹Ž ‘…Š’ŽŽ‚ € „ŽŽ†Š…
+        DW      128     ;+ —ˆ‘‹Ž €‰’Ž‚ ‚ ‘…Š’Ž…
+        DB      1       ;+ —ˆ‘‹Ž ‘ˆ‘’…Œ›• „ŽŽ†…Š
+        DW      0       ;+ ŽŒ… €—€‹œŽƒŽ –ˆ‹ˆ„€
+		DW 0	;     384     ;+ —ˆ‘‹Ž ‹ŽŠŽ‚ € „ˆ‘Š…
+        DW      128     ;+ —ˆ‘‹Ž ‹ŽŠŽ‚ € „ŽŽ†Š…
+		DW 0	;3H      ;+ —ˆ‘‹Ž „ŽŽ†…Š € „ˆ‘Š…
+        DB      8       ;+ „‹ˆ€ ŽŒ…€ ‹ŽŠ€ ‚ ‘…Š’Ž…
+        DW      128     ;+ —ˆ‘‹Ž ‡€ˆ‘…‰ ‚ „ˆ…Š’Žˆˆ
+
+		include conio.a80
+		include scankey.a80
+		include textio.a80
+		include hex.a80
+		include disk.a80
+		include fdc_wd.a80
+		include ed_drv.a80
+		include hddrv.a80
+		include config.a80
+
+CPM_IMG		binclude cpm.img
+		include bios.a80
+CPM_SIZE	EQU $-CPM_IMG
+
+VAR1_I
+;          IN VALUE
+RQCHAN_		DB 0		;	DM      RQCHAN   1       ;ŽŒ… Š€€‹€
+RQCOM_		DB 0		;	DM      RQCOM    1       ;ŠŽŒ€„€
+RQBLN_		DB 0		;	DM      RQBLN    1       ;—ˆ‘‹Ž ‹ŽŠŽ‚
+RQTRACK_	DW 0		;	DM      RQTRACK  2       ;ŽŒ… „ŽŽ†Šˆ
+RQBLOCK_	DW 0X4F00	;	DM      RQBLOCK  2       ;ŽŒ… ‹ŽŠ€
+RQBADR_		DW 0X18		;	DM      RQBADR   2       ;“”… Ž‹œ‡Ž‚€’…‹Ÿ
+
+;          WORK VALUE
+RQHEAD_		DB 7		;	DM      RQHEAD   1       ;ŽŒ… ƒŽ‹Ž‚Šˆ
+RQCYL_		DW 0		;	DM      RQCYL    2       ;ŽŒ… –ˆ‹ˆ„€
+RQDEV_		DB 0		;	DM      RQDEV    1       ;ŠŽ„ “‘’Ž‰‘’‚€
+LOCBUF_		DW 0		;	DM      LOCBUF   2       ;€„…‘ ‹ŽŠ€ ‚ “”……
+RQSECT_		DB 7		;	DM      RQSECT   1       ;ŽŒ… ‘…Š’Ž€
+;DM      DCSEGM  2       ;‘…‹…Š’Ž ‘…ƒŒ…’€
+DCBUF_		DW 0X300	;	DM      DCBUF    2       ;€„…‘ “”…€
+REP_		DB 1		;	DM      REP      1       ;‘—…’—ˆŠ —ˆ‘‹€ Ž‚’ŽŽ‚
+
+;……Œ…›… ŠŽ’Ž‹…€ ”‹ŽŽ‚
+FD_TRKS_	DB 0X0A,7,8,0	;	DM      FD_TRKS  4       ;ŽŒ…€ ’…Š“™ˆ• „ŽŽ†…Š
+
+;‹ŽŠ ‘Ž‘’ŽŸˆŸ “”…€
+BUFT_		DB 0		;	DM      BUFT     1               ;ŽŒ… Š€€‹€
+BUFTRK_		DW 0X1001	;	DM      BUFTRK   2               ;ŽŒ… „ŽŽ†Šˆ
+BUFSEC_		DB 0X3F		;	DM      BUFSEC   1               ;ŽŒ… ‘…Š’Ž€
+
+		DB 0XFE,0,0XA6
+		DUPL 0X0C,0
+		DB 0XFF,0X0F,5,0,8,0X60,4,0X3F,0XC9,0,0
+
+VAR1_S		EQU $-VAR1_I
+
+PALN		DB 0FFH,0FEH,0FDH,0FCH,0EFH,0EEH,0EDH,0ECH,0FFH,0DEH,0BDH,09CH,06FH,04EH,02DH,00CH
+
+		include init.a80
+		include ve31.a80
+		include ci.a80
+
+;		IF HACK_RBIOS=0
+;		ELSE
+		DUPL 0X3E20-$,0
+WR_MAS_SLA	LD BC,HD_HEAD;0XCF
+		LD A,(IY+2)
+		AND 1
+		RRCA
+		RRCA
+		RRCA
+		RRCA
+		OR 0XA0
+		OUT (C),A
+		LD BC,HD_CYLHI;0XAF
+		RET
+
+GET_MAS_SLA	LD C,A
+		LD A,(IY+2)
+		AND 1
+		RRCA
+		RRCA
+		RRCA
+		RRCA
+		OR C
+		LD BC,HD_HEAD;0XCF
+		RET
+;		ENDIF
+
+		DUPL 0X3EFF-$,0
+MY_R_ADR:	DEFW  PTST_1
+
+PM_ROM_TAB:
+        DB      64H,5,2,0,  66H,65H
+        DB      64H,5,2,80H,66H,65H
+PM_RAM_RU5:
+        DB      6,  5,2,0,  6,7
+        DB      6,  5,2,80H,6,7
+PM_RAM_RU7:
+        DB      1CH,5,2,0,  1DH,1EH
+        DB      1CH,5,2,80H,1DH,1EH
+
+PM_GO_TAB:
+        DW      PM_GO_S48
+        DW      PM_GO_S128
+        DW      PM_GO_TRDOS
+
+PM_GO_S48:
+        OUT     (C),E
+        NOP
+        LD      A,30H
+        LD      BC,CONF_128
+        OUT     (C),A
+        RST     0
+
+PM_GO_S128:
+        OUT     (C),E
+        NOP
+        XOR     A
+        LD      BC,CONF_128
+        OUT     (C),A
+        RST     0
+
+PM_GO_TRDOS:
+        OUT     (C),E
+        NOP
+        LD      BC,CONF_128
+        LD      A,30H
+        OUT     (C),A
+        LD      BC,0
+        PUSH    BC
+        JP      3D2FH
+
+;		DUPL 0X3FFE-$,0
+;		DB 0XB2
+
+		DUPL 0X3FF8-$,0
+		DB "ATMCPM"
+		DW DATA_VERS

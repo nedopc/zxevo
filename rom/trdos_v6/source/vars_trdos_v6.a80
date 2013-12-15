@@ -1,0 +1,14 @@
+
+;LAST UPDATE: 09.12.2013 savelij
+
+madrom		EQU 0
+testdrv		EQU 0 ;автотест дисководов
+cmos		EQU 0;1 ;при сбросе брать # дисковода из часов по Глюку
+atm		EQU 3 ;3=ZX Evo
+resident	EQU 0 ;for ZX Evo
+
+		IF madrom=1;       IFN	madrom
+F_PAGE		EQU 0X5C81
+       ELSE	
+F_PAGE		EQU 0X5B5C
+       ENDIF	

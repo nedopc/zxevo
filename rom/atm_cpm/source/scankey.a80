@@ -1,0 +1,391 @@
+
+;.Z80
+KEY_SCAN: XOR A
+          IN A,(0FEH)
+          OR 0E0H
+          INC A
+          RET Z
+          LD L,-8                            ;INITIAL KEY VALUE
+          LD DE,0                            ;INITIALISE DE - NO KEY, NO SHIFTS
+          LD BC,0FEFEH                       ;C-PORT ADRESS, D-COUNTER
+KEY_LINE: IN A,(C)                           ;READ KEYBOARD
+          CPL
+          AND 1FH                            ;MASK FOR RESPONCE BITS
+          JR Z,KEY_DONE                      ;IF NO KEY PRESSED - DOWN
+          LD H,A                             ;HOLD VALUE TO H
+          LD A,L                             ;RESTORE INITIAL KEY VALUE
+LP2:      ADD A,8H                           ;REPEATEDLY SUBTRACT 8 FROM
+          SRL H                              ;THE PRESENTS KEY VALUE UNTIL A
+          JR NC,LP2                          ;KEY-BIT IS FOUND
+          OR A
+          JR NZ,NO_CS
+          SET _K_CS,E
+          JR NO_DN
+
+NO_CS:    CP 0FH
+          JR NZ,NO_SS
+          SET _K_SS,E
+          JR NO_DN
+
+NO_SS:    LD D,A
+NO_DN:    INC H
+          DEC H
+          JR NZ,LP2                          ;IF MORE THE ONE KEY PRESSED - PASS BACK
+KEY_DONE: INC L                              ;KEY VALUE ADJUST FOR NEXT SCANNING LINE
+          RLC B                              ;NEXT KEYBOARD LINE
+          JR C,KEY_LINE                      ;REPEAT FOR ALL LINES
+          LD A,D                             ;FIRST KEY VALUE
+          OR E
+          RET
+
+K_STA:  DB 40H, 80H
+
+K_ST1:  DB 3,4,0BH,0CH,13H,14H,1BH,1CH,23H,24H  ; CS
+K_ST1S  EQU $-K_ST1
+
+K_ST2:  DB 4,5,8,0CH,0DH,0EH,10H,14H,16H,17H,18H,1EH,1FH,20H,26H,27H ; SS
+K_ST2S  EQU $-K_ST2
+K_STAS  EQU $-K_STA
+
+KEYBOARD_: DEC (IX-_K_5CNT)
+        RET P
+        LD  (IX-_K_5CNT),0
+        CALL KEY_SCAN
+        CP  (IX-_K_LAST)
+        JR  Z,K_OLD
+;----- TESTING FOR UNBALANCED EXTEND KEY
+        LD  B,(IX-_K_BUF)
+        LD  (IX-_K_BUF),-1
+        INC B
+        LD  D,A                       ; SAVE FOR LATER
+        LD  C,3FH
+        JR  Z,K_NOBUF
+        DEC B
+        AND C                         ; KEY IN BUF
+        JR  Z,K_ORED
+        XOR B
+        AND C
+        JR  Z,K_ORED
+        LD  A,B
+        AND C
+        JR  Z,K_ORED
+        LD  A,B
+        AND 0C0H
+        OR  C
+        JR  K_SBUF
+
+K_ORED: LD  A,B
+        OR  D
+        JR  K_NXT
+
+K_NOBUF:LD  A,(FLAG)                  ; MASK ALREADY SETED SHIFT'S BIT
+        CPL
+        OR  C                         ; C STILL 3FH
+        AND D
+        LD  HL,K_STA                  ; IT'S MAY BE UNBALANCED EXTEND KEY?
+        LD  BC,K_STAS
+        CPIR
+        LD  A,D
+        JR  NZ,K_NXT                  ; NO - PROCESS IT IN ORDER CASE
+K_SBUF: LD  (K_BUF),A                 ; ELSE - REMEMBER IT & PROCESS LATER
+        RET
+;----- END OF TEST
+
+K_NXT:  LD  B,A
+        LD  A,(KEY_DEL)
+        LD  (K_CNT),A
+        LD  (IX-_K_5CNT),5
+        LD  A,B
+        AND 3FH
+        JR  Z,K_STAT                  ; NO KEY (ONLY SHIFT)- SET STATUS
+        XOR (IX-_K_LAST)
+        AND 3FH                       ; KEY THE SAME?
+        JR  NZ,K_DONE1                ; NO (JUST PRESSED) - DON'T CHANGE STAT
+K_STAT: LD  A,(FLAG)                  ; ELSE SET IT
+        XOR B
+        AND 3FH
+        XOR B
+        LD  (FLAG),A
+K_DONE1:LD  (IX-_K_LAST),B
+        JR  K_DONE
+
+K_OLD:  BIT 7,(IX-_K_CNT)
+        RET NZ
+        DEC (IX-_K_CNT)
+        RET NZ
+        LD  A,(KEY_REP)
+        LD  (K_CNT),A
+K_DONE: LD  A,(FLAG)
+        AND 0C0H
+        XOR (IX-_K_LAST)
+        JP P,KE_NOH
+        LD HL,K_ST1
+        LD C,K_ST1S
+        LD D,40
+        JR K_1
+
+KE_NOH: BIT _K_SS,A
+        JR  Z,K_PUT
+        LD  D,40+K_ST1S
+        LD  HL,K_ST2
+        LD  C,K_ST2S
+K_1:    LD  B,0
+        AND 3FH
+        CPIR
+        JR  NZ,K_PUT
+        LD  A,D
+        ADD A,C
+K_PUT:  OR  A
+        RET Z
+        LD  B,A
+        CP  2FH                      ; IS CAPS LOCK ?
+        JR  NZ,K_CL
+        LD  (IX-_K_CNT),80H          ; YES - PASSIVATE REPEATOR
+        LD  A,(FLAG)
+        XOR 10H                      ; IS _CAPS BIT !!!!!!
+        LD  (FLAG),A
+        XOR A
+        RET
+
+K_CL:   CP  2BH                      ; IS ALT ?
+        JR  NZ,K_AT
+        LD  (IX-_K_CNT),80H          ; YES - PASSIVATE REPEATOR
+        JR  K_OK
+
+K_AT:   CP  7                        ; IS SPACE
+        JR  NZ,K_OK
+        BIT _BREAK,(IX-_FLAG1)
+        JR  NZ,K_OK
+        LD  A,(FLAG)
+        OR  3EH
+        INC A
+        JR  NZ,K_OK
+        LD  A,3
+        RST 18H
+;        LD  HL,BIOS+3
+;        LD  (ENT_ADR),HL
+        JP   ENTR2
+
+K_OK:  LD   A,(TAIL)
+       CP   MAXQUI
+       LD  HL,(BEEP_T)
+       JP   Z,BEEP
+       LD   HL,BEGQUI
+       CALL  ADD_HL_A
+       INC  (IX-_TAIL)
+       LD   (HL),B
+		LD HL,(BEEP_K)
+		JP   BEEP
+ 
+_RK:   BIT _FLEX_C,(IX-_FLAG)        ; READ KEY FOR CP/M
+        JR  Z,READ_W
+        CALL _SK
+        JR  NZ,RD_KI
+        LD   A,1
+        RST  18H
+        PUSH AF
+        CALL CUR_AC
+        POP  AF
+        RST  18H
+        EI
+        CALL READ_W
+        PUSH AF
+        LD   A,1
+        RST  18H
+        PUSH AF
+        CALL CUR_PA
+        POP  AF
+        RST  18H
+        EI
+        POP AF
+        RET
+
+
+READ_W:CALL STAT_K
+       OR   A
+       JR   Z,READ_W
+RD_KI: CALL POPKEY
+       CALL K_ENCODE
+       RET
+
+POPKEY:LD   HL,BEGQUI+1
+       LD   DE,BEGQUI
+       DEC  (IX-_TAIL)
+       LD   A,(DE)
+       LD   BC,MAXQUI-1
+       LDIR
+       RET
+
+STK_1: CALL POPKEY
+STAT_K_
+_SK:   LD   A,(TAIL)
+       OR   A
+       RET  Z
+       LD   A,(BEGQUI)
+       CALL K_ENCODE
+       OR A
+       JR Z,STK_1
+       LD   A,0FFH
+       RET
+
+_RKNW
+READ_KNW: LD A,(TAIL)           ; READ KEY (NO WAIT)
+       OR A                      ; OUT: KEY AVAILABLE: A-0
+       LD A,1                    ;       C-CHAR, H-SCAN, L-KB. TYPE (0 FOR SINC)
+       JR Z,RKNW                 ;       D-KEYB FLAGS (2 HI BIT)
+       CALL POPKEY               ;      NO KEY AVAILABLE: A-1
+       PUSH AF                   ;       D-KEYB FLAGS (2 HI BIT)
+       CALL K_ENCODE
+       LD  C,A
+       POP HL
+       XOR A
+RKNW:  LD  L,0
+       LD  D,(IX-_FLAG)
+       RET
+
+_KBT
+KB_TYP_
+	LD A,(TAIL)              ; READ KEYB TYPE (L) & FLAGS (D)
+        OR A                     ; & KEY AVAIL. (A-0 AV, A-1 NO AV.)
+        LD A,1
+        JR Z,RKNW
+        XOR A
+        JR RKNW
+
+K_ENCODE:
+        LD E,A
+        LD HL,KT_MAIN
+        CALL ADD_HL_A
+        LD A,(HL)
+        OR A
+        SCF
+        RET Z
+        CP ' '
+        RET Z
+        CP 0DH
+        JR NZ,KEN_2
+        LD A,(FLAG)
+        OR 3EH
+        INC A
+        LD A,0DH
+        RET NZ
+        LD A,0AH
+        RET
+KEN_2:  LD D,0
+        EX AF,AF'
+        LD A,E
+        BIT _RUS,(IX-_FLAG)
+        JR Z,IS_NREXT
+        CP 3AH
+        JR C,IS_NREXT
+        SUB 3AH
+        LD HL,KT_RUS
+        CALL ADD_HL_A
+        LD A,(HL)
+        EX AF,AF'
+        JR IS_REXT
+IS_NREXT:CP 28H
+        JR NC,IS_EXT
+        DEC A
+        AND 6
+        CP 2
+        JR NZ,IS_LIT
+        INC D
+IS_LIT: INC D
+IS_EXT: INC D
+IS_REXT:LD A,(FLAG)
+        AND 0C0H
+        RRA
+        RRA
+        RRA
+        RRA
+        ADD A,D
+        LD HL,KT_JMP
+        CALL ADD_HL_A
+        LD A,(HL)
+        CALL ADD_HL_A
+        EX AF,AF'
+        OR A
+        JP (HL)
+
+;DK      MACRO PAR
+;        IRP MRK,<PAR>
+;         DB  MRK-$
+;        ENDM
+;       ENDM
+
+KT_JMP;  DUPL 0X10,0
+;	 DK <<K_CRET>,<K_ERET>,<K_CRET>,<K_RET>>
+;         DK <<K_LOCK>,<K_LOCK>,<K_SYML>,<K_SYMN>>
+;         DK <<K_CAPS>,<K_?LIT>,<K_CAPS>,<K_SYMN>>
+;         DK <<K_LOCK>,<K_LOCK>,<K_CTRL>,<K_LOCK>>
+	 DB LOW (K_CRET-$),LOW (K_ERET-$-1),LOW (K_CRET-$-2),LOW (K_RET-$-3)
+         DB LOW (K_LOCK-$),LOW (K_LOCK-$-1),LOW (K_SYML-$-2),LOW (K_SYMN-$-3)
+         DB LOW (K_CAPS-$),LOW (K__LIT-$-1),LOW (K_CAPS-$-2),LOW (K_SYMN-$-3)
+         DB LOW (K_LOCK-$),LOW (K_LOCK-$-1),LOW (K_CTRL-$-2),LOW (K_LOCK-$-3)
+
+K_LOCK: XOR A
+        SCF
+K_RET:  RET
+
+K_CAPS: XOR 20H
+K_CRET: BIT _CAPS,(IX-_FLAG)
+        RET Z
+        XOR 20H
+        RET
+
+K_CTRL: AND 1FH
+        RET
+
+K_SYMN: SUB 10H
+	CP  0X22
+	JR  Z,KSN_1
+	CP  " "
+	RET NZ
+	LD  A,"_"
+	RET
+
+KSN_1:  LD  A,"@"
+        RET
+
+K__LIT: SUB "("
+        CP 2
+        JR NC,K_LOCK
+        ADD A,A
+        ADD A,"["
+        RET
+
+K_ERET: OR A
+        RET P
+        LD A,0EH
+        BIT _RUS,(IX-_FLAG)
+        RET NZ
+        INC A
+        RET
+
+K_SYML: SUB "A"
+        LD HL,KT_SYM
+        CALL ADD_HL_A
+        LD A,(HL)
+        OR A
+        RET NZ
+        SCF
+        RET
+
+; TABLES
+KT_MAIN:DB 0,"AQ10P",0DH," "
+        DB "ZSW29OL",0
+        DB "XDE38IKM"
+        DB "CFR47UJN"
+        DB "VGT56YHB"
+        DB 18H,13H,5,80H,4,9,0,0,8,1BH
+        DB "*^/,-?.+(`=;):",0X22,"_"
+KT_RUS: DB 5BH,5FH,"=;",5DH,5EH,40H,5CH
+KT_SYM: DB "~*?",0X5C,0,"{}^",0,"-+=.,;",0X22,0,"<|>]/",0,"`[:"
+
+SPKEYB_T	JP KEYBOARD_;	LOC_C13		; -58=5F67
+		JP _RK;	LOC_D0B		; -7F=5F40
+		JP STAT_K_;	SUB_D50
+		JP READ_KNW;	LOC_D61
+		JP KB_TYP_;	LOC_D79
+		RET

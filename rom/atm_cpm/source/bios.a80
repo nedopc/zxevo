@@ -1,0 +1,948 @@
+
+;LAST UPDATE: 21.11.2013 savelij
+
+;.Z80
+;        CSEG
+
+;        TITLE   'BIOS'
+
+;PRINT   MACRO   A1,A2
+;IF1
+;.PRINTX /A1 A2/
+;ENDIF
+;        ENDM
+
+;INCLUDE DEFINES.INC
+
+	PHASE  0EA00H
+;CCP     EQU     $-1600H
+BDOS    EQU     CCP+806H
+CDISK   EQU     0004H           ;CURRENT DISK
+;IOBYTE  EQU     0003H           ;I/O BYTE ADDRESS
+;BIOS    EQU     $
+
+;
+; MC1207-MONITOR ENTRY POINTS
+;
+;_RUN    EQU     0F800H          ;
+;_CI     EQU     0F803H          ;
+;_RI     EQU     0F806H          ;
+;_CO     EQU     0F809H          ;
+;_PO     EQU     0F80CH          ;
+;_LO     EQU     0F80FH          ;
+;_CSTS   EQU     0F812H          ;
+;_IOCHK  EQU     0F815H          ;
+;_IOSET  EQU     0F818H          ;
+;_MEMCK  EQU     0F81BH          ;
+;_IODEF  EQU     0F81EH          ;
+;_REST   EQU     0F821H          ;
+;_RQDIO  EQU     0F824H          ;
+;_RQRES  EQU     0F827H          ;
+;_RQSET  EQU     0F82AH          ;
+;_RQCHK  EQU     0F82DH          ;
+;_MUX    EQU     0F830H          ; C=81H - LOAD CPM
+;---------------------
+
+        JP      BOOT            ; 00
+WBOT1:  JP      WBOOT           ; 03
+        JP      CONST           ; 06
+        JP      CONIN           ; 09
+        JP      CONOUT_          ; 0C
+        JP      LIST            ; 0F
+        JP      PUNCH           ; 12
+        JP      READER          ; 15
+        JP      HOME            ; 18
+        JP      SELDSK          ; 1B
+        JP      SETTRK          ; 1E
+        JP      SETSEC          ; 21
+        JP      SETDMA          ; 24
+        JP      READ            ; 27
+        JP      WRITE           ; 2A
+        JP      LISTST          ; 2D
+        JP      SECTRAN         ; 30
+
+        JP      ASSIGN          ; 33
+        JP      GETCH           ; 36
+        JP      BMUX            ; 39
+;***********************
+; 0FFH - SYMBOL PRESENT.
+;   0H - NO SYMBOL
+;
+CONST:
+        JP      _CSTS
+
+;***********************
+; INTERNAL MUX
+; C-CODE (HI BIT - MON'S MUX)
+BMUX:   BIT     7,C
+        RES     7,C
+        JP      NZ,_MUX
+        INC     C
+        DEC     C
+        JR      Z,SET_CIOERR
+        LD      A,0FFH
+        RET
+
+SET_CIOERR:                             ; SET CRIT IO ERROR HANDLER (HL)
+        LD      DE,(CIOERR_A)           ; RET PREVIOS HANDLER (HL)
+        LD      (CIOERR_A),HL
+        EX      DE,HL
+        XOR     A
+        RET
+
+;***********************
+; INPUT FROM BUFER
+;
+CONIN:
+        JP      _CI
+
+;*************************
+;  CONSOL OUTPUT
+;
+CONOUT_:
+        JP      _CO
+
+;**************************
+;  TYPE MESSAGE GIVEN BY (HL)
+;
+TYPMSG:
+        LD      A,(HL)
+        OR      A
+        RET     Z
+        LD      C,A
+        CALL    CONOUT_
+        INC     HL
+        JP      TYPMSG
+
+;**************************
+;  LIST STATUS
+;
+LISTST:
+;	IF ROM
+LPORT_	EQU	0FBH
+;	ELSE
+;LPORT_	EQU	7BH
+;	ENDIF
+        IN A,(LPORT_)
+        RLCA;RRCA
+        CCF
+        SBC A,A
+        RET
+
+;**************************
+;  LIST CHAR FROM REG. C
+;
+LIST:
+        JP      _LO
+
+;**************************
+;  PUNCH CHAR FROM C
+;
+PUNCH:
+        JP      _PO
+
+;**************************
+;  READ CHAR INTO A
+;
+READER:
+        JP      _RI
+
+;***************************
+;  COLD START
+;
+BOOT:
+        LD      SP,80H
+        EI
+        CALL    ASSIG1
+
+;        LD      DE,BRQ          ; FORMAT EDISK
+;        LD      C,1
+;        CALL    _RQDIO
+
+;        LD      DE,BRQ          ; RESET FLOPPY
+;        XOR     A
+;        LD      C,A
+;        LD      (COM),A
+;        CALL    _RQDIO
+
+        LD      C,0
+        CALL    SELDSK
+        XOR     A
+        LD      (IOBYTE),A
+        LD      (CDISK),A
+        LD      (DISKNO),A
+        LD      HL,MES_1
+        CALL    TYPMSG
+        JP      GOCPM_
+
+;*************************
+;  WARM START
+;
+WBOOT:
+        LD      SP,80H
+        EI
+        LD      C,1H
+        CALL    _MUX
+
+GOCPM_
+        LD      A,0C3H          ; 'JMP' COMMAND
+        LD      (0000),A
+        LD      HL,WBOT1        ; WARM BOOT ADDRESS
+        LD      (1),HL          ;
+        LD      (5),A           ; 'JMP' COMMAND
+        LD      HL,BDOS         ; BDOS ENTRY POINT
+        LD      (6),HL
+        LD      BC,0080H        ; BDOS DMA ADDRESS
+        CALL    SETDMA          ; SET IT
+        LD      A,(CDISK)       ; CURRENT DRIVE FOR CCP
+        LD      C,A
+        JP      CCP             ; START CPM
+
+;************************
+;  MOVE TO THE TRACK 00 POSITION OF
+; CURRENT DRIVE
+;
+HOME:
+        LD      HL,0
+        LD      (TRACK),HL
+        LD      BC,0100H        ; SEEK COMMAND + 0 BLN
+        JP      EXEC
+
+;************************
+;  SELECT DISK GIVEN BY REG. C
+;
+SELDSK: LD      A,C
+        CP      TOT_DSK
+        JP      NC,SELERR
+        LD      HL,DSKTAB
+        LD      B,0
+        ADD     HL,BC
+        LD      A,(HL)
+        OR      A               ; CHANAL ASSIGNED ?
+        JP      P,SEL1          ; O'KEY
+SELERR: LD      HL,0
+        LD      A,(DISKNO)      ; OLD DISK
+        LD      (CDISK),A       ; SELECT IT
+        RET                     ; ERROR
+SEL1:
+        LD      (CHAN),A        ; UPDATE REQUEST BLOCK
+        LD      A,C
+        LD      (DISKNO),A      ; STORE NEW DISK NUMBER
+        LD      L,C
+        LD      H,0
+        ADD     HL,HL
+        ADD     HL,HL
+        ADD     HL,HL
+        ADD     HL,HL
+        LD      DE,DPBASE
+        ADD     HL,DE
+        RET                     ; O'KEY. (HL<>0)
+;**********************
+;  SET TRACK GIVEN BY REG. C
+;
+SETTRK:
+        LD      HL,TRACK
+        LD      (HL),C
+        INC     HL
+        LD      (HL),B
+        XOR     A
+        RET
+
+;       LXI     B,0100H         ; SEEK COMMAND + 0 BLN
+;       JMP     EXEC            ; EXECUTE IT.
+
+;**********************
+;  SET SECTOR GIVEN BY REG. C
+;
+SETSEC:
+        LD      A,C
+        LD      (BLOCK),A
+        XOR     A               ; O'KEY
+        RET
+
+;**********************
+;  TRANSLATE THE SECTOR GIVEN BY BC
+; USING THE TRANSLATE TABLE GIVEN BY DE
+;
+SECTRAN:
+        LD      HL,1
+        ADD     HL,BC
+        RET
+
+;**********************
+;  SET DMA ADDRESS GIVEN BY REG. B & C
+;
+SETDMA:
+        LD      L,C
+        LD      H,B
+        LD      (DMA),HL
+        RET
+
+;*************************
+;  WRITE ONE SECTOR
+;
+WRITE:  LD      BC,0601H        ; WRITE 1 SECTOR
+        JP      EXEC
+
+;**********************
+;  READ ONE SECTOR
+;
+READ:   LD      BC,0401H
+        CALL    EXEC
+
+;       PUSH    PSW
+;       LHLD    DMA
+;       MVI     B,128
+;       CALL    DUMP
+;       LXI     H,CRLF
+;       CALL    TYPMSG
+;       POP     PSW
+
+        RET
+
+;***********************
+MS:     EX      (SP),HL
+        CALL    TYPMSG
+        INC     HL
+        EX      (SP),HL
+        RET
+
+;**********************
+;  EXECUTION OF COMMAND
+;    (B) - COMMAND
+;    (C) - NUMBER OF BLOCKS
+;
+EXEC:
+        LD      HL,BRQ+1
+        LD      (HL),B          ; COMMAND
+        INC     HL
+        LD      (HL),C          ; # OF BLOCKS
+
+;       LXI     H,CRLF
+;       CALL    TYPMSG
+;       LDA     BRQ
+;       CALL    HEX
+;       CALL    MS
+;       DB 'CHANAL  ',0
+;       LDA     BRQ+1
+;       CALL    HEX
+;       CALL    MS
+;       DB 'COMMAND  ',0
+;       LDA     TRACK
+;       CALL    HEX
+;       CALL    MS
+;       DB 'TRACK  ',0
+;       LDA     BLOCK
+;       CALL    HEX
+;       CALL    MS
+;       DB 'BLOCK',0DH,0AH,0
+;       CALL    _CI
+
+AGAIN:
+        LD      DE,BRQ
+        LD      A,(DE)
+        LD      C,A             ; CHANAL
+        CALL    DISK_            ; EXECUTION OF COMMAND
+        OR      A               ; O'KEY ?
+        RET     Z               ; YES. RETURN
+        LD      BC,BRQ
+        CALL    DEF_CIO         ; IN: A-ERROR, BC-REQ BLOCK
+CIOERR_A EQU $-2                ; OUT: (C) 0-ABORT, 1-RETRY, 2-IGNORE, 3-FAIL
+        LD      A,C
+        OR      A
+        JP      Z,WBOT1
+        DEC     A
+        JR      Z,AGAIN1
+        DEC     A
+        RET
+AGAIN1: LD      HL,COM
+        LD      A,(HL)
+        PUSH    AF
+        LD      (HL),3
+        LD      DE,BRQ
+        LD      A,(DE)
+        LD      C,A             ; CHANAL
+        CALL    DISK_            ; EXECUTION OF COMMAND
+        POP     AF
+        LD      (COM),A
+        JR      AGAIN
+
+DEF_CIO:PUSH    AF
+        LD      HL,ERRMS1
+        CALL    TYPMSG
+        POP     AF
+        CALL    HEX             ; ERROR CODE
+        LD      HL,ERRMS2
+        CALL    TYPMSG
+        LD      A,(CHAN)
+        CALL    HEX             ; CHANAL
+        LD      A,(COM)
+        CALL    HEX             ; COMMAND
+        LD      A,(TRACK)
+        CALL    HEX             ; TRACK
+        LD      A,(BLOCK)
+        CALL    HEX             ; BLOCK
+ASK:    LD      HL,ASKMSG
+        CALL    TYPMSG
+        CALL    CONIN
+        CP 3
+        JR Z,ABORT_CLR
+        CALL    UPCASECHAR
+        LD      C,A
+        CALL    CONOUT_
+        LD      HL,RSTR
+        LD      BC,4
+        CPIR
+        JR      NZ,ASK
+        RET
+
+ABORT_CLR	XOR A
+	LD (4),A
+	LD C,A
+	RET
+
+RSTR:   DB "FIRA"
+
+;
+; TYPE BYTE IN HEX FROM (A) & ":" AFTER IT
+;
+HEX:
+        PUSH    AF
+        RRCA
+        RRCA
+        RRCA
+        RRCA
+        CALL    DHEX_
+        POP     AF
+        CALL    DHEX_
+        LD      C,":"
+        JP      CONOUT_
+
+DUMP:   LD      A,(HL)
+        CALL    HEX
+        INC     HL
+        DEC     B
+        JP      NZ,DUMP
+        RET
+
+;
+; TYPE ONE HEX DIGIT
+;
+DHEX_   AND     0FH
+        ADD     A,90H
+        DAA
+        ADC     A,40H
+        DAA
+        LD      C,A
+        JP      CONOUT_
+;
+;
+UPCASECHAR:
+        CP      60H
+        RET     C
+        SUB     20H
+        RET
+;
+; DISK SYSTEM CALL
+;
+DISK_
+        LD      A,C             ; REQUESTED CHANAL
+        JP      _RQDIO          ; EXECUTE
+
+;
+; GET LOGICAL DISK DESCRIPTOR BY ITS DISK NUMBER
+;
+;  INPUT :
+;     C  - DISK NUMBER
+;   (DE) - BUFFER FOR 34-BYTE DESCRIPTOR
+;  OUTPUT :
+;     A  - ERROR CODE
+;     C  - CHANAL NUMBER
+; BUFFER - DESCRIPTOR (34 BYTES)
+;
+GETCH:
+        LD      HL,DSKTAB
+        LD      B,0
+        ADD     HL,BC
+        LD      A,(HL)
+        OR      A
+        RET     M       ; RETURN WITH 0FFH IF NOT ASSIGNED
+        LD      C,A
+        PUSH    BC
+        CALL    _RQCHK
+        POP     BC
+        RET
+;
+; ASSIGN CHANAL GIVEN  BY
+;
+;  INPUT :
+;    (B) - DISK NUMBER       (hi bit - not rebuild disk system)
+;    (C) - CHANAL NUMBER     (-1 - passivate)
+;   (DE) - DESCRIPTOR        (0  - not assign disk chanal)
+;  OUTPUT :
+;    (A) - ERROR CODE
+;
+;    IMPORTANT WARNING :
+;      WARM REBOOT OR BDOS FUNCTION "RESET DISK SYSTEM" (#13)
+;      HIGLY RECOMMENDED TO BE PERFORMED AFTER CALLING THIS BIOS FUNCTION !
+;
+ASSIGN:
+        PUSH    BC
+        PUSH    DE
+		LD A,D
+		OR E
+		CALL NZ,_RQSET
+        POP     DE
+        POP     BC
+        OR      A
+        RET     NZ              ; SET CHANAL SUCCESS ?
+        LD      HL,DSKTAB       ; STORE CHANAL NUMBER IN DISK TABLE
+        LD      A,C
+		BIT 7,B
+		RES 7,B
+        LD      C,B
+        LD      B,0
+        ADD     HL,BC
+        LD      (HL),A          ; UPDATE DISK TABLE
+
+		RLA
+		LD A,0
+		RET NZ
+		RET C
+
+ASSIG1: LD      HL,MEM          ; RESET OF MEMORY ALLOCATION
+        LD      (MEMPTR),HL
+        LD      C,0             ; LOOP BY DISKS
+        LD      HL,DSKTAB
+        LD      (ASSDSK),HL
+        LD      HL,DPBASE
+        LD      (ASSDPA),HL
+
+ASS1:   PUSH    BC
+        LD      HL,(ASSDSK)
+        LD      A,(HL)
+        OR      A
+        JP      M,ASS7          ; DISK NOT ASSIGNED ?
+        LD      C,A             ; CHANAL
+        LD      DE,CH           ;
+        CALL    _RQCHK          ; GET CHANAL DESCRIPTOR
+        JP      Z,ASS_OK
+        LD      (HL),0FFH       ; ERROR - PASSIVATE CHANAL
+        JP      ASS7
+ASS_OK:
+
+        LD      HL,(ASSDPA)     ; BLOCK OF POINTERS
+        LD      C,8             ; CLEAR 8 BYTES FOR BDOS
+        XOR     A
+ASS2:   LD      (HL),A
+        INC     HL
+        DEC     C
+        JP      NZ,ASS2
+        INC     HL              ; DIRECTORY BUFFER
+        INC     HL
+        LD      E,(HL)          ; DPB ADDRESS
+        INC     HL
+        LD      D,(HL)
+        INC     HL
+        PUSH    HL              ; ---- PREPARING DPB ----
+        LD      HL,(DBLTR)      ; BLOCKS PER TRACK
+        EX      DE,HL           ; DPB ADDRESS
+        LD      (HL),E          ; SPT
+        INC     HL
+        LD      (HL),D
+        PUSH    HL
+        LD      HL,0            ; MAKING TRACK OFFSET FOR CP/M
+        LD      C,0             ; OFFSET
+        LD      A,(DALTCYL)
+        OR      A
+        JP      Z,ASS31
+ASS3:   ADD     HL,DE           ; HL+=SPT
+        INC     C               ; OFFSET++
+        DEC     A
+;       CPI     64              ; SIZE OF SYSTEM IN BLOCKS
+        JP      NZ,ASS3         ;
+ASS31:  EX      DE,HL           ; DE:=OFFSET*DBLTR
+        POP     HL              ; DPB+1
+        LD      A,C
+        LD      BC,12           ; OFFSET
+        ADD     HL,BC
+        LD      (HL),A
+        PUSH    HL
+        LD      HL,(DBLDR)      ; BLOCKS PER DRIVE
+        LD      A,L             ; DSM=(DBLDR-OFFSET*DBLTR) DIV 16 - 1
+        SUB     E
+        LD      L,A
+        LD      A,H
+        SBC     A,D
+        LD      H,A
+        LD      A,L
+        RRCA
+        RRCA
+        RRCA
+        RRCA
+        AND     0FH
+        LD      L,A
+        LD      A,H
+        RRCA
+        RRCA
+        RRCA
+        RRCA
+        LD      H,A
+        AND     0F0H
+        OR      L
+        LD      L,A
+        LD      A,H
+        AND     0FH
+        LD      H,A
+        DEC     HL
+        EX      DE,HL           ;DE=DSM
+        POP     HL
+        LD      BC,-8
+        ADD     HL,BC
+        LD      (HL),E          ;DSM
+        INC     HL
+        LD      (HL),D
+        DEC     HL
+        DEC     HL              ;IF DSM<256 THEN EXM:=1 ELSE DSM:=0
+        LD      (HL),0
+        LD      A,D
+        OR      A
+        JP      NZ,ASS5         ;<>0 ?
+        INC     (HL)
+ASS5:   XOR     A               ;ALVSIZ=DSM/8+1
+        EX      DE,HL
+        ADD     HL,HL
+        RLA
+        ADD     HL,HL
+        RLA
+        ADD     HL,HL
+        RLA
+        ADD     HL,HL
+        RLA
+        ADD     HL,HL
+        RLA
+        LD      L,H
+        LD      H,A
+        INC     HL
+        LD      (ALVSIZ),HL
+        EX      DE,HL
+        PUSH    HL
+        LD      HL,(DDIRENT)
+        DEC     HL
+        EX      DE,HL
+        POP     HL
+        INC     HL
+        INC     HL
+        INC     HL
+        LD      (HL),E  ;DRM=DDIRENT-1
+        INC     HL
+        LD      (HL),D
+        PUSH    HL
+        EX      DE,HL   ;DE=DDIRENT-1
+        ADD     HL,HL   ;H=DRM*32/2048 (32 BYTES PER DIRECTORY ENTRY)
+        ADD     HL,HL   ;              (2048 BYTES PER LOGICAL BLOCK)
+        LD      DE,0    ;RESERVED BLOCKS (LOGICAL) FOR DIRECTORY
+        INC     H
+ASS4:   SCF
+        LD      A,D
+        RRA
+        LD      D,A
+        LD      A,E
+        RRA
+        LD      E,A
+        DEC     H
+        JP      NZ,ASS4
+        POP     HL
+        INC     HL
+        LD      (HL),D  ;AL0
+        INC     HL
+        LD      (HL),E  ;AL1
+        INC     HL
+        EX      DE,HL
+        LD      A,(DHEADR);CHANGED HEADS PRESENT ?
+        OR      A
+        LD      HL,0
+        JP      Z,ASS6  ;NO. CHECK AREA = 0
+        LD      HL,(DDIRENT);YES. CHECK AREA = DDIRENT/4
+        XOR     A
+        LD      A,H
+        RRA
+        LD      H,A
+        LD      A,L
+        RRA
+        LD      L,A
+        XOR     A
+        LD      A,H
+        RRA
+        LD      H,A
+        LD      A,L
+        RRA
+        LD      L,A
+ASS6:   EX      DE,HL
+        LD      (HL),E  ;CKS
+        INC     HL
+        LD      (HL),D  ; --- DPB READY NOW ---
+        LD      HL,(MEMPTR)
+        EX      DE,HL
+        EX      (SP),HL ; HL=CSV
+        LD      (HL),E  ; CSV=MEMPTR
+        INC     HL
+        LD      (HL),D
+        INC     HL
+        EX      (SP),HL ;HL=CKS
+        ADD     HL,DE   ;MEMPTR=MEMPTR+CKS
+        POP     DE      ;DE=ALV
+        EX      DE,HL
+        LD      (HL),E
+        INC     HL
+        LD      (HL),D
+        LD      HL,(ALVSIZ)
+        ADD     HL,DE
+        LD      (MEMPTR),HL;MEMPTR=MEMPTR+ALVSIZ
+ASS7:
+        LD      HL,(ASSDSK)
+        INC     HL
+        LD      (ASSDSK),HL
+        LD      HL,(ASSDPA)
+        LD      BC,16
+        ADD     HL,BC
+        LD      (ASSDPA),HL
+        POP     BC      ;C=DISK NUMBER
+        INC     C
+        LD      A,C
+        CP      10
+        JP      NZ,ASS1
+
+        XOR     A       ;ASSIGN O"KEY
+        RET
+
+;------------------------------
+MES_1		DB "CP/M  V2.2     COPYRIGHT(C)  BY  DIGITAL RESEARCH"
+		DB 0DH,0AH,"BIOS  V",VERSBIOS," COPYRIGHT(C)  BY  XVR - PRODUCT"
+CR_LF:   DB      0DH,0AH,0
+ERRMS1: DB      0DH,0AH,"BIOS ERROR ",0
+ERRMS2: DB      " AT ",0
+ASKMSG: DB      0DH,0AH
+        DB      " SELECT ((R)ETRY, (I)GNORE, (A)BORT, (F)AIL) :"
+        DB      0
+
+BRQ:                    ; REQUEST BLOCK FOR åMC1207-MONITOR
+CHAN:   DB      1       ; CHANAL
+COM:    DB      2       ; COMMAND
+BLN:    DB      0E5H    ; NUMBER OF BLOCKS
+TRACK:  DW      1       ; TRACK NUMBER
+BLOCK:  DW      0       ; BLOCK NUMBER
+DMA:    DW      80H     ; BUFFER ADDRESS
+
+DISKNO: DB 0;    1       ; DISK NUMBER
+
+DSKTAB:
+        DB      1,0,2,0FFH,0FFH
+        DB      0FFH,0FFH,0FFH,0FFH,0FFH
+TOT_DSK EQU     $-DSKTAB
+
+DPBASE:
+        DW      0,0
+        DW      0,0
+        DW      DIRBF,DPB0
+        DW      0,0
+
+        DW      0,0
+        DW      0,0
+        DW      DIRBF,DPB1
+        DW      0,0
+
+        DW      0,0
+        DW      0,0
+        DW      DIRBF,DPB2
+        DW      0,0
+
+        DW      0,0
+        DW      0,0
+        DW      DIRBF,DPB3
+        DW      0,0
+
+        DW      0,0
+        DW      0,0
+        DW      DIRBF,DPB4
+        DW      0,0
+
+        DW      0,0
+        DW      0,0
+        DW      DIRBF,DPB5
+        DW      0,0
+
+        DW      0,0
+        DW      0,0
+        DW      DIRBF,DPB6
+        DW      0,0
+
+        DW      0,0
+        DW      0,0
+        DW      DIRBF,DPB7
+        DW      0,0
+
+        DW      0,0
+        DW      0,0
+        DW      DIRBF,DPB8
+        DW      0,0
+
+        DW      0,0
+        DW      0,0
+        DW      DIRBF,DPB9
+        DW      0,0
+;
+;
+;
+DPB0:   DW      0
+        DB      4
+        DB      15
+        DB      0
+        DW      0
+        DW      0
+        DW      0
+        DW      0
+        DW      0
+DPB1:   DW      0
+        DB      4
+        DB      15
+        DB      0
+        DW      0
+        DW      0
+        DW      0
+        DW      0
+        DW      0
+DPB2:   DW      0
+        DB      4
+        DB      15
+        DB      0
+        DW      0
+        DW      0
+        DW      0
+        DW      0
+        DW      0
+DPB3:   DW      0
+        DB      4
+        DB      15
+        DB      0
+        DW      0
+        DW      0
+        DW      0
+        DW      0
+        DW      0
+DPB4:   DW      0
+        DB      4
+        DB      15
+        DB      0
+        DW      0
+        DW      0
+        DW      0
+        DW      0
+        DW      0
+DPB5:   DW      0
+        DB      4
+        DB      15
+        DB      0
+        DW      0
+        DW      0
+        DW      0
+        DW      0
+        DW      0
+DPB6:   DW      0
+        DB      4
+        DB      15
+        DB      0
+        DW      0
+        DW      0
+        DW      0
+        DW      0
+        DW      0
+DPB7:   DW      0
+        DB      4
+        DB      15
+        DB      0
+        DW      0
+        DW      0
+        DW      0
+        DW      0
+        DW      0
+DPB8:   DW      0
+        DB      4
+        DB      15
+        DB      0
+        DW      0
+        DW      0
+        DW      0
+        DW      0
+        DW      0
+DPB9:   DW      0
+        DB      4
+        DB      15
+        DB      0
+        DW      0
+        DW      0
+        DW      0
+        DW      0
+        DW      0
+
+BIOS_LEN  EQU  $-BIOS
+;PUBLIC    BIOS_LEN
+;PRINT <BIOS LENGTH > %(BIOS_LEN)
+
+;DPB0:
+;0      DW      32              ; SPT  SECT. PER TRACK
+;2      DB      4               ; BSH  BLOCK SHIFT FACTOR
+;3      DB      15              ; BLM  BLOCK MASK
+;4      DB      0               ; EXM  EXTENT MASK
+;5      DW      315             ; DSM  DISK SIZE -1
+;7      DW      127             ; DRM  DIRECTORY ENTRYES
+;9      DB      11000000B       ; AL0  ALLOC 0
+;10     DB      00000000B       ; AL1  ALLOC 1
+;11     DW      32              ; CKS  CHECK SIZE
+;13     DW      2               ; OFFS TRACK OFFSET
+
+NSECT   EQU   $
+WBSPT   EQU   NSECT+   1
+MEMPTR  EQU   WBSPT+   1
+ASSDSK  EQU   MEMPTR+  2
+ASSDPA  EQU   ASSDSK+  2
+ALVSIZ  EQU   ASSDPA+  2
+
+;CH:                    ; äÄçÄãúçõâ éèàëÄíÖãú (èéåÖëíàíú Ç èáì)
+DTYP    EQU   ALVSIZ+    2       ;äéÑ ìëíêéâëíÇÄ
+CH      EQU   DTYP
+DUS     EQU   DTYP+      1       ;çéåÖê èêàÇéÑÄ
+DDTYP   EQU   DUS+       1       ;äéÑ èêàÇéÑÄ
+DHEADF  EQU   DDTYP+     1       ;óàëãé îàäëàêéÇÄççõï ÉéãéÇéä
+DHEADR  EQU   DHEADF+    1       ;óàëãé ëåÖççõï ÉéãéÇéä
+DCYLN   EQU   DHEADR+    1       ;óàëãé ñàãàçÑêéÇ çÄ ÑàëäÖ
+DSECTT  EQU   DCYLN+     2       ;óàëãé ëÖäíéêéÇ çÄ ÑéêéÜäÖ
+DBYTES  EQU   DSECTT+    1       ;óàëãé ÅÄâíéÇ Ç ëÖäíéêÖ
+DALTCYL EQU   DBYTES+    2       ;óàëãé ÄãúíÖêçÄíàÇçõï ñàãàçÑêéÇ
+DBEGCYL EQU   DALTCYL+   1       ;çéåÖê çÄóÄãúçéÉé ñàãàçÑêÄ
+DBLDR   EQU   DBEGCYL+   2       ;óàëãé ÅãéäéÇ çÄ ÑàëäÖ
+DBLTR   EQU   DBLDR+     2       ;óàëãé ÅãéäéÇ çÄ ÑéêéÜäÖ
+DTRACK  EQU   DBLTR+     2       ;óàëãé ÑéêéÜÖä çÄ ÑàëäÖ
+DSEKTL  EQU   DTRACK+    2       ;ÑãàçÄ çéåÖêÄ ÅãéäÄ Ç ëÖäíéêÖ
+DDIRENT EQU   DSEKTL+    1       ;óàëãé áÄèàëÖâ Ç ÑàêÖäíéêàà
+DIF0    EQU   DDIRENT+   2       ;êÄáåÖíäÄ èÖêÇéâ ÑéêéÜäà
+DIF1    EQU   DIF0+      1       ;êÄáåÖíäÄ Çíéêéâ ÑéêéÜäà
+DIF2    EQU   DIF1+      1       ;êÄáåÖíäÄ ÇëÖï éëíÄÇòàïëü ÑéêéÜÖä
+DTIF    EQU   DIF2+      1       ;ëåÖôÖçàÖ èÖêÇéÉé ëÖäíéêÄ
+DF8     EQU   DTIF+      1       ;èêàáçÄä 8-ÑûâåéÇéÉé ÑàëäÄ
+                                ;àãà çéåÖê çÄóÄãúçéâ ÉéãéÇäà
+DFMFM   EQU   DF8+       1       ;èãéíçéëíú áÄèàëà
+DFN     EQU   DFMFM+     1       ;êÄáåÖê ëÖäíéêÄ
+DFGPL   EQU   DFN+       1       ;GAP3 Ñãü óíÖçàü/áÄèàëà
+DFGPF   EQU   DFGPL+     1       ;GAP3 Ñãü îéêåÄíÄ
+DFSRHUT EQU   DFGPF+     1       ;ÇêÖåü òÄÉÄ
+                                ;àãà ÇêÖåü òÄÉÄ èêà SEEK
+DFHLT   EQU   DFSRHUT+   1       ;ÇêÖåü éèìëäÄçàü ÉéãéÇäà
+                                ;àãà ÇêÖåü òÄÉÄ èêà RECALIBRATE
+DFMOTOR EQU   DFHLT+     1       ;èêàáçÄä ÇäãûóÖçàü åéíéêÄ
+
+
+DIRBF   EQU   DFMOTOR+   1       ; DIRECTORY BUFFER
+MEM     EQU   DIRBF+     128
+
+		DEPHASE
