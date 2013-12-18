@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 15.12.2013 savelij
+;LAST UPDATE: 18.12.2013 savelij
 
 ;ˆ‘€’…‹œ Š€ (€„…‘ ‚ IX)
 ;+00 X Š„ˆ€’€
@@ -96,9 +96,9 @@ MKILLSTXT	DB 0X17,0XFF,"Services"
 		DB 0X0D," N.Dismount image"		;n
 		DB 0
 MKILLS_KEY	IF BUILD_DEBUG=1
-		DB LOW (KILL1-$-1),"rekimscfun"
-		ELSE
 		DB LOW (KILL1-$-1),"rekimscxfun"
+		ELSE
+		DB LOW (KILL1-$-1),"rekimscfun"
 		ENDIF
 
 KILL1		DW RESETNGS				;r
