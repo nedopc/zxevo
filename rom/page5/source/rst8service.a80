@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 18.12.2013 savelij
+;LAST UPDATE: 06.02.2014 savelij
 
 		include ../../macros.a80
 		include ../../define.a80
@@ -137,7 +137,7 @@ CODE_TABL	DW AY_PRN_INIT_			;40
 		DW SCRUP_			;49
 		DW SCRDN_			;4A
 		DW SET_MODE_			;4B
-		DW SET_MAP_			;4C
+		DW RESERVED			;4C
 		DW RESERVED			;4D
 		DW RESERVED			;4E
 		DW RESERVED			;4F
@@ -602,6 +602,8 @@ READ_KEYS
 		include fat/z_sd_drv.a80
 		include fat/nemo_drv.a80
 		include fat/read_fat.a80
+
+SUPPORT_EXT	DB "TRDSCLFDITAPSPG$C FNTBMPROM",0
 
 ;‘’ˆ‚Š€ ‘ˆ‘Š€ €‰„…›• „ˆ…Š’ˆ‰/”€‰‹‚
 SORT_FINDFILES	LD HL,(KOL_FOUNDED)

@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 16.09.2013 savelij
+;LAST UPDATE: 02.02.2014 savelij
 
 		include ../../macros.a80
 		include ../../define.a80
@@ -192,7 +192,11 @@ RSTKEYS2	LD H,CMOS_BYTE_00
 		LD A,PAGE_EVODOS
 		OUT (C),A
 		LD B,HIGH (WIN_A3)
+		IF NEW_DOS=1
+		LD A,P_DOS
+		ELSE
 		LD A,P_ADD_DOS
+		ENDIF
 		OUT (C),A			
 		LD HL,CPU3
 		LD DE,CPU2
