@@ -376,7 +376,7 @@ CH0:    DB      0FFH    ;ˆ‡€Š „…‰‘’‚ˆ’…‹œŽ‘’ˆ
         DB      1       ;€‡Œ… ‘…Š’Ž€
         DB      80      ;GAP3 „‹Ÿ —’…ˆŸ/‡€ˆ‘ˆ
         DB      80      ;GAP3 „‹Ÿ ”ŽŒ€’€
-        DB      0    ;‚…ŒŸ ˜€ƒ€
+        DB      0       ;‚…ŒŸ ˜€ƒ€
         DB      0       ;‚…ŒŸ Ž“‘Š€ˆŸ ƒŽ‹Ž‚Šˆ
         DB      0       ;ˆ‡€Š ‚Š‹ž—…ˆŸ ŒŽ’Ž€
 
@@ -385,13 +385,13 @@ BSS_START	EQU $+0X3A
 
 CH2		EQU $
 CHED		EQU CH2+0X23
-CH3     EQU     CHED+0X23-5
-CH4     EQU     CH3+23H
-CH5     EQU     CH4+23H
-CH6     EQU     CH5+23H
-CH7     EQU     CH6+23H
-CH8     EQU     CH7+23H
-CH9     EQU     CH8+23H
+CH3		EQU     CHED+0X23-5
+CH4		EQU     CH3+23H
+CH5		EQU     CH4+23H
+CH6		EQU     CH5+23H
+CH7		EQU     CH6+23H
+CH8		EQU     CH7+23H
+CH9		EQU     CH8+23H
 
 BUF_MON		EQU CH9+23H      ; DMON BUFFER (1024 BYTE)
 BSS_END		EQU BUF_MON+1024

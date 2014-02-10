@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 13.12.2013 savelij
+;LAST UPDATE: 02.02.2014 savelij
 
 		include ../../macros.a80
 		include ../../define.a80
@@ -7,7 +7,7 @@
 		include bas_trd_vars.a80
 
 ;		     0123456789012345678
-NUMBER_VERS	EQU " EVO-DOS Ver 0.36  "
+NUMBER_VERS	EQU " EVO-DOS Ver 0.37  "
 ZASTV_X		EQU 7					;Š„ˆ€’€ X …—€’ˆ €„ˆ‘ˆ BETA128
 ZASTV_Y		EQU 6					;Š„ˆ€’€ Y …—€’ˆ €„ˆ‘ˆ BETA128
 ZASTV_PIX	EQU ZASTV_Y*0X20+0X4000+ZASTV_X+9	;€„…‘ ‚›‚„€ ‘Š˜…›• “ƒ‹Š‚

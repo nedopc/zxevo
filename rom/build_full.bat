@@ -34,6 +34,14 @@ cd ..\..\page1\evo-dos
 ..\..\..\tools\asw\bin\asw -U -L evo-dos_virt.a80
 ..\..\..\tools\asw\bin\p2bin evo-dos_virt.p ..\evo-dos_virt.rom -r $-$ -k
 
+cd ..\dos
+
+..\..\..\tools\asw\bin\asw -U -L trdos.a80
+..\..\..\tools\asw\bin\p2bin trdos.p ..\trdos.rom -r $-$ -k
+
+..\..\..\tools\asw\bin\asw -U -L evodos.a80
+..\..\..\tools\asw\bin\p2bin evodos.p ..\evodos.rom -r $-$ -k
+
 cd ..\..\page2\source
 
 ..\..\..\tools\asw\bin\asw -U -L spec128_0.a80
@@ -79,8 +87,8 @@ cd ..\..\trdos_v6\source
 
 cd ..\..
 
-rem copy /B /Y page3\basic48.rom+page1\evo-dos_virt.rom+msxdos\msxdos.rom+ff_16k.rom+page5\rst8service.rom+page3\basic48.rom+page1\evo-dos_emu3d13.rom+page2\basic128.rom+page0\services.rom ers.rom
 copy /B /Y page3\basic48.rom+page1\evo-dos_virt.rom+atm_msxdos\msxdos.rom+atm_cpm\rbios.rom+page5\rst8service.rom+page3\basic48.rom+page1\evo-dos_emu3d13.rom+page2\basic128.rom+page0\services.rom ers.rom
+rem copy /B /Y page3\basic48.rom+page1\trdos.rom+atm_msxdos\msxdos.rom+atm_cpm\rbios.rom+page5\rst8service.rom+page3\basic48.rom+page1\evodos.rom+page2\basic128.rom+page0\services.rom ers.rom
 copy /B /Y page3\2006.rom+trdos_v6\dosatm3.rom+page2\basic128.rom+page0\glukpen.rom glukpent.rom
 
 cd profrom\source
@@ -90,7 +98,7 @@ cd profrom\source
 
 cd ..\..
 
-rem          64         64          64                   128          192
+rem        64         64          64                   128          192
 copy /B /Y ff_64k.rom+ff_64k.rom+glukpent.rom+profrom\evoprofrom.rom+ers.rom zxevo.rom
 
 del ers.rom
