@@ -1,0 +1,577 @@
+
+;LAST UPDATE: 03.02.2014 savelij
+
+;        MAIN	"*",#C6
+WB		EQU %01000111
+WW		EQU %11111111
+BB		EQU %00000000
+BW		EQU %10111000
+		DUPL LOW (-$),0;        DS	.(-$)
+HINTLEFT
+;1,3,0,2
+      ;1
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	BW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	BW
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	BB
+      ;3
+        DB	BW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	BW
+      ;0
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	BW
+        DB	WW
+        DB	WW
+        DB	BW
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	BB
+      ;2
+        DB	BB
+        DB	BB
+        DB	BW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	BW
+        DB	BB
+        DB	BB
+HINTRIGHT
+;1,3,0,2
+      ;2
+        DB	BB
+        DB	BB
+        DB	WB
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WB
+        DB	BB
+        DB	BB
+      ;0
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	WB
+        DB	WW
+        DB	WW
+        DB	WB
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	BB
+      ;3
+        DB	WB
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WB
+      ;1
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	WB
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WB
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	BB
+HINTDOWN
+;1,3,0,2
+      ;1
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	BW
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	BB
+      ;3
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	BW
+      ;0
+        DB	WW
+        DB	BW
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	BB
+      ;2
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	BW
+        DB	BB
+        DB	BB
+;1,3,0,2 rgt
+      ;1
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WB
+        DB	BB
+        DB	BB
+      ;3
+        DB	WW
+        DB	WB
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	BB
+      ;0
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WB
+      ;2
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WB
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	BB
+HINTUP
+;1,3,0,2
+      ;1
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	BW
+        DB	WW
+        DB	WW
+        DB	WW
+      ;3
+        DB	BW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+      ;0
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	BW
+        DB	WW
+      ;2
+        DB	BB
+        DB	BB
+        DB	BW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+;1,3,0,2 rgt
+      ;1
+        DB	BB
+        DB	BB
+        DB	WB
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+      ;3
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	WB
+        DB	WW
+      ;0
+        DB	WB
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+      ;2
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	BB
+        DB	WB
+        DB	WW
+        DB	WW
+        DB	WW
+HINTFIRE
+;1,3,0,2
+      ;1
+        DB	00
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	BB
+      ;3
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+      ;0
+        DB	BB
+        DB	BB
+        DB	BW
+        DB	WW
+        DB	WW
+        DB	BW
+        DB	BB
+        DB	BB
+      ;2
+        DB	BW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	BW
+;1,3,0,2 rgt
+      ;1
+        DB	WB
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WB
+      ;3
+        DB	BB
+        DB	BB
+        DB	WB
+        DB	WW
+        DB	WW
+        DB	WB
+        DB	BB
+        DB	BB
+      ;0
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+      ;2
+        DB	BB
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	WW
+        DB	BB
+HINTOFF
+		DUPL 64,0;        DS	64
+
+ASKBIBIK
+        LD	E,10 ;время
+        LD	HL,200
+        JR	BIBIK
+GOODBIBIK
+        LD	E,7 ;время
+        LD	HL,50
+        JR	BIBIK
+NZBADBIBIK
+        RET	Z ;Z=отпустили кнопку, NZ=нажали
+BADBIBIK
+        LD	E,15 ;время
+        LD	HL,800
+BIBIK
+;E=время (период огибающей)
+;HL=период тона
+        LD	D,0XC
+        CALL	OUTAY
+        LD	D,2
+        LD	E,L
+        CALL	OUTAY
+        INC	D
+        LD	E,H
+        CALL	OUTAY
+;тип огибающей 1, запуск огибающей
+        LD	DE,0XD01
+OUTAY
+        LD	BC,-3
+        OUT	(C),D
+        LD	B,0XBF
+        OUT	(C),E
+        RET	
+
+DEPKS16
+;HX=атрибут пустых частей экрана (для ATM)
+       PUSH	IX
+        LD	DE,addr
+        PUSH	BC
+        PUSH DE
+        LDIR	
+        POP	DE
+        POP BC
+        XOR	A
+        LD	L,A
+        LD H,L
+        SBC	HL,BC
+        EX DE,HL	
+        LD	A,p14
+        CALL	OUTA
+        PUSH	DE
+        LDIR	
+        POP	IX
+        LD	DE,addr
+        LD	HL,0X6000
+        CALL	UNILDRAR ;распаковываем IX->DE (длина=HL)
+      ;LD A,6
+      ;OUT (-2),A
+
+       POP	IX
+        LD	HL,addr+192
+_y := 0
+_x := 0
+        xy2adr
+        LD	DE,_a-0X8000
+        LD	BC,3*192
+        CALL	DEPKST
+        LD	HL,addr+(3*192)
+_y := 0
+_x := 0
+        xy2adr
+        LD	DE,_a-0X6000
+        CALL	DEPKST
+;убиваем уже распакованные столбцы
+        LD	B,64
+        CALL	DEPKILL
+;сейчас данные ниже 0XE000
+        LD	HL,addr+192
+_y := 0
+_x := 0
+        xy2adr
+        LD	DE,_a+0X2000
+        LD	C,192 ;B=0
+        CALL	DEPKST
+;убиваем распакованный столбец
+        LD	B,32
+        CALL	DEPKILL
+;сейчас данные ниже 0XE000
+        LD	HL,addr
+_y := 0
+_x := 0
+        xy2adr
+        LD	DE,_a
+        LD	C,B ;=0
+DEPKST
+		IF atm=1;       IFN	atm
+        PUSH	BC
+        PUSH DE
+		REPT 4
+        DEC	E
+		ENDM
+        LD	IXL,4
+        CALL	BLNKST0
+        SET	5,E
+        LD	IXL,4
+        CALL	BLNKST0
+        POP	DE
+        POP BC
+       ENDIF	
+        LD	IXL,32
+DEPKST0 PUSH	DE
+        PUSH	BC
+        LD	B,192
+DEPKST1 LD	A,(HL)
+		LD (DE),A
+        INC	HL
+        CALL	DDE
+        DJNZ	DEPKST1
+		IF atm=1;       IFN	atm
+        LD	B,8
+DEPKST2 LD	A,IXH
+        LD	(DE),A
+        CALL	DDE
+        DJNZ	DEPKST2
+       ENDIF	
+        POP	BC
+        ADD	HL,BC
+        POP	DE
+        INC	E
+        DEC	IXL
+        JR NZ,DEPKST0
+        RET	
+		IF atm=1;       IFN	atm
+BLNKST0 PUSH	DE
+        LD	B,200
+BLNKST1 LD	A,IXH
+        LD	(DE),A
+        CALL	DDE
+        DJNZ	BLNKST1
+        POP	DE
+        INC	E
+        DEC	IXL
+        JR NZ,BLNKST0
+        RET	
+       ENDIF	
+
+DEPKILL
+        LD	HL,addr-192
+        LD	DE,addr
+DEPKIL0 PUSH	BC
+        LD	BC,192
+        ADD	HL,BC
+        LDIR	
+        POP	BC
+        DJNZ	DEPKIL0
+        RET	
+DDE
+		IF atm=1;       IFN	atm
+        PUSH	HL
+        LD	HL,40
+        ADD	HL,DE
+        EX DE,HL	
+        POP	HL
+        RET	
+       ELSE	
+        INC	D
+        LD	A,D
+        AND	7
+        RET	NZ
+        LD	A,E
+        ADD	A,32
+        LD	E,A
+        RET	C
+        LD	A,D
+        SUB	8
+        LD	D,A
+        RET	
+       ENDIF	
+UDE
+		IF atm=1;       IFN	atm
+        PUSH	HL
+        LD	HL,-40
+        ADD	HL,DE
+        EX DE,HL	
+        POP	HL
+        RET	
+       ELSE	
+        LD	A,D
+        DEC	D
+        AND	7
+        RET	NZ
+        LD	A,E
+        SUB	32
+        LD	E,A
+        RET	C
+        LD	A,D
+        ADD	A,8
+        LD	D,A
+        RET	
+       ENDIF	
+
