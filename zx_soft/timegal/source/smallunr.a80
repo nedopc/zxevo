@@ -1,0 +1,325 @@
+
+;LAST UPDATE: 03.02.2014 savelij
+
+maintree	EQU RARS
+tree		EQU (298-6)*4-4+maintree
+bdlens		EQU tree
+ldlens		EQU tree
+ddlens		EQU 298+ldlens
+;rdlens=ddlens+48
+tabend		EQU ddlens+48+28
+NEWBYTE
+        LD	A,(IX)
+        RLA	
+        INC	IX
+        RET	
+dPPbr16
+        PUSH	BC
+        JR	NZ,dPPn16
+;16=prev len copies-3
+        CALL	LDA2
+        DEC	HL
+        LD	A,(HL)
+        INC	HL
+        LD	(dPPdupV),A
+        LD	A,3
+        JR	dPPfil
+UNILDRAR
+        ADD	HL,DE
+        LD	(theEnd),HL;сам HL не нужен!
+;IX->DE
+        LD	A,128
+        EX AF,AF'	
+NEWTREE
+       PUSH	DE
+        CALL	LDA2
+        LD	HL,bdlens
+       LD	E,19
+dPPtetr LD	B,4
+        CALL	LDA18B
+        LD	(HL),C
+        INC	HL
+       DEC	E
+        JR	NZ,dPPtetr
+      ;EXX
+      ;PUSH DE
+        LD	DE,19+1
+        CALL	MKMAINTREE ;делаем из них дерево
+      ;POP DE
+      ;EXX
+        LD	BC,298+48+28 ;tabsize
+        LD	HL,ldlens;UnpOldTable
+dPP0   PUSH	HL
+        CALL	DEHUFFMAIN
+       POP	HL
+        CP	16
+       JR	NC,dPPbr16
+;<16 delta from prev codelen tab
+        LD	(HL),A
+        INC	HL
+        DEC	BC
+        JR	dPPQ
+dPPn16  CP	17
+        JR	NZ,dPPn3b
+;17=zerolens-3
+        LD	B,3
+        LD	A,B
+dPPfilG CALL	LDA18B
+dPPfil  ADD	A,C
+        POP	BC
+dPPdupV := $+1
+dPPdup0 LD	(HL),0
+        INC	HL
+        DEC	BC
+        DEC	A
+        JR	NZ,dPPdup0
+        LD	(dPPdupV),A
+dPPQ    LD	A,B
+        OR	C
+        JR	NZ,dPP0
+      ;EXX
+      ;PUSH DE
+        LD	DE,298+1
+        CALL	MKMAINTREE ;делаем из них дерево
+        LD	HL,ddlens+49
+        LD	DE,48+1
+        LD	BC,tree
+        CALL	MKTREE ;делаем из них дерево
+       POP	DE
+      ;EXX
+DEPK0
+        CALL	DEHUFFMAIN
+        DEC	H
+       JR	NZ,yBYTE
+       SUB	LOW (269)
+       JR	Z,NEWTREE
+       JR	C,len2
+       DEC	A
+       ;SUB 270
+        LD	L,A
+        CP	8
+       CALL	NC,EMMTPP
+		REPT 3
+        INC	HL
+		ENDM
+       PUSH	HL ;len
+        LD	HL,tree
+        CALL	DEHUFF
+        ADD	A,-4
+       JR	NC,EMBBTQ
+        LD	L,1
+        ADC	A,L
+        RRA	
+        RL	L
+        LD	B,A
+       CALL	EM_TPP
+EMBBTQ  INC	HL
+       ;NC
+        LD	B,H
+        LD C,L
+GPldir  LD	C,L
+        LD	H,D
+        LD L,E
+       ;OR A
+        SBC	HL,BC
+        LD	A,B
+       POP	BC ;3..255
+        AND	0XE0
+        JR	Z,$+3
+        INC	C
+      ;CALL UNILDIR
+        LDIR	
+GPq
+;или просто BIT 7,D
+theEnd := $+1
+        LD	HL,0
+       SCF	
+        SBC	HL,DE
+     ;LD A,H ;!
+     ;ADD A,2;!
+       JR	NC,DEPK0
+        RET	
+      ;LD A,(UNIpg)
+      ;JP OUTME
+;18=zerolens-11
+dPPn3b
+        LD	B,7
+        LD	A,11
+        JR	dPPfilG
+yBYTE
+       LD	A,L
+        LD	(DE),A
+        INC	DE
+        JR	GPq
+len2
+;261..268=>-8..-1
+       ADD	A,A
+       LD	L,A
+        LD	H,HIGH (tlen2);'tlen2
+        LD	B,(HL) ;bits
+        INC	L
+        LD	L,(HL) ;N>>bits
+        CALL	EM_TPP
+        LD	C,2
+       PUSH	BC
+       ;CY
+       JR	GPldir
+
+DEHUFFMAIN
+        LD	HL,maintree
+DEHUFF
+       EX AF,AF'	
+        ADD	A,A
+        CALL	Z,NEWBYTE
+        JR	NC,$+4 ;ноль
+        INC	L  ;единица
+        INC	L;HL
+       EX AF,AF'	
+        LD	A,(HL)
+        INC	L
+        LD	H,(HL)
+        LD	L,A
+		IF LOW (maintree&0X40)=0;       IFN	'maintree&0X40
+       BIT	6,H
+       ELSE	
+		IF LOW (maintree&0X80)=0;       IFN	'maintree&0X80
+       BIT	7,H
+       ENDIF	
+       ENDIF	
+       JR	NZ,DEHUFF
+        RET	
+
+;создание дерева. нули - более короткие ветки
+;сначала создаются все ветки для
+;символов с bitlen=1, потом 2 и т.д. до 15
+;by Roman Petrov
+MKMAINTREE
+        LD	HL,ldlens ;было просто tree
+        ADD	HL,DE
+        LD	BC,maintree
+MKTREE
+        PUSH	BC
+        EXX	
+        POP	DE ;начало буфера
+        LD	H,D
+        LD	L,E
+        XOR	A ;=0 признак выхода
+        PUSH	AF
+        INC	A ;=1
+        PUSH	HL
+        PUSH	AF
+        LD	C,A
+MKTREE0 EXX	     ;HL=кон.bitlens+1
+        LD	B,D
+        LD	C,E
+       ;ADD HL,BC;указ.на последний bitlen
+      ;OR A
+       SBC	HL,BC;указ.на 1й bitlen
+        EXX	
+MKTREE1 LD	B,A
+        LD	A,C
+        EXX	
+       ;CPDR ;BC=число листьев+1
+       CPIR	
+        LD	A,B
+        OR	C
+        EXX	
+        LD	A,B
+        JR	NZ,MKTREEY;найден символ с таким bitlen
+        INC	C ;не найден такой символ
+       JR	NZ,MKTREE0
+       JR	MTREEbug
+MKTREE_DEEPER
+        INC	DE ;новое место
+        INC	DE ;для
+        INC	DE ;новых
+        INC	DE ;узлов
+        LD	(HL),E
+        INC	HL
+        LD	(HL),D ;указатель для "0"
+        LD	H,D
+        LD	L,E ;адрес для "код+0"
+        INC	A  ;длина этого кода
+        PUSH	HL ;заносим это
+        PUSH	AF ;в стек
+MKTREEY CP	C
+        JR	NZ,MKTREE_DEEPER ;пока не углубимся до нужной длины
+       ;A=C
+        EXX	
+        PUSH	BC ;антиномер литерала+1
+       PUSH	DE ;Q+1
+        EXX	
+MTREEbug
+       LD	(MKhl),HL
+       POP	HL
+        POP	BC
+       ;DEC BC ;номер литерала
+       ;LD (HL),C
+       ;INC HL
+       ;LD (HL),B ;формируем лист
+       SCF	
+       SBC	HL,BC
+MKhl := $+1
+       LD	(0),HL
+        LD	C,A
+        POP	AF
+        RET	Z ;=0 признак выхода
+        POP	HL
+        INC	HL
+        INC	HL ;следующий свободный узел
+           ;A=его глубина
+           ;DE=адрес места для новых узлов
+        JR	MKTREE1
+
+EMMTPP
+        LD	B,A
+        AND	3
+        OR	4
+        LD	L,A
+        SRL	B
+        SRL B
+        DEC	B
+EM_TPP  EX AF,AF'	
+MLEN0   ADD	A,A
+        CALL	Z,NEWBYTE
+        ADC	HL,HL
+       DJNZ	MLEN0
+        EX AF,AF'	
+        RET	
+
+LDA2    LD	A,2
+LDA
+        CP	9
+        JR	NC,LDA915
+LDA18   LD	B,A
+LDA18B
+        LD	C,0
+        EX AF,AF'	
+LDA0    ADD	A,A
+        CALL	Z,NEWBYTE
+        RL	C
+        DJNZ	LDA0
+        EX AF,AF'	
+        RET	
+LDA915
+        SUB	8
+        CALL	LDA18
+        LD	A,C
+        LD	B,8
+        CALL	LDA0-1
+        LD	B,A
+        RET	
+
+;        DISPLAY	$
+		DUPL (HIGH ($)<<8)+0XF0-$,0;		DUPL $+15/256<8+0XF0-$,0
+;        DISPLAY	"=",$
+tlen2
+        DB	2,0>>2
+        DB	2,4>>2
+        DB	3,8>>3
+        DB	4,16>>4
+        DB	5,32>>5
+        DB	6,64>>6
+        DB	6,128>>6
+        DB	6,192>>6
+

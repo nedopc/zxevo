@@ -1,0 +1,2045 @@
+
+;LAST UPDATE: 05.02.2014 savelij
+
+;сначала компилим atm=0, пакуем ZXRAR header=off
+;потом компилим atm=1
+COVPORT		EQU 251
+sound		EQU 1
+;atm		EQU 0
+smuc		EQU atm
+sectcycl	EQU 8 ;1 из них звуковой
+
+reaction	EQU 5;4 ;время реакции
+z		EQU 6;5    ;задержка относительно Tих/1.7554
+
+		IF smuc=1;       IFN	smuc
+		IF atm=1;      IFN	atm
+;схема ATM:
+hddstat		EQU 0XFEEF
+hddcmd		EQU 0XFEEF
+hddhead		EQU 0XFECF
+hddcylhi	EQU 0XFEAF
+hddcyllo	EQU 0XFE8F
+hddsec		EQU 0XFE6F
+hddcount	EQU 0XFE4F
+hdderr		EQU 0XFE2F
+hdddatlo	EQU 0XFE0F
+hdddathi	EQU 0XFF0F
+hddupr		EQU 0XFEBE ;при установленном b7 FFBA
+hdduprON	EQU 0XFFBA
+hddupr1		EQU 0XF7
+hddupr0		EQU 0X77
+      ELSE	
+;схема SMUC:
+hddstat		EQU 0XFFBE
+hddcmd		EQU 0XFFBE
+hddhead		EQU 0XFEBE
+hddcylhi	EQU 0XFDBE
+hddcyllo	EQU 0XFCBE
+hddsec		EQU 0XFBBE
+hddcount	EQU 0XFABE
+hdderr		EQU 0XF9BE
+hdddatlo	EQU 0XF8BE
+hdddathi	EQU 0XD8BE
+hddupr		EQU 0XFEBE ;при установленном b7 FFBA
+hdduprON	EQU 0XFFBA
+hddupr1		EQU 0XF7
+hddupr0		EQU 0X77
+      ENDIF	
+       ELSE	
+;схема Nemo:
+hddstat		EQU 0XF0
+hddcmd		EQU 0XF0
+hddhead		EQU 0XD0
+hddcylhi	EQU 0XB0
+hddcyllo	EQU 0X90
+hddsec		EQU 0X70
+hddcount	EQU 0X50
+hdderr		EQU 0X30
+hdddatlo	EQU 0X10
+hdddathi	EQU 0X11
+hddupr		EQU 0XC8
+hdduprON	EQU 0
+       ENDIF	
+
+SECBUF		EQU 0XB500
+LASTSND		EQU 0XB500
+SNDLEN		EQU 2048
+pusto		EQU 0XBF00
+PROUTBUF	EQU 0XBF00 ;32 bytes спрайт символа
+TY		EQU 0XBD00 ;512 ;обязательно для ATM A8=1!!!
+RARS		EQU 0X4000 ;для распаковки экранов
+addr		EQU 0X9F00 ;для распаковки экранов (<0XA000)
+
+		IF atm=1;       IFN	atm
+pgspr		EQU 0X10
+pgfnt		EQU 0X10
+pgIQ		EQU 0X10
+pgpic		EQU 0X14
+pgmuz		EQU 0X16
+p14		EQU 0X11 ;экр0 слой0
+p15		EQU 0X15 ;экр0 слой1
+p16		EQU 0X13 ;экр1 слой0 (выводится экр0)
+p17		EQU 0X17 ;экр1 слой1
+p1C		EQU 0X19 ;экр0 слой0 (выводится экр1)
+
+xy2adr        MACRO;	xy2adr
+_a := _y*40+_x+0XC004
+        ENDM	
+       ELSE	
+pgspr		EQU 0X10
+pgfnt		EQU 0X10
+pgIQ		EQU 0X10
+pgpic		EQU 0X11
+pgmuz		EQU 0X13
+p14		EQU 0X14 ;экр0 слой0
+p15		EQU 0X15 ;экр0 слой1
+p16		EQU 0X16 ;экр1 слой0 (выводится экр0)
+p17		EQU 0X17 ;экр1 слой1
+p1C		EQU 0X1C ;экр0 слой0 (выводится экр1)
+
+xy2adr        MACRO;	xy2adr
+_a := (_y&7)<<8+((_y&56)<<2)+((_y&192)<<5)+_x+0XC000
+        ENDM	
+       ENDIF	
+
+outim		MACRO;	outi
+       IF	atm=0
+        CALL	pause
+       ENDIF	
+        OUTI	
+		ENDM
+
+        ORG	0X6000
+begin
+        JP	LOADPEX
+WASLOA
+		binclude loa16.bin;        INCBIN	"loa16. "
+Lloa := $-WASLOA
+WASPENT
+		binclude pent.bin;        INCBIN	"PENT. "
+		DUPL 0X7F00-$,0;        DS	0X7F00-$
+LOADPEX
+;B=тип компьютера:
+ ;0=PENTAGON, 1=ATM, 2=SCORPION, 3=PROFI, 4=SPRINTER
+        PUSH	BC
+        DEC	B
+        POP	BC
+        JP	Z,GO ;ATM
+       PUSH	AF
+       PUSH BC
+       PUSH DE
+       PUSH HL
+  ;depack PENT version
+        LD	HL,0X5800
+        LD	DE,0X5801
+        LD	BC,0X2FF
+        LD	(HL),L
+        LDIR	
+        LD	IX,WASPENT
+        LD	DE,0X8200
+        LD	HL,0X3E00
+        CALL	UNILDRAR ;распаковываем IX->DE (длина=HL)
+
+       POP	HL
+       POP DE
+       POP BC
+       POP AF
+        JP	GO
+		DUPL 0X8000-$,0;        DS	0X8000-$
+		include smallunr.a80;        INCLUDE	"B:smallunr",0X44
+
+  ;дальше заменяемая часть
+		DUPL 0X8200-$,0;        DS	0X8200-$
+GO
+;SP=0X6000, DI
+;A=0XA0 (master) или 0XB0 (slave)
+;C=тип контроллера IDE:
+ ;0=NEMO, 1=ATM, 2=SMUC, 3=PROFI, 4=SPRINTER
+;D=язык:
+ ;0=ENGLISH, 1=РУССКИЙ
+;E=адрес COVOX:
+ ;0XFB=ATM/PENTAGON
+;H=доступные видеорежимы (накладываются по OR)
+ ;1=512x192 BW VMG
+ ;2=384x304 ZX AC
+ ;4=256x192 15 AC
+ ;8=320x200 16 ATM
+        LD	SP,0X8000
+       LD	(REG_SDH),A
+       LD	A,E
+       LD	(varcovport),A
+
+      ;LD A,4
+      ;OUT (-2),A
+
+        LD	BC,32765
+        LD	A,0X10
+        OUT	(C),A
+        LD	HL,WASLOA
+        LD	DE,loa
+        LD	BC,Lloa
+        LDIR	
+
+        CALL	CLSATM
+
+		IF 1;      IFN	1
+        LD	BC,32765
+        LD	A,pgpic
+        OUT	(C),A
+        LD	HL,0X9F00
+        LD	DE,0XC000
+        LD	BC,0X2100
+        LDIR	
+        LD	BC,32765
+        LD	A,0X10
+        OUT	(C),A
+
+      ;LD A,5
+      ;OUT (-2),A
+
+        LD	HL,loa
+        LD	BC,Lloa
+;включаем 2-й экран и стр. с картинками
+        LD	A,0X18
+        LD	(curplane),A
+       LD	IXH,0X00 ;черные поля экрана
+        CALL	DEPKS16
+
+		IF atm=1;       IFN	atm
+        LD	BC,0XFF77 ;выкл.теневые порты
+        LD	A,%10101000 ;EGA
+        CALL	OUTSHAD
+       ELSE	
+         LD	A,0XFE
+         IN	A,(0XFE)
+         RRA	
+        LD	BC,0XEFF7
+        LD	A,1
+        ;JNC $+4 ;CS - turbo for Pentagon 1024SL 2.2
+        ;OR 0X10 ;noturbo for ZX Evo
+        OUT	(C),A
+       ENDIF	
+
+        LD	BC,32765
+        LD	A,pgpic
+        OUT	(C),A ;вкл 1-й экран
+        LD	HL,0XC000
+        LD	DE,0X9F00
+        LD	BC,0X2100
+        LDIR	
+        LD	A,0X17
+        LD	(curplane),A
+
+       LD	DE,0
+WAIT1S		REPT 4; DUP	4
+       ADD	HL,HL
+		ENDM;       EDUP	
+       DEC	DE
+       LD	A,D
+       OR	E
+       JR NZ,WAIT1S
+
+      ENDIF	
+        LD	BC,32765
+        LD	A,0X10
+        OUT	(C),A
+
+        LD	HL,AP_READTOC
+        CALL	SEND_ATAPI
+      ;RET C
+        CALL	NO_BSY
+      ;RET C
+        CALL	WAIT_DRQ
+      ;RET C
+        CALL	LEN_TO_HL
+        LD	B,H
+        LD C,L
+        LD	HL,SECBUF
+        CALL	TRANS_IN
+        CALL	NO_BSY
+
+        CALL	SCANCAT
+      ;LD A,4
+      ;OUT (-2),A
+
+        LD	HL,AP_1x
+        CALL	SEND_ATAPI
+      ;LD A,5
+      ;OUT (-2),A
+
+        LD	HL,TY
+     ;для 2 битпланов (+0/64), +128 - код нового кадра
+MKTY
+        LD	A,L
+        AND	31
+        JR NZ,MKTYN0
+		IF atm=1;      IFN	atm
+        LD	DE,0XC004
+      ELSE	
+        LD	DE,0XC000
+      ENDIF	
+MKTYN0
+         LD	A,L
+         AND	31
+         CP	24
+         JR C,$+5
+         LD	DE,0
+        LD	(HL),E
+        INC	H
+        LD	(HL),D
+        DEC	H
+		IF atm=1;       IFN	atm
+        LD	A,E
+        ADD	A,LOW (40*8)
+        LD	E,A
+        JR NC,$+3
+        INC	D
+        INC	D
+       ELSE	
+        LD	A,E
+        ADD	A,32
+        LD	E,A
+        JR NC,$+6
+        LD	A,D
+        ADD	A,8
+        LD	D,A
+       ENDIF	
+        INC	L
+        JR NZ,MKTY
+
+        CALL	CLSATM
+
+		IF atm=1;       IFN	atm
+        LD	A,%10101000 ;EGA
+        CALL	OPENPORTS_A
+        LD	A,0XED
+        LD	(IN_A),A
+        LD	(OUT_A),A
+        LD	A,0X78 ;in a,(c)
+        LD	(IN_A+1),A
+        INC	A    ;out (c),a
+        LD	(OUT_A+1),A
+        LD	A,0XC9
+        LD	(IN_A+2),A
+        LD	(OUT_A+2),A
+       ELSE	
+        LD	BC,0XEFF7
+        LD	A,1
+        OUT	(C),A
+       ENDIF	
+
+        LD	DE,0XE00
+SHUT0   DEC	D
+        CALL	OUTAY
+        JR NZ,SHUT0
+;играет тон с огибающей в канале B
+        LD	DE,0X7FD
+        CALL	OUTAY
+        LD	DE,0X910
+        CALL	OUTAY
+
+       ;LD A,7
+       ;OUT (-2),A
+
+        LD	HL,TFILES
+NEWVIDEO
+        LD	DE,SECTOR
+        LD	BC,4
+        LDIR	
+        LD	DE,CUREVENT
+        LDI	;адрес скрипта
+        LDI	;
+        LD	DE,CURENDOFVIDEO
+        LDI	
+        LDI	
+
+        LD	HL,LASTSND
+        LD	DE,LASTSND+1
+        LD	BC,SNDLEN-1
+        LD	(HL),0X80
+        LDIR	
+
+        CALL	READ_P1
+       XOR	A
+       OUT	(0XFE),A
+
+        LD	HL,0
+        LD	(SOUNDFRAME),HL
+        LD	HL,(CUREVENT)
+        LD	E,(HL)
+        INC	HL
+        LD	D,(HL)
+        INC	HL
+        LD	(CUREVENT),HL
+        LD	(EVENTTIME),DE ;когда будет первое событие
+        LD	HL,NEWPLANEOK
+        LD	(JPENDOFVIDEO),HL ;после каждого кадра
+        XOR	A
+        LD	(CURKEY),A ;запрещаем кнопки, пока нет стрелки
+       LD	HL,BADBIBIK
+       LD	(keySND),HL
+
+        EXX	
+        LD	HL,LASTSND
+varcovport := $+1
+        LD	C,COVPORT
+        EXX	
+SNDLOOP
+        CALL	INKEY
+        LD	A,C
+OLDKEY := $+1
+        CP	0
+        LD	(OLDKEY),A
+        JR Z,KEYOFF ;если сост. кнопок не менялось - обходим
+CURKEY := $+1
+        LD	A,-1
+        CP	-1
+        JR NZ,KEYOFF ;если уже нажимали что-то - обходим
+        LD	A,C
+        LD	(CURKEY),A
+NEEDKEY := $+1
+        CP	111
+        JR Z,KEYGOOD
+        INC	A
+keySND := $+1
+        CALL	NZBADBIBIK ;Z=отпустили, NZ=нажали
+                        ;а из интро выходить надо и так,и эдак
+        JR	KEYOFF
+KEYGOOD
+        CALL	GOODBIBIK
+KEYOFF
+SOUNDFRAME := $+1
+        LD	HL,0
+EVENTTIME := $+1
+        LD	DE,0
+        OR	A
+        SBC	HL,DE
+        ADD	HL,DE
+        INC	HL
+        LD	(SOUNDFRAME),HL
+        JR NZ,NOEVENT
+CUREVENT := $+1
+        LD	HL,0
+        LD	E,(HL) ;тип события
+        INC	HL    ;
+        LD	D,(HL) ;
+        INC	HL
+        LD	C,(HL) ;параметр события
+        INC	HL    ;
+        LD	B,(HL) ;
+        INC	HL
+        LD	(EVENTPARAM),BC
+       PUSH	HL
+        LD	($+5),DE
+        CALL	0
+       POP	HL
+        LD	E,(HL) ;время следующего события
+        INC	HL    ;
+        LD	D,(HL) ;
+        INC	HL
+        LD	(EVENTTIME),DE
+        LD	(CUREVENT),HL
+NOEVENT
+
+       IF	sound=0
+        LD	IXL,sectcycl-2 ;не -1!
+        JP	SECTLOOP
+       ENDIF	
+       ;чтение сектора звука и доигрывание остатка
+     ;доигрываем остаток звука без 128 байт (время чтения)
+        LD	C,LOW (hddstat)
+        LD	DE,-1
+         EXX	
+         outim
+         EXX	
+        LD	HL,pusto
+sldoigr
+		IF atm=1;       IFN	atm
+        IN	A,(C)
+        LD	A,A
+         OR	A
+         JR C,$+2
+        LD	A,H
+       IN	A,(LOW (hddstat))
+        ADD	A,(HL)
+        INC	A
+        LD	A,(HL)
+        LD	A,A
+        ADC	A,H
+        SUB	L
+        LD	A,A
+    PUSH	HL
+		REPT 7;        DUP	8
+        INI	
+        ADD	HL,DE
+		ENDM;        EDUP	
+		INI;        ORG	$-1
+        EXX	
+        OUTI	
+        EXX	
+    SET	5,A
+		REPT 7;        DUP	8
+        INI	
+        ADD	HL,DE
+		ENDM;        EDUP	
+		INI;        ORG	$-1
+    POP	HL
+        EXX	
+        OUTI	
+       ELSE	;~atm
+        IN	A,(LOW (hddstat))
+        LD	A,A
+         OR	A
+         JR C,$+2
+       IN	A,(LOW (hddstat))
+        ADD	A,(HL)
+        INC	A
+        LD	A,(HL)
+		REPT 7;        DUP	8
+        IN	A,(LOW (hddstat))
+        LD	A,(HL)
+        INC	H
+		ENDM;        EDUP	
+        IN	A,(LOW (hddstat))
+        LD	A,(HL)
+;        ORG	$-1
+    NOP	
+        EXX	
+        outim
+        EXX	
+    LD	C,H
+    SET	5,A
+		REPT 7;        DUP	8
+        IN	A,(LOW (hddstat))
+        LD	A,(HL)
+        INC	H
+		ENDM;        EDUP	
+        IN	A,(LOW (hddstat))
+        LD	A,(HL)
+;        ORG	$-1
+        EXX	
+        outim
+       ENDIF	
+        LD	A,H
+        EXX	
+		CP HIGH (SNDLEN)+HIGH (LASTSND)-1;        CP	'SNDLEN+'LASTSND-1
+        JR C,sldoigr
+        EXX	
+        LD	HL,LASTSND+SNDLEN-256
+        EXX	
+        LD	HL,LASTSND
+        LD	BC,LOW (hdddatlo+0X0000) ;B=0X00 (2*128)
+        LD	DE,0
+RDSND0
+		IF atm=1;      IFN	atm
+        INC	B
+        IN	A,(C)
+        DEC	B
+         OR	A
+         JR C,$+2
+        EXX	
+        OUTI	
+        EXX	
+       IN	A,(LOW (hddstat))
+        ADD	A,(HL)
+        INC	A
+        LD	A,(HL)
+        LD	A,A
+        ADC	A,H
+        SUB	L
+        LD	A,A
+		REPT 7;        DUP	8
+        INI	
+        ADD	HL,DE
+		ENDM;        EDUP	
+		INI;        ORG	$-1
+    PUSH	HL
+    POP	HL
+    SET	5,A
+        EXX	
+        OUTI	
+        EXX	
+		REPT 7;        DUP	8
+        INI	
+        ADD	HL,DE
+		ENDM;        EDUP	
+		INI;        ORG	$-1
+       ELSE	;~atm
+        IN	A,(LOW (hddstat))
+         OR	A
+         JR C,$+2
+        EXX	
+        outim
+        EXX	
+       IN	A,(LOW (hddstat))
+        ADD	A,(HL)
+        INC	A
+        LD	A,A
+		REPT 4;        DUP	4
+        IN	A,(LOW (hdddatlo))
+        LD	(HL),A
+        INC	L
+        IN	A,(LOW (hdddathi))
+        LD	(HL),A
+        INC	L
+		ENDM;        EDUP	
+    LD	C,H
+    SET	5,A
+        EXX	
+        outim
+        EXX	
+		REPT 3;        DUP	4
+        IN	A,(LOW (hdddatlo))
+        LD	(HL),A
+        INC	L
+        IN	A,(LOW (hdddathi))
+        LD	(HL),A
+        INC	L
+		ENDM;        EDUP	
+        IN	A,(LOW (hdddatlo))
+        LD	(HL),A
+        INC	L
+        IN	A,(LOW (hdddathi))
+        LD	(HL),A
+;        ORG	$-1
+        INC	HL
+       ENDIF	
+        LD	A,H
+		CP HIGH (SNDLEN+LASTSND);        CP	'SNDLEN+'LASTSND
+        JR C,RDSND0
+        EXX	
+        LD	HL,LASTSND
+        outim
+        EXX	
+        LD	IXL,sectcycl
+        JP	LOOPNEXTSEC ;1-е знакоместо - с битом 7
+NEWPLANE
+       IF	atm=0
+       IN	A,(LOW (hdddathi))
+       ENDIF	
+curplane := $+1
+        LD	A,0X17
+;порядок обработки: SCR0(lo,hi), SCR1(lo,hi)
+                       ;0X1C,0X1D      0X16,0X17
+                  ;ATM ;0X19,0X1D      0X13,0X17
+		IF atm=1;      IFN	atm
+        XOR	4
+        BIT	2,A
+      ELSE	
+        XOR	1
+        BIT	0,A
+      ENDIF	
+        JR NZ,NONEWSCR
+        XOR	0X1C!0X16 ;=0X19!0X13 ;=0X0A
+        INC	L
+        JP	Z,ENDOFVIDEO
+        DEC	L
+JPENDOFVIDEO := $+1
+        JP	NEWPLANEOK ;ENDOFVIDEODEAD; ENDOFVIDEO
+NEWPLANEOK
+NONEWSCR
+        LD	(curplane),A
+       PUSH	BC
+        LD	BC,32765
+        OUT	(C),A
+       POP	BC
+        JP	NEWPLQ
+SECTLOOP
+		IF atm=1;       IFN	atm
+        LD	BC,0XF20F ;B=0XF2 (18*113)
+        LD	DE,39
+       ELSE	
+        LD	B,113
+       ENDIF	
+         EXX	
+         outim
+         EXX	
+FRAMELOOP
+		IF atm=1;       IFN	atm
+        IN	A,(C)
+       ELSE	
+        IN	A,(LOW (hdddatlo))
+       ENDIF	
+        LD	L,A
+         RLA	
+         JR C,NEWPLANE
+NEWPLQ  LD	H,HIGH (TY);'TY        ;22
+		IF atm=1;       IFN	atm
+        LD	A,H
+       ENDIF	
+       IN	A,(LOW (hdddathi))
+        ADD	A,(HL)
+        INC	H
+        LD	H,(HL)
+        LD	L,A          ;33
+		IF atm=1;       IFN	atm
+        ADC	A,H
+        SUB	L
+        LD	H,A
+    PUSH	HL
+       ELSE	
+    LD	C,H              ;4
+       ENDIF	
+     ;HL=screen
+		IF atm=1;       IFN	atm
+		REPT 7;        DUP	8
+        INI	
+        ADD	HL,DE
+		ENDM;        EDUP	
+		INI
+       ELSE	
+		REPT 3;        DUP	4
+        IN	A,(LOW (hdddatlo))
+        LD	(HL),A
+        INC	H
+        IN	A,(LOW (hdddathi))
+        LD	(HL),A
+        INC	H
+		ENDM;        EDUP	
+        IN	A,(LOW (hdddatlo))
+        LD	(HL),A
+        INC	H
+        IN	A,(LOW (hdddathi))
+        LD	(HL),A
+       ENDIF	
+;        ORG	$-1
+                         ;172
+		IF sound=1;       IFN	sound
+        EXX	
+        outim
+        EXX	             ;24
+       ENDIF	
+		IF atm=1;       IFN	atm
+    POP	HL
+       ELSE	
+    LD	H,C
+       ENDIF	
+    SET	5,H              ;12
+		IF atm=1;       IFN	atm
+		REPT 7;        DUP	8
+        INI	
+        ADD	HL,DE
+		ENDM;        EDUP	
+		INI
+       ELSE	
+		REPT 3;        DUP	4
+        IN	A,(LOW (hdddatlo))
+        LD	(HL),A
+        INC	H
+        IN	A,(LOW (hdddathi))
+        LD	(HL),A
+        INC	H
+		ENDM;        EDUP	
+        IN	A,(LOW (hdddatlo))
+        LD	(HL),A
+        INC	H
+        IN	A,(LOW (hdddathi))
+        LD	(HL),A
+       ENDIF	
+;        ORG	$-1
+                         ;172
+		IF atm=1;       IFN	atm
+        DEC	B ;для четности порта данных
+       ENDIF	
+		IF sound=1;       IFN	sound
+        EXX	
+        outim
+        EXX	             ;24
+       ENDIF	
+        DJNZ	FRAMELOOP   ;13 ;476 PENT / 576 ATM
+      ;остаток сектора (14 байт)
+		REPT 7;        DUP	7
+		IF atm=1;       IFN	atm
+        IN	A,(C)
+       ELSE	
+        IN	A,(LOW (hdddatlo))
+       IN	A,(LOW (hdddathi)) ;ZX Evo fix
+       ENDIF	
+		ENDM;        EDUP	            ;77 PENT / 84 ATM
+LOOPNEXTSEC
+        LD	HL,SECTOR+3
+        INC	(HL)
+        DEC	HL
+        JR Z,$-2           ;29*N-5 (можно считать 24)
+
+   ;типы команд должны совпадать с теми, к-е в главном цикле
+        LD	C,LOW (hddstat)
+        LD	DE,-1
+        LD	HL,pusto
+        EXX	
+        outim
+        EXX	             ;24
+BSYDOATAPI
+		IF atm=1;       IFN	atm
+        IN	A,(C)
+        LD	A,A
+        LD	A,H
+        INC	A
+        ADC	A,H
+        SUB	L
+        LD	A,A
+    PUSH	HL
+		REPT 7;        DUP	8
+        INI	
+        ADD	HL,DE
+		ENDM;        EDUP	
+		INI;        ORG	$-1
+        EXX	
+       LD	A,H
+		CP HIGH (SNDLEN)+HIGH (LASTSND)-1;       CP	'SNDLEN+'LASTSND-1
+       JR NC,$+4
+        OUTI	
+        EXX	
+		REPT 7;        DUP	8
+        INI	
+        ADD	HL,DE
+		ENDM;        EDUP	
+		INI;        ORG	$-1
+    POP	HL
+        EXX	
+       LD	A,H
+		CP HIGH (SNDLEN)+HIGH (LASTSND)-1;       CP	'SNDLEN+'LASTSND-1
+       JR NC,$+4
+        OUTI	
+        EXX	
+        XOR	A
+       ELSE	;~atm
+        IN	A,(LOW (hddstat))
+        LD	A,A
+		REPT 7;        DUP	8
+        IN	A,(LOW (hddstat))
+        LD	A,(HL)
+        INC	H
+		ENDM;        EDUP	
+        IN	A,(LOW (hddstat))
+        LD	A,(HL)
+;        ORG	$-1
+        EXX	
+       NOP	
+       LD	A,H
+		CP HIGH (SNDLEN)+HIGH (LASTSND)-1;       CP	'SNDLEN+'LASTSND-1
+       JR NC,_nouti
+        outim
+_nouti
+        EXX	
+       SET	5,A
+		REPT 7;        DUP	8
+        IN	A,(LOW (hddstat))
+        LD	A,(HL)
+        INC	H
+		ENDM;        EDUP	
+        IN	A,(LOW (hddstat))
+        LD	A,(HL)
+;        ORG	$-1
+        EXX	
+       LD	A,H
+		CP HIGH (SNDLEN)+HIGH (LASTSND)-1;       CP	'SNDLEN+'LASTSND-1
+       JR NC,_nouti2
+        outim
+_nouti2
+        EXX	
+       ENDIF	
+        IN	A,(LOW (hddstat))
+        BIT	7,A
+        JR NZ,BSYDOATAPI
+
+;SEND_ATAPI
+        LD	A,(REG_SDH)
+       ;AND 16
+       ;OR 0XA0
+        OUT	(LOW (hddhead)),A  ;38
+        XOR	A
+        OUT	(LOW (hddcyllo)),A ;15
+        LD	A,8
+        OUT	(LOW (hddcylhi)),A ;18
+        LD	A,0XA0
+        OUT	(LOW (hddcmd)),A   ;18
+
+        LD	C,LOW (hddstat)
+        LD	DE,-1
+         EXX	
+         outim
+         EXX	
+        LD	HL,pusto
+sAdrq
+		IF atm=1;       IFN	atm
+        IN	A,(C)
+        LD	A,A
+        LD	A,H
+        INC	A
+        ADC	A,H
+        SUB	L
+        LD	A,A
+    PUSH	HL
+		REPT 7;        DUP	8
+        INI	
+        ADD	HL,DE
+		ENDM;        EDUP	
+		INI;        ORG	$-1
+        EXX	
+       LD	A,H
+		CP HIGH (SNDLEN)+HIGH (LASTSND)-1;       CP	'SNDLEN+'LASTSND-1
+       JR NC,$+4
+        OUTI	
+        EXX	
+		REPT 7;        DUP	8
+        INI	
+        ADD	HL,DE
+		ENDM;        EDUP	
+		INI;        ORG	$-1
+    POP	HL
+        EXX	
+       LD	A,H
+		CP HIGH (SNDLEN)+HIGH (LASTSND)-1;       CP	'SNDLEN+'LASTSND-1
+       JR NC,$+4
+        OUTI	
+        EXX	
+        XOR	A
+       ELSE	;~atm
+        IN	A,(LOW (hddstat))
+        LD	A,A
+		REPT 7;        DUP	8
+        IN	A,(LOW (hddstat))
+        LD	A,(HL)
+        INC	H
+		ENDM;        EDUP	
+        IN	A,(LOW (hddstat))
+        LD	A,(HL)
+;        ORG	$-1
+        EXX	
+       NOP	
+       LD	A,H
+		CP HIGH (SNDLEN)+HIGH (LASTSND)-1;       CP	'SNDLEN+'LASTSND-1
+       JR NC,_nouti3
+        outim
+_nouti3
+        EXX	
+       SET	5,A
+		REPT 7;        DUP	8
+        IN	A,(LOW (hddstat))
+        LD	A,(HL)
+        INC	H
+		ENDM;        EDUP	
+        IN	A,(LOW (hddstat))
+        LD	A,(HL)
+;        ORG	$-1
+        EXX	
+       LD	A,H
+		CP HIGH (SNDLEN)+HIGH (LASTSND)-1;       CP	'SNDLEN+'LASTSND-1
+       JR NC,_nouti4
+        outim
+_nouti4
+        EXX	
+       ENDIF	
+        IN	A,(LOW (hddstat))
+        BIT	3,A
+        JR Z,sAdrq
+
+        LD	HL,AP_READ
+		REPT 2;       DUP	2
+		IF atm=1;       IFN	atm
+        INC	HL
+        LD	A,(HL)
+        LD	BC,hdddathi
+        OUT	(C),A
+        DEC	HL
+        LD	A,(HL)
+        LD	BC,hdddatlo
+        OUT	(C),A
+        INC	HL
+        INC HL        ;117*2=244(+10)
+		DUPL 7,0;        DS	7
+       ELSE	
+        LD	C,(HL)
+        INC	HL
+        LD	A,(HL)
+        OUT	(LOW (hdddathi)),A
+        LD	A,C
+        OUT	(LOW (hdddatlo)),A
+        INC	HL           ;52
+       ENDIF	
+		ENDM;       EDUP	
+         EXX	
+         outim
+         EXX	
+		REPT 2;       DUP	2
+		IF atm=1;       IFN	atm
+        INC	HL
+        LD	A,(HL)
+        LD	BC,hdddathi
+        OUT	(C),A
+        DEC	HL
+        LD	A,(HL)
+        LD	BC,hdddatlo
+        OUT	(C),A
+        INC	HL
+        INC HL        ;117*2=244(+22)
+		DUPL 7,0;        DS	7
+       ELSE	
+        LD	C,(HL)
+        INC	HL
+        LD	A,(HL)
+        OUT	(LOW (hdddathi)),A
+        LD	A,C
+        OUT	(LOW (hdddatlo)),A
+        INC	HL           ;52
+       ENDIF	
+		ENDM;       EDUP	
+         EXX	
+         outim
+         EXX	
+
+		REPT 2;       DUP	2
+		IF atm=1;       IFN	atm
+        INC	HL
+        LD	A,(HL)
+        LD	BC,hdddathi
+        OUT	(C),A
+        DEC	HL
+        LD	A,(HL)
+        LD	BC,hdddatlo
+        OUT	(C),A
+        INC	HL
+        INC HL        ;
+       ELSE	
+        LD	C,(HL)
+        INC	HL
+        LD	A,(HL)
+        OUT	(LOW (hdddathi)),A
+        LD	A,C
+        OUT	(LOW (hdddatlo)),A
+        INC	HL           ;52
+       ENDIF	
+		ENDM;       EDUP	
+     ;(где-то 2000 тактов ищет)
+     ;(точнее, 20000 каждый 10-й раз)
+          ;XOR A
+          ;IN A,(hddstat)
+          ;RLCA       ;BSY
+          ;JC $-4
+        LD	C,LOW (hddstat)
+        LD	DE,-1
+         EXX	
+         outim
+         EXX	
+        LD	HL,pusto
+sldrq
+		IF atm=1;       IFN	atm
+        IN	A,(C)
+        LD	A,A
+        LD	A,H
+        INC	A
+        ADC	A,H
+        SUB	L
+        LD	A,A
+    PUSH	HL
+		REPT 7;        DUP	8
+        INI	
+        ADD	HL,DE
+		ENDM;        EDUP	
+		INI;        ORG	$-1
+        EXX	
+       LD	A,H
+		CP HIGH (SNDLEN)+HIGH (LASTSND)-1;       CP	'SNDLEN+'LASTSND-1
+       JR NC,$+4
+        OUTI	
+        EXX	
+		REPT 7;        DUP	8
+        INI	
+        ADD	HL,DE
+		ENDM;        EDUP	
+		INI;        ORG	$-1
+    POP	HL
+        EXX	
+       LD	A,H
+		CP HIGH (SNDLEN)+HIGH (LASTSND)-1;       CP	'SNDLEN+'LASTSND-1
+       JR NC,$+4
+        OUTI	
+        EXX	
+        XOR	A
+       ELSE	;~atm
+        IN	A,(hddstat)
+        LD	A,A
+		REPT 7;        DUP	8
+        IN	A,(hddstat)
+        LD	A,(HL)
+        INC	H
+		ENDM;        EDUP	
+        IN	A,(hddstat)
+        LD	A,(HL)
+;        ORG	$-1
+        EXX	
+       NOP	
+       LD	A,H
+		CP HIGH (SNDLEN)+HIGH (LASTSND)-1;       CP	'SNDLEN+'LASTSND-1
+       JR NC,_nouti5
+        outim
+_nouti5
+        EXX	
+       SET	5,A
+		REPT 7;        DUP	8
+        IN	A,(hddstat)
+        LD	A,(HL)
+        INC	H
+		ENDM;        EDUP	
+        IN	A,(hddstat)
+        LD	A,(HL)
+;        ORG	$-1
+        EXX	
+       LD	A,H
+		CP HIGH (SNDLEN)+HIGH (LASTSND)-1;       CP	'SNDLEN+'LASTSND-1
+       JR NC,_nouti6
+        outim
+_nouti6
+        EXX	
+       ENDIF	
+        IN	A,(LOW (hddstat))
+        BIT	3,A
+        JR Z,sldrq
+
+        DEC	IXL
+        JP	NZ,SECTLOOP
+       IF	sound=0
+        EXX	
+        LD	HL,LASTSND
+        EXX	
+        LD	IXL,sectcycl-1
+        LD	HL,SECTOR+3
+        INC	(HL)
+        DEC	HL
+        JR Z,$-2           ;29*N-5 (можно считать 24)
+        JP	SECTLOOP
+       ELSE	
+        JP	SNDLOOP
+       ENDIF	
+
+ENDOFVIDEO
+        CALL	CLSATM
+		IF 0;       IFN	0
+        LD	HL,LEVEL
+        INC	(HL)
+        LD	A,(HL)
+        CP	16
+        JR C,EOVNOPRINT
+
+        LD	A,(LIVES)
+        ADD	A,"0"
+        LD	(TLIVESN),A
+        LD	HL,TLIVES
+_y := 96
+_x := 9
+        xy2adr
+        LD	DE,_a
+        CALL	PRW
+
+        LD	A,(LEVEL)
+        CALL	CODEDIG
+        LD	A,(LIVES)
+        CALL	CODEDIG
+        LD	A,(SCORE)
+        CALL	CODEDIG
+        LD	A,(SCORE+1)
+        CALL	CODEDIG
+        LD	HL,(SCORE)
+        LD	A,(LIVES)
+        XOR	L
+        XOR	H
+        LD	L,A
+        LD	A,(LEVEL)
+        XOR	L
+        CALL	CODEDIG
+        LD	HL,TCODEN
+        LD	B,8
+TCODELET0
+        LD	A,(HL)
+        AND	31
+        ADD	A,"0"
+        CP	":"
+        JR C,$+4
+        ADD A,0X41-0X3A;	A,"A"-":"
+        LD	(HL),A
+        INC	HL
+        DJNZ	TCODELET0
+
+        LD	HL,TCODE
+_y := 80
+_x := 9
+        xy2adr
+        LD	DE,_a
+        CALL	PRW
+EOVNOPRINT
+       ENDIF	
+ENDOFVIDEODEAD
+CURENDOFVIDEO := $+1
+        LD	HL,TFILES
+       PUSH	HL
+        LD	HL,LASTSND
+        CALL	READ_P2
+       POP	HL
+        JP	NEWVIDEO
+
+CODEDIG
+        LD	HL,TCODEN
+        LD	B,8
+CODEDIG0
+        RLA	
+        RL	(HL)
+        INC	HL
+        DJNZ	CODEDIG0
+        RET	
+
+TLIVES  DB	"   LIVES: 0",0
+TLIVESN := $-2
+TCODE   DB	"CODE: 00000000",0
+TCODEN := $-9
+
+PRW
+;C=фоновый цвет (в виде атрибута)
+        LD	C,0
+;IX=таблица раскраски буквы по строкам
+        LD	IX,BUK_W
+        CALL	PRTXT88
+        LD	A,(curplane)
+        LD	BC,32765
+        OUT	(C),A
+        RET	
+INKEY
+;C=11LRDUBF (B=break)
+        LD	A,254
+        IN	A,(254)
+        RRA	
+        LD	A,239
+        IN	A,(254)
+        JR	C,UANOCAP
+        LD	C,0XFF
+        RRA	    ;CS+"0" = "0"
+        JR C,$+3
+        DEC	C
+        RRA	
+        RRA	    ;CS+"8"
+        JR C,$+4
+        RES	4,C
+        RRA	    ;CS+"7"
+        JR C,$+4
+        RES	2,C
+        RRA	    ;CS+"6"
+        JR C,$+4
+        RES	3,C
+        LD	A,0XF7
+        IN	A,(254)
+        BIT	4,A ;CS+"5"
+        JR NZ,$+4
+        RES	5,C
+        RLA	    ;CS+"1"
+        JR C,INKEYF
+        RES	1,C
+        JR	INKEYF
+UANOCAP
+        RRCA	
+        RLA	
+        RLA	
+        OR	0XC2
+        LD	C,A
+        LD	A,0XDF
+        IN	A,(254)
+        RRA	    ;"P"
+        JR	C,$+4
+        RES	4,C
+        RRA	    ;"O"
+        JR	C,$+4
+        RES	5,C
+        LD	A,0XFB
+        IN	A,(254)
+        RRA	    ;"Q"
+        JR	C,$+4
+        RES	2,C
+        RRA	
+        RRA	    ;"E"
+        JR	C,$+4
+        RES	1,C
+        LD	A,0XFD
+        IN	A,(254)
+        RRA	    ;"A"
+        JR C,$+4
+        RES	3,C
+INKEYF  LD	A,0X7F
+        IN	A,(254)
+        CPL	
+        AND	31
+        RET	Z
+        RES	0,C
+        RET	
+
+CLSATM
+		REPT 2;       DUP	2
+;чистим невидимый экран
+        CALL	CLSATMPLANE
+;переключаем экран
+        LD	A,(curplane)
+        XOR	8
+        LD	(curplane),A
+		ENDM;       EDUP	
+        RET	
+;чистим невидимый экран
+CLSATMPLANE
+        LD	A,(curplane)
+        AND	0X18
+        LD	C,A
+        CPL	
+        RRA	
+        RRA	
+        AND	2
+        OR	C
+        OR	5
+        CALL	CLSPG
+		IF atm=1;       IFN	atm
+        SUB	4
+       ELSE	
+        DEC	A
+       ENDIF	
+CLSPG   LD	BC,32765
+        OUT	(C),A
+        LD	HL,0XC000
+        CALL	CLS7999
+        LD	HL,0XE000
+CLS7999 LD	BC,7999
+CLSI1   LD	D,H
+		LD E,1
+        LD	(HL),L
+        LDIR	
+        RET	
+
+SCANCAT
+     ;берем посл сессию (предпосл запись)
+        LD	HL,SECBUF+1
+        LD	A,(HL)
+        ADD	A,-10
+        LD	L,A
+;грузим начало сессии (17*0X800 байт)
+        LD	D,7
+        CALL	LOADER
+        LD	B,16
+SCANL0  PUSH	BC
+        LD	B,1
+        CALL	LOADERLOOP
+        POP	BC
+        DJNZ	SCANL0
+        LD	C,0XA2
+        ADD	HL,BC
+       ;CY=0
+        CALL	LOADER ;грузим корневой каталог
+       ;HL=SECBUF
+        LD	DE,TFILES
+FNDNEWFILE
+        LD	HL,SECBUF
+FNDFILELOOP
+       PUSH	HL
+        LD	C,33
+        ADD	HL,BC
+        LD	C,4
+       PUSH	DE
+FNDFI0  LD	A,(DE)
+        CPI	
+       JR NZ,FNDFIN
+        INC	DE
+        JP	PE,FNDFI0
+       POP	DE
+       POP	HL
+        LD	C,6
+        ADD	HL,BC
+        LD	C,4
+        LDIR	
+FNDFIOK		REPT 4
+		INC	DE
+		ENDM
+        LD	A,D
+		CP HIGH (ENDFILES);        CP	'ENDFILES
+        JR NZ,FNDNEWFILE
+        LD	A,E
+        CP	LOW (ENDFILES)
+        JR NZ,FNDNEWFILE
+        RET	
+FNDFIN
+       POP	DE
+       POP	HL
+PADDIN0 LD	C,(HL)
+        INC	HL
+        LD	B,(HL)
+        DEC	HL
+       LD	A,B
+       OR	C
+       JR NZ,NOPADDING
+        INC	H
+        LD	L,A
+NOPADDING
+       INC	B
+       DJNZ	CATEND ;B<>0
+        ADD	HL,BC
+        LD	A,H
+        CP	64
+       JR NC,FNDFILELOOP
+CATEND
+        LD	A,-2 ;нет файла
+        LD	(DE),A
+		REPT 4
+        INC	DE
+		ENDM
+        JR	FNDFIOK
+
+LOADER
+;грузим файл
+;HL указывает на поле координат файла в motorola порядке
+;CY=1: размер в DE
+;CY=0: размер в (HL+4)
+       PUSH	DE
+        LD	DE,SECTOR
+        LD	BC,4
+        LDIR	
+       POP	DE
+        JR C,$+5
+         LD	E,(HL)
+         INC	HL
+         LD	D,(HL)
+        EX DE,HL	
+        SCF	
+        LD	DE,2048
+        INC	B
+        SBC	HL,DE
+        JR NC,$-3
+LOADERLOOP
+        LD	HL,SECBUF
+       PUSH	HL
+LOADER0 PUSH	BC
+        CALL	READCD
+       CALL	READ_P2 ;!!! в буте он входит в READCD
+       LD	BC,2048
+       ADD	HL,BC
+        PUSH	HL
+        LD	HL,SECTOR+3
+        INC	(HL)
+        DEC	HL
+        JR Z,$-2
+        POP	HL
+        POP	BC
+        DJNZ	LOADER0
+       POP	HL
+        RET	
+
+READ_P1
+       PUSH	BC
+       PUSH DE
+       PUSH HL
+        CALL	READCD
+       POP	HL
+       POP DE
+       POP BC
+        RET	
+READ_P2
+       PUSH	BC
+       PUSH DE
+       PUSH HL
+        CALL	READ_S
+        CALL	READ_S
+        CALL	READ_S
+        CALL	READ_S
+        CALL	NO_BSY
+       POP	HL
+       POP DE
+       POP BC
+        RET	
+NXTSEC
+       PUSH	HL
+        LD	HL,SECTOR+3
+        INC	(HL)
+        DEC	HL
+        JR Z,$-2
+       POP	HL
+        RET	
+
+		IF atm=1;       IFN	atm
+OUTSHAD
+        LD	IX,10835
+        PUSH	IX
+        JP	0X3D2F
+       ENDIF	
+
+;ЧТЕНИЕ 512 байт
+READ_S
+		IF smuc=1;       IFN	smuc
+        LD	B,0
+READ_S0 PUSH	BC
+        LD	BC,hdddatlo
+        CALL	IN_A
+        LD	(HL),A
+        INC	HL
+        LD	BC,hdddathi
+        CALL	IN_A
+        LD	(HL),A
+        INC	HL
+        POP	BC
+        DJNZ	READ_S0
+       ELSE	;nemo
+        LD	C,hdddatlo
+		REPT 256;        DUP	256
+        INI	
+        INC	C
+        INI	
+        DEC	C
+		ENDM;        EDUP	
+       ENDIF	
+        RET	
+
+OUT_A
+		IF smuc=1;       IFN	smuc
+		IF atm=1;      IFN	atm
+        PUSH	AF
+        PUSH BC
+        CALL	OPENPORTS
+        POP	BC
+        POP AF
+        OUT	(C),A
+        JR	CLOSEPORTS
+OPENPORTS
+        LD	A,%10101000;11
+OPENPORTS_A
+        LD	BC,0X2A53
+        PUSH	BC
+        LD	BC,0X4177
+        JP	0X3D2F
+      ELSE	
+        LD	IX,0X3FF0
+        PUSH	IX
+        JP	0X3D2F
+      ENDIF	
+       ELSE	;nemo
+        OUT	(C),A
+        RET	
+       ENDIF	
+
+IN_HDDSTAT
+        LD	BC,hddstat
+IN_A
+		IF smuc=1;       IFN	smuc
+		IF atm=1;      IFN	atm
+        PUSH	BC
+        CALL	OPENPORTS
+        POP	BC
+        IN	A,(C)
+CLOSEPORTS
+        PUSH	AF
+        PUSH BC
+        LD	A,%10101000;11
+        LD	BC,0XFF77
+        OUT	(C),A
+        POP	BC
+        POP AF
+        RET	
+      ELSE	
+        LD	IX,0X3FF3
+        PUSH	IX
+        JP	0X3D2F
+      ENDIF	
+       ELSE	
+        IN	A,(C)
+        RET	
+       ENDIF	
+
+;ПОСЛАТЬ КОМАНДУ НА ВИНТ
+HDSC
+        LD	BC,hddcmd
+        CALL	OUT_A
+;ОЖИДАНИЕ ОСВОБОЖДЕНИЯ УСТРОЙСТВА
+NO_BSY
+        CALL	IN_HDDSTAT
+        RLCA	
+        RET	NC
+        JR	NO_BSY
+;ОЖИДАНИЕ ГОТОВНОСТИ ПЕРЕДАЧИ ДАННЫХ
+WAIT_DRQ
+        CALL	IN_HDDSTAT
+       OR	A
+        BIT	3,A
+        RET	NZ
+        JR	WAIT_DRQ
+
+;ЧТЕНИE ЧИСЛА ИЗ РЕГИСТРА ЦИЛИНДРА
+LEN_TO_HL
+        LD	BC,hddcyllo
+        CALL	IN_A
+        LD	L,A
+        LD	BC,hddcylhi
+        CALL	IN_A
+        LD	H,A
+        RET	
+
+;IN:HL-АДРЕС ПРИЕМА ДАННЫХ
+;   BC-КОЛ-ВО БАЙТ
+TRANS_IN
+        PUSH	BC
+        CALL	NO_BSY
+        POP	BC
+       RET	C
+        PUSH	BC
+        CALL	WAIT_DRQ
+        POP	BC
+       RET	C
+        INC	BC
+        SRL	B
+        RR	C
+TR_IN0  PUSH	BC
+        LD	BC,hdddatlo
+        CALL	IN_A
+        LD	(HL),A
+        INC	HL
+        LD	BC,hdddathi
+        CALL	IN_A
+        LD	(HL),A
+        POP	BC
+        CPI	
+        JP	PE,TR_IN0
+        RET	
+
+;ПЕРЕДАЧА ATAPI-ПАКЕТА
+SEND_ATAPI
+REG_SDH := $+1
+       LD	A,0XB0
+       LD	BC,hddhead
+       CALL	OUT_A
+        LD	BC,hddcyllo
+        XOR	A
+        CALL	OUT_A
+        LD	BC,hddcylhi
+		LD A,HIGH (2048);        LD	A,'2048
+        CALL	OUT_A
+        LD	A,0XA0
+        CALL	HDSC
+        LD	B,6
+TR_OUT0 PUSH	BC
+        INC	HL
+        LD	A,(HL)
+        LD	BC,hdddathi
+        CALL	OUT_A
+        DEC	HL
+        LD	A,(HL)
+        LD	BC,hdddatlo
+        CALL	OUT_A
+        INC	HL
+        INC HL
+        POP	BC
+        DJNZ	TR_OUT0
+        RET	
+
+READCD
+;ЧТЕНИЕ СЕКТОРА
+LOAD_SECTOR_
+       PUSH	HL
+        LD	HL,AP_READ
+        CALL	SEND_ATAPI
+       POP	HL
+;бывает ситуация,что CHECK CONDITION (D0 статуса)=0,
+;а при этом DRQ не выдается!
+       ;CALL IN_HDDSTAT
+       ;RRA
+        CALL	NO_BSY ;иначе виснет при иниц-ции CD
+       ;CALL WAIT_DRQ ;здесь виснет, если инитить слишком рано
+                 ;после выхода разгоняется, ждет кнопку и читает
+     ;ожидание DRQ по рецепту Budder'а
+        LD	DE,0
+RDCDDRQ CALL	IN_HDDSTAT
+        BIT	3,A
+       RET	NZ ;потом прочитаем
+        INC	DE
+        BIT	2,D ;4,D
+        JR	Z,RDCDDRQ
+        PUSH	HL
+        LD	HL,AP_00
+        CALL	SEND_ATAPI
+        POP	HL
+        JR	LOAD_SECTOR_
+
+;ATAPI-ПАКЕТ "ПУСТЫШКА"
+AP_00
+        DW	0
+		DUPL 10,0;        DS	10
+
+;ATAPI-ПАКЕТ "SPEED 1x"
+AP_1x
+        DW	0XBB
+        DB	0
+        DB	176 ;1x=176k/s
+		DUPL 8,0;        DS	8
+
+;ATAPI-ПАКЕТ "ЧТЕНИЕ"
+AP_READ
+		IF 0;       IFN	0
+        DW	0XBE   ;"READ CD"
+SECTOR  DB	0,0,0,0
+        DB	0
+        DB	0,1   ;=1 сектор
+        DB	0X10   ;читаем только данные
+        DB	0,0
+       ELSE	
+        DW	0X28   ;"READ(10)"
+SECTOR  DB	0,0,0,0
+        DB	0
+        DB	0,1   ;=1 сектор
+        DB	0
+        DB	0,0
+       ENDIF	
+AP_READTOC
+        DW	0X43   ;SCMSF=0,т.е.секторы,а не MSF
+        DB	0     ;FORMAT=0:все сессии
+		DUPL 3,0;        DS	3
+        DB	0     ;с 1-й сессии
+        DB	HIGH (2048);'2048 ;длина табл
+        DB	LOW (2048)
+        DB	0X00   ;FUNC
+		DUPL 2,0;        DS	2
+
+       IF	atm=0
+pause
+;162t - 17 (call) - 10 (ret) = 135
+		REPT 11;       DUP	11
+        JR	$+2
+		ENDM;       EDUP	
+        NOP	;136
+        RET	
+       ENDIF	
+
+evEMPTY
+        RET	
+
+evRIGHTOFF
+        LD	DE,HINTOFF
+        CALL	evRIGHTPM
+        JR	UMER
+evRIGHTON
+        LD	A,%11101111
+        LD	(NEEDKEY),A
+        LD	A,-1
+        LD	(CURKEY),A
+        CALL	ASKBIBIK
+        LD	DE,HINTRIGHT
+evRIGHTPM
+_y := 88
+_x := 31
+        xy2adr
+        LD	HL,_a
+        JR	evLRPM
+evLEFTOFF
+        LD	DE,HINTOFF
+        CALL	evLEFTPM
+        JR	UMER
+evLEFTON
+        LD	A,%11011111
+        LD	(NEEDKEY),A
+        LD	A,-1
+        LD	(CURKEY),A
+        CALL	ASKBIBIK
+        LD	DE,HINTLEFT
+evLEFTPM
+_y := 88
+_x := 0
+        xy2adr
+        LD	HL,_a
+evLRPM
+        LD	A,(curplane)
+                       ;0X1C,0X1D 0X16,0X17
+                   ;ATM;0X19,0X1D 0X13,0X17
+        OR	7
+       PUSH	AF
+       PUSH	DE
+       PUSH HL
+        CALL	evSPR16PP
+       POP	HL
+       POP DE
+       POP	AF
+        SUB	2
+        CALL	evSPR16PP
+        LD	A,(curplane)
+        LD	BC,32765
+        OUT	(C),A
+        RET	
+
+evFIREOFF
+        LD	DE,HINTOFF
+        CALL	evFIREPM
+UMER
+        LD	A,(NEEDKEY)
+        LD	C,A
+        LD	A,(CURKEY)
+        CP	C
+        RET	Z
+        INC	A
+        CALL	Z,BADBIBIK ;не нажимали ничего - смерть
+EVENTPARAM := $+1
+        LD	HL,0
+        LD	(CURENDOFVIDEO),HL
+        LD	HL,ENDOFVIDEODEAD
+        LD	(JPENDOFVIDEO),HL
+        RET	
+evFIREON
+        LD	A,%11111110
+        LD	(NEEDKEY),A
+        LD	A,-1
+        LD	(CURKEY),A
+        CALL	ASKBIBIK
+        LD	DE,HINTFIRE
+evFIREPM
+_y := 184
+_x := 28
+        xy2adr
+        LD	HL,_a
+        JR	evUDPM
+evDOWNOFF
+        LD	DE,HINTOFF
+        CALL	evDOWNPM
+        JR	UMER
+evDOWNON
+        LD	A,%11110111
+        LD	(NEEDKEY),A
+        LD	A,-1
+        LD	(CURKEY),A
+        CALL	ASKBIBIK
+        LD	DE,HINTDOWN
+evDOWNPM
+_y := 184
+_x := 15
+        xy2adr
+        LD	HL,_a
+        JR	evUDPM
+evUPOFF
+        LD	DE,HINTOFF
+        CALL	evUPPM
+        JR	UMER
+evUPON
+        LD	A,%11111011
+        LD	(NEEDKEY),A
+        LD	A,-1
+        LD	(CURKEY),A
+        CALL	ASKBIBIK
+        LD	DE,HINTUP
+evUPPM
+_y := 0
+_x := 15
+        xy2adr
+        LD	HL,_a
+evUDPM
+        LD	A,(curplane)
+                       ;0X1C,0X1D      0X16,0X17
+                  ;ATM ;0X19,0X1D      0X13,0X17
+        OR	7
+        PUSH	AF
+        PUSH HL
+        CALL	evUD88
+        POP	HL
+        POP AF
+        INC	HL
+evUD88
+       PUSH	AF
+       PUSH	DE
+       PUSH HL
+        CALL	evSPR8PP
+       POP	HL
+       POP DE
+       POP	AF
+        SUB	2
+        CALL	evSPR8PP
+        LD	A,(curplane)
+        LD	BC,32765
+        OUT	(C),A
+        RET	
+
+evSPR16PP
+        LD	BC,32765
+        OUT	(C),A
+       PUSH	AF
+        PUSH	HL
+        PUSH	HL
+        CALL	HINTSTOLB
+        POP	HL
+        SET	5,H
+        CALL	HINTSTOLB
+        POP	HL
+       POP	AF
+		IF atm=1;       IFN	atm
+        SUB	4
+       ELSE	
+        DEC	A
+       ENDIF	
+        LD	BC,32765
+        OUT	(C),A
+        PUSH	HL
+        CALL	HINTSTOLB
+        POP	HL
+        SET	5,H
+HINTSTOLB
+		IF atm=1;       IFN	atm
+        LD	BC,40
+		REPT 15;        DUP	16
+        LD	A,(DE)
+        INC	E
+        LD	(HL),A
+        ADD	HL,BC
+		ENDM;        EDUP	
+        LD	A,(DE)
+        INC	E
+        LD	(HL),A
+       ELSE	
+		REPT 7;        DUP	8
+        LD	A,(DE)
+        INC	E
+        LD	(HL),A
+        INC	H
+		ENDM;        EDUP	
+        LD	A,(DE)
+        INC	E
+        LD	(HL),A
+;        ORG	$-1
+        LD	A,L
+        ADD	A,32
+        LD	L,A
+        LD	A,H
+        SUB	7
+        LD	H,A
+		REPT 7;        DUP	8
+        LD	A,(DE)
+        INC	E
+        LD	(HL),A
+        INC	H
+		ENDM;        EDUP	
+        LD	A,(DE)
+        INC	E
+        LD	(HL),A
+       ENDIF	
+;        ORG	$-1
+        RET	
+evSPR8PP
+        LD	BC,32765
+        OUT	(C),A
+       PUSH	AF
+        PUSH	HL
+        PUSH	HL
+        CALL	HINTSTOLB8
+        POP	HL
+        SET	5,H
+        CALL	HINTSTOLB8
+        POP	HL
+       POP	AF
+		IF atm=1;       IFN	atm
+        SUB	4
+       ELSE	
+        DEC	A
+       ENDIF	
+        LD	BC,32765
+        OUT	(C),A
+        PUSH	HL
+        CALL	HINTSTOLB8
+        POP	HL
+        SET	5,H
+HINTSTOLB8
+		IF atm=1;       IFN	atm
+        LD	BC,40
+		REPT 7;        DUP	8
+        LD	A,(DE)
+        INC	E
+        LD	(HL),A
+        ADD	HL,BC
+		ENDM;        EDUP	
+        LD	A,(DE)
+        INC	E
+        LD	(HL),A
+       ELSE	
+		REPT 7;        DUP	8
+        LD	A,(DE)
+        INC	E
+        LD	(HL),A
+        INC	H
+		ENDM;        EDUP	
+        LD	A,(DE)
+        INC	E
+        LD	(HL),A
+       ENDIF	
+;        ORG	$-1
+        RET	
+
+		IF 0;       IFN	0
+CLSTOLB
+		IF atm=1;       IFN	atm
+        LD	BC,40
+        XOR	A
+		REPT 16;        DUP	16
+        LD	(HL),A
+        ADD	HL,BC
+		ENDM;        EDUP	
+       ELSE	
+		REPT 7;        DUP	8
+        LD	A,(DE)
+        INC	E
+        LD	(HL),A
+        INC	H
+		ENDM;        EDUP	
+        LD	A,(DE)
+        INC	E
+        LD	(HL),A
+;        ORG	$-1
+        LD	A,L
+        ADD	A,32
+        LD	L,A
+        LD	A,H
+        SUB	7
+        LD	H,A
+		REPT 7;        DUP	8
+        LD	A,(DE)
+        INC	E
+        LD	(HL),A
+        INC	H
+		ENDM;        EDUP	
+        LD	A,(DE)
+        INC	E
+        LD	(HL),A
+       ENDIF	
+;        ORG	$-1
+        RET	
+       ENDIF	
+OUTA
+       PUSH	BC
+        LD	C,A
+        LD	A,(curplane)
+        AND	0X18
+        OR	C
+        LD	BC,32765
+        OUT	(C),A
+       POP	BC
+        RET	
+
+		include galarr.a80;        INCLUDE	"GALARR",0X84
+SCORE   DW	0
+LIVES   DB	0
+LEVEL   DB	0
+
+		include galscrip.a80;        INCLUDE	"GALSCRIP",0XC4
+;       DISPLAY	$
+		DUPL LOW (-$),0;        DS	.(-$)
+f88		binclude 88kriv.bin,0,0X800;     INCBIN	"88kriv$",0X800
+loa
+end
+		IF 0
+		DUPL 0XC000-$,0;        DS	0XC000-$
+;       DISPLAY	/T,end
+        ORG	0X5B00
+ObjTab  DB	"AUTORUN "
+        DB	"Z"
+        DW	begin,end-begin
+        DB	16
+        DB	"X "
+       IF	atm
+        DB	"PENT    "
+        DB	"C"
+        DW	0X8200,0X3E00
+        DB	16
+        DB	"  "
+       ENDIF	
+		ENDIF
+;		include saveobj5.a80;        INCLUDE	"SAVEOBJ*",0XC0

@@ -1,0 +1,1351 @@
+
+;LAST UPDATE: 03.02.2014 savelij
+
+;        MAIN	"*",0XC6
+
+;цвета:
+cF		EQU 0XB847
+cE		EQU 0XB046
+cD		EQU 0XA845
+cC		EQU 0XA044
+cB		EQU 0X9843
+cA		EQU 0X9042
+c9		EQU 0X8841
+c8		EQU 0X8040
+c7		EQU 0X3807
+c6		EQU 0X3006
+c5		EQU 0X2805
+c4		EQU 0X2004
+c3		EQU 0X1803
+c2		EQU 0X1002
+c1		EQU 0X0801
+c0		EQU 0X0000
+
+;раскраски букв:
+BUK_W
+		REPT 8;        DUP	8
+        DW	cF
+		ENDM;        EDUP	
+BUK_YSL
+        DW	c5
+        DW	c6
+        DW	c7
+        DW	cE
+        DW	cF
+        DW	cE
+        DW	c7
+        DW	c6
+
+PRTXT88
+;C=фоновый цвет (в виде атрибута)
+;IX=таблица раскраски буквы по строкам
+        LD	A,(HL)
+        INC	HL
+        OR	A
+        RET	Z
+        CALL	PR88
+        JR	PRTXT88
+
+PR88
+       PUSH	BC
+       PUSH HL
+        LD	L,A
+        LD	A,pgfnt
+        CALL	OUTA
+;преобразовываем в 4 цветных столбца
+       PUSH	DE
+        LD	DE,PROUTBUF
+        LD	B,4
+PR880   LD	H,HIGH (f88);'f88
+proh := 0
+		REPT 7;       DUP	8
+        LD	A,C
+        RLC	(HL)
+        JR NC,$+5
+        OR	(IX+proh)
+        RLC	(HL)
+        JR NC,$+5
+        OR	(IX+proh+1)
+        LD	(DE),A
+        INC	E
+        INC	H
+proh := proh+2
+		ENDM;       EDUP	
+        LD	A,C
+        RLC	(HL)
+        JR NC,$+5
+        OR	(IX+proh)
+        RLC	(HL)
+        JR NC,$+5
+        OR	(IX+proh+1)
+        LD	(DE),A
+        INC	E
+;        ORG	$-1
+        DEC	B
+        JP	NZ,PR880
+       POP	DE
+;выводим на 1-й экран
+       PUSH	DE
+        LD	HL,PROUTBUF
+        PUSH	DE
+        LD	A,p14
+        CALL	OUTCHRSTOLB
+        POP	DE
+        PUSH	DE
+        RES	7,D
+        CALL	CHRSTOLB
+        POP	DE
+        SET	5,D
+        PUSH	DE
+        CALL	CHRSTOLB
+        POP	DE
+        RES	7,D
+        CALL	CHRSTOLB
+       POP	DE
+;выводим на 2-й экран
+       PUSH	DE
+        LD	HL,PROUTBUF
+        PUSH	DE
+        LD	A,p16
+        CALL	OUTCHRSTOLB
+        POP	DE
+        PUSH	DE
+        LD	A,p17
+        CALL	OUTCHRSTOLB
+        POP	DE
+        SET	5,D
+        PUSH	DE
+        LD	A,p16
+        CALL	OUTCHRSTOLB
+        POP	DE
+        LD	A,p17
+        CALL	OUTCHRSTOLB
+       POP	DE
+       POP	HL
+       POP BC
+        INC	DE ;для ATM нельзя INC E
+        RET	
+
+OUTCHRSTOLB
+        CALL	OUTA
+CHRSTOLB
+		REPT 7;        DUP	8
+        LD	A,(HL)
+        LD (DE),A
+        INC	L
+cstid := $
+		IF atm=1;      IFN	atm
+        LD	A,E
+        ADD	A,40
+        LD	E,A
+        JR NC,$+3
+        INC	D
+       ELSE	
+        INC	D
+       ENDIF	
+		ENDM;        EDUP	
+        LD	A,(HL)
+        LD (DE),A
+        INC	L
+;        ORG	cstid
+        RET	
+
+HOD        MACRO W0,W1,W2;	HOD
+t := z+W0;\0
+        DW	t-reaction
+		IF (W1-'A')=0;       IF	"\1"-"A"
+        DW	evFIREON
+       ENDIF	
+		IF (W1-'L')=0;       IF	"\1"-"L"
+        DW	evLEFTON
+       ENDIF	
+		IF (W1-'R')=0;       IF	"\1"-"R"
+        DW	evRIGHTON
+       ENDIF	
+		IF (W1-'U')=0;       IF	"\1"-"U"
+        DW	evUPON
+       ENDIF	
+		IF (W1-'D')=0;       IF	"\1"-"D"
+        DW	evDOWNON
+       ENDIF	
+         DW	W2;\2
+        DW	t
+		IF (W1-'A')=0;       IF	"\1"-"A"
+        DW	evFIREOFF
+       ENDIF	
+		IF (W1-'L')=0;       IF	"\1"-"L"
+        DW	evLEFTOFF
+       ENDIF	
+		IF (W1-'R')=0;       IF	"\1"-"R"
+        DW	evRIGHTOFF
+       ENDIF	
+		IF (W1-'U')=0;       IF	"\1"-"U"
+        DW	evUPOFF
+       ENDIF	
+		IF (W1-'D')=0;       IF	"\1"-"D"
+        DW	evDOWNOFF
+       ENDIF	
+        DW	W2;\2
+        ENDM	
+
+SCRIPTL1
+;DW время события (в звуковых фреймах=0.117 s)
+;DW тип события
+;DW адрес имени файла смерти (для событий ev...OFF)
+        HOD 44,'R',fL1D1
+        HOD 69,'R',fL1D1
+        HOD 91,'L',fL1D1
+        HOD 131,'R',fL1D2
+        HOD 147,'L',fL1D3
+        HOD 168,'U',fL1D4
+        HOD 199,'D',fL1D5
+        DW	-1
+
+SCRIPTM1
+        HOD 44,'L',fL1D1
+        HOD 69,'L',fL1D1
+        HOD 91,'R',fL1D1
+        HOD 131,'L',fL1D2
+        HOD 147,'R',fL1D3
+        HOD 168,'U',fL1D4
+        HOD 199,'D',fL1D5
+        DW	-1
+
+SCRIPTL2
+        HOD 50,'U',fL2D1
+        HOD 126,'L',fL2D2
+        HOD 157,'A',fL2D3
+        HOD 218,'A',fL2D4
+t := 232
+        DW	t
+        DW	evBEGINTIMESTOP
+        DW	TTIMESTOP2
+		REPT 14;       DUP	14
+t := t+4
+        DW	t
+        DW	evTIMESTOPKEY
+        DW	TTIMESTOP2
+		ENDM;       EDUP	
+        DW	291
+        DW	evENDTIMESTOP
+        DW	TTIMESTOP2END
+        DW	-1
+
+SCRIPTL3
+        HOD 47,'D',fL3D1
+        HOD 67,'R',fL3D1
+        HOD 85,'L',fL3D2
+        HOD 105,'R',fL3D3
+        HOD 133,'D',fL3D4
+        HOD 161,'R',fL3D5
+        HOD 190,'R',fL3D6
+        HOD 212,'R',fL3D6
+        HOD 246,'A',fL3D7
+        HOD 296,'A',fL3DA
+t := 306
+        DW	t
+        DW	evBEGINTIMESTOP
+        DW	TTIMESTOP3
+		REPT 14;       DUP	14
+t := t+4
+        DW	t
+        DW	evTIMESTOPKEY
+        DW	TTIMESTOP3
+		ENDM;       EDUP	
+        DW	366
+        DW	evENDTIMESTOP
+        DW	TTIMESTOP3END
+        DW	-1
+
+SCRIPTM3
+        HOD 47,'D',fL3D1
+        HOD 67,'L',fL3D1
+        HOD 85,'R',fL3D2
+        HOD 105,'L',fL3D3
+        HOD 133,'D',fL3D4
+        HOD 161,'L',fL3D5
+        HOD 190,'L',fL3D6
+        HOD 212,'L',fL3D6
+        HOD 246,'A',fL3D7
+        HOD 296,'A',fL3DA
+t := 306
+        DW	t
+        DW	evBEGINTIMESTOP
+        DW	TTIMESTOP3
+		REPT 14;       DUP	14
+t := t+4
+        DW	t
+        DW	evTIMESTOPKEY
+        DW	TTIMESTOP3
+		ENDM;       EDUP	
+        DW	366
+        DW	evENDTIMESTOP
+        DW	TTIMESTOP3END
+
+        DW	-1
+
+SCRIPTL4
+        HOD 65,'R',fL4D1
+        HOD 83,'U',fL4D1
+        HOD 138,'R',fL4D2
+        DW	-1
+
+SCRIPTL5
+        HOD 55,'R',fL5D1
+        HOD 85,'A',fL5D1
+        HOD 98,'A',fL5D1
+        HOD 121,'A',fL5D1
+        HOD 146,'L',fL5D1
+        HOD 165,'U',fL5D1
+        HOD 228,'L',fL5D2
+        HOD 256,'R',fL5D3
+        HOD 291,'L',fL5D2
+        HOD 325,'U',fL5D1
+        HOD 361,'A',fL5D1
+        DW	-1
+
+SCRIPTL6
+        HOD 45,'R',fL6D1
+        HOD 68,'D',fL6D2
+        HOD 96,'U',fL6D3
+        HOD 129,'D',fL6D1
+        HOD 184,'R',fL6D4
+        HOD 209,'L',fL6D5
+        HOD 242,'U',fL6D6
+        HOD 283,'A',fL6D7
+        HOD 314,'R',fL6D8
+        HOD 366,'R',fL6D9
+        DW	-1
+
+SCRIPTM6
+        HOD 45,'L',fL6D1
+        HOD 68,'D',fL6D2
+        HOD 96,'U',fL6D3
+        HOD 129,'D',fL6D1
+        HOD 184,'L',fL6D4
+        HOD 209,'R',fL6D5
+        HOD 242,'U',fL6D6
+        HOD 283,'A',fL6D7
+        HOD 314,'L',fL6D8
+        HOD 366,'L',fL6D9
+        DW	-1
+
+SCRIPTL7
+        HOD 72,'U',fL7D1
+        HOD 99,'R',fL7D1
+        HOD 123,'A',fL7D1
+        HOD 177,'L',fL7D1
+        HOD 197,'A',fL7D1
+        HOD 245,'A',fL7D2
+        DW	-1
+
+SCRIPTL8
+        HOD 53,'L',fL8D1
+        HOD 78,'A',fL8D1
+        HOD 111,'U',fL8D1
+        HOD 140,'U',fL8D1
+        HOD 166,'U',fL8D2
+        HOD 219,'U',fL8D3
+        HOD 244,'L',fL8D4
+        HOD 263,'R',fL8D5
+        HOD 308,'A',fL8D6
+t := 317
+        DW	t
+        DW	evBEGINTIMESTOP
+        DW	TTIMESTOP8
+		REPT 14;       DUP	14
+t := t+4
+        DW	t
+        DW	evTIMESTOPKEY
+        DW	TTIMESTOP8
+		ENDM;       EDUP	
+        DW	377
+        DW	evENDTIMESTOP
+        DW	TTIMESTOP8END
+        DW	-1
+
+SCRIPTL9
+        HOD 38,'R',fL9D1
+        HOD 60,'R',fL9D2
+        HOD 84,'D',fL9D3
+        HOD 117,'U',fL9D4
+        HOD 174,'A',fL9D2
+t := 183
+        DW	t
+        DW	evBEGINTIMESTOP
+        DW	TTIMESTOP9
+		REPT 14;       DUP	14
+t := t+4
+        DW	t
+        DW	evTIMESTOPKEY
+        DW	TTIMESTOP9
+		ENDM;       EDUP	
+        DW	243
+        DW	evENDTIMESTOP
+        DW	TTIMESTOP9END
+        HOD 306,'A',fL9D5
+        HOD 406,'U',fL9D6
+        HOD 423,'L',fL9D7
+        HOD 450,'R',fL9D8
+        HOD 470,'R',fL9D9
+        DW	-1
+
+SCRIPTM9
+        HOD 38,'L',fL9D1
+        HOD 60,'L',fL9D2
+        HOD 84,'D',fL9D3
+        HOD 117,'U',fL9D4
+        HOD 174,'A',fL9D2
+t := 183
+        DW	t
+        DW	evBEGINTIMESTOP
+        DW	TTIMESTOP9
+		REPT 14;       DUP	14
+t := t+4
+        DW	t
+        DW	evTIMESTOPKEY
+        DW	TTIMESTOP9
+		ENDM;       EDUP	
+        DW	243
+        DW	evENDTIMESTOP
+        DW	TTIMESTOP9END
+        HOD 306,'A',fL9D5
+        HOD 406,'U',fL9D6
+        HOD 423,'R',fL9D7
+        HOD 450,'L',fL9D8
+        HOD 470,'L',fL9D9
+        DW	-1
+
+SCRIPTLA
+        HOD 53,'R',fLAD1
+        HOD 87,'L',fLAD2
+        HOD 117,'D',fLAD3
+        HOD 172,'R',fLAD4
+        HOD 217,'R',fLAD5
+        HOD 254,'L',fLAD6
+        HOD 312,'A',fLAD1
+t := 325
+        DW	t
+        DW	evBEGINTIMESTOP
+        DW	TTIMESTOPA
+		REPT 14;       DUP	14
+t := t+4
+        DW	t
+        DW	evTIMESTOPKEY
+        DW	TTIMESTOPA
+		ENDM;       EDUP	
+        DW	385
+        DW	evENDTIMESTOP
+        DW	TTIMESTOPAEND
+        DW	-1
+
+SCRIPTMA
+        HOD 53,'L',fLAD1
+        HOD 87,'R',fLAD2
+        HOD 117,'D',fLAD3
+        HOD 172,'L',fLAD4
+        HOD 217,'R',fLAD5
+        HOD 254,'L',fLAD6
+        HOD 312,'A',fLAD1
+t := 325
+        DW	t
+        DW	evBEGINTIMESTOP
+        DW	TTIMESTOPA
+		REPT 14;       DUP	14
+t := t+4
+        DW	t
+        DW	evTIMESTOPKEY
+        DW	TTIMESTOPA
+		ENDM;       EDUP	
+        DW	385
+        DW	evENDTIMESTOP
+        DW	TTIMESTOPAEND
+        DW	-1
+
+SCRIPTLB
+        HOD 44,'L',fLBD1
+        HOD 94,'R',fLBD2
+        HOD 162,'L',fLBD3
+        HOD 198,'D',fLBD4
+        HOD 236,'A',fLBD5
+t := 245
+        DW	t
+        DW	evBEGINTIMESTOP
+        DW	TTIMESTOPB
+		REPT 14;       DUP	14
+t := t+4
+        DW	t
+        DW	evTIMESTOPKEY
+        DW	TTIMESTOPB
+		ENDM;       EDUP	
+        DW	305
+        DW	evENDTIMESTOP
+        DW	TTIMESTOPBEND
+        DW	-1
+
+SCRIPTLC
+        HOD 47,'R',fLCD1
+        HOD 92,'U',fLCD2
+        HOD 125,'L',fLCD3
+        HOD 143,'U',fLCD4
+        HOD 197,'R',fLCD5
+        HOD 231,'D',fLCD6
+        HOD 257,'A',fLCD7
+        HOD 286,'R',fLCD8
+        HOD 305,'D',fLCD9
+        DW	-1
+
+SCRIPTLD
+        HOD 44,'L',fLDD1
+        HOD 60,'L',fLDD2
+        HOD 89,'R',fLDD1
+        HOD 138,'A',fLDD3
+        HOD 177,'L',fLDD4
+        HOD 208,'R',fLDD5
+        HOD 238,'A',fLDD6
+        HOD 292,'A',fLDD7
+t := 319
+        DW	t
+        DW	evBEGINTIMESTOP
+        DW	TTIMESTOPD
+		REPT 14;       DUP	14
+t := t+4
+        DW	t
+        DW	evTIMESTOPKEY
+        DW	TTIMESTOPD
+		ENDM;       EDUP	
+        DW	378
+        DW	evENDTIMESTOP
+        DW	TTIMESTOPDEND
+        DW	-1
+
+SCRIPTMD
+        HOD 44,'R',fLDD1
+        HOD 60,'R',fLDD2
+        HOD 89,'L',fLDD1
+        HOD 138,'A',fLDD3
+        HOD 177,'R',fLDD4
+        HOD 208,'L',fLDD5
+        HOD 238,'A',fLDD6
+        HOD 292,'A',fLDD7
+t := 319
+        DW	t
+        DW	evBEGINTIMESTOP
+        DW	TTIMESTOPD
+		REPT 14;       DUP	14
+t := t+4
+        DW	t
+        DW	evTIMESTOPKEY
+        DW	TTIMESTOPD
+		ENDM;       EDUP	
+        DW	378
+        DW	evENDTIMESTOP
+        DW	TTIMESTOPDEND
+        DW	-1
+
+SCRIPTLE
+        HOD 57,'A',fLED1
+        HOD 116,'D',fLED2
+        HOD 140,'L',fLED3
+        HOD 164,'R',fLED4
+        HOD 232,'A',fLED7
+t := 244
+        DW	t
+        DW	evBEGINTIMESTOP
+        DW	TTIMESTOPE
+		REPT 14;       DUP	14
+t := t+4
+        DW	t
+        DW	evTIMESTOPKEY
+        DW	TTIMESTOPE
+		ENDM       EDUP	
+        DW	304
+        DW	evENDTIMESTOP
+        DW	TTIMESTOPEEND
+        HOD 337,'R',fLED5
+        HOD 351,'A',fLED6
+        DW	-1
+
+SCRIPTLF
+        HOD 59,'L',fLFD1
+        HOD 87,'R',fLFD2
+        HOD 143,'R',fLFD3
+        HOD 165,'A',fLFD4
+        HOD 183,'A',fLFD5
+        HOD 231,'D',fLFD6
+        DW	-1
+
+SCRIPTMF
+        HOD 59,'R',fLFD1
+        HOD 87,'L',fLFD2
+        HOD 143,'L',fLFD3
+        HOD 165,'A',fLFD4
+        HOD 183,'A',fLFD5
+        HOD 231,'D',fLFD6
+        DW	-1
+
+SCRIPTLG
+        HOD 52,'R',fLGD1
+        HOD 73,'A',fLGD2
+        HOD 123,'A',fLGD3
+        HOD 139,'A',fLGD4
+        HOD 155,'U',fLGD5
+        HOD 202,'R',fLGD6
+        HOD 220,'A',fLGD7
+        HOD 261,'L',fLGD8
+        HOD 309,'A',fLGD4
+        DW	-1
+
+SCRIPTL1D1
+        DW	-1
+
+SCRIPTINTRO
+        DW	0 ;сразу
+        DW	evINTROEXITPREPARE
+        DW	0
+        DW	-1
+
+evINTROEXITPREPARE
+        LD	A,-1
+        LD	(CURKEY),A
+        LD	(OLDKEY),A
+        LD	A,111
+        LD	(NEEDKEY),A ;чтобы все кнопки звучали одинаково
+       LD	HL,evINTROEXIT
+       LD	(keySND),HL ;чтобы вместо звучания - выход
+       LD	HL,0
+       LD	(SCORE),HL
+       LD	A,5
+       LD	(LIVES),A
+       LD	A,0
+       LD	(LEVEL),A
+        RET	
+evINTROEXIT
+        LD	HL,ENDOFVIDEO
+        LD	(JPENDOFVIDEO),HL
+        RET	
+
+evTIMESTOPKEY
+        LD	A,(CURKEY)
+        LD	C,A
+        LD	A,-1
+        LD	(CURKEY),A
+        INC	C
+        RET	Z ;не нажимали кнопку
+        LD	A,(CURTIMESTOP)
+        DEC	A
+        JP	P,$+5
+        LD	A,2
+        LD	(CURTIMESTOP),A
+        LD	HL,(EVENTPARAM) ;адрес таблицы строк
+        CALL	PRTIMESTOP
+        JP	GOODBIBIK
+
+evBEGINTIMESTOP
+       LD	A,-1
+       LD	(CURKEY),A
+       LD	A,111
+       LD	(NEEDKEY),A ;чтобы все кнопки звучали одинаково
+        LD	A,R
+        ADD	A,3
+        JR NC,$-2
+        LD	(CURTIMESTOP),A ;0..2
+        LD	HL,(EVENTPARAM) ;адрес таблицы строк
+PRTIMESTOP
+        LD	A,(CURTIMESTOP)
+        ADD	A,A
+        ADD	A,L
+        LD	L,A
+        JR NC,$+3
+        INC	H
+        LD	E,(HL)
+        INC	HL
+        LD	D,(HL)
+        EX DE,HL	
+PRLOWMSG
+_y := 184
+_x := 6
+        xy2adr
+        LD	DE,_a
+;C=фоновый цвет (в виде атрибута)
+        LD	C,0
+;IX=таблица раскраски буквы по строкам
+        LD	IX,BUK_YSL
+        CALL	PRTXT88
+        LD	A,(curplane)
+        LD	BC,32765
+        OUT	(C),A
+        RET	
+
+evENDTIMESTOP
+        LD	HL,TSPACES
+        CALL	PRLOWMSG
+        LD	HL,(EVENTPARAM)
+CURTIMESTOP := $+1
+        LD	A,0
+        ADD	A,A
+        ADD	A,L
+        LD	L,A
+        JR NC,$+3
+        INC	H
+        LD	A,(HL)
+        INC	HL
+        LD	H,(HL)
+        LD L,A
+        OR	H
+        JP	Z,GOODBIBIK
+        LD	(CURENDOFVIDEO),HL
+        CALL	BADBIBIK
+        LD	HL,ENDOFVIDEODEAD
+        LD	(JPENDOFVIDEO),HL
+        RET	
+
+;для системы паролей
+TLEVELS
+        DW	fL1
+        DW	fL2
+        DW	fL3
+        DW	fL4
+        DW	fL5
+        DW	fL6
+        DW	fL7
+        DW	fL8
+        DW	fL9
+        DW	fLA
+        DW	fLB
+        DW	fLC
+        DW	fLD
+        DW	fLE
+        DW	fLF
+        DW	fLG
+
+TFILES
+;будет адрес файла в motorola порядке
+;-2,?,?,? файл не найден
+fINTRO  DB	"GINT"
+        DW	SCRIPTINTRO
+        DW	fL1 ;куда идти после ролика
+fL1     DB	"LEV1"
+        DW	SCRIPTL1
+        DW	fL2 ;куда идти после ролика
+fM1     DB	"MEV1"
+        DW	SCRIPTM1
+        DW	fL2 ;куда идти после ролика
+fL2     DB	"LEV2"
+        DW	SCRIPTL2
+        DW	fL3
+fL3     DB	"LEV3"
+        DW	SCRIPTL3
+        DW	fL4 ;куда идти после ролика
+fM3     DB	"MEV3"
+        DW	SCRIPTM3
+        DW	fL4 ;куда идти после ролика
+fL4     DB	"LEV4"
+        DW	SCRIPTL4
+        DW	fL5
+fL5     DB	"LEV5"
+        DW	SCRIPTL5
+        DW	fL6
+fL6     DB	"LEV6"
+        DW	SCRIPTL6
+        DW	fL7
+fM6     DB	"MEV6"
+        DW	SCRIPTM6
+        DW	fL7
+fL7     DB	"LEV7"
+        DW	SCRIPTL7
+        DW	fL8
+fL8     DB	"LEV8"
+        DW	SCRIPTL8
+        DW	fL9 ;куда идти после ролика
+fL9     DB	"LEV9"
+        DW	SCRIPTL9
+        DW	fLA ;куда идти после ролика
+fM9     DB	"MEV9"
+        DW	SCRIPTM9
+        DW	fLA ;куда идти после ролика
+fLA     DB	"LEVA"
+        DW	SCRIPTLA
+        DW	fLB ;куда идти после ролика
+fMA     DB	"MEVA"
+        DW	SCRIPTMA
+        DW	fLB ;куда идти после ролика
+fLB     DB	"LEVB"
+        DW	SCRIPTLB
+        DW	fLC ;куда идти после ролика
+fLC     DB	"LEVC"
+        DW	SCRIPTLC
+        DW	fLD
+fLD     DB	"LEVD"
+        DW	SCRIPTLD
+        DW	fLE ;куда идти после ролика
+fMD     DB	"MEVD"
+        DW	SCRIPTMD
+        DW	fLE ;куда идти после ролика
+fLE     DB	"LEVE"
+        DW	SCRIPTLE
+        DW	fLF ;куда идти после ролика
+fLF     DB	"LEVF"
+        DW	SCRIPTLF
+        DW	fLG
+fMF     DB	"MEVF"
+        DW	SCRIPTMF
+        DW	fLG
+fLG     DB	"LEVG"
+        DW	SCRIPTLG
+        DW	fINTRO ;куда идти после ролика
+
+fL1D1
+        DB	"L1D1"
+        DW	SCRIPTL1D1
+        DW	fL1
+fL1D2 ;
+        DB	"L1D2"
+        DW	SCRIPTL1D1
+        DW	fM1
+fL1D3 ;
+        DB	"L1D3"
+        DW	SCRIPTL1D1
+        DW	fL1
+fL1D4 ;
+        DB	"L1D4"
+        DW	SCRIPTL1D1
+        DW	fL1
+fL1D5 ;
+        DB	"L1D5"
+        DW	SCRIPTL1D1
+        DW	fM1
+fL2D1
+        DB	"L2D1"
+        DW	SCRIPTL1D1
+        DW	fL2
+fL2D2 ;
+        DB	"L2D2"
+        DW	SCRIPTL1D1
+        DW	fL2
+fL2D3 ;
+        DB	"L2D3"
+        DW	SCRIPTL1D1
+        DW	fL2
+fL2D4 ;
+        DB	"L2D4"
+        DW	SCRIPTL1D1
+        DW	fL2
+fL2D5 ;
+        DB	"L2D5"
+        DW	SCRIPTL1D1
+        DW	fL2
+fL2D6 ;
+        DB	"L2D6"
+        DW	SCRIPTL1D1
+        DW	fL2
+fL3D1
+        DB	"L3D1"
+        DW	SCRIPTL1D1
+        DW	fL3
+fL3D2 ;
+        DB	"L3D2"
+        DW	SCRIPTL1D1
+        DW	fL3
+fL3D3 ;
+        DB	"L3D3"
+        DW	SCRIPTL1D1
+        DW	fM3
+fL3D4 ;
+        DB	"L3D4"
+        DW	SCRIPTL1D1
+        DW	fL3
+fL3D5 ;
+        DB	"L3D5"
+        DW	SCRIPTL1D1
+        DW	fM3
+fL3D6 ;
+        DB	"L3D6"
+        DW	SCRIPTL1D1
+        DW	fM3
+fL3D7 ;
+        DB	"L3D7"
+        DW	SCRIPTL1D1
+        DW	fL3
+fL3D8 ;
+        DB	"L3D8"
+        DW	SCRIPTL1D1
+        DW	fL3
+fL3D9 ;
+        DB	"L3D9"
+        DW	SCRIPTL1D1
+        DW	fM3
+fL3DA ;
+        DB	"L3DA"
+        DW	SCRIPTL1D1
+        DW	fM3
+fL4D1
+        DB	"L4D1"
+        DW	SCRIPTL1D1
+        DW	fL4
+fL4D2 ;
+        DB	"L4D2"
+        DW	SCRIPTL1D1
+        DW	fL4
+fL5D1
+        DB	"L5D1"
+        DW	SCRIPTL1D1
+        DW	fL5
+fL5D2 ;
+        DB	"L5D2"
+        DW	SCRIPTL1D1
+        DW	fL5
+fL5D3 ;
+        DB	"L5D3"
+        DW	SCRIPTL1D1
+        DW	fL5
+fL6D1
+        DB	"L6D1"
+        DW	SCRIPTL1D1
+        DW	fL6
+fL6D2 ;
+        DB	"L6D2"
+        DW	SCRIPTL1D1
+        DW	fM6
+fL6D3 ;
+        DB	"L6D3"
+        DW	SCRIPTL1D1
+        DW	fL6
+fL6D4 ;
+        DB	"L6D4"
+        DW	SCRIPTL1D1
+        DW	fM6
+fL6D5 ;
+        DB	"L6D5"
+        DW	SCRIPTL1D1
+        DW	fM6
+fL6D6 ;
+        DB	"L6D6"
+        DW	SCRIPTL1D1
+        DW	fL6
+fL6D7 ;
+        DB	"L6D7"
+        DW	SCRIPTL1D1
+        DW	fL6
+fL6D8 ;
+        DB	"L6D8"
+        DW	SCRIPTL1D1
+        DW	fM6
+fL6D9 ;
+        DB	"L6D9"
+        DW	SCRIPTL1D1
+        DW	fL6
+fL7D1
+        DB	"L7D1"
+        DW	SCRIPTL1D1
+        DW	fL7
+fL7D2 ;
+        DB	"L7D2"
+        DW	SCRIPTL1D1
+        DW	fL7
+fL8D1
+        DB	"L8D1"
+        DW	SCRIPTL1D1
+        DW	fL8
+fL8D2 ;
+        DB	"L8D2"
+        DW	SCRIPTL1D1
+        DW	fL8
+fL8D3 ;
+        DB	"L8D3"
+        DW	SCRIPTL1D1
+        DW	fL8
+fL8D4 ;
+        DB	"L8D4"
+        DW	SCRIPTL1D1
+        DW	fL8
+fL8D5 ;
+        DB	"L8D5"
+        DW	SCRIPTL1D1
+        DW	fL8
+fL8D6 ;
+        DB	"L8D6"
+        DW	SCRIPTL1D1
+        DW	fL8
+fL8D7 ;
+        DB	"L8D7"
+        DW	SCRIPTL1D1
+        DW	fL8
+fL8D8 ;
+        DB	"L8D8"
+        DW	SCRIPTL1D1
+        DW	fL8
+fL9D1
+        DB	"L9D1"
+        DW	SCRIPTL1D1
+        DW	fM9
+fL9D2 ;
+        DB	"L9D2"
+        DW	SCRIPTL1D1
+        DW	fL9
+fL9D3 ;
+        DB	"L9D3"
+        DW	SCRIPTL1D1
+        DW	fL9
+fL9D4 ;
+        DB	"L9D4"
+        DW	SCRIPTL1D1
+        DW	fM9
+fL9D5 ;
+        DB	"L9D5"
+        DW	SCRIPTL1D1
+        DW	fM9
+fL9D6 ;
+        DB	"L9D6"
+        DW	SCRIPTL1D1
+        DW	fL9
+fL9D7 ;
+        DB	"L9D7"
+        DW	SCRIPTL1D1
+        DW	fM9
+fL9D8 ;
+        DB	"L9D8"
+        DW	SCRIPTL1D1
+        DW	fL9
+fL9D9 ;
+        DB	"L9D9"
+        DW	SCRIPTL1D1
+        DW	fM9
+fL9DA ;
+        DB	"L9DA"
+        DW	SCRIPTL1D1
+        DW	fL9
+fL9DB ;
+        DB	"L9DB"
+        DW	SCRIPTL1D1
+        DW	fL9
+fL9DC ;
+        DB	"L9DC"
+        DW	SCRIPTL1D1
+        DW	fM9
+fLAD1
+        DB	"LAD1"
+        DW	SCRIPTL1D1
+        DW	fMA
+fLAD2 ;
+        DB	"LAD2"
+        DW	SCRIPTL1D1
+        DW	fLA
+fLAD3 ;
+        DB	"LAD3"
+        DW	SCRIPTL1D1
+        DW	fLA
+fLAD4 ;
+        DB	"LAD4"
+        DW	SCRIPTL1D1
+        DW	fMA
+fLAD5 ;
+        DB	"LAD5"
+        DW	SCRIPTL1D1
+        DW	fMA
+fLAD6 ;
+        DB	"LAD6"
+        DW	SCRIPTL1D1
+        DW	fLA
+fLAD7 ;
+        DB	"LAD7"
+        DW	SCRIPTL1D1
+        DW	fMA
+fLAD8 ;
+        DB	"LAD8"
+        DW	SCRIPTL1D1
+        DW	fLA
+fLBD1
+        DB	"LBD1"
+        DW	SCRIPTL1D1
+        DW	fLB
+fLBD2 ;
+        DB	"LBD2"
+        DW	SCRIPTL1D1
+        DW	fLB
+fLBD3 ;
+        DB	"LBD3"
+        DW	SCRIPTL1D1
+        DW	fLB
+fLBD4 ;
+        DB	"LBD4"
+        DW	SCRIPTL1D1
+        DW	fLB
+fLBD5 ;
+        DB	"LBD5"
+        DW	SCRIPTL1D1
+        DW	fLB
+fLBD6 ;
+        DB	"LBD6"
+        DW	SCRIPTL1D1
+        DW	fLB
+fLBD7 ;
+        DB	"LBD7"
+        DW	SCRIPTL1D1
+        DW	fLB
+fLCD1
+        DB	"LCD1"
+        DW	SCRIPTL1D1
+        DW	fLC
+fLCD2 ;
+        DB	"LCD2"
+        DW	SCRIPTL1D1
+        DW	fLC
+fLCD3 ;
+        DB	"LCD3"
+        DW	SCRIPTL1D1
+        DW	fLC
+fLCD4 ;
+        DB	"LCD4"
+        DW	SCRIPTL1D1
+        DW	fLC
+fLCD5 ;
+        DB	"LCD5"
+        DW	SCRIPTL1D1
+        DW	fLC
+fLCD6 ;
+        DB	"LCD6"
+        DW	SCRIPTL1D1
+        DW	fLC
+fLCD7 ;
+        DB	"LCD7"
+        DW	SCRIPTL1D1
+        DW	fLC
+fLCD8 ;
+        DB	"LCD8"
+        DW	SCRIPTL1D1
+        DW	fLC
+fLCD9 ;
+        DB	"LCD9"
+        DW	SCRIPTL1D1
+        DW	fLC
+fLDD1
+        DB	"LDD1"
+        DW	SCRIPTL1D1
+        DW	fLD
+fLDD2 ;
+        DB	"LDD2"
+        DW	SCRIPTL1D1
+        DW	fMD
+fLDD3 ;
+        DB	"LDD3"
+        DW	SCRIPTL1D1
+        DW	fLD
+fLDD4 ;
+        DB	"LDD4"
+        DW	SCRIPTL1D1
+        DW	fLD
+fLDD5 ;
+        DB	"LDD5"
+        DW	SCRIPTL1D1
+        DW	fMD
+fLDD6 ;
+        DB	"LDD6"
+        DW	SCRIPTL1D1
+        DW	fMD
+fLDD7 ;
+        DB	"LDD7"
+        DW	SCRIPTL1D1
+        DW	fLD
+fLDD8 ;
+        DB	"LDD8"
+        DW	SCRIPTL1D1
+        DW	fMD
+fLDD9 ;
+        DB	"LDD9"
+        DW	SCRIPTL1D1
+        DW	fLD
+fLED1
+        DB	"LED1"
+        DW	SCRIPTL1D1
+        DW	fLE
+fLED2 ;
+        DB	"LED2"
+        DW	SCRIPTL1D1
+        DW	fLE
+fLED3 ;
+        DB	"LED3"
+        DW	SCRIPTL1D1
+        DW	fLE
+fLED4 ;
+        DB	"LED4"
+        DW	SCRIPTL1D1
+        DW	fLE
+fLED5 ;
+        DB	"LED5"
+        DW	SCRIPTL1D1
+        DW	fLE
+fLED6 ;
+        DB	"LED6"
+        DW	SCRIPTL1D1
+        DW	fLE
+fLED7 ;
+        DB	"LED7"
+        DW	SCRIPTL1D1
+        DW	fLE
+fLED8 ;
+        DB	"LED8"
+        DW	SCRIPTL1D1
+        DW	fLE
+fLED9 ;
+        DB	"LED9"
+        DW	SCRIPTL1D1
+        DW	fLE
+fLFD1
+        DB	"LFD1"
+        DW	SCRIPTL1D1
+        DW	fMF
+fLFD2 ;
+        DB	"LFD2"
+        DW	SCRIPTL1D1
+        DW	fMF
+fLFD3 ;
+        DB	"LFD3"
+        DW	SCRIPTL1D1
+        DW	fLF
+fLFD4 ;
+        DB	"LFD4"
+        DW	SCRIPTL1D1
+        DW	fMF
+fLFD5 ;
+        DB	"LFD5"
+        DW	SCRIPTL1D1
+        DW	fLF
+fLFD6 ;
+        DB	"LFD6"
+        DW	SCRIPTL1D1
+        DW	fLF
+fLGD1
+        DB	"LGD1"
+        DW	SCRIPTL1D1
+        DW	fLG
+fLGD2 ;
+        DB	"LGD2"
+        DW	SCRIPTL1D1
+        DW	fLG
+fLGD3 ;
+        DB	"LGD3"
+        DW	SCRIPTL1D1
+        DW	fLG
+fLGD4 ;
+        DB	"LGD4"
+        DW	SCRIPTL1D1
+        DW	fLG
+fLGD5 ;
+        DB	"LGD5"
+        DW	SCRIPTL1D1
+        DW	fLG
+fLGD6 ;
+        DB	"LGD6"
+        DW	SCRIPTL1D1
+        DW	fLG
+fLGD7 ;
+        DB	"LGD7"
+        DW	SCRIPTL1D1
+        DW	fLG
+fLGD8 ;
+        DB	"LGD8"
+        DW	SCRIPTL1D1
+        DW	fLG
+fPENT
+        DB	"PENT"
+        DW	SCRIPTL1D1
+        DW	fLG
+ENDFILES
+
+TTIMESTOP2
+        DW	TVYST
+        DW	TUVERN
+        DW	TPLYT
+TTIMESTOP2END
+        DW	fL2D5
+        DW	fL2D6
+        DW	0
+TTIMESTOP3
+        DW	TVYSTV
+        DW	TPOIMV
+        DW	TPEREV
+TTIMESTOP3END
+        DW	fL3D8
+        DW	fL3D9
+        DW	0
+TTIMESTOP8
+        DW	TVLODK
+        DW	TVVODU
+        DW	TNAKOR
+TTIMESTOP8END
+        DW	fL8D7
+        DW	fL8D8
+        DW	0
+TTIMESTOP9
+        DW	TNAKOR
+        DW	TMOLIT
+        DW	TVVODU
+TTIMESTOP9END
+        DW	fL9DB
+        DW	fL9DC
+        DW	0
+TTIMESTOPA
+        DW	TLEZTX
+        DW	TSPRYG
+        DW	TVERTO
+TTIMESTOPAEND
+        DW	fLAD7
+        DW	fLAD8
+        DW	0
+TTIMESTOPB
+        DW	TSVERN
+        DW	TRAZVE
+        DW	TPODCI
+TTIMESTOPBEND
+        DW	fLBD6
+        DW	fLBD7
+        DW	0
+TTIMESTOPD
+        DW	TSTREL
+        DW	TSPRYG
+        DW	TPODPR
+TTIMESTOPDEND
+        DW	fLDD8
+        DW	fLDD9
+        DW	0
+TTIMESTOPE
+        DW	TPRYGN
+        DW	TSTRPO
+        DW	TNAZHA
+TTIMESTOPEEND
+        DW	fLED8
+        DW	fLED9
+        DW	0
+
+TVYST   DB	"     ВЫСТРЕЛИТЬ     ",0
+TUVERN  DB	"     УВЕРНУТЬСЯ     ",0
+TPLYT   DB	"    ПЛЫТЬ ВВЕРХ     ",0
+
+TVYSTV  DB	"ВЫСТРЕЛИТЬ ВО ВРАГОВ",0
+TPOIMV  DB	"ПОЙМАТЬ ВРАГОВ СЕТЬЮ",0
+TPEREV  DB	"ПЕРЕПРЫГНУТЬ ВРАГОВ ",0
+
+TVLODK  DB	"  ПРЫГНУТЬ В ЛОДКУ  ",0
+TVVODU  DB	"  ПРЫГНУТЬ В ВОДУ   ",0
+TNAKOR  DB	"ПРЫГНУТЬ НА КОРАБЛЬ ",0
+
+TMOLIT  DB	"      МОЛИТЬСЯ      ",0
+
+TLEZTX  DB	"    ЛЕЗТЬ ВВЕРХ     ",0
+TSPRYG  DB	"   СПРЫГНУТЬ ВНИЗ   ",0
+TVERTO  DB	"ПРЫГНУТЬ НА ВЕРТОЛЕТ",0
+
+TSVERN  DB	" СВЕРНУТЬ В СТОРОНУ ",0
+TRAZVE  DB	"    РАЗВЕРНУТЬСЯ    ",0
+TPODCI  DB	"ЕХАТЬ ПОД ЦИСТЕРНОЙ ",0
+
+TSTREL  DB	" СТРЕЛЯТЬ В РОБОТА  ",0
+TPODPR  DB	" ПОДПРЫГНУТЬ ВВЕРХ  ",0
+
+TPRYGN  DB	"   ПРЫГНУТЬ ВВЕРХ   ",0
+TSTRPO  DB	" СТРЕЛЯТЬ ПО ВРАГАМ ",0
+TNAZHA  DB	"НАЖАТЬ КНОПКУ ШЛЮЗА ",0
+
+TSPACES DB	"                    ",0
+

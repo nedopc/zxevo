@@ -1,0 +1,8 @@
+
+;LAST UPDATE: 19.02.2014 savelij
+
+		include ../../../rom/macros.a80
+
+atm		EQU 1
+
+		include gal5evo.a80
