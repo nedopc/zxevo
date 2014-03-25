@@ -1,0 +1,139 @@
+
+;LAST UPDATE: 25.03.2014 savelij
+
+		include ../../../rom/macros.a80
+		include ../../../rom/global_vars.a80
+		include zmodem_h.a80
+		include filexfer_h.a80
+
+DEBUG		EQU 0
+
+zmblkmax	EQU 0X4000			;êÄáåÖê ÅìîÖêÄ èêàÖåÄ
+
+		ORG 0X6000
+		DI
+		LD (OLD_SP),SP
+		CALL CRC16_INIT
+RESTART		LD HL,0X4000
+		LD DE,0X4001
+		LD BC,0X1800
+		LD (HL),L
+		LDIR
+		LD BC,0X2FF
+		LD (HL),WHITE
+		LDIR
+		LD HL,TXT_PROGNAME
+		CALL PRINT_MSG
+		LD HL,TXT_INFO
+		CALL PRINT_MSG
+;		CALL CRC32_INIT
+		IF DEBUG=0
+		CALL RS232_INIT
+		ENDIF
+
+		CALL ZRECV
+		INC A
+		JR NZ,EXIT
+HEADER_ERR	LD HL,TXT_HEADERERR
+		CALL PRINT_MSG
+		LD HL,TXT_ANYKEY
+		CALL PRINT_MSG
+		CALL BREAKRECV1
+		LD SP,(OLD_SP)
+		JR RESTART
+
+;èêàçìÑàíÖãúçõâ ÇõïéÑ Ç ERS
+EXIT		PEC_ON SHADOW_BF
+		LD HL,0X79ED
+		LD (0XFFFE),HL
+		LD BC,0XBC77
+		LD A,2
+		JP 0XFFFE
+
+		include zmodem.a80
+		include zrecv.a80
+		include crc.a80
+		include memory.a80
+		include cmp_fileext.a80
+		include print.a80
+		include hex2dec.a80
+
+		IF DEBUG=0
+		include rs232.a80
+		ELSE
+
+ADR_PEREDACHA	EQU 0X5000
+
+PRIEM		DB 0x72,0x7A,0x0D,0x2A,0x2A,0x18,0x42,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x0D,0x8A,0x11
+		include proba_bin.a80
+		DB 0x2A,0x2A,0x18,0x42,0x30,0x38,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x32,0x32,0x64,0x0D,0x8A
+		DB 0x4f,0x4f
+
+RS232_READ	PUSH HL
+		LD HL,PRIEM
+TADR_PRIEM	EQU $-2
+		LD A,(HL)
+		INC HL
+		LD (TADR_PRIEM),HL
+		POP HL
+RS232_WRITEBUF	RET
+
+RS232_WRITE	PUSH HL
+		LD HL,ADR_PEREDACHA
+TADR_PEREDACHA	EQU $-2
+		LD (HL),A
+		INC HL
+		LD (TADR_PEREDACHA),HL
+		POP HL
+		RET
+		ENDIF
+
+TXT_PROGNAME	DB 0,0,"*** RS232 loader for PentEvo ***",0
+TXT_INFO	DB 0,2,"Receive files: TAP, TRD",0
+TXT_BREAKRECV	DB 0,16,"Receive file not support",0
+TXT_HEADERERR	DB 0,16,"Header not support",0
+TXT_FILENAME	DB 0,8,"Filename: "
+TXT_NAME	DB "                       ",0
+TXT_FILESIZE	DB 0,10,"Filesize:",0
+TXT_SIZE	DB 9,10
+TXT_SIZERECV	DB "       /"
+TXT_FULLSIZE	DB "       "
+TXT_FULLSIZE_	EQU $-1
+		DB " bytes",0
+TXT_ANYKEY	DB 0,22,"Press any key for RESTART",0
+ETXT_PROGNAME
+
+EXT_FILE	EQU $			;1 çéåÖê êÄëòàêÖçàü èêàçàåÄÖåéÉé îÄâãÄ
+OLD_SP		EQU EXT_FILE+1		;2
+TXT_DEC		EQU OLD_SP+2		;A
+Not8bit		EQU TXT_DEC+0X0A	;1
+ztrans		EQU Not8bit+1		;1
+zmanag		EQU ztrans+1		;1
+zconv		EQU zmanag+1		;1
+zmrtype		EQU zconv+1		;1
+rxframeind	EQU zmrtype+1		;1
+rxtype		EQU rxframeind+1	;1
+prev_rxtype	EQU rxtype+1		;1
+rxhdr		EQU prev_rxtype+1	;4
+txhdr		EQU rxhdr+4		;4
+rxbytes		EQU txhdr+4		;4
+tryzhdrtype	EQU rxbytes+4		;1
+zctlesc		EQU tryzhdrtype+1	;1
+totl_bytes	EQU zctlesc+1		;4
+rxcount		EQU totl_bytes+4	;2
+attn		EQU rxcount+2		;ZATTNLEN+1
+ZRECVF2_TRIES	EQU attn+ZATTNLEN+1	;1
+ZRECVF3_TRIES	EQU ZRECVF2_TRIES+1	;1
+ZRECVF_N	EQU ZRECVF3_TRIES+1	;1
+CRC16_WORD	EQU ZRECVF_N+1		;2
+ADR_BUFRECV	EQU CRC16_WORD+2	;2
+TEK_PAGE	EQU ADR_BUFRECV+2	;1
+
+		IF DEBUG=1
+zmbuff		EQU 0X4000			;ÄÑêÖë ÅìîÖêÄ èêàÖåÄ
+		ELSE
+zmbuff		EQU TEK_PAGE+1		;80
+		ENDIF
+
+CRC16_TABLE	EQU zmbuff+0X80+LOW (-(zmbuff+0X80))	;200
+CRC32_TABLE	EQU CRC16_TABLE+0X200	;400

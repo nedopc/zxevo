@@ -1,0 +1,457 @@
+
+;LAST UPDATE: 22.03.2014 savelij
+
+;Receive array buf of max length with ending ZDLE sequence
+; and CRC.  Returns the ending character or error code.
+; NB: On errors may store length+1 bytes!
+;çÄ ÇïéÑÖ: DE=ÑãàçÄ, HL=ÄÑêÖë ÅìîÖêÄ
+;çÄ ÇõïéÑÖ: ë=1 áÄäéçóàãëü ÅìîÖê
+ZRDATA		LD A,(rxframeind)
+		CP ZBIN32
+		JR NZ,ZM_0072
+		RET;JP ZRDAT32
+		
+ZM_0072		CALL ZDLREAD
+		DEC B
+		JR Z,ZM_0078
+		LD (HL),A
+		INC HL
+		CALL UPDCRC
+		DEC DE
+		LD A,D
+		OR E
+		JR NZ,ZM_0072
+		LD (ADR_BUFRECV),HL
+		LD A,ERROR
+		RET
+
+;crcfoo
+ZM_0078		LD (ADR_BUFRECV),HL
+		LD HL,zmblkmax
+		AND A
+		SBC HL,DE
+		LD (rxcount),HL
+		CP ZDLE
+		RET Z
+		CP LOW (GOTCRCE)
+		JR Z,ZM_0080
+		CP LOW (GOTCRCG)
+		JR Z,ZM_0080
+		CP LOW (GOTCRCQ)
+		JR Z,ZM_0080
+		CP LOW (GOTCRCW)
+		JR Z,ZM_0080
+		LD A,ZCAN
+		RET
+
+ZM_0080		PUSH AF
+		CALL UPDCRC
+		CALL ZDLREAD
+		CALL UPDCRC
+		CALL ZDLREAD
+		CALL UPDCRC
+		POP AF
+		LD C,A
+		LD HL,(CRC16_WORD)
+		LD A,H
+		OR L
+		LD A,C
+		RET
+
+;Read a ZMODEM header to hdr, either binary or hex.
+;eflag controls local display of non zmodem characters:
+;    0:  no display
+;    1:  display printing characters only
+;    2:  display all non ZMODEM characters
+;On success, set Zmodem to 1, set rxpos and return type of header.
+; Otherwise return negative on error.
+; Return ERROR instantly if ZCRCW sequence, for fast error recovery.
+ZGETHDR		LD A,(rxtype)
+		LD (prev_rxtype),A
+		XOR A
+		LD (rxtype),A
+		LD (rxframeind),A
+;again
+ZM_0113		CALL RS232_READ
+		CP ZPAD
+		JR Z,ZM_0115
+		CP ZPAD|0X80
+		JR NZ,ZM_0118
+		LD (Not8bit),A
+		JR ZM_0115
+
+ZM_0118		INC A
+		RET Z
+		CP ZPAD
+		JR NZ,ZM_0113
+;gotcan
+		JR $
+
+;garbage
+ZM_0115		CALL NOXRD7
+		CP ZDLE
+		JR Z,ZM_0133
+		CP ZPAD
+		JR Z,ZM_0115
+ZM_0133		CALL NOXRD7
+		CP ZBIN
+		JR NZ,ZM_0140
+		LD (rxframeind),A
+		CALL ZRBHDR
+		LD A,(rxtype)
+		RET
+
+ZM_0140		CP ZBIN32
+		JR NZ,ZM_0141
+		LD (rxframeind),A
+		JR $
+
+ZM_0141		CP ZHEX
+		JR NZ,ZM_0143
+		LD (rxframeind),A
+		CALL ZRHHDR
+		LD A,(rxtype)
+		RET
+
+ZM_0143		CP ZDLE
+		JR NZ,ZM_0113
+		RET
+
+;Receive a binary style header (type and position)
+ZRBHDR		LD DE,0
+		LD (CRC16_WORD),DE
+		CALL ZDLREAD
+		LD (rxtype),A
+		CALL UPDCRC
+		LD HL,rxhdr
+		CALL ZDLREAD	;1
+		LD (HL),A
+		INC HL
+		CALL UPDCRC
+		CALL ZDLREAD	;2
+		LD (HL),A
+		INC HL
+		CALL UPDCRC
+		CALL ZDLREAD	;3
+		LD (HL),A
+		INC HL
+		CALL UPDCRC
+		CALL ZDLREAD	;4
+		LD (HL),A
+		INC HL
+		CALL UPDCRC
+		CALL ZDLREAD	;1
+		CALL UPDCRC
+		CALL ZDLREAD	;2
+		CALL UPDCRC
+		LD HL,(CRC16_WORD)
+		LD A,H
+		OR L
+		LD A,(rxtype)
+		RET
+
+;Read a byte, checking for ZMODEM escape encoding
+; including CAN*5 which represents a quick abort
+;çÄ ÇõïéÑÖ: B=0-èêàçüí ÅÄâí
+;	    B=1-èêàçüí ìèêÄÇãüûôàâ ÅÄâí
+ZDLREAD		LD B,0
+ZM_0359		CALL RS232_READ
+		LD C,A
+		AND 0X60
+		LD A,C
+		RET NZ
+		CP ZDLE
+		JR Z,ZM_0233
+		CP 0X11
+		JR Z,ZM_0359
+		CP 0X13
+		JR Z,ZM_0359
+		CP 0X91
+		JR Z,ZM_0359
+		CP 0X93
+		JR Z,ZM_0359
+		LD A,(zctlesc)
+		AND A
+		LD A,C
+		RET Z
+		AND 0X60
+		LD A,C
+		JR Z,ZM_0359
+		RET
+
+;again2
+ZM_0233		CALL RS232_READ
+		CP ZDLE
+		JR NZ,ZM_0248
+		CALL RS232_READ
+ZM_0248		CP ZDLE
+		JR NZ,ZM_0252
+		CALL RS232_READ
+ZM_0252		CP ZDLE
+		JR NZ,ZM_0256
+		CALL RS232_READ
+ZM_0256		LD C,A
+		CP ZFREECNT
+		JR Z,ZM_0233
+		CP ZSTDERR
+		JR Z,ZM_0233
+		LD B,1
+		CP ZDLE
+		RET Z
+		CP ZCRCE
+		RET Z
+		CP ZCRCG
+		RET Z
+		CP ZCRCQ
+		RET Z
+		CP ZCRCW
+		RET Z
+		DEC B
+		CP 0X91
+		JR Z,ZM_0260
+		CP 0X93
+		JR NZ,ZM_0263
+ZM_0261		LD A,0XFF
+		RET
+
+ZM_0260		LD A,0X7F
+		RET
+
+ZM_0263		LD A,(zctlesc)
+		AND A
+		LD A,C
+		JR Z,ZM_0265
+		AND 0X60
+		JR Z,ZM_0233
+ZM_0265		LD A,C
+		AND 0X60
+		XOR 0X40
+		RET NZ
+ZM_0268		LD A,C
+		XOR 0X40
+		RET
+
+;Receive a hex style header (type and position)
+ZRHHDR		LD DE,0
+		LD (CRC16_WORD),DE
+		CALL ZGETHEX
+		LD (rxtype),A
+		CALL UPDCRC
+		LD HL,rxhdr
+		CALL ZGETHEX	;1
+		LD (HL),A
+		INC HL
+		CALL UPDCRC
+		CALL ZGETHEX	;2
+		LD (HL),A
+		INC HL
+		CALL UPDCRC
+		CALL ZGETHEX	;3
+		LD (HL),A
+		INC HL
+		CALL UPDCRC
+		CALL ZGETHEX	;4
+		LD (HL),A
+		CALL UPDCRC
+		CALL ZGETHEX	;1
+		CALL UPDCRC
+		CALL ZGETHEX	;2
+		CALL UPDCRC
+		LD HL,(CRC16_WORD)
+		LD A,H
+		OR L
+		RET NZ
+		CALL RS232_READ
+		CP 0X0D
+		JR Z,ZM_0193
+		CP 0X8D
+		JR NZ,ZM_0195
+		LD (Not8bit),A
+ZM_0193		CALL RS232_READ
+		CP 0X0A
+		JR NZ,ZM_0195
+		LD HL,Not8bit
+		OR (HL)
+		LD (HL),A
+ZM_0195		LD A,(rxtype)
+		AND A
+		RET
+
+;Decode two lower case hex digits into an 8 bit byte value
+ZGETHEX		CALL NOXRD7
+		BIT 7,A
+		SCF
+		RET NZ
+		SUB '0'
+		CP 10
+		JR C,ZGETHEX1
+		AND %11011111
+		SUB 7
+ZGETHEX1	RRCA
+		RRCA
+		RRCA
+		RRCA
+		AND 0XF0
+		LD E,A
+		CALL NOXRD7
+		BIT 7,A
+		SCF
+		RET NZ
+		SUB '0'
+		CP 10
+		JR C,ZGETHEX2
+		AND %11011111
+		SUB 7
+ZGETHEX2	AND 0X0F
+		OR E
+		RET
+
+;Read a character from the modem line with timeout.
+;Eat parity, XON and XOFF characters.
+NOXRD7		CALL RS232_READ
+		AND 0X7F
+		LD C,A
+		CP XON
+		JR Z,NOXRD7
+		CP XOFF
+		JR Z,NOXRD7
+		CP 0X0A
+		RET Z
+		CP 0X0D
+		RET Z
+		CP ZDLE
+		RET Z
+		LD A,(zctlesc)
+		AND A
+		LD A,C
+		RET Z
+		LD A,C
+		AND 0X60
+		JR Z,NOXRD7
+		LD A,C
+		RET
+
+;Send ZMODEM HEX header hdr of type type
+;A=type
+ZSHHDR		LD (tryzhdrtype),A
+		LD A,ZPAD
+		CALL RS232_WRITE
+		LD A,ZPAD
+		CALL RS232_WRITE
+		LD A,ZDLE
+		CALL RS232_WRITE
+		LD A,ZHEX
+		CALL RS232_WRITE
+		LD A,(tryzhdrtype)
+		CALL TO_HEX
+		LD E,A
+		XOR A
+		LD D,A
+		LD (CRC16_WORD),DE
+		CALL TO_HEX
+		CALL UPDCRC
+		CALL TO_HEX
+		CALL UPDCRC
+		CALL TO_HEX
+		CALL UPDCRC
+		LD A,(txhdr+3)
+		CALL TO_HEX
+		CALL UPDCRC
+		XOR A
+		CALL UPDCRC
+		CALL UPDCRC
+		LD DE,(CRC16_WORD)
+		LD A,D
+		CALL TO_HEX
+		LD A,E
+		CALL TO_HEX
+		LD A,0X0D
+		CALL RS232_WRITE
+		LD A,0X8A
+		CALL RS232_WRITE
+		LD A,(tryzhdrtype)
+		CP ZFIN
+		RET Z
+		CP ZACK
+		RET Z
+		LD A,0X11
+		JP RS232_WRITE
+
+;èÖêÖÑÄóÄ ÅÄâíÄ Ç HEX ÇàÑÖ
+TO_HEX		LD B,A
+		RRCA
+		RRCA
+		RRCA
+		RRCA
+		CALL TO_HEX1
+TO_HEX1		AND 0X0F
+		CP 0X0A
+		JR C,TO_HEX2
+		ADD A,7
+		OR %00100000
+TO_HEX2		ADD A,'0'
+		CALL RS232_WRITE
+		LD A,B
+		RET
+
+;A=ÅÄâí Ñãü éÅçéÇãÖçàü CRC16
+UPDCRC		EXX
+		LD DE,(CRC16_WORD)
+		LD B,A
+		LD C,E
+		LD L,D
+		LD H,HIGH (CRC16_TABLE)
+		LD A,(HL)
+		XOR B
+		LD E,A
+		INC H
+		LD A,(HL)
+		XOR C
+		LD D,A
+		LD A,B
+		LD (CRC16_WORD),DE
+		EXX
+		RET
+
+;Store long integer pos in txhdr
+STOHDR		LD HL,txhdr
+		LD (HL),E
+		INC HL
+		LD (HL),D
+		INC HL
+		LD (HL),C
+		INC HL
+		LD (HL),B
+		RET
+
+;Recover a long integer from a header
+RCLHDR		LD HL,rxhdr
+		LD E,(HL)
+		INC HL
+		LD D,(HL)
+		INC HL
+		LD C,(HL)
+		INC HL
+		LD B,(HL)
+		RET
+
+;Output the attention string (if there is one).
+RXATTN		LD HL,attn
+RXATTN1		LD A,(HL)
+		AND A
+		RET Z
+		CALL RS232_WRITE
+		JR RXATTN1
+
+;send cancel string to get the other end to shut up
+ABORTTX		LD E,10
+ABORTTX1	LD A,0X18
+		CALL RS232_WRITE		;èÖêÖÑÄóÄ ÅÄâíÄ
+		DEC E
+		JR NZ,ABORTTX1
+		LD E,10
+ABORTTX2	LD A,8
+		CALL RS232_WRITE		;èÖêÖÑÄóÄ ÅÄâíÄ
+		DEC E
+		JR NZ,ABORTTX2
+		RET

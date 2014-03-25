@@ -1,0 +1,63 @@
+
+;LAST UPDATE: 24.03.2014 savelij
+
+;X,Y äééêÑàçÄíÄ,íÖäëí
+PRINT_MSG	LD A,(HL)
+		INC HL
+		LD C,(HL)
+		INC HL
+		PUSH HL
+		LD L,C
+		LD H,A
+		CALL ADRDIS
+		EX DE,HL
+		POP HL
+PRINTMSG2	LD A,(HL)
+		INC HL
+		AND A
+		RET Z
+		PUSH DE
+		PUSH HL
+		LD BC,0X3C00
+		LD L,A
+		LD H,C
+		ADD HL,HL
+		ADD HL,HL
+		ADD HL,HL
+		ADD HL,BC
+		REPT 8
+		LD A,(HL)
+		LD (DE),A
+		INC HL
+		INC D
+		ENDM
+		POP HL
+		POP DE
+		INC DE
+		JR PRINTMSG2
+
+;H-X, L-Y
+ADRDIS		LD (ASD+1),A
+		LD A,L
+		AND 0X18
+		OR 0X40
+		EX AF,AF'
+		LD A,L
+		AND 7
+		RRCA
+		RRCA
+		RRCA
+		ADD A,H
+		LD L,A
+		EX AF,AF'
+		LD H,A
+		LD E,L
+ADRATR		LD A,H
+		RRCA
+		RRCA
+		RRCA
+		AND 3
+		OR 0X58
+		LD D,A
+ASD		LD A,0
+		RET

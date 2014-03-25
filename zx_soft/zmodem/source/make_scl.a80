@@ -1,0 +1,51 @@
+
+;LAST UPDATE: 25.03.2014 savelij
+
+		include ../../../rom/macros.a80
+
+ADR_LOADING	EQU 0X6000			; ¤à¥á § £àã§ª¨ ¨ ª®¬¯¨«ïæ¨¨
+START_CODE	EQU ADR_LOADING
+
+		ORG ADR_LOADING-0X117		;(END_HEADER-START_SCL)
+;‡€ƒŽ‹Ž‚ŽŠ SCL ”€‰‹€
+START_SCL	DB "SINCLAIR",1,"zm_evo  B"
+		DW BASIC_FULL,BASIC_FULL
+FULL_SIZE	DB SIZE_SECTORS+1
+
+		include ../../../rom/basic4monoloader.a80
+
+;END_HEADER
+	
+		ORG ADR_LOADING
+		DI
+;		LD BC,0X7FFD
+;		LD A,0X16			;‘’€ˆ–€ ‘ „€‰‚…€Œˆ ˆ MICRO BOOT FAT
+;		OUT (C),A
+		LD HL,ADR_LOADING;$
+		PUSH HL
+		LD HL,START_UNPACK
+		LD DE,0X5B00
+		LD BC,END_UNPACK-START_UNPACK
+		PUSH DE
+		LDIR
+		LD HL,END_COD-1
+		LD DE,0XFFFF
+		LD BC,END_COD-END_UNPACK
+		LDDR
+		LD HL,ADR_LOADING
+		EX DE,HL
+		INC HL
+		RET
+		
+START_UNPACK	include ../../../rom/dec40.a80
+END_UNPACK
+		binclude main_pack.rom	;¨¬ï ¯ ª®¢ ­­®© ¯à®£¨
+END_COD
+
+		DUPL LOW (-$),0
+
+		IF (END_COD-ADR_LOADING)&0XFF
+SIZE_SECTORS	EQU ((END_COD-ADR_LOADING)>>8)+1
+		ELSE
+SIZE_SECTORS	EQU ((END_COD-ADR_LOADING)>>8)
+		ENDIF

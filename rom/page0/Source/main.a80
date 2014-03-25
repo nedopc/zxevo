@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 16.02.2014 savelij
+;LAST UPDATE: 21.03.2014 savelij
 	
 		include ../../macros.a80
 		include ../../define.a80
@@ -18,6 +18,10 @@ VERSBIOS	EQU "0.54d "
 
 TO_DOS4BAS	EQU 0X3D13
 TO_DOS		EQU 0X3D2F
+
+CRC16_TABLE	EQU 0XB800			;200
+CRC32_TABLE	EQU CRC16_TABLE+0X200		;400
+RS232_BUF	EQU CRC32_TABLE+0X400
 
 ADRTBLDIRL	EQU 0XF5FF			;‘’…Š ‘Ž•€…ˆŸ „€›• ˆ •Ž†„…ˆˆ Ž „ˆ€Œ
 BUFTSC		EQU 0XF700			;180 ’€‹ˆ–€ €„…‘Ž‚ ‘’ŽŠ Š€€		F700
@@ -40,6 +44,9 @@ CMOS_OFF	EQU 0
 
 		ORG 0X6000
 		DI
+;		CALL CRC16_INIT
+;		CALL CRC32_INIT
+;		CALL RECV_FILE
 		CALL CLEAR_128K
 		LD A,0X10
 		CALL SET_7FFD			;‚Š‹ž—…ˆ… €‘ˆŠ€48 ˆ ‘’€ˆ–› 0
@@ -846,6 +853,7 @@ TURBO_7MHZ	LD E,0XA3
 		include pc_keys_test.a80
 		include flasher.a80
 		include fat_boot.a80
+		include crc.a80
 
 ;‡€“‘Š PERFECT COMMANDER
 PERFECT		DI
