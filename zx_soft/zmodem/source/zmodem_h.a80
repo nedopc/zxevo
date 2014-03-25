@@ -1,0 +1,121 @@
+
+;LAST UPDATE: 27.02.2014 savelij
+
+;/*
+; *   Z M O D E M . H     Manifest constants for ZMODEM
+; *    application to application file transfer protocol
+; *    05-23-87  Chuck Forsberg Omen Technology Inc
+; */
+
+BLKSIZE		EQU 1024		;/* absolute max. block size */
+
+XOFF		EQU 's'&0X1F
+XON		EQU 'q'&0X1F
+CAN		EQU 'X'&0X1F
+RETRYMAX	EQU 10
+
+ZPAD		EQU '*'			;/* 052 Padding character begins frames */
+ZDLE		EQU 0X18		;/* Ctrl-X Zmodem escape - `ala BISYNC DLE */
+ZDLEE		EQU ZDLE^0X40		;/* Escaped ZDLE as transmitted */
+ZBIN		EQU 'A'			;/* Binary frame indicator */
+ZHEX		EQU 'B'			;/* HEX frame indicator */
+ZBIN32		EQU 'C'			;/* Binary frame with 32 bit FCS */
+
+;/* Frame types (see array "frametypes" in zm.c) */
+ZRQINIT		EQU 0			;/* Request receive init */
+ZRINIT		EQU 1			;/* Receive init */
+ZSINIT		EQU 2			;/* Send init sequence (optional) */
+ZACK		EQU 3			;/* ACK to above */
+ZFILE		EQU 4			;/* File name from sender */
+ZSKIP		EQU 5			;/* To sender: skip this file */
+ZNAK		EQU 6			;/* Last packet was garbled */
+ZABORT		EQU 7			;/* Abort batch transfers */
+ZFIN		EQU 8			;/* Finish session */
+ZRPOS		EQU 9			;/* Resume data trans at this position */
+ZDATA		EQU 10			;/* Data packet(s) follow */
+ZEOF		EQU 11			;/* End of file */
+ZFERR		EQU 12			;/* Fatal Read or Write error Detected */
+ZCRC		EQU 13			;/* Request for file CRC and response */
+ZCHALLENGE	EQU 14			;/* Receiver's Challenge */
+ZCOMPL		EQU 15			;/* Request is complete */
+ZCAN		EQU 16			;/* Other end canned session with CAN*5 */
+ZFREECNT	EQU 17			;/* Request for free bytes on filesystem */
+ZCOMMAND	EQU 18			;/* Command from sending program */
+ZSTDERR		EQU 19			;/* Output to standard error, data follows */
+ZTIMEOUT	EQU 20			;/* for protocol error reports */
+
+;/* ZDLE sequences */
+ZCRCE		EQU 'h'			;/* CRC next, frame ends, header packet follows */
+ZCRCG		EQU 'i'			;/* CRC next, frame continues nonstop */
+ZCRCQ		EQU 'j'			;/* CRC next, frame continues, ZACK expected */
+ZCRCW		EQU 'k'			;/* CRC next, ZACK expected, end of frame */
+ZRUB0		EQU 'l'			;/* Translate to rubout 0177 */
+ZRUB1		EQU 'm'			;/* Translate to rubout 0377 */
+
+;/* zdlread return values (internal) */
+;/* -1 is general error, -2 is timeout */
+GOTOR		EQU 0X100
+GOTCRCE		EQU (ZCRCE|GOTOR)	;/* ZDLE-ZCRCE received */
+GOTCRCG		EQU (ZCRCG|GOTOR)	;/* ZDLE-ZCRCG received */
+GOTCRCQ		EQU (ZCRCQ|GOTOR)	;/* ZDLE-ZCRCQ received */
+GOTCRCW		EQU (ZCRCW|GOTOR)	;/* ZDLE-ZCRCW received */
+GOTCAN		EQU (GOTOR|030)		;/* CAN*5 seen */
+
+;/* Byte positions within header array */
+ZF0		EQU 3			;/* First flags byte */
+ZF1		EQU 2
+ZF2		EQU 1
+ZF3		EQU 0
+ZP0		EQU 0			;/* Low order 8 bits of position */
+ZP1		EQU 1
+ZP2		EQU 2
+ZP3		EQU 3			;/* High order 8 bits of file position */
+
+;/* Bit Masks for ZRINIT flags byte ZF0 */
+CANFDX		EQU 1			;/* Rx can send and receive true FDX */
+CANOVIO		EQU 2			;/* Rx can receive data during disk I/O */
+CANBRK		EQU 4			;/* Rx can send a break signal */
+CANCRY		EQU 8			;/* Receiver can decrypt */
+CANLZW		EQU 0X10		;/* Receiver can uncompress */
+CANFC32		EQU 0X20		;/* Receiver can use 32 bit Frame Check */
+ESCCTL		EQU 0X40		;/* Receiver expects ctl chars to be escaped */
+ESC8		EQU 0X80		;/* Receiver expects 8th bit to be escaped */
+
+;/* Parameters for ZSINIT frame */
+ZATTNLEN	EQU 32			;/* Max length of attention string */
+
+;/* Bit Masks for ZSINIT flags byte ZF0 */
+TESCCTL		EQU 0X40		;/* Transmitter expects ctl chars to be escaped */
+TESC8		EQU 0X80		;/* Transmitter expects 8th bit to be escaped */
+
+;/* Parameters for ZFILE frame */
+;/* Conversion options one of these in ZF0 */
+ZCBIN		EQU 1			;/* Binary transfer - inhibit conversion */
+ZCNL		EQU 2			;/* Convert NL to local end of line convention */
+ZCRESUM		EQU 3			;/* Resume interrupted file transfer */
+
+;/* Management include options, one of these ored in ZF1 */
+ZMSKNOLOC	EQU 0X80		;/* Skip file if not present at rx */
+
+;/* Management options, one of these ored in ZF1 */
+ZMMASK		EQU 0X1F		;/* Mask for the choices below */
+ZMNEWL		EQU 1			;/* Transfer if source newer or longer */
+ZMCRC		EQU 2			;/* Transfer if different file CRC or length */
+ZMAPND		EQU 3			;/* Append contents to existing file (if any) */
+ZMCLOB		EQU 4			;/* Replace existing file */
+ZMNEW		EQU 5			;/* Transfer if source newer */
+
+;/* Number 5 is alive ... */
+ZMDIFF		EQU 6			;/* Transfer if dates or lengths different */
+ZMPROT		EQU 7			;/* Protect destination file */
+
+;/* Transport options, one of these in ZF2 */
+ZTLZW		EQU 1			;/* Lempel-Ziv compression */
+ZTCRYPT		EQU 2			;/* Encryption */
+ZTRLE		EQU 3			;/* Run Length encoding */
+
+;/* Extended options for ZF3, bit encoded */
+ZXSPARS		EQU 64			;/* Encoding for sparse file operations */
+
+;/* Parameters for ZCOMMAND frame ZF0 (otherwise 0) */
+ZCACK1		EQU 1			;/* Acknowledge, then do command */

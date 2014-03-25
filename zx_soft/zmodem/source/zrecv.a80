@@ -1,0 +1,353 @@
+
+;LAST UPDATE: 25.03.2014 savelij
+
+;Receive one or more files using ZMODEM.
+;èêàÖå éÑçéÉé îÄâãÄ
+;çÄ ÇïéÑÖ: DE=ÄÑêÖë ÅìîÖêÄ áÄÉêìáäà
+ZRECV		XOR A
+		LD H,A
+		LD L,A
+		LD (totl_bytes),HL
+		LD (totl_bytes+2),HL
+		LD (zctlesc),A
+		CALL ZRECVF
+		PUSH AF
+		CALL CMP_FILEEXT		;èêéÇÖêäÄ êÄëòàêÖçàü èêàçàåÄÖåéÉé îÄâãÄ
+		JR Z,BREAK_RECV
+		POP AF
+		CP ZFILE
+		CALL Z,ZRECVF2
+		CP ZFILE
+		JR NC,ABORTTX
+		RET
+
+;èêà çÖèéÑÑÖêÜàÇÄÖåéå êÄëòàêÖçàà èéëõã èêÖêõÇÄçàü èÖêÖÑÄóà à ÇõïéÑ
+BREAK_RECV	POP AF
+		LD A,ZCAN
+		CALL ZSHHDR
+		CALL ABORTTX
+		LD HL,TXT_BREAKRECV
+		CALL PRINT_MSG
+		LD HL,TXT_ANYKEY
+		CALL PRINT_MSG
+BREAKRECV1	XOR A
+		IN A,(0XFE)
+		CPL
+		AND 0X1F
+		JR Z,BREAKRECV1
+BREAKRECV2	XOR A
+		IN A,(0XFE)
+		CPL
+		AND 0X1F
+		JR NZ,BREAKRECV2
+		LD A,0XFF
+		RET
+
+;Initialize for Zmodem receive attempt, try to activate Zmodem sender
+; Handles ZSINIT frame
+; Return ZFILE if Zmodem filename received, -1 on error,
+;  ZCOMPL if transaction finished, else 0
+;DE=ÄÑêÖë ÅìîÖêÄ áÄÉêìáäà
+ZRECVF		LD A,ZRINIT
+		LD (tryzhdrtype),A
+		LD HL,ZRECVF_N
+		LD (HL),60
+ZR_0062		LD HL,ZRECVF_N
+		DEC (HL)
+		RET Z
+		LD A,(zmrtype)
+		DEC A
+		JR Z,ZR_0066
+		LD BC,BLKSIZE
+		LD HL,zmblkmax
+		AND A
+		SBC HL,BC
+		JR NC,ZR_0065
+ZR_0066		LD DE,zmblkmax
+		LD BC,0
+		JR ZR_0158
+
+ZR_0065		LD BC,0
+		LD D,B
+		LD E,C
+ZR_0158		CALL STOHDR
+		LD HL,txhdr+3
+		LD (HL),CANFC32|CANFDX
+		LD A,(zmrtype)
+		AND A
+		JR NZ,ZR_0070
+		SET 1,(HL)
+ZR_0070		LD A,(zctlesc)
+		AND A
+		JR Z,ZR_0072
+		SET 6,(HL)
+ZR_0072		LD A,(tryzhdrtype)
+		CALL ZSHHDR
+		LD HL,tryzhdrtype
+		LD A,ZSKIP
+		CP (HL)
+		JR NZ,ZR_0074
+		LD (HL),ZRINIT
+;again
+ZR_0074		CALL ZGETHDR
+		CP ZRQINIT	;0
+		JR Z,ZR_0062
+		CP ZSINIT	;2
+		JR Z,ZR_0080
+		CP ZFILE	;4
+		JR Z,ZR_0077
+		CP ZFIN		;8
+		JR Z,ZR_0085
+		CP ZEOF		;11
+		JR Z,ZR_0062
+		CP ZCOMPL	;15
+		JR Z,ZR_0074
+		CP ZCAN		;16
+		JR Z,ZR_0091
+		CP ZFREECNT	;17
+		JR Z,ZR_0083
+		CP ZCOMMAND	;18
+		JR Z,ZR_0091
+		JR ZR_0062
+
+ZR_0077		LD HL,rxhdr+1
+		LD DE,ztrans
+		LDI
+		LDI
+		LDI
+		LD A,ZRINIT
+		LD (tryzhdrtype),A
+		LD DE,zmblkmax
+		LD HL,zmbuff
+		CALL ZRDATA
+		CP ZCRCW
+		JR NZ,ZR_0082
+		LD A,ZFILE
+		RET
+
+ZR_0080		LD A,(rxhdr+3)
+		AND 0X40
+		LD (zctlesc),A
+		LD HL,attn
+		LD DE,0X20
+		CALL ZRDATA
+		CP ZCRCW
+		JR NZ,ZR_0082
+		LD BC,0
+		LD DE,1
+		CALL STOHDR
+		JR ZR_0083
+
+ZR_0082		LD A,ZNAK
+		JR ZR_0161
+
+ZR_0083		LD A,ZACK
+ZR_0161		CALL ZSHHDR
+		JR ZR_0074
+
+ZR_0085		LD BC,0
+		LD D,B
+		LD E,C
+		CALL STOHDR
+		LD IXL,3
+ZR_0087		DEC IXL
+		JR Z,ZR_0086
+		LD A,ZFIN
+		CALL ZSHHDR
+		CALL RS232_READ
+		CP "O"
+		JR NZ,ZR_0087
+		CALL RS232_READ
+ZR_0086		LD A,ZCOMPL
+		RET
+
+ZR_0091		LD A,ERROR
+		RET
+
+;Receive 1 or more files with ZMODEM protocol
+ZRECVF2		LD HL,ZRECVF2_TRIES
+		LD (HL),10
+		LD HL,ZRECVF2_TRIES
+		DEC (HL)
+		LD A,ERROR
+		RET Z
+ZR_0097		CALL ZRECVF3
+		CP ZSKIP	;5
+		JR Z,ZR_0099
+		CP ZEOF		;11
+		JR NZ,ZR_0104
+ZR_0099		CALL ZRECVF
+		CP ZCOMPL	;15
+		JR NZ,ZR_0102
+		LD A,OK
+		RET
+
+ZR_0102		CP ZFILE	;4
+		JR Z,ZRECVF2
+		LD A,ERROR
+		RET
+
+ZR_0104		CP ZRINIT	;1
+		RET NZ
+		LD A,ERROR
+		RET
+
+;Receive a file with ZMODEM protocol
+; Assumes file name frame is in zmbuff
+ZRECVF3		LD HL,0
+		LD (rxbytes),HL
+		LD (rxbytes+2),HL
+		LD A,10
+		LD (ZRECVF3_TRIES),A
+ZR_0108		LD DE,(rxbytes)
+		LD BC,(rxbytes+2)
+		CALL STOHDR
+		LD A,ZRPOS
+		CALL ZSHHDR
+;nxthdr
+ZR_0109		CALL ZGETHDR
+		CP ZFILE	;4
+		JR Z,ZR_0113
+		CP ZSKIP	;5
+		JR Z,ZR_0121
+		CP ZNAK		;6
+		JP Z,ZR_0111
+		CP ZDATA	;10
+		JR Z,ZR_0122
+		CP ZEOF		;11
+		JR Z,ZR_0115
+ZR_0111		LD HL,ZRECVF3_TRIES
+		DEC (HL)
+		RET Z
+ZR_0113		LD DE,zmblkmax
+		LD HL,zmbuff
+		CALL ZRDATA
+		JR ZR_0108
+
+ZR_0115		CALL RCLHDR
+		LD HL,(rxbytes)
+		AND A
+		SBC HL,DE
+		JR NZ,ZR_0109
+		LD HL,(rxbytes+2)
+		AND A
+		SBC HL,BC
+		JR NZ,ZR_0109
+		LD HL,totl_bytes
+		LD DE,(rxbytes)
+		CALL ADD_ADR_DD
+		LD A,(rxtype)
+		RET
+
+ZR_0118		LD HL,ZRECVF3_TRIES
+		DEC (HL)
+		JR NZ,ZR_0108
+		RET
+
+ZR_0121		LD A,(prev_rxtype)
+		RET
+
+ZR_0122		CALL RCLHDR
+		LD HL,0XC000
+		LD (ADR_BUFRECV),HL
+		LD HL,(rxbytes)
+		AND A
+		SBC HL,DE
+		JR NZ,ZR_0183
+		LD HL,(rxbytes+2)
+		AND A
+		SBC HL,BC
+		JR Z,ZR_0124
+ZR_0183		LD HL,ZRECVF3_TRIES
+		DEC (HL)
+		RET Z
+		CALL RXATTN
+		JP ZR_0108
+
+;moredata
+ZR_0124		LD DE,zmblkmax
+		LD HL,(ADR_BUFRECV);zmbuff
+		LD A,H
+		OR L
+		CALL Z,NEXT_PAGE
+		CALL ZRDATA
+		CP ZCAN		;0X10
+		RET Z
+		CP ZCRCE	;h
+		JR Z,ZR_0133
+		CP ZCRCG	;i
+		JR Z,ZR_0132
+		CP ZCRCQ	;j
+		JR Z,ZR_0131
+		CP ZCRCW	;k
+		JR Z,ZR_0130
+		CP ERROR	;0XFE
+		JR Z,ZR_0138
+;sendnak
+ZR_0140		CALL RXATTN
+		LD BC,(rxbytes+2)
+		LD DE,(rxbytes)
+		CALL STOHDR
+		LD A,ZNAK
+		CALL ZSHHDR
+		JR ZR_0124
+
+ZR_0138		LD HL,ZRECVF3_TRIES
+		DEC (HL)
+		JR NZ,ZR_0140
+		LD A,ERROR
+		RET
+
+ZR_0130		CALL ZR_0193
+		LD A,XON
+		CALL RS232_WRITE
+		JR ZR_0184
+
+ZR_0131		CALL ZR_0193
+		JR ZR_0185
+
+ZR_0132		LD HL,rxbytes
+		LD DE,(rxcount)
+		CALL ADD_ADR_DD
+		CALL UPDATE_CHISLO
+ZR_0185		LD A,10
+		LD (ZRECVF3_TRIES),A
+		JR ZR_0124
+
+ZR_0133		LD HL,rxbytes
+		LD DE,(rxcount)
+		CALL ADD_ADR_DD
+		CALL UPDATE_CHISLO
+ZR_0184		LD A,10
+		LD (ZRECVF3_TRIES),A
+		JP ZR_0109
+
+ZR_0193		LD HL,rxbytes
+		LD DE,(rxcount)
+		CALL ADD_ADR_DD
+		CALL UPDATE_CHISLO
+		CALL STOHDR
+		LD A,ZACK
+		JP ZSHHDR
+
+ADD_ADR_DD	LD A,D
+		RLCA
+		SBC A,A
+		LD C,A
+		LD B,C
+		LD A,(HL)
+		ADD A,E
+		LD (HL),A
+		INC HL
+		LD A,(HL)
+		ADC A,D
+		LD (HL),A
+		INC HL
+		LD A,(HL)
+		ADC A,C
+		LD (HL),A
+		INC HL
+		LD A,(HL)
+		ADC A,B
+		LD (HL),A
+		RET

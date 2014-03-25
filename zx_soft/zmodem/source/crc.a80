@@ -1,0 +1,154 @@
+
+;LAST UPDATE: 27.02.2014 savelij
+
+CRC16_INIT	LD BC,0X1021
+		LD DE,CRC16_TABLE
+		PUSH IX
+		LD IXL,E
+		INC D
+		INC D
+		LD IXH,D
+		LD E,C
+		LD D,B
+		LD C,0
+CRC_I0		LD L,0
+		LD H,C
+		DEC H
+		LD B,8
+CRC_I1		ADD HL,HL
+		JR NC,CRC_I2
+		LD A,L
+		XOR E
+		LD L,A
+		LD A,H
+		XOR D
+		LD H,A 
+CRC_I2		DJNZ CRC_I1
+		DEC IX
+		LD (IX),H
+		DEC IXH
+		LD (IX),L
+		INC IXH
+		DEC C
+		JR NZ,CRC_I0
+		POP IX
+		RET
+
+;BC=ÑãàçÄ, DE=ÄÑêÖë, HL=ëíÄêí WORD
+CRC16		EXX
+		LD D,HIGH (CRC16_TABLE)
+		EXX
+CRC161		LD A,(DE)
+		INC DE
+		XOR H
+		EXX
+		LD E,A
+		LD A,(DE)
+		INC D
+		EXX
+		XOR L
+		LD H,A
+		EXX
+		LD A,(DE)
+		DEC D
+		EXX
+		LD L,A
+		DEC BC
+		LD A,B
+		OR C
+		JP NZ,CRC161
+		RET
+
+;BC=ÑãàçÄ, IX=ÄÑêÖë, HLDE=ëíÄêí DWORD
+CRC32		PUSH BC
+		EXX
+		POP BC		;ÑãàçÄ
+		EXX
+		LD B,H
+		LD C,L		;BCDE=ëíÄêí DWORD
+CRC321		LD A,(IX+0)
+		INC IX
+		XOR E
+		LD L,A
+		LD H,HIGH (CRC32_TABLE)
+		LD A,(HL)
+		INC H
+		XOR D
+		LD E,A
+		LD A,(HL)
+		INC H
+		XOR C
+		LD D,A
+		LD A,(HL)
+		INC H
+		XOR B
+		LD C,A
+		XOR A
+		XOR (HL)
+		LD B,A
+		EXX
+		DEC BC
+		LD A,B
+		OR C
+		EXX
+		JP NZ,CRC321
+		LD A,B
+		CPL
+		LD H,A
+		LD A,C
+		CPL
+		LD L,A
+		LD A,D
+		CPL
+		LD D,A
+		LD A,E
+		CPL
+		LD E,A
+		RET
+
+CRC32_INIT	LD L,0
+CRC32T3		LD E,L
+		LD B,0
+		LD D,B
+		LD C,B
+		LD H,8
+CRC32T1		BIT 0,E
+		JP Z,CRC32T2
+		SRL B
+		RR C
+		RR D
+		RR E
+		LD A,B
+		XOR 0XED
+		LD B,A
+		LD A,C
+		XOR 0XB8
+		LD C,A
+		LD A,D
+		XOR 0X83
+		LD D,A
+		LD A,E
+		XOR 0X20
+		LD E,A
+		JP CRC32T4
+
+CRC32T2		SRL B
+		RR C
+		RR D
+		RR E
+CRC32T4		DEC H
+		JP NZ,CRC32T1	;ñàäã çÄ 8
+		LD H,HIGH (CRC32_TABLE)
+		LD (HL),E
+		INC H
+		LD (HL),D
+		INC H
+		LD (HL),C
+		INC H
+		LD (HL),B
+		DEC H
+		DEC H
+		DEC H
+		INC L
+		JP NZ,CRC32T3	;ñàäã çÄ 256
+		RET

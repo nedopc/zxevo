@@ -1,0 +1,34 @@
+
+;LAST UPDATE: 12.03.2014 savelij
+
+;/* Fancy numbers for xferstat() call types. */
+XFER_START	EQU 1			;/* start of file transfer session */
+XFER_FILE	EQU 2			;/* start of new file */
+XFER_EOF	EQU 3			;/* end of file */
+XFER_DATA	EQU 4			;/* protocol data block (normal) */
+XFER_STATUS	EQU 5			;/* protocol status */
+XFER_ERROR	EQU 6			;/* protocol error */
+XFER_END	EQU 7			;/* end of session */
+
+;/* Fancy numbers for protocol module. */
+ASCII		EQU 1			;/* guess */
+XMODEM		EQU 2			;/* Volkswagen */
+XMODEMC		EQU 3			;/*   ditto CRC */
+MODEM7		EQU 4			;/* modemers nightmare */
+MODEM7C		EQU 5			;/*   ditto CRC */
+TELINK		EQU 6			;/* extended nightmare */
+TELINKC		EQU 7			;/*   ditto CRC */
+KERMIT		EQU 8			;/* design by committee */
+DIETIFNA	EQU 9			;/* design by fire/flame */
+ZMODEM		EQU 10			;/* designed to work right */
+FSC001X		EQU 11			;/* FSC001 pure XMODEM/CRC */
+FSC001T		EQU 12			;/* FSC001 pure TELINK/CRC */
+
+;/* Protocol driver return codes */
+OK		EQU 0			;/* alls well */
+TIMEOUT		EQU -1			;/* timeout error */
+ERROR		EQU -2			;/* generic error */
+ABORT		EQU -3			;/* manually aborted */
+DISKFULL	EQU -4			;/* disk full error */
+BADFILE		EQU -5			;/* bad filename */
+  
