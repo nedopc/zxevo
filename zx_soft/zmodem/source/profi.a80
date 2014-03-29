@@ -1,0 +1,6 @@
+
+;LAST UPDATE: 28.03.2014 savelij
+
+		include memtype.a80
+
+MEMTYPE		EQU PROFI

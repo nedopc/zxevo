@@ -8,7 +8,13 @@ START_CODE	EQU ADR_LOADING
 
 		ORG ADR_LOADING-0X117		;(END_HEADER-START_SCL)
 ;ЗАГОЛОВОК SCL ФАЙЛА
-START_SCL	DB "SINCLAIR",1,"zm_evo  B"
+START_SCL	IF MEMTYPE=PROFI
+		DB "SINCLAIR",1,"zm_profiB"
+		ELSEIF MEMTYPE=PENT22
+		DB "SINCLAIR",1,"zm_pnt22B"
+		ELSE
+		DB "SINCLAIR",1,"zm_evo  B"
+		ENDIF
 		DW BASIC_FULL,BASIC_FULL
 FULL_SIZE	DB SIZE_SECTORS+1
 
@@ -18,9 +24,6 @@ FULL_SIZE	DB SIZE_SECTORS+1
 	
 		ORG ADR_LOADING
 		DI
-;		LD BC,0X7FFD
-;		LD A,0X16			;СТРАНИЦА С ДРАЙВЕРАМИ И MICRO BOOT FAT
-;		OUT (C),A
 		LD HL,ADR_LOADING;$
 		PUSH HL
 		LD HL,START_UNPACK
@@ -38,8 +41,13 @@ FULL_SIZE	DB SIZE_SECTORS+1
 		RET
 		
 START_UNPACK	include ../../../rom/dec40.a80
-END_UNPACK
-		binclude main_pack.rom	;имя пакованной проги
+END_UNPACK	IF MEMTYPE=PROFI
+		binclude main_profi_pack.rom	;имя пакованной проги
+		ELSEIF MEMTYPE=PENT22
+		binclude main_pent22_pack.rom	;имя пакованной проги
+		ELSE
+		binclude main_evo_pack.rom	;имя пакованной проги
+		ENDIF
 END_COD
 
 		DUPL LOW (-$),0
