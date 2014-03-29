@@ -7,7 +7,13 @@ ADRWORK		EQU 0X6000
 UNPACKER	EQU 0X5B00
 
 		ORG ADRWORK-0X11
+		IF MEMTYPE=PROFI
+		SUM_HOB "zm_profiC",ADRWORK,EBINAR-BINAR,SIZE_SECTORS
+		ELSEIF MEMTYPE=PENT22
+		SUM_HOB "zm_pnt22C",ADRWORK,EBINAR-BINAR,SIZE_SECTORS		
+		ELSE
 		SUM_HOB "zm_evo  C",ADRWORK,EBINAR-BINAR,SIZE_SECTORS
+		ENDIF
 
 		DI
 		LD HL,ADRWORK
@@ -27,7 +33,13 @@ UNPACKER	EQU 0X5B00
 		RET
 
 DEPACK		include ../../../rom/dec40.a80
-BINAR		binclude main_pack.rom
+BINAR		IF MEMTYPE=PROFI
+		binclude main_profi_pack.rom
+		ELSEIF MEMTYPE=PENT22
+		binclude main_pent22_pack.rom
+		ELSE
+		binclude main_evo_pack.rom
+		ENDIF
 EBINAR
 
 		DUPL 0X100-LOW ($),0

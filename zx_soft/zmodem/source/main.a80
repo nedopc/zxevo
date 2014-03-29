@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 25.03.2014 savelij
+;LAST UPDATE: 29.03.2014 savelij
 
 		include ../../../rom/macros.a80
 		include ../../../rom/global_vars.a80
@@ -7,6 +7,14 @@
 		include filexfer_h.a80
 
 DEBUG		EQU 0
+
+		IF MEMTYPE=PROFI
+SPEED		EQU BAUD115200
+		ELSEIF MEMTYPE=PENT22
+SPEED		EQU BAUD19200
+		ELSE
+SPEED		EQU BAUD57600
+		ENDIF
 
 zmblkmax	EQU 0X4000			;êÄáåÖê ÅìîÖêÄ èêàÖåÄ
 
@@ -43,12 +51,37 @@ HEADER_ERR	LD HL,TXT_HEADERERR
 		JR RESTART
 
 ;èêàçìÑàíÖãúçõâ ÇõïéÑ Ç ERS
-EXIT		PEC_ON SHADOW_BF
+EXIT		IF MEMTYPE=PROFI
+		LD BC,0X7FFD
+		XOR A
+		OUT (C),A
+		JP 0
+		ELSEIF MEMTYPE=PENT22
+		LD BC,0XEFF7
+		LD A,8
+		OUT (C),A
+		LD HL,EXIT1
+		LD DE,0X3D2F-(EXIT2-EXIT1)
+		PUSH DE
+		LD BC,EXIT2-EXIT1
+		LDIR
+		RET
+
+EXIT1		LD HL,0
+		PUSH HL
+		LD BC,0X7FFD
+		OUT (C),L
+		LD BC,0XEFF7
+		OUT (C),L
+EXIT2
+		ELSE
+		PEC_ON SHADOW_BF
 		LD HL,0X79ED
 		LD (0XFFFE),HL
 		LD BC,0XBC77
 		LD A,2
 		JP 0XFFFE
+		ENDIF
 
 		include zmodem.a80
 		include zrecv.a80
@@ -88,9 +121,24 @@ TADR_PEREDACHA	EQU $-2
 		RET
 		ENDIF
 
-TXT_PROGNAME	DB 0,0,"*** RS232 loader for PentEvo ***",0
-TXT_INFO	DB 0,2,"Receive files: TAP, TRD",0
-TXT_BREAKRECV	DB 0,16,"Receive file not support",0
+TXT_PROGNAME	DB 0,0,"*** RS232 loader for "
+		IF MEMTYPE=PROFI
+		DB "Profi"
+		ELSEIF MEMTYPE=PENT22
+		DB "Pent2.2"
+		ELSE
+		DB "PentEvo"
+		ENDIF
+		DB " ***",0
+TXT_INFO	DB 0,2,"Received files: "
+		IF MEMTYPE=PROFI
+		DZ "TRD"
+		ELSEIF MEMTYPE=PENT22
+		DZ "TRD"
+		ELSE
+		DZ "TAP, TRD"
+		ENDIF
+TXT_BREAKRECV	DB 0,16,"Received file not supported",0
 TXT_HEADERERR	DB 0,16,"Header not support",0
 TXT_FILENAME	DB 0,8,"Filename: "
 TXT_NAME	DB "                       ",0
