@@ -206,10 +206,10 @@ void make_colortab(char flash_active)
       unsigned char bright = (a >> 6) & 1;
       unsigned char flash = (a >> 7) & 1;
 
-      if (ink)
+      //if (ink) //Alone Coder removed this for ATM 8th color
           ink |= bright << 3; // no bright for 0th color
 
-      if (paper)
+      //if (paper) //Alone Coder removed this for ATM 8th color
           paper |= (conf.flashcolor ? flash : bright) << 3; // no bright for 0th color
 
       if (flash_active && flash)
