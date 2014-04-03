@@ -370,9 +370,17 @@ void to_zx(UBYTE scancode, UBYTE was_E0, UBYTE was_release)
 				if ( !was_release )
 				{
 					if (kb_status & (KB_LSHIFT_MASK | KB_RSHIFT_MASK))
-						zx_mode_switcher(MODE_VGA|(~modes_register&MODE_60HZ));
+					{
+						UBYTE m=~modes_register&MODE_60HZ;
+						if (m==0) m|=MODE_VGA;
+						zx_mode_switcher(m);
+					}
 					else
-						zx_mode_switcher(MODE_VGA|(modes_register&MODE_60HZ));
+					{
+						UBYTE m=modes_register&MODE_60HZ;
+						if (m==0) m|=MODE_VGA;
+						zx_mode_switcher(m);
+					}
 				}
 				break;
 			//Num Lock
