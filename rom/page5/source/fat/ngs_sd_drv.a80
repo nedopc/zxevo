@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 03.06.2013 savelij
+;LAST UPDATE: 30.03.2014 savelij
 
 ;€„…‘ –ˆŠ‹€ Ž™…ˆŸ ‘Ž ‘…ŠŽŒ
 COMINT_		EQU 0X026E
@@ -142,7 +142,7 @@ SDRDSN2		IN A,(GSCOM)
 		IN A,(GSDAT)
 		CP 0X99				;Š€’€ Ž’…Ÿ‹€‘œ Ž ‚…ŒŸ —’…ˆŸ/‡€ˆ‘ˆ
 		JP Z,SD_CARD_LOST
-		LD BC,WIN_P2
+		LD BC,WIN_P6
 		XOR A
 		OUT (C),A
 		POP BC

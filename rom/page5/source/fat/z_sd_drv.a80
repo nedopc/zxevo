@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 09.12.2012 savelij
+;LAST UPDATE: 30.03.2014 savelij
 
 ;‚•Ž„›… €€Œ…’› Ž™ˆ…:
 ;HL-€„…‘ ‡€ƒ“‡Šˆ ‚ €ŒŸ’œ
@@ -267,7 +267,7 @@ RD_SECT2	LD BC,P_DATA
 		NOP
 		IN A,(C)
 		PEC_ON SHADOW_BF
-		LD BC,WIN_P2
+		LD BC,WIN_P6
 		XOR A
 		OUT (C),A
 		PEC_OFF SHADOW_BF
