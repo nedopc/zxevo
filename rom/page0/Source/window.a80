@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 24.06.2013 savelij
+;LAST UPDATE: 03.04.2014 savelij
 
 ;éèàëÄíÖãú éäçÄ (ÄÑêÖë Ç IX)
 ;+00 X äééêÑàçÄíÄ
@@ -719,8 +719,8 @@ DOWN1		LD D,(IX+0)
 		BIT 3,(HL)
 		LD L,(IX+8)
 		LD H,(IX+9)
-		LD BC,ADR_CAT
 		JR NZ,DOWN3
+		LD BC,ADR_CAT
 		ADD HL,HL
 		ADD HL,HL
 		ADD HL,HL
@@ -732,7 +732,8 @@ DOWN4		CALL FILENAME8_3
 		RET Z
 		JP DRAW_MOUSE
 
-DOWN3		DEC D
+DOWN3		LD BC,ADR_CAT_FAT
+		DEC D
 		ADD HL,HL
 		ADD HL,BC
 		LD C,(HL)
@@ -938,4 +939,198 @@ ADRSTARTIND	EQU $-2
 		INC HL
 		LD (ADRSTARTIND),HL
 		POP HL
+		RET
+
+;ÇéëëíÄçéÇãÖçàÖ óÄëíà ùäêÄçÄ èéÑ éäçéå
+WIN_RESTORE
+;		BIT 3,(IX-1)
+;		RET Z
+;		RES 3,(IX-1)
+		LD A,2
+		JR RESAV
+
+;ëéïêÄçÖçàÖ óÄëíà ùäêÄçÄ èéÑ éäçéå
+WIN_STORE
+;		BIT 3,(IX-1)
+;		RET NZ
+;		SET 3,(IX-1)
+		LD A,1
+RESAV		EX AF,AF'
+		LD A,0X16;P_WINS
+		CALL SET_7FFD;PAGE_128
+;		LD HL,PAGE_128_RET
+;		PUSH HL
+		EX AF,AF'
+		LD (NSOH+1),A
+		RRCA
+		CALL WSOHR
+		LD HL,0X127E
+		JR C,SOH7
+		LD HL,0X771A
+SOH7		LD (SOH4),HL
+		LD (SOH1),HL
+		LD L,(IX+1)
+		LD H,(IX+0)
+		CALL ADRDIS_
+		PUSH HL
+		CALL ADRATR_
+		EX (SP),HL
+		LD B,(IX+2)
+SOH3		PUSH BC
+		LD B,8
+		PUSH HL
+SOH2		PUSH HL
+		LD C,(IX+3)
+SOH1		LD A,(HL)
+		LD (DE),A
+		INC DE
+		INC HL
+		DEC C
+		JR NZ,SOH1
+		POP HL
+		INC H
+		DJNZ SOH2
+		POP HL
+		CALL UVEHL_
+		POP BC
+		DJNZ SOH3
+		POP HL
+		LD A,(NSOH+1)
+		AND A
+		JR Z,SOH6_0
+		BIT 6,(IX+8)
+		JR Z,SOH6_0
+		INC (IX+2)
+		INC (IX+3)
+SOH6_0		LD C,(IX+2)
+SOH6		PUSH HL
+		LD B,(IX+3)
+SOH4		LD A,(HL)
+		LD (DE),A
+		INC HL
+		INC DE
+		DJNZ SOH4
+		POP HL
+		LD A,0X20
+		ADD A,L
+		LD L,A
+		JR NC,SOH4_0
+		INC H
+SOH4_0		DEC C
+		JR NZ,SOH6
+NSOH		LD A,0
+		AND A
+		RET Z
+		CP 1
+		JR NZ,NSOH1
+		LD (BUFHR+1),DE
+NSOH1		BIT 6,(IX+8)
+		JR Z,ADRWEK
+		DEC (IX+2)
+		DEC (IX+3)
+ADRWEK		LD HL,0
+		RRCA
+		JR NC,ADRWK1
+		INC HL
+		INC HL
+		LD D,IXH
+		LD E,IXL
+		LD (HL),E
+		INC HL
+		LD (HL),D
+		RET
+
+ADRWK1		LD A,(BUFHR1+1)
+		AND A
+		RET Z
+		DEC HL
+		DEC HL
+		DEC HL
+		DEC HL
+		DEC HL
+		LD D,(HL)
+		DEC HL
+		LD E,(HL)
+ADRWK2		LD IXH,D
+		LD IXL,E
+		RET
+
+WSOHR		PUSH AF
+		PUSH HL
+BUFHR		LD DE,0XC000
+		EX AF,AF'
+		LD HL,TABSS
+BUFHR1		LD A,0
+		AND A
+		JR NZ,BUFHR4
+		LD DE,0XC000
+BUFHR4		PUSH AF
+		PUSH AF
+		ADD A,A
+		ADD A,A
+		ADD A,L
+		LD L,A
+		JR NC,BUFHR4_0
+		INC H
+BUFHR4_0	LD (ADRWEK+1),HL
+		POP AF
+		EX AF,AF'
+		JR NC,NWOS
+		LD (HL),E
+		INC HL
+		LD (HL),D
+		POP AF
+		INC A
+		JR BUFHR3
+
+NWOS		DEC HL
+		DEC HL
+		DEC HL
+		LD D,(HL)
+		DEC HL
+		LD E,(HL)
+		LD (BUFHR+1),DE
+		POP AF
+		DEC A
+		RET C
+BUFHR3		LD (BUFHR1+1),A
+		POP HL
+		POP AF
+		RET
+
+TABSS		DUPL 0X20,0
+
+ADRDIS_		PUSH AF
+		LD A,L
+		AND 0X18
+		OR 0X40
+		EX AF,AF'
+		LD A,L
+		AND 7
+		RRCA
+		RRCA
+		RRCA
+		ADD A,H
+		LD L,A
+		EX AF,AF'
+		LD H,A
+		POP AF
+		RET
+
+ADRATR_		LD A,H
+		RRCA
+		RRCA
+		RRCA
+		AND 3
+		OR 0X58
+		LD H,A
+		RET
+
+UVEHL_		LD A,0X20
+		ADD A,L
+		LD L,A
+		RET NC
+		LD A,H
+		ADD A,8
+		LD H,A
 		RET

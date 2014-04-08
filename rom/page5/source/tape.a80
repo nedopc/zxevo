@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 13.05.2011 savelij
+;LAST UPDATE: 30.03.2014 savelij
 
 TAPE_EMUL	LD H,CMOS_BYTE_00
 		CALL READCMOS
@@ -13,16 +13,16 @@ TAPE_EMUL	LD H,CMOS_BYTE_00
 		LD (RREG_F),HL
 		RET
 
-EMULOADTAP	LD A,(CPU2+2)			;ŽŒ… ‘’€ˆ–› ƒ„… €—ˆ€…’‘Ÿ ‘‹…„“ž™ˆ‰ ‹ŽŠ
+EMULOADTAP	LD A,(CPU6+2)			;ŽŒ… ‘’€ˆ–› ƒ„… €—ˆ€…’‘Ÿ ‘‹…„“ž™ˆ‰ ‹ŽŠ
 		LD IYL,A
 		ADD A,PAGE4TAP
-		LD BC,WIN_P1
+		LD BC,WIN_P5
 		OUT (C),A			;…€‹œ€Ÿ ‘’€ˆ–€ Ž’Š“„€ €’œ
-		LD HL,(CPU2)			;‘Œ…™…ˆ… ‚ ‘’€ˆ–…
+		LD HL,(CPU6)			;‘Œ…™…ˆ… ‚ ‘’€ˆ–…
 		LD DE,(RREG_IXL)		;€„…‘ Š“„€ ‹Ž†ˆ’œ
 		LD A,D
 		EXX
-		LD BC,WIN_P2
+		LD BC,WIN_P6
 		CP 0X80
 		LD A,0XFA			;„‹Ÿ „ˆ€€‡Ž€ €„…‘Ž‚ ‡€ƒ“‡Šˆ 4000-7FFF
 		JR C,ELT01
@@ -53,7 +53,7 @@ ELT07		LDI
 		LD A,0XFD
 		LD IYH,A
 		EXX
-		LD B,HIGH (WIN_P2)
+		LD B,HIGH (WIN_P6)
 		OUT (C),A
 		EXX
 		LD D,0X80
@@ -64,22 +64,22 @@ ELT06		LD A,H
 		LD A,IYL
 		ADD A,PAGE4TAP
 		EXX
-		LD B,HIGH (WIN_P1)
+		LD B,HIGH (WIN_P5)
 		OUT (C),A
 		EXX
 		LD H,0X40
 		JR ELT07
 		
 ELT05		RES 6,H
-		LD BC,WIN_P1
+		LD BC,WIN_P5
 		LD A,0XFA
 		OUT (C),A			;‚…“‹ˆ ‘’€ˆ–“ ‚ 1 ŽŠ… Ž…–ˆŽ‚€ˆŸ
-		LD B,HIGH (WIN_P2)
+		LD B,HIGH (WIN_P6)
 		XOR A
 		OUT (C),A			;‚Š‹ž—ˆ‹ˆ Ž‘‹…„žž ‘’€ˆ–“
-		LD (CPU2),HL			;‚…“‹ˆ ‘Œ…™…ˆ… ‚ ‘’€ˆ–… „‹Ÿ ‡€ƒ“‡Šˆ
+		LD (CPU6),HL			;‚…“‹ˆ ‘Œ…™…ˆ… ‚ ‘’€ˆ–… „‹Ÿ ‡€ƒ“‡Šˆ
 		LD A,IYL
-		LD (CPU2+2),A			;‚…“‹ˆ ‚ ……Œ…“ž ŽŒ… ’…Š“™…‰ ‘’€ˆ–› ‡€ƒ“‡Šˆ
+		LD (CPU6+2),A			;‚…“‹ˆ ‚ ……Œ…“ž ŽŒ… ’…Š“™…‰ ‘’€ˆ–› ‡€ƒ“‡Šˆ
 		LD HL,(RREG_IXL)
 		LD DE,(RREG_E)
 		ADD HL,DE
@@ -92,7 +92,7 @@ ELT05		RES 6,H
 		RET
 
 TAPE_INIT	XOR A
-		LD HL,CPU2
+		LD HL,CPU6
 		LD (HL),A
 		INC L
 		LD (HL),A
