@@ -69,14 +69,14 @@ void zx_task(UBYTE operation) // zx task, tracks when there is need to send new 
 {
 	static UBYTE prev_code;
 	static UBYTE task_state;
-	static UBYTE reset_type;
+	//static UBYTE reset_type;
 
 	UBYTE was_data;
 	UBYTE code,keynum,keybit;
 
 	if ( operation==ZX_TASK_INIT )
 	{
-		reset_type = 0;
+		//reset_type = 0;
 		prev_code = KEY_V+1; // impossible scancode
 		task_state = 0;
 		shift_pause = 0;
@@ -147,7 +147,7 @@ void zx_task(UBYTE operation) // zx task, tracks when there is need to send new 
 
 					zx_fifo_get(); // remove byte from fifo
 
-					reset_type = 0;
+					//reset_type = 0;
 					prev_code  = KEY_V+1;
 
 					zx_clr_kb();
@@ -354,7 +354,7 @@ void to_zx(UBYTE scancode, UBYTE was_E0, UBYTE was_release)
 				{
 					//hard reset
 					flags_register |= FLAG_HARD_RESET;
-					t.tb.b1=t.tb.b1=NO_KEY;
+					t.tb.b2=t.tb.b1=NO_KEY;
 				}
 				break;
 		}//switch
