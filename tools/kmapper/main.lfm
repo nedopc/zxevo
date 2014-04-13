@@ -1,0 +1,112 @@
+object Form1: TForm1
+  Left = 306
+  Height = 512
+  Top = 107
+  Width = 800
+  Caption = 'ZX Evolution KeyMapper  (140413beta)'
+  ClientHeight = 512
+  ClientWidth = 800
+  Constraints.MaxHeight = 1080
+  Constraints.MaxWidth = 1920
+  Constraints.MinHeight = 480
+  Constraints.MinWidth = 640
+  OnCreate = FormCreate
+  OnMouseDown = FormMouseDown
+  OnMouseUp = FormMouseUp
+  OnPaint = FormPaint
+  OnResize = FormResize
+  Position = poScreenCenter
+  LCLVersion = '1.0.2.0'
+  object ButtonDef: TButton
+    Left = 8
+    Height = 25
+    Top = 480
+    Width = 72
+    Anchors = [akLeft, akBottom]
+    Caption = 'Default...'
+    OnClick = ButtonDefClick
+    TabOrder = 0
+  end
+  object ButtonOpen: TButton
+    Left = 96
+    Height = 25
+    Top = 480
+    Width = 88
+    Anchors = [akLeft, akBottom]
+    Caption = 'Open'
+    OnClick = ButtonOpenClick
+    TabOrder = 1
+  end
+  object ButtonSave: TButton
+    Left = 200
+    Height = 25
+    Top = 480
+    Width = 88
+    Anchors = [akLeft, akBottom]
+    Caption = 'Save'
+    OnClick = ButtonSaveClick
+    TabOrder = 2
+  end
+  object ButtonFWPath: TButton
+    Left = 304
+    Height = 25
+    Top = 480
+    Width = 104
+    Anchors = [akLeft, akBottom]
+    Caption = 'Firmware Path'
+    OnClick = ButtonFWPathClick
+    TabOrder = 3
+  end
+  object ButtonExit: TButton
+    Left = 728
+    Height = 25
+    Top = 480
+    Width = 64
+    Anchors = [akRight, akBottom]
+    Caption = 'Exit'
+    OnClick = ButtonExitClick
+    TabOrder = 4
+  end
+  object Bevel1: TBevel
+    Left = 0
+    Height = 2
+    Top = 472
+    Width = 800
+    Anchors = [akLeft, akRight, akBottom]
+    Shape = bsTopLine
+  end
+  object ButtonHelp: TButton
+    Left = 424
+    Height = 25
+    Top = 480
+    Width = 104
+    Anchors = [akLeft, akBottom]
+    Caption = 'Help / Settings'
+    OnClick = ButtonHelpClick
+    TabOrder = 5
+  end
+  object Bevel2: TBevel
+    Left = 0
+    Height = 2
+    Top = 320
+    Width = 800
+    Anchors = [akLeft, akRight]
+    Shape = bsTopLine
+  end
+  object OpenDialog1: TOpenDialog
+    DefaultExt = '.bin'
+    Filter = 'Binary (*.bin)|*.bin|All Files|*.*'
+    InitialDir = '.'
+    Options = [ofPathMustExist, ofFileMustExist, ofEnableSizing, ofViewDetail]
+    left = 536
+    top = 480
+  end
+  object SaveDialog1: TSaveDialog
+    DefaultExt = '.bin'
+    Filter = 'Binary (*.bin)|*.bin|All Files|*.*'
+    InitialDir = '.'
+    Options = [ofOverwritePrompt, ofPathMustExist, ofEnableSizing, ofViewDetail]
+    left = 568
+    top = 480
+  end
+end
