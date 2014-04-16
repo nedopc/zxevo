@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 27.06.2013 savelij
+;LAST UPDATE: 10.04.2014 savelij
 
 ;€ ‚•Ž„…: H-€„…‘ Ÿ—…‰Šˆ
 ;	   L-Ž—ˆ’€Ž… ‡€—…ˆ…
@@ -65,6 +65,7 @@ RDCMOS2BUF1	CALL READCMOS
 		POP DE
 		RET
 
+;‚…˜ˆ‰ ‚›‡Ž‚ —’…ˆŸ CMOS
 EREAD_CMOS	LD HL,(RREG_L)			;H=€„…‘ Ÿ—…‰Šˆ ŠŒŽ‘ Ž’Š“„€ —ˆ’€’œ
 		CALL READCMOS
 		LD (RREG_L),HL			;‚…“‹ˆ Ž—ˆ’€Ž… ‚ …ƒˆ‘’ L
@@ -73,7 +74,9 @@ EREAD_CMOS	LD HL,(RREG_L)			;H=€„…‘ Ÿ—…‰Šˆ ŠŒŽ‘ Ž’Š“„€ —ˆ’€’œ
 		LD (RREG_F),HL			;‚…“‹ˆ Ž—ˆ’€Ž… ‚ …ƒˆ‘’ A ‚Œ…‘’… ‘ ”‹€ƒ€Œˆ
 		RET
 
+;‚…˜ˆ‰ ‚›‡Ž‚ ‡€ˆ‘ˆ ‚ CMOS ‘ ……‘—…’ŽŒ CRC
 EWRITE_CMOS	LD HL,(RREG_L)
+;‚“’…ˆ‰ ‚›‡Ž‚ ‡€ˆ‘ˆ ‚ CMOS ‘ ……‘—…’ŽŒ CRC
 IWRITECMOS	PUSH IX
 		PUSH DE
 		CALL WRITECMOS

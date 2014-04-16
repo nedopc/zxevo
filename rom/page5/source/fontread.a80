@@ -5,13 +5,13 @@
 ;
 ; сорец для аласма
 
-;ПЕРЕДЕЛКА ДЛЯ КОМПИЛЯЦИИ В СОСТАВЕ EVO RESET SERVICE 18.01.2012 savelij
+;ПЕРЕДЕЛКА ДЛЯ КОМПИЛЯЦИИ В СОСТАВЕ EVO RESET SERVICE 16.04.2012 savelij
 
 ;START   EQU     #6000
  ;       ORG     START
 
-FREAD		EQU OFFSET_FNTSAVE-0X800
-FONT		EQU OFFSET_FNTSAVE;0XD800
+FREAD		EQU CPU1+OFFSET_SCRSAVE;OFFSET_FNTSAVE;-0X800
+FONT		EQU CPU1+OFFSET_FNTSAVE;0XD800
 ;FLDIR		EQU 0XD800
 
 SCAN_FONT
@@ -33,7 +33,7 @@ SCAN_FONT
         LD      BC,0XFF77
         OUT     (C),A     ;включаем новый пентевный текстмод - 1-страничный
                           ; заодно ефф7 и фф77 ставят нам 7 МГц частоту
-
+		EVOPORT WIN_P1,PAGE_SCR_FONT
         CALL    OUTPAGE   ;выводим все символы на экран
 
 LOOP
