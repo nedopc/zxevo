@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 30.03.2014 savelij
+;LAST UPDATE: 15.04.2014 savelij
 
 ;Žˆ‘€’…‹œ ŽŠ€ (€„…‘ ‚ IX)
 ;+00 X ŠŽŽ„ˆ€’€
@@ -1450,7 +1450,7 @@ SCRUP1		LD A,(IX+0X10)
 		EXX
 		LD A,E
 		EXX
-		AND A
+		AND 1;A
 		JR Z,SCRUP2
 		LD A,(IX+0X11)
 		LD H,A
@@ -1754,7 +1754,7 @@ SCRDN1		LD A,(IX+0)
 		EXX
 		LD A,E
 		EXX
-		AND A
+		AND 1;A
 		JR Z,SCRDN2
 		LD A,(IX+1)
 		LD H,A

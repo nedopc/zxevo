@@ -478,6 +478,7 @@ SONGLNBIN	binclude songln_pack.bin
 		include input_keys.a80
 		include mouse.a80
 		include file_browser.a80
+		include call_trdos.a80
 		include call_cmos.a80
 
 		DUPL 0X3FF8-$,0XFF

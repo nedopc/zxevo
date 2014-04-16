@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 06.02.2014 savelij
+;LAST UPDATE: 10.04.2014 savelij
 
 ;ŽŒ…€ ”“Š–ˆ‰ RST 8, ŽŸ„ŽŠ ŒŽ†…’ ›’œ ˆ‡Œ……!
 _AY_PRN_INIT	EQU 0X40
@@ -79,6 +79,16 @@ _OPEN_FILE	EQU 0X08			;Ž’Š›’ˆ… ”€‰‹€
 _READ_FILE	EQU 0X09			;Ž‘‹…„Ž‚€’…‹œŽ… —’…ˆ… Ž’Š›’ŽƒŽ ”€‰‹€
 _INIT_TEKDIR	EQU 0X0A			;‘Ž‡„€ˆ… ’€‹ˆ–› Š‹€‘’…Ž‚ ’…Š“™…‰ „ˆ…Š’Žˆˆ
 _POS_FILES	EQU 0X0B			;€Ž’€ ‘ ’…Š“™…‰ Ž‡ˆ–ˆ…‰
+
+;Ž„”“Š–ˆˆ ”“Š–ˆˆ _POS_FILES
+_POSTF00	EQU 0X00			;‘Ž•€…ˆ… ’…Š“™…‰ Ž‡ˆ–ˆˆ ”€‰‹€
+_POSTF01	EQU 0X01			;‚Ž‘‘’€Ž‚‹…ˆ… ’…Š“™…‰ Ž‡ˆ–ˆˆ ”€‰‹€
+_POSTF02	EQU 0X02			;‘Ž‘ ’…Š“™…‰ Ž‡ˆ–ˆˆ ‚ 0 ˆ Žˆ‘Š …‚Ž‰ "‹…ƒ€‹œŽ‰" ‡€ˆ‘ˆ
+_POSTF03	EQU 0X03			;……ŒŽ’€’œ € "B" ”€‰‹Ž‚ €‡€„
+_POSTF04	EQU 0X04			;……ŒŽ’€’œ € "B" ”€‰‹Ž‚ ‚……„
+_POSTF05	EQU 0X05			;Ž„‘—…’ ŠŽ‹ˆ—…‘’‚€ "‹…ƒ€‹œ›•" ‡€ˆ‘…‰
+_POSTF06	EQU 0X06			;“‘’€Ž‚ˆ’œ ŽŒ… "‹…ƒ€‹œŽ‰" ‡€ˆ‘ˆ ˆ‡ "BC"
+_POSTF07	EQU 0X07			;‚…“’œ ‚ "BC" ’…Š“™ˆ‰ ŽŒ… "‹…ƒ€‹œŽ‰" ‡€ˆ‘ˆ
 
 ;ŽŒ…€ Ž„„…†ˆ‚€…Œ›• €‘˜ˆ…ˆ‰ „‹Ÿ RST 8
 _TRD		EQU 1
