@@ -6,7 +6,7 @@
 		include ../../global_vars.a80
 
 ;VERSION
-VERSBIOS	EQU "0.55a "
+VERSBIOS	EQU "0.55b "
 
 ;BIT 4,(IY+55)
 ;BIT 3,(IY+55)-0-‡€…’ €ˆŒ€–ˆˆ ŠŽ˜€Š€, 1-€‡…˜…ˆ…
