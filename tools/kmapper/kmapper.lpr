@@ -13,7 +13,7 @@ uses
 {$R *.res}
 
 begin
-  Application.Title:='ZX Evolution KeyMapper  (140413beta)';
+  Application.Title:='ZX Evolution KeyMapper  (140425beta)';
   RequireDerivedFormResource := True;
   Application.Initialize;
   Application.CreateForm(TForm1, Form1);
