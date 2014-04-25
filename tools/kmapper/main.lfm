@@ -3,7 +3,7 @@ object Form1: TForm1
   Height = 512
   Top = 107
   Width = 800
-  Caption = 'ZX Evolution KeyMapper  (140413beta)'
+  Caption = 'ZX Evolution KeyMapper  (140425beta)'
   ClientHeight = 512
   ClientWidth = 800
   Constraints.MaxHeight = 1080
@@ -16,7 +16,7 @@ object Form1: TForm1
   OnPaint = FormPaint
   OnResize = FormResize
   Position = poScreenCenter
-  LCLVersion = '1.0.2.0'
+  LCLVersion = '1.2.0.3'
   object ButtonDef: TButton
     Left = 8
     Height = 25
