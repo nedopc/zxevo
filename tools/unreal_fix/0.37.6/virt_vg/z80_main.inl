@@ -105,6 +105,13 @@ Z80INLINE unsigned char m1_cycle(Z80 *cpu)
 
 void Z80FAST step()
 {
+
+	// rst 8 trap.
+	// if bit BF.6 and pc=8 and ROM => same as when 'nmi_in_progress' (RAM page FF)
+	if( conf.mem_model==MM_ATM3 && (cpu.pc&0x0FFFF)==8 && (comp.pBF&0x40) && (bankr[0]>=ROM_BASE_M) )
+	{
+	}
+
    if (comp.flags & CF_SETDOSROM)
    {
       if (cpu.pch == 0x3D)
