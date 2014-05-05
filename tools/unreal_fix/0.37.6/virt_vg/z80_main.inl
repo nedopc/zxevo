@@ -105,11 +105,13 @@ Z80INLINE unsigned char m1_cycle(Z80 *cpu)
 
 void Z80FAST step()
 {
+	int rst8_trap = 0;
 
 	// rst 8 trap.
 	// if bit BF.6 and pc=8 and ROM => same as when 'nmi_in_progress' (RAM page FF)
 	if( conf.mem_model==MM_ATM3 && (cpu.pc&0x0FFFF)==8 && (comp.pBF&0x40) && (bankr[0]>=ROM_BASE_M) )
 	{
+		rst8_trap = 1;
 	}
 
    if (comp.flags & CF_SETDOSROM)
@@ -173,6 +175,12 @@ void Z80FAST step()
           set_scorp_profrom(3);
    }
 #endif
+
+	if( rst8_trap )
+	{
+		cpu.nmi_in_progress = true;
+		set_banks();
+	}
 }
 
 void z80loop()
