@@ -181,6 +181,37 @@ void Z80FAST step()
 		cpu.nmi_in_progress = true;
 		set_banks();
 	}
+	
+	if(comp.pBE)
+	{
+		if(comp.pBE == 1)
+		{
+			cpu.nmi_in_progress = false;
+			set_banks();
+		}
+		comp.pBE--;
+	}
+
+	if(nmi_pending)
+	{
+		if( conf.mem_model==MM_ATM3 && (comp.pBF&0x10) )
+		{
+			nmi_pending = 0;
+			cpu.nmi_in_progress = true;
+			set_banks();
+			m_nmi(RM_NOCHANGE);
+		}
+		else if((conf.mem_model == MM_PROFSCORP || conf.mem_model == MM_SCORP))
+		{
+			nmi_pending--;
+			if(cpu.pc >= 0x4000)
+			{
+//				printf("pc=%x\n", cpu.pc);
+				::m_nmi(RM_DOS);
+				nmi_pending = 0;
+			}
+		}
+	}
 }
 
 void z80loop()
@@ -237,18 +268,20 @@ void z80loop()
 */
       step();
 
-      if(comp.pBE)
-      {
-          if(comp.pBE == 1)
-          {
-              cpu.nmi_in_progress = false;
-              set_banks();
-          }
-          comp.pBE--;
-      }
+/* moving it to step()...
 
-      if(nmi_pending)
-      {
+	if(comp.pBE)
+	{
+		if(comp.pBE == 1)
+		{
+			cpu.nmi_in_progress = false;
+			set_banks();
+		}
+		comp.pBE--;
+	}
+
+	if(nmi_pending)
+	{
 		if( conf.mem_model==MM_ATM3 && (comp.pBF&0x10) )
 		{
 			nmi_pending = 0;
@@ -258,15 +291,17 @@ void z80loop()
 			continue;
 		}
 		else if((conf.mem_model == MM_PROFSCORP || conf.mem_model == MM_SCORP))
-         {
-             nmi_pending--;
-             if(cpu.pc >= 0x4000)
-             {
-    //             printf("pc=%x\n", cpu.pc);
-                 ::m_nmi(RM_DOS);
-                 nmi_pending = 0;
-             }
-         }
-      }
+		{
+			nmi_pending--;
+			if(cpu.pc >= 0x4000)
+			{
+//				printf("pc=%x\n", cpu.pc);
+				::m_nmi(RM_DOS);
+				nmi_pending = 0;
+			}
+		}
+	}
+*/
    }
 }
+
