@@ -42,3 +42,5 @@ void SetVersionType(UBYTE type)
 {
 	ext_type_gluk = type;
 }
+
+
