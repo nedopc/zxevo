@@ -8,7 +8,18 @@
  *
  * @subsection current Current version.
  *
- * - Fix RS232 (clear overrun error flag)
+ * - Add EEPROM access via RTC interface.
+ * - Add reset PS2 keyboard after error. 
+ * - Fix change resolution command (need for some PS2 mouses).
+ *
+ * @subsection ver_2014_04_13 Version 13.04.2014.
+ * 
+ * - Fix access to users keyboard map.
+ *
+ * @subsection ver_2013_11_08 Version 08.11.2013.
+ *
+ * - Add mode 60Hz;
+ * - Fix RS232 (clear overrun error flag).
  *
  * @subsection ver_2012_02_13 Version 13.02.2011.
  *
@@ -147,7 +158,6 @@ extern volatile UBYTE ext_type_gluk;
 #define EXT_TYPE_BOOTLOADER_VERSION   1
 /** Type is PS2 keyboards log. */
 #define EXT_TYPE_PS2KEYBOARDS_LOG     2
-
 
 /** Data buffer. */
 extern UBYTE dbuf[];
