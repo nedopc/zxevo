@@ -1,12 +1,12 @@
 
-;LAST UPDATE: 18.05.2014 savelij
+;LAST UPDATE: 19.05.2014 savelij
 	
 		include ../../macros.a80
 		include ../../define.a80
 		include ../../global_vars.a80
 
 ;VERSION
-VERSBIOS	EQU "0.55c "
+VERSBIOS	EQU "0.55d "
 
 ;BIT 4,(IY+55)
 ;BIT 3,(IY+55)-0-‡€…’ €ˆŒ€–ˆˆ Š˜€Š€, 1-€‡…˜…ˆ…
