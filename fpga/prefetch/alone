@@ -1,0 +1,52 @@
+Hello Vadim,
+
+имеем cpuwordaddr[21] (идёт с адресной шины проца и манагера банок), ptr1[21], ptr2[21],
+buf1[16], buf2[16], buf1empty, buf2empty, wordmreq (с твоей схемы
+буфера слова), wordrd (с твоей схемы буфера слова), word (на вход
+твоей схемы буфера слова), drammreq (идёт на арбитр драмы), dramaddr
+(идёт на арбитр драмы), dramout (управляет муксом с выхода драмы)
+drammreqtmp (никуда не идёт).
+
+если wordmreq
+то
+  если wordrd
+  то
+    если (cpuwordaddr == ptr1) && !buf1empty
+    то { drammreqtmp = 0; word = buf1; buf1empty = 1 }
+    если (cpuwordaddr == ptr2) && !buf2empty
+    то { drammreqtmp = 0; word = buf2; buf2empty = 1 }
+  иначе {
+    drammreqtmp = 1
+    drammreq = 1
+    dramaddr = cpuwordaddr
+    dramout = DRAMOUT_WORD //читаем драму по cpuwordaddr в word
+    если m1
+    то { ptr1 = cpuwordaddr+1; buf1empty = 1 }
+    иначе { ptr2 = cpuwordaddr+1; buf2empty = 1 }
+  }
+}
+иначе drammreqtmp = 0
+
+если !drammreqtmp
+то
+  если buf1empty
+  то {
+    drammreq = 1
+    dramaddr = ptr1
+    dramout = DRAMOUT_BUF1 //читаем драму по ptr1 в buf1
+    ptr1++
+    buf1empty = 0
+  }
+  иначе
+    если buf2empty
+    то {
+      drammreq = 1
+      dramaddr = ptr2
+      dramout = DRAMOUT_BUF2 //читаем драму по ptr2 в buf2
+      ptr2++
+      buf2empty = 0
+    }
+    иначе drammreq = 0
+
+как-то так.
+
