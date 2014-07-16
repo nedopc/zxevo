@@ -1,4 +1,4 @@
-@ECHO OFF
+rem @ECHO OFF
 
 cd fat_boot\source
 
@@ -34,13 +34,10 @@ cd ..\..\page1\evo-dos
 ..\..\..\tools\asw\bin\asw -U -L evo-dos_virt.a80
 ..\..\..\tools\asw\bin\p2bin evo-dos_virt.p ..\evo-dos_virt.rom -r $-$ -k
 
-cd ..\dos
+cd ..\trdos503
 
-..\..\..\tools\asw\bin\asw -U -L trdos.a80
-..\..\..\tools\asw\bin\p2bin trdos.p ..\trdos.rom -r $-$ -k
-
-..\..\..\tools\asw\bin\asw -U -L evodos.a80
-..\..\..\tools\asw\bin\p2bin evodos.p ..\evodos.rom -r $-$ -k
+..\..\..\tools\asw\bin\asw -U -L tr_503.a80
+..\..\..\tools\asw\bin\p2bin tr_503.p ..\tr_503.rom -r $-$ -k
 
 cd ..\..\page2\source
 
@@ -66,7 +63,9 @@ cd ..\..\sts\source
 
 ..\..\..\tools\asw\bin\asw -U -L -s sts.a80
 ..\..\..\tools\asw\bin\p2bin sts.p ..\sts.rom -r $-$ -k
+
 cd ..
+
 ..\..\tools\mhmt\mhmt -mlz sts.rom sts_pack.rom
 
 cd ..\page5\source
@@ -104,7 +103,7 @@ copy /B /Y ff_64k.rom+ff_64k.rom+glukpent.rom+profrom\evoprofrom.rom+ers.rom zxe
 del ers.rom
 del glukpent.rom
 
-copy /B /Y zxevo.rom ..\tools\unreal_fix\0.37.6\fix_build\x32\zxevo.rom
+rem copy /B /Y zxevo.rom ..\tools\unreal_fix\0.37.6\fix_build\x32\zxevo_.rom
 copy /B /Y zxevo.rom d:\unrealspeccy\zxevo.rom
 
 pause

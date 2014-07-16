@@ -150,12 +150,23 @@ SETUPERTXT	DB 1,0X17,0XFF,"Setup"
 SNDKEYS_STAT	EQU $-2
 		DB 0X0D," G.Access SD NeoGS:    off"
 ACCSSDG_STAT	EQU $-2
+		IF NEWDOS=1
+		DB 0X0D," K.DRV AY printer:     off"
+ETXT_AYPRINTER	EQU $-2
+		ENDIF
 		DB 0X0D," X.Exit"
 		DB 0
-SETUPERKEY	DB LOW (SETUPER1-$-1),"sgx"
+SETUPERKEY	IF NEWDOS=1
+		DB LOW (SETUPER1-$-1),"sgkx"
+		ELSE
+		DB LOW (SETUPER1-$-1),"sgx"
+		ENDIF
 
 SETUPER1	DW SOUND_KEYS
 		DW ACS_SDNGS
+		IF NEWDOS=1
+		DW EN_AYPRINTER
+		ENDIF
 		DW RESTART
 SETUPER2
 ;===========================Œ…ž “‘’€Ž‚ŽŠ===============================
@@ -214,7 +225,11 @@ MAIN2		DW CHNGTURBO			;w ˆ‡Œ……ˆ… ’“Ž
 		DW VIEW_HELP			;h ‚›‚Ž„ •…‹€
 		DW EN_LOADFONT			;e €‡…˜…ˆ… ……‡€ƒ“‡Šˆ ˜ˆ”’€ Ž ‘Ž‘“
 		DW SET_TYPEFONT			;j ‚›Ž ’ˆ€ ˜ˆ”’€
+		IF NEWDOS=1
+		DW SET_DOSTYPE
+		ELSE
 		DW EN_AYPRINTER			;k ‚›Ž „€‰‚…€ ˆ’…€
+		ENDIF
 		DW EN_AUTOMNT			;n ‚Š‹/‚›Š‹ €‚’ŽŒŽ’ˆŽ‚€ˆŸ ˆ‡ ”€‰‹€
 		DW SONGLN			;0XAC SONG IN LINES
 ;============================ƒ‹€‚Ž… Œ…ž================================
@@ -374,11 +389,18 @@ TXT_ERASEROM	DB 0X17,0XFF,0X0D,3,"Erase FLASH",0
 ;===============================ERASE ROM================================
 
 ;============================‘’€ˆ–€ ŽŒŽ™ˆ=============================
-WIN_HELP	DB 0X01,0X03,0X14,0X1A,0X0F,0X00,%00100000,0
+WIN_HELP	IF NEWDOS=1
+		DB 0X01+1,0X03+4,0X14-9,0X1A,0X0F,0X00,%00100000,0
+		ELSE
+		DB 0X01,0X03,0X14,0X1A,0X0F,0X00,%00100000,0
+		ENDIF
 		DW 0,0
 		DW TXT_WINHELP,0,0,0
 TXT_WINHELP	DB 0X17,0XFF,"Help"
 		DB 0X0D," Key+RESET:"
+		IF NEWDOS=1
+		DB 0X0D
+		ENDIF
 		DB 0X0D," Space=TRDOS"
 		DB 0X0D," CS=Basic128"
 		DB 0X0D," SS=Basic48"
@@ -387,6 +409,9 @@ TXT_WINHELP	DB 0X17,0XFF,"Help"
 		DB 0X0D," S=old CMOS SetUp"
 		DB 0X0D," 0=return to EVO Reset Service"
 		DB 0X0D,"----------------------------------"
+		IF NEWDOS=1
+		DB 0
+		ELSE
 		DB 0X0D," In main menu:"
 		DB 0X0D," 1-4=TR-DOS drive"
 		DB 0X0D," V=TR-DOS drive"
@@ -396,6 +421,7 @@ TXT_WINHELP	DB 0X17,0XFF,"Help"
 		DB 0X0D," 8=on/off mouse"
 		DB 0X0D," 9=on/off time"
 		DB 0X0D," & uppercased option keys.",0
+		ENDIF
 ;============================‘’€ˆ–€ ŽŒŽ™ˆ=============================
 
 ;============================SD Š€’€ “„€‹…€============================
@@ -453,8 +479,13 @@ ROMLOADFONT	DB 0X16,0X0C,0X00,0X17,MAGENTA,"E.Reload FONT:    ",0X17,0XFF,"off",
 EROMLOADFONT	EQU $-3
 TYPESFONT	DB 0X16,0X0D,0X00,0X17,MAGENTA,"J.Type FONT:    ",0X17,0XFF,"  ATM",0
 ETYPESFONT	EQU $-6
+		IF NEWDOS=1
+TXT_DOSTYPE	DB 0X16,0X0E,0X00,0X17,MAGENTA,"K.DOS type:   ",0X17,0XFF," TR-DOS",0
+ETXT_DOSTYPE	EQU $-8
+		ELSE
 TXT_AYPRINTER	DB 0X16,0X0E,0X00,0X17,MAGENTA,"K.DRV AY printer: ",0X17,0XFF,"off",0
 ETXT_AYPRINTER	EQU $-3
+		ENDIF
 TXT_AUTOMOUNT	DB 0X16,0X0F,0X00,0X17,MAGENTA,"N.Automount TRD:  ",0X17,0XFF,"off",0
 ETXT_AUTOMOUNT	EQU $-3
 
@@ -597,6 +628,10 @@ T_ALL		DB "off"	;0
 T_128		DB "128"	;2
 T_48		DB " 48"	;1
 
+TXT_DOSTYPES0	DB "EVO-DOS"
+TXT_DOSTYPES1	DB " TR-DOS"
+ETXT_DOSTYPES
+
 DRV_SYM		DB 0	;ŽŒ… ‚›€ŽƒŽ „ˆ‘ŠŽ‚Ž„€
 MEMMODE		DB 0	;…†ˆŒ €ŒŸ’ˆ
 SYSREG1		DB 0	;ŠŽˆŸ „‹Ÿ ‚›‚Ž„€ ‚ Ž’ EFF7
@@ -608,7 +643,7 @@ FLAGS		DB 0	;BIT 7
 			;BIT 3-=1-‡€“‘Š ‘ ”€’€, =0-‡€“‘Š ‘ „ˆ‘Š…’›
 			;BIT 2-=1-—€‘› €‰„…›, =0-…’
 			;BIT 1-=1-Œ›˜œ …‘’œ, =0-…’
-			;BIT 0-Š€ŠŽ‰ Š“‘Ž ˆ‘Ž‚€’œ, „‹Ÿ Œˆƒ€ˆŸ
+			;BIT 0-=Š€ŠŽ‰ Š“‘Ž ˆ‘Ž‚€’œ, „‹Ÿ Œˆƒ€ˆŸ
 
 RUN_BASIC	DW 1					;ŽŒ… ‘’ŽŠˆ …‰‘ˆŠ Žƒˆ
 		DW ERUN_BASIC-RUN_BASIC-5		;„‹ˆ€ …‰‘ˆŠ ‘’ŽŠˆ

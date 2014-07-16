@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 30.03.2014 savelij
+;LAST UPDATE: 04.07.2014 savelij
 
 TAPE_EMUL	LD H,CMOS_BYTE_00
 		CALL READCMOS
@@ -71,9 +71,7 @@ ELT06		LD A,H
 		JR ELT07
 		
 ELT05		RES 6,H
-		LD BC,WIN_P5
-		LD A,0XFA
-		OUT (C),A			;‚…“‹ˆ ‘’€ˆ–“ ‚ 1 ŽŠ… Ž…–ˆŽ‚€ˆŸ
+		EVOPORT WIN_P5,0XFA		;‚…“‹ˆ ‘’€ˆ–“ ‚ 1 ŽŠ… Ž…–ˆŽ‚€ˆŸ
 		LD B,HIGH (WIN_P6)
 		XOR A
 		OUT (C),A			;‚Š‹ž—ˆ‹ˆ Ž‘‹…„žž ‘’€ˆ–“
