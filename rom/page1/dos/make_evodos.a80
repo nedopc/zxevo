@@ -1,0 +1,6 @@
+
+;LAST UPDATE: 25.06.2014 savelij
+
+EVODOS		EQU 1
+
+		include dos.a80

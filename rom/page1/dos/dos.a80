@@ -1,23 +1,38 @@
 
-;LAST UPDATE: 05.06.2014 savelij
+;LAST UPDATE: 05.07.2014 savelij
 
 		include ../../macros.a80
-		include bas_trd_vars.a80
+		include ../../define.a80
+		include ../../global_vars.a80
+		include ../../bas_trd_vars.a80
+		include ../../basic_tokens.a80
+
+;		     0123456789012345678
+NUMBER_VERS	EQU " EVO-DOS Ver 0.38  "
+ZASTV_X		EQU 7					;ŠŽŽ„ˆ€’€ X …—€’ˆ €„ˆ‘ˆ BETA128
+ZASTV_Y		EQU 7					;ŠŽŽ„ˆ€’€ Y …—€’ˆ €„ˆ‘ˆ BETA128
+ZASTV_PIX	EQU ZASTV_Y*0X20+0X4000+ZASTV_X+9	;€„…‘ ‚›‚Ž„€ ‘ŠŽ˜…›• “ƒŽ‹ŠŽ‚
+ZASTV_ATR	EQU ZASTV_Y*0X20+0X5800+ZASTV_X		;€„…‘ ‚›‚Ž„€ –‚…’€ „‹Ÿ ‘ŠŽ˜…›• “ƒŽ‹ŠŽ‚
 
 		ORG 0
+		IF EVODOS=1
 		di
 		ld	a,7
 		OUT (0XFE),A
 		jr	loc_9
 
 		DB 1
-RST_8		JP $
+RST_8		JP DOS2RST8
 
 loc_9		ld	a,3Fh
 		jr	loc_1B
 
 		nop
 RST_10		jp	PRINT_A_
+
+		DUPL ADR_SEL_ROM-$,0XFF
+		OUT (C),A
+		RET
 
 		DUPL 0X0018-$,0XFF
 RST_18		jp	PRINT_MSG	; …—€’œ ’…Š‘’Ž‚ŽƒŽ ‘ŽŽ™…ˆŸ
@@ -41,9 +56,7 @@ RST_28		jp	ADR_OPEN_CHAN
 loc_2B		LD SP,0XFFFF
 		jr	loc_3A
 
-RST_30		JP $
-
-loc_33		
+RST_30		JP RST30_WORK
 
 		DUPL 0X0038-$,0FFh
 RST_38		ei
@@ -55,6 +68,61 @@ loc_3A		REPT 8
 		LD HL,0XA500
 		ADD HL,SP
 		JR C,loc_3A
+		ELSE
+		di
+		ld	de,0FFFFh
+		ld	a,7
+		jr	loc_9
+
+RST_8		nop
+loc_9		out	(0FEh),	a
+		ld	a,3Fh
+		jr	loc_13
+
+		nop
+RST_10		jp	PRINT_A_
+
+loc_13		ld	i,a
+		jp	loc_1B
+
+RST_18		jp	PRINT_MSG	; …—€’œ ’…Š‘’Ž‚ŽƒŽ ‘ŽŽ™…ˆŸ
+
+loc_1B		nop
+		nop
+		nop
+		jr	loc_24
+
+RST_20		jp	CALL2BASIC
+
+		ret
+
+loc_24		ld	h,d
+		ld	l,e
+		jr	loc_2B
+
+RST_28		jp	ADR_OPEN_CHAN
+
+loc_2B		ld	(hl),2
+		dec	hl
+		cp	h
+		jr	nz,loc_2B
+		jr	loc_3A
+
+		DUPL 0X0038-$,0FFh
+RST_38		ei
+		ret
+
+loc_3A		or	a
+		sbc	hl,de
+		add	hl,de
+		inc	hl
+		jr	nc,loc_47
+		dec	(hl)
+		jr	z,loc_47
+		dec	(hl)
+		jr	z,loc_3A
+loc_47		dec	hl
+		ENDIF
 		ld	(P_RAMT),hl
 		ld	de,3EAFh	; €„…‘	UDG ‚ ‡“ 48Š
 		ld	bc,0A8h
@@ -69,7 +137,8 @@ loc_3A		REPT 8
 		ld	hl,0B8EDh	; LDDR
 		jr	EXECUTECOM2HL
 
-		jp	MAGIC
+		NOP
+		DW MAGIC
 
 EXECUTECOM2HL	ld	(TRD_5F10),hl
 		push	af
@@ -110,7 +179,7 @@ loc_79		ex	de,hl
 		ld	(DATADD),hl
 		inc	hl
 		ld	(PROG),hl
-loc_BE		ld	(VARS),hl
+		ld	(VARS),hl
 		ld	(hl),80h
 		inc	hl
 		ld	(E_LINE),hl	; €„…‘	€—€‹€ …„€Š’ˆ“…ŒŽ‰ ‘’ŽŠˆ
@@ -191,7 +260,7 @@ loc_166		push	hl
 		push	hl
 		ret
 
-loc_16C		DUPL 3,0
+CONTINUE_15619	DUPL 3,0
 		call	CREATE_BUF	; ‘Ž‡„€ˆ… “”…€
 		ld	a,0FFh
 		ld	(TRD_5D15),a	; …‘‹ˆ 0,…—€’€’œ ˜€Š“	TR-DOS.ˆ€—… …	…—€’€’œ
@@ -219,7 +288,7 @@ loc_16C		DUPL 3,0
 loc_1A5		ld	(CH_ADD),hl
 loc_1A8		call	CP_0D_OR_80
 loc_1AB		jp	z,END_COMAND
-		cp	0EAh		; REM
+		cp	__REM
 		inc	hl
 		jr	nz,loc_1A8
 		call	CP_0D_OR_80
@@ -231,8 +300,12 @@ loc_1AB		jp	z,END_COMAND
 		ld	hl,(TRD_5D11)	; €„…‘	‘’ŽŠˆ ŠŽŒ€„› TR_DOS
 		jp	loc_30A
 
-CP_0D_OR_80	ld	a,(hl)
+CP_0D_OR_80	IF EVODOS=1
+		JP READ_BYTE_HL_
+		ELSE
+		ld	a,(hl)
 		cp	0Dh
+		ENDIF
 		ret	z
 		cp	80h
 		ret	z
@@ -316,10 +389,21 @@ IN_COMMAND_CPU	ld	hl,0		; ‚•Ž†„…ˆ… ‚ ŠŽŒ€„›‰	Ž–…‘‘Ž „Ž‘€
 					; ’…Š‘’	‡€‘’€‚Šˆ „Ž‘€
 		rst	18h
 		call	OUT_COLOR_LINE	; ˆ‘Ž‚€ˆ… –‚…’›• ‹ˆˆ‰ ‡€‘’€‚Šˆ „Ž‘€
-		DUPL 0X026D-$,0
+		IF EVODOS=1
+		LD HL,TEXT4VIRTDRV	;’…Š‘’ Ž ‚ˆ’“€‹œ›‰ „ˆ‘ŠŽ‚Ž„
+		RST 0X18		;…—€’œ € Š€…
+		LD H,VIRT_REAL_DRIVE
+		CALL READCMOS		;—’…ˆ… ŽŒ…€ ‚ˆ’“€‹œŽƒŽ „ˆ‘Š€
+		AND 3			;€Œ “†› ’Ž‹œŠŽ 2 Œ‹€„˜ˆ• ˆ’€
+		ADD A,"A"		;…Ž€‡Ž‚€‹ˆ ‚ ’…Š‘’
+		RST 0X10		;€…—€’€‹ˆ “Š‚“
+		ELSE
+		DUPL 0X271-$,0
+		ENDIF
 loc_271		LD A,(NOT_USED)		; Ž‚…Š€ € #AA
 		cp	0AAh
 		jr	nz,COMMAND_CPU	; …‘‹ˆ … #AA,’Ž ‚•Ž„ ‚	ŠŽŒ€„›‰ Ž–…‘‘Ž
+
 		DUPL 0X027B-$,0
 loc_27B		ld	hl,(E_LINE)	; €„…‘	€—€‹€ …„€Š’ˆ“…ŒŽ‰ ‘’ŽŠˆ
 		ld	a,0
@@ -405,7 +489,7 @@ loc_30A		ld	a,(hl)
 		and	80h
 		ld	a,b
 		jr	z,loc_31A
-		cp	0FEh		; RETURN
+		cp	__RETURN
 		jr	z,loc_31A
 		push	af
 		call	ACTIV_DEF_DISK	; ‚›Ž	„ˆ‘ŠŽ‚Ž„€ Ž “ŒŽ‹—€ˆž
@@ -416,14 +500,14 @@ loc_31A		ld	hl,CODE_BYTE_COM ; ’€‹ˆ–€ …‰‘ˆŠ ŠŽŒ€„ „‹Ÿ TR-DOS
 		ld	c,0
 loc_320		inc	c
 		ld	d,a
-		ld	a,15h
+		ld	a,LOW (ECODE_BYTE_COM-CODE_BYTE_COM)
 		cp	c
 		jp	c,END_COMAND
 		ld	a,d
 		inc	hl
 		cp	(hl)
 		jr	nz,loc_320
-		cp	0FEh		; RETURN
+		cp	__RETURN
 		call	nz,CREATE_BUF	; ‘Ž‡„€ˆ… “”…€
 		ld	a,9
 		ld	(TRD_5D06),a	; ŠŽ‹ˆ—…‘’‚Ž ‘ˆŒ‚Ž‹Ž‚ ˆŒ…ˆ ”€‰‹€ ˆ Žˆ‘Š…
@@ -454,10 +538,18 @@ END_COM		ld	hl,FLAGS
 
 ; FIX
 ; ’…Š‘’	‡€‘’€‚Šˆ „Ž‘€
-ZASTAVKA	db 16h,1,5,"* TR-DOS Ver 5.03 *",0Dh,0Dh,7Fh
+ZASTAVKA	IF EVODOS=1
+		DB 0X16,0X01,0X06,NUMBER_VERS,0X0D,0X0D,0X7F
+		DB " 2010 Created for PentEvo 4MB "
+		DB 0X16,ZASTV_Y-2,ZASTV_X+5
+		DB "NedoPC",0X16,ZASTV_Y,ZASTV_X
+		DZ "OnlyVirt"
+		ELSE
+		db 16h,1,5,"* TR-DOS Ver 5.03 *",0Dh,0Dh,7Fh
 		db " 1986 Technology Research Ltd.",16h,5,0Bh
-		db "(U.K.)",16h,7,5
+		db "(U.K.)",16h,7,7
 		db "BETA 128",0
+		ENDIF
 
 END_OUT_DIR	call	READ_9SEC	; —’…ˆ… 9 ‘…Š’Ž€
 		call	PRINT_0D
@@ -991,6 +1083,12 @@ WR_NEW_FREE_SEC	call	READ_9SEC	; —’…ˆ… 9 ‘…Š’Ž€
 		ld	(TRD_5E0A),hl
 		jp	REWRITE_9SEC	; ……‡€ˆ‘œ 9 ‘…Š’Ž€
 
+;===============FREE SPACE 1============
+		IF EVODOS=1
+		include virtual.a80
+		ENDIF
+;===============FREE SPACE 1============
+
 		DUPL 0X1018-$,0XFF
 COM_STAR	call	SET_AND_PUT
 		call	EXIT_IF_SINTAX	; ‚Ž‡‚€’ ‚ …„›„“™ˆ‰ ‚›‡Ž‚,…‘‹ˆ Ž‚…Š€ ‘ˆ’€Š‘ˆ‘€
@@ -1007,10 +1105,10 @@ INP_EXTFILENAME	ld	b,"C"
 		or	a
 		jr	nz,loc_104D
 		call	GET_SYMSTR
-		cp	0AFh		; CODE
+		cp	__CODE
 		ld	b,"C"
 		jr	z,loc_104D
-		cp	0E4h		; DATA
+		cp	__DATA
 		ld	b,"D"
 		jr	z,loc_104D
 		cp	"#"
@@ -1045,7 +1143,7 @@ loc_1056	rst	20h
 		ret
 
 ; ˆ‘Ž‚€ˆ… –‚…’›• ‹ˆˆ‰ ‡€‘’€‚Šˆ „Ž‘€
-OUT_COLOR_LINE	ld	hl,58E5h
+OUT_COLOR_LINE	ld	hl,ZASTV_ATR
 		ld	b,0Ah
 loc_1073	ld	(hl),7
 		inc	hl
@@ -1061,7 +1159,7 @@ loc_1073	ld	(hl),7
 		ld	(hl),28h
 		inc	hl
 		ld	(hl),7
-		ld	hl,40EEh
+		ld	hl,ZASTV_PIX
 		ld	b,8
 		xor	a
 loc_108F	push	bc
@@ -1907,8 +2005,12 @@ loc_17F7	add	a,10h
 		or	a
 		jr	z,loc_180D	; FIX
 		ex	de,hl
-loc_180D	ldir			; FIX
+loc_180D	IF EVODOS=1
+		JP EMU_LDIR
+		ELSE
+		ldir			; FIX
 		ret
+		ENDIF
 
 VERIFY		ld	a,0FFh
 		ld	(TRD_5CF9),a	; „ˆ‘ŠŽ‚Ž„ ˆ Ž…€–ˆˆ	‘ 2 ”€‰‹€Œˆ
@@ -1966,9 +2068,9 @@ GET_PARAMS	call	CP_SECOND_SYM	; Ž‚…Š€ ‘‹…„“ž™…ƒŽ ‘ˆŒ‚Ž‹€
 		call	CP_HIGH_ERR
 		call	nz,sub_1857
 		call	GET_SYMSTR
-		cp	0AFh		; CODE
+		cp	__CODE
 		call	z,GET_LOAD_CODE ; Ž‹“—…ˆ… €„…‘€ ‡€ƒ“‡Šˆ ŠŽ„€,…‘‹ˆ	“Š€‡€
-		cp	0E4h		; DATA
+		cp	__DATA
 		push	af
 		call	CP_HIGH_ERR
 		call	z,INP_EXTFILENAME ; ˆ…Œ €‘˜ˆ…ˆŸ ”€‰‹€
@@ -2285,9 +2387,9 @@ SAVE		call	ZERO2HIGH_ERR
 		ld	(TRD_5CD1),hl
 		call	SET_AND_PUT
 		call	GET_SYMSTR
-		cp	0AFh		; CODE
+		cp	__CODE
 		jr	z,loc_1B39
-		cp	0CAh		; LINE
+		cp	__LINE
 		jr	nz,loc_1AF8	; SCREEN$
 		call	SET_NUM_CHAN
 		call	EXIT_IF_SINTAX	; ‚Ž‡‚€’ ‚ …„›„“™ˆ‰ ‚›‡Ž‚,…‘‹ˆ Ž‚…Š€ ‘ˆ’€Š‘ˆ‘€
@@ -2296,7 +2398,7 @@ SAVE		call	ZERO2HIGH_ERR
 		ld	hl,TRD_5CE5	; €‘˜ˆ…ˆ… ”€‰‹€
 		jr	loc_1B1F
 
-loc_1AF8	cp	0AAh		; SCREEN$
+loc_1AF8	cp	__SCREENS
 		jr	nz,loc_1B0D
 		ld	hl,4000h
 		ld	(TRD_5CD7),hl	; ŽŒ…†“’Ž—›‰	‘’€’ ”€‰‹€ ˆ‹ˆ	ŠŽ‹-‚Ž ’…ŠŽ‚
@@ -2309,7 +2411,7 @@ loc_1AF8	cp	0AAh		; SCREEN$
 loc_1B0D	call	EXIT_IF_SINTAX	; ‚Ž‡‚€’ ‚ …„›„“™ˆ‰ ‚›‡Ž‚,…‘‹ˆ Ž‚…Š€ ‘ˆ’€Š‘ˆ‘€
 		call	GET_SYMSTR
 		ld	hl,TRD_5CE5	; €‘˜ˆ…ˆ… ”€‰‹€
-		cp	0E4h		; DATA
+		cp	__DATA
 		jr	z,loc_1B2C
 		cp	0Dh
 		jp	nz,SINTAX_ERROR
@@ -2358,7 +2460,7 @@ loc_1B6D	ld	a,h
 		jp	c,loc_1C45
 		push	hl
 		ld	hl,(E_LINE)	; €„…‘	€—€‹€ …„€Š’ˆ“…ŒŽ‰ ‘’ŽŠˆ
-		ld	(hl),0AAh	; SCREEN$
+		ld	(hl),__SCREENS
 		inc	hl
 		ld	de,(TRD_5CD1)
 		ld	(hl),e
@@ -2486,8 +2588,12 @@ loc_1C73	ld	a,(hl)
 		cp	" "
 		jp	c,SINTAX_ERROR
 		ld	de,TRD_5CDD	; ˆŒŸ ”€‰‹€
+		IF EVODOS=1
+		JP EMU_LDIR_RBC
+		ELSE
 		push	bc
 		ldir
+		ENDIF
 		pop	bc
 		ret
 
@@ -2726,7 +2832,7 @@ SET_AND_PUT	call	SET_CH_ADD	; “‘’€Ž‚Š€ CH_ADD
 		jp	PUT_NUMDSK_STK
 
 GET_START_SIZE	call	GET_SYMSTR
-		cp	0AFh		; CODE
+		cp	__CODE
 		ret	nz
 INPUT_PARAMS	call	CHISLO2STKBOT	; ‡€…‘…ˆ… —ˆ‘‹€ € ‘’…Š Š€‹œŠ“‹Ÿ’Ž€
 		jr	z,loc_1DFB
@@ -2773,7 +2879,12 @@ RESERV_RAM	rst	20h
 
 WR_NUM_TRACK	call	GET_NUM_TRACK
 		ld	a,h
+		IF EVODOS=1
+		RST 0X30
+		DB WOUT3F
+		ELSE
 		out	(3Fh),a
+		ENDIF
 		ret
 
 ; —’…ˆ… ‘…Š’ŽŽ‚
@@ -2866,11 +2977,17 @@ FORMAT		ld	hl,0FFFFh
 		call	SET_AND_PUT
 		call	EXIT_IF_SINTAX	; ‚Ž‡‚€’ ‚ …„›„“™ˆ‰ ‚›‡Ž‚,…‘‹ˆ Ž‚…Š€ ‘ˆ’€Š‘ˆ‘€
 		call	SET_FILENAME	; ……Ž‘ ‡€„€ŽƒŽ ˆŒ…ˆ ”€‰‹€	‚ “”…	#5CDD
+		IF EVODOS=1
+		CALL FORMAT_RAM
+		JR Z,END_FORMAT
+		ELSE
 		call	GET_TYPE_DISK	; Ž‹“—…ˆ… ŠŽ„€ …†ˆŒ€	€Ž’› „ˆ‘ŠŽ‚Ž„€
 		and	80h
 		ld	a,40		; 40 „ŽŽ†…Š
 		jr	z,loc_1EE8
+		ENDIF
 		ld	a,80		; 80 „ŽŽ†…Š
+		DUPL 0X1EE8-$,0
 loc_1EE8	ld	(TRD_5CD7),a	; ŽŒ…†“’Ž—›‰	‘’€’ ”€‰‹€ ˆ‹ˆ	ŠŽ‹-‚Ž ’…ŠŽ‚
 					; Ž‘‹…	Ž‚…Šˆ ’ˆ€ „ˆ‘ŠŽ‚Ž„€
 		call	COM_00		; ‚Ž‘‘’€Ž‚‹…ˆ… ‚ƒ93
@@ -2881,23 +2998,33 @@ loc_1EE8	ld	(TRD_5CD7),a	; ŽŒ…†“’Ž—›‰	‘’€’ ”€‰‹€ ˆ‹ˆ	ŠŽ‹-‚Ž ’…ŠŽ‚
 		call	COM_16		; “‘’€Ž‚Š€ 0 ‘’ŽŽ› „ˆ‘Š€
 		ld	e,0
 		call	FORMAT_TREK	; ”ŽŒ€’ˆŽ‚€ˆ… „ŽŽ†Šˆ
+		IF EVODOS=0
 		ld	a,(TRD_5CDD)	; ˆŒŸ ”€‰‹€
 		cp	"$"
 		jr	z,loc_1F1B
+		ENDIF
 		call	COM_17		; “‘’€Ž‚Š€ 1 ‘’ŽŽ› „ˆ‘Š€
 		call	PAUSE_3_C_A
 		call	loc_3EB5
+		IF EVODOS=0
 		ld	a,h
 		cp	1
 		jr	nz,loc_1F1B
+		ENDIF
 		ld	a,80h
 		ld	(TRD_5CDA),a
 loc_1F1B	call	FORMAT_DISK
+		IF EVODOS=1
+END_FORMAT	CALL CP_TYPEDRIVE
+		CALL Z,CREATE_TRDTABL
+		CALL CLEAR_DOWN_SCR
 		ld	hl,TRD_5D25
 		ld	(hl),0
 		ld	de,TRD_5D26
 		ld	bc,0FFh
 		ldir
+		JR LOC_1F50
+		ELSE
 		ld	bc,TRD_5CD7	; ŽŒ…†“’Ž—›‰	‘’€’ ”€‰‹€ ˆ‹ˆ	ŠŽ‹-‚Ž ’…ŠŽ‚
 					; Ž‘‹…	Ž‚…Šˆ ’ˆ€ „ˆ‘ŠŽ‚Ž„€
 		ld	de,TRD_5CDA
@@ -2919,7 +3046,10 @@ loc_1F49	ld	a,(de)
 		cp	80h
 		ld	a,18h		; 40 „ŽŽ†…Š 2 ‘’ŽŽ›
 		jr	nz,loc_1F44	; ‘…Š’ŽŽ‚
-		ld	a,16h		; 80 „ŽŽ†…Š 2 ‘’ŽŽ›
+		ENDIF
+
+		DUPL 0X1F50-$,0
+LOC_1F50	ld	a,16h		; 80 „ŽŽ†…Š 2 ‘’ŽŽ›
 		ld	hl,2544		; ‘…Š’ŽŽ‚
 loc_1F55	ld	(TRD_5E08),a
 		ld	(TRD_5E0A),hl
@@ -2978,7 +3108,12 @@ CP_DISK_TRACK	call	GET_TIME_HEAD	; Ž‹“—…ˆ… ‚…Œ…ˆ ……Œ…™…ˆŸ	ƒŽ‹Ž‚Šˆ
 		ld	a,2
 		call	HEAD_POSITION
 		call	PAUSE725779T
+		IF EVODOS=1
+		RST 0X30
+		DB WIN1F
+		ELSE
 		in	a,(1Fh)
+		ENDIF
 		and	4
 		ld	a,80		; 80 „ŽŽ†…Š
 		jr	z,loc_1FE7
@@ -2991,7 +3126,12 @@ loc_1FE7	ld	(TRD_5CD7),a	; ŽŒ…†“’Ž—›‰	‘’€’ ”€‰‹€ ˆ‹ˆ	ŠŽ‹-‚Ž ’…ŠŽ‚
 COM_16		ld	a,(TRD_5D16)	; ŠŽˆŸ	‘ˆ‘’…ŒŽƒŽ …ƒˆ‘’€ (Ž’ #FF)
 		or	3Ch
 SET_REG_FF	ld	(TRD_5D16),a	; “‘’€Ž‚Š€ …ƒˆ‘’€ #FF
+		IF EVODOS=1
+		RST 0X30
+		DB WOUTFF
+		ELSE
 		out	(0FFh),a
+		ENDIF
 		ret
 
 ; “‘’€Ž‚Š€ 1 ‘’ŽŽ› „ˆ‘Š€
@@ -3002,7 +3142,12 @@ COM_17		ld	a,(TRD_5D16)	; ŠŽˆŸ	‘ˆ‘’…ŒŽƒŽ …ƒˆ‘’€ (Ž’ #FF)
 ; ”ŽŒ€’ˆŽ‚€ˆ… „ŽŽ†Šˆ
 FORMAT_TREK	di
 		ld	a,0F4h
+		IF EVODOS=1
+		RST 0X30
+		DB WOUT1F
+		ELSE
 		out	(1Fh),a
+		ENDIF
 		ld	hl,TABL_SECTORS
 		ld	c,7Fh
 loc_2007	ld	b,0Ah
@@ -3042,7 +3187,7 @@ loc_2007	ld	b,0Ah
 		call	WRITE_C_D_B
 		ld	d,0F7h
 		call	WRITE_C_D_1
-		ld	b,3Ch
+		ld	b,32h
 		ld	d,4Eh
 		call	WRITE_C_D_B
 		ld	a,(hl)
@@ -3053,7 +3198,12 @@ loc_2007	ld	b,0Ah
 		call	WRITE_C_D_B
 		jp	m,loc_2076
 		call	WRITE_C_D_B
-loc_2076	in	a,(1Fh)
+loc_2076	IF EVODOS=1
+		RST 0X30
+		DB WIN1F
+		ELSE
+		in	a,(1Fh)
+		ENDIF
 		and	40h
 		jp	nz,loc_3F39	; Read Only
 CP_NUM_TRACK	ld	a,(TRD_5CD7+1)	; ŽŒ…†“’Ž—›‰	‘’€’ ”€‰‹€ ˆ‹ˆ	ŠŽ‹-‚Ž ’…ŠŽ‚
@@ -3062,18 +3212,38 @@ CP_NUM_TRACK	ld	a,(TRD_5CD7+1)	; ŽŒ…†“’Ž—›‰	‘’€’ ”€‰‹€ ˆ‹ˆ	ŠŽ‹-‚Ž ’…ŠŽ‚
 		ret	nz
 		ld	c,7Fh
 		ld	a,e
+		IF EVODOS=1
+		RST 0X30
+		DB WOUT3F
+		ELSE
 		out	(3Fh),a
+		ENDIF
 		ld	hl, TABL_SECTORS+1
 loc_208A	ld	b,3
 		ld	a,(hl)
+		IF EVODOS=1
+		RST 0X30
+		DB WOUT5F
+		ELSE
 		out	(5Fh),a
+		ENDIF
 		push	hl
 loc_2090	di
 		ld	a,80h
+		IF EVODOS=1
+		RST 0X30
+		DB WOUT1F
+		ELSE
 		out	(1Fh),a
+		ENDIF
 		push	bc
 		call	RD_DATAPORT
+		IF EVODOS=1
+		RST 0X30
+		DB WIN1F
+		ELSE
 		in	a,(1Fh)
+		ENDIF
 		and	7Fh
 		pop	bc
 		jr	z,loc_20A6
@@ -3089,11 +3259,21 @@ loc_20A6	pop	hl
 		ret
 
 WRITE_C_D_1	ld	b,1
-WRITE_C_D_B	in	a,(0FFh)
+WRITE_C_D_B	IF EVODOS=1
+		RST 0X30
+		DB WINFF
+		ELSE
+		in	a,(0FFh)
+		ENDIF
 		and	0C0h
 		jr	z,WRITE_C_D_B
 		ret	m
+		IF EVODOS=1
+		RST 0X30
+		DB WOUTCD
+		ELSE
 		out	(c),d
+		ENDIF
 		djnz	WRITE_C_D_B
 		ret
 
@@ -3178,8 +3358,12 @@ GET_COMMAND	ld	a,(TRD_5D0F)	; ŽŒ…	Ž˜ˆŠˆ TR-DOS
 		ld	hl,(E_LINE)	; €„…‘	€—€‹€ …„€Š’ˆ“…ŒŽ‰ ‘’ŽŠˆ
 		call	PRINT_0D
 		ld	a,(TRD_5D19)	; „ˆ‘ŠŽ‚Ž„ Ž “ŒŽ‹—€ˆž
+		IF EVODOS=1
+		CALL GET_COMMAND2
+		ELSE
 		add	a,"A"
 		rst	10h
+		ENDIF
 		ld	a,">"
 		rst	10h
 		ld	hl,ERR_NR
@@ -3425,8 +3609,12 @@ loc_2304	inc	hl
 		ex	de,hl
 		ld	hl,TRD_5CDD	; ˆŒŸ ”€‰‹€
 		ld	bc,10h
+		IF EVODOS=1
+		JP EMU_LDIR_RHL
+		ELSE
 		ldir
 		pop	hl
+		ENDIF
 		ret
 
 GET_ADRTEKSYM	ld	c,0Dh
@@ -4066,12 +4254,22 @@ COM_15		xor	a		; Ž‚…Š€ „ŽŽ†Šˆ
 		ld	(TRD_5CD7+1),a	; ŽŒ…†“’Ž—›‰	‘’€’ ”€‰‹€ ˆ‹ˆ	ŠŽ‹-‚Ž ’…ŠŽ‚
 					; Ž‘‹…	Ž‚…Šˆ ’ˆ€ „ˆ‘ŠŽ‚Ž„€
 		ld	(TRD_5CD6),a	; #FF-ŠŽŒ€„€ ˆŸ’€ ‘ˆ’€Š‘ˆ—…‘ŠˆŒ €€‹ˆ‡€’ŽŽŒ
+		IF EVODOS=1
+		RST 0X30
+		DB WIN1F
+		ELSE
 		in	a,(1Fh)
+		ENDIF
 		ld	(TRD_5CCD),a	; #80-ƒŽ’Ž‚Ž‘’œ „ˆ‘ŠŽ‚Ž„€
 		ld	e,d
 		push	de
 		ld	a,e
+		IF EVODOS=1
+		RST 0X30
+		DB WOUT7F
+		ELSE
 		out	(7Fh),a
+		ENDIF
 		LD A,0X18
 		call	COM2VG_WAIT
 		ld	a,(TRD_5CCD)	; #80-ƒŽ’Ž‚Ž‘’œ „ˆ‘ŠŽ‚Ž„€
@@ -4105,7 +4303,13 @@ CALL_3D13	push	af
 		push	bc
 		ld	(TRD_5D04),de
 		ld	(TRD_5D02),hl
+		IF EVODOS=1
+		NOP
+		RST 0X30
+		DB SET_BYTE_DRIVE		;“‘’€Ž‚Š€ ……Œ…Ž‰ ‚ˆ’“€‹œŽƒŽ/…€‹œŽƒŽ „ˆ‘Š€ ˆ‡ CMOS
+		ELSE
 		DUPL 3,0
+		ENDIF
 		ld	a,0FFh
 		ld	(TRD_5D15),a	; …‘‹ˆ 0,…—€’€’œ ˜€Š“	TR-DOS.ˆ€—… …	…—€’€’œ
 		ld	(TRD_5D1F),a
@@ -4182,8 +4386,12 @@ loc_28E5	ld	de,TRD_5CDD	; ˆŒŸ ”€‰‹€
 		or	a
 		jr	z,loc_28EF	; FIX
 		ex	de,hl
-loc_28EF	ldir			; FIX
+loc_28EF	IF EVODOS=1
+		JP EMU_LDIR
+		ELSE
+		ldir			; FIX
 		ret
+		ENDIF
 
 COM_0C		call	COM_18		; ‡€ˆ‘œ …‰‘ˆŠ	Žƒ€ŒŒ› € „ˆ‘Š
 		call	CP_FREE_ON_DISK	; Ž‚…Š€ ‘‚ŽŽ„ŽƒŽ Œ…‘’€ € „ˆ‘Š…
@@ -4315,8 +4523,12 @@ TXT_FILES_	db " File(s)",8Dh,0
 sub_2A35	ld	hl,loc_2A41
 		ld	de,4080h
 		ld	bc,20h
+		IF EVODOS=1
+		JP EMU_LDIR
+		ELSE
 		ldir			; FIX
 		ret
+		ENDIF
 
 loc_2A41	ld	a,(loc_3B5)
 		cp	0F3h
@@ -4326,7 +4538,12 @@ loc_2A41	ld	a,(loc_3B5)
 loc_2A4B	ld	(KSTATE1),a
 		ld	bc,7FFDh
 		ld	a,10h
+LOC_2A53	IF EVODOS=1
+		RST 0X30
+		DB WOUTCA
+		ELSE
 		out	(c),a
+		ENDIF
 		ret
 
 MAGIC		push	af
@@ -4349,10 +4566,20 @@ MAGIC		push	af
 		add	hl,sp
 		push	hl
 		ld	a,3Ch
+		IF EVODOS=1
+		RST 0X30
+		DB WOUTFF
+		ELSE
 		out	(0FFh),a
+		ENDIF
 		ld	a,3Fh
 		ld	i,a
+		IF EVODOS=1
+		RST 0X30
+		DB WIN1F
+		ELSE
 		in	a,(1Fh)
+		ENDIF
 		and	80h
 		rrca
 		rrca
@@ -4399,7 +4626,12 @@ MAGIC		push	af
 		call	sub_2D4C
 		push	de
 		ld	a,3Ch
+		IF EVODOS=1
+		RST 0X30
+		DB WOUTFF
+		ELSE
 		out	(0FFh),a
+		ENDIF
 		call	sub_2F65
 		ld	hl,4000h
 		ld	de,8
@@ -4439,7 +4671,12 @@ loc_2B09	ld	(hl)," "
 		ld	(hl),d
 		ld	hl,4000h
 		ld	de,0
+		IF EVODOS=1
+		RST 0X30
+		DB WIN5F
+		ELSE
 		in	a,(5Fh)
+		ENDIF
 		dec	a
 		ld	e,a
 		ld	b,1
@@ -4548,7 +4785,12 @@ loc_2B95	push	bc
 		ld	bc,10h
 		ex	de,hl
 		ldir
+		IF EVODOS=1
+		RST 0X30
+		DB WIN5F
+		ELSE
 		in	a,(5Fh)
+		ENDIF
 		dec	a
 		ld	e,a
 		ld	d,0
@@ -4650,7 +4892,12 @@ sub_2C7E	ld	c,0
 		ld	bc,10h
 		ex	de,hl
 		ldir
+		IF EVODOS=1
+		RST 0X30
+		DB WIN5F
+		ELSE
 		in	a,(5Fh)
+		ENDIF
 		dec	a
 		ld	e,a
 		ld	d,0
@@ -4744,18 +4991,33 @@ loc_2D6F	pop	bc
 
 sub_2D73	ld	a,e
 		inc	a
+		IF EVODOS=1
+		RST 0X30
+		DB WOUT5F
+		ELSE
 		out	(5Fh),a
+		ENDIF
 		push	hl
 		ld	d,14h
 		push	de
 loc_2D7B	di
 		ld	c,7Fh
 		ld	a,0A0h
+		IF EVODOS=1
+		RST 0X30
+		DB WOUT1F
+		ELSE
 		out	(1Fh),a
+		ENDIF
 		call	WR_DATAPORT
 		pop	de
 		pop	hl
+		IF EVODOS=1
+		RST 0X30
+		DB WIN1F
+		ELSE
 		in	a,(1Fh)
+		ENDIF
 		and	7Fh
 		ret	z
 		dec	d
@@ -4950,7 +5212,12 @@ loc_2F03	pop	af
 
 sub_2F07	ld	a,(4011h)
 		or	3Ch
-loc_2F0C	out	(0FFh),a
+loc_2F0C	IF EVODOS=1
+		RST 0X30
+		DB WOUTFF
+		ELSE
+		out	(0FFh),a
+		ENDIF
 		ret
 
 sub_2F0F	ld	a,c
@@ -4964,18 +5231,33 @@ sub_2F0F	ld	a,c
 
 sub_2F1B	ld	a,e
 		inc	a
+		IF EVODOS=1
+		RST 0X30
+		DB WOUT5F
+		ELSE
 		out	(5Fh),a
+		ENDIF
 		push	hl
 		ld	d,14h
 		push	de
 loc_2F23	di
 		ld	c,7Fh
 		ld	a,80h
+		IF EVODOS=1
+		RST 0X30
+		DB WOUT1F
+		ELSE
 		out	(1Fh),a
+		ENDIF
 		call	RD_DATAPORT
 		pop	de
 		pop	hl
+		IF EVODOS=1
+		RST 0X30
+		DB WIN1F
+		ELSE
 		in	a,(1Fh)
+		ENDIF
 		and	7Fh
 		ret	z
 		dec	d
@@ -4985,7 +5267,12 @@ loc_2F23	di
 		halt
 
 sub_2F3A	ld	a,3Ch
+		IF EVODOS=1
+		RST 0X30
+		DB WOUTFF
+		ELSE
 		out	(0FFh),a
+		ENDIF
 		ld	a,(KSTATE0)
 		and	8
 		jr	nz,loc_2F4F
@@ -4995,13 +5282,33 @@ sub_2F3A	ld	a,3Ch
 		ld	c,a
 		jr	nc,loc_2F4F
 		ld	a,2Ch
+		IF EVODOS=1
+		RST 0X30
+		DB WOUTFF
+		ELSE
 		out	(0FFh),a
+		ENDIF
 loc_2F4F	ld	a,c
-loc_2F50	out	(7Fh),a
+loc_2F50	IF EVODOS=1
+		RST 0X30
+		DB WOUT7F
+		ELSE
+		out	(7Fh),a
+		ENDIF
 		call	PAUSE725779T
 		LD A,0X18
-loc_2F57	out	(1Fh),a
-loc_2F59	in	a,(0FFh)
+loc_2F57	IF EVODOS=1
+		RST 0X30
+		DB WOUT1F
+		ELSE
+		out	(1Fh),a
+		ENDIF
+loc_2F59	IF EVODOS=1
+		RST 0X30
+		DB WINFF
+		ELSE
+		in	a,(0FFh)
+		ENDIF
 		and	80h
 		jr	z,loc_2F59
 		push	bc
@@ -5035,7 +5342,32 @@ CALL2BASIC	ld	(TRD_5D02),hl
 		ld	de,(TRD_5D04)
 		ret
 
-SET_VARS	ld	hl,0FFFFh
+SET_VARS	IF EVODOS=1
+		LD HL,0X0808
+		ld	(TRD_5CFA),hl	; ‚…ŒŸ	……Œ…™…ˆŸ „ˆ‘ŠŽ‚Ž„€ A
+		ld	(TRD_5CFC),hl	; ‚…ŒŸ	……Œ…™…ˆŸ „ˆ‘ŠŽ‚Ž„€ C
+		LD HL,0X8383
+		ld	(TRD_5CC8),hl	; …†ˆŒ	€Ž’€ „ˆ‘ŠŽ‚Ž„€ A
+		ld	(TRD_5CCA),hl	; …†ˆŒ	€Ž’€ „ˆ‘ŠŽ‚Ž„€ C
+		xor	a
+		ld	(TRD_5D17),a	; ˆ‘Ž‚€ˆ… ‡€‘’€‚Šˆ,…‘‹ˆ #AA
+		ld	(TRD_5D18),a
+		ld	(TRD_5D0F),a	; ŽŒ…	Ž˜ˆŠˆ TR-DOS
+		ld	(TRD_5D1F),a
+		CALL SET_DRIVENAME
+		ld	a,0FFh
+		NOP
+		NOP
+		ld	(ERR_NR),a
+		ld	(TRD_5D0C),a
+		ld	a,0C9h
+		ld	(TRD_5CC2),a	; ‘Ž„…†ˆ’ #C9.„‹Ÿ ……•Ž„€ ˆ‡ TR-DOS ‚	BASIC
+		ld	a,0D0h
+		RST 0X30
+		DB WOUT1F
+		RET
+		ELSE
+		ld	hl,0FFFFh
 		ld	(TRD_5CFA),hl	; ‚…ŒŸ	……Œ…™…ˆŸ „ˆ‘ŠŽ‚Ž„€ A
 		ld	(TRD_5CFC),hl	; ‚…ŒŸ	……Œ…™…ˆŸ „ˆ‘ŠŽ‚Ž„€ C
 		ld	(TRD_5CC8),hl	; …†ˆŒ	€Ž’€ „ˆ‘ŠŽ‚Ž„€ A
@@ -5056,6 +5388,7 @@ SET_VARS	ld	hl,0FFFFh
 		ld	a,0D0h
 		out	(1Fh),a
 		ret
+		ENDIF
 
 CP_END_CAT	call	CP_END_BUF	; Ž‚…Š€ € ŠŽ…– “”…€
 		ld	a,(hl)
@@ -5079,31 +5412,40 @@ LOAD_END_FILE	push	hl
 		ret	z
 		ld	c,a
 		ld	hl,TRD_5D25
+		IF EVODOS=1
+		JP EMU_LDIR
+		ELSE
 		ldir			; FIX
 		ret
+		ENDIF
 
 ; ’€‹ˆ–€ …‰‘ˆŠ ŠŽŒ€„	„‹Ÿ TR-DOS
-CODE_BYTE_COM	db 0CFh			; CAT
+CODE_BYTE_COM	db __CAT
 		db "*"
-		db 0D0h			; FORMAT
-		db 0D1h			; MOVE
-		db 0E6h			; NEW
-		db 0D2h			; ERASE
-		db 0EFh			; LOAD
-		db 0F8h			; SAVE
-		db 0FEh			; RETURN
-		db 0BEh			; PEEK
-		db 0F4h			; POKE
-		db 0D5h			; MERGE
-		db 0F7h			; RUN
-		db 0D3h			; OPEN
-		db 0D4h			; CLOSE
-		db 0FFh			; COPY
+		db __FORMAT
+		db __MOVE
+		db __NEW
+		db __ERASE
+		db __LOAD
+		db __SAVE
+		db __RETURN
+		db __PEEK
+		db __POKE
+		db __MERGE
+		db __RUN
+		db __OPEN
+		db __CLOSE
+		db __COPY
+		IF EVODOS=1
+		DB "."
+		ELSE
 		db "4"			; 40
-		db 0ECh			; GOTO
+		ENDIF
+		db __GOTO
 		db "8"			; 80
-		db 0F0h			; LIST
-		db 0D6h			; VERIFY
+		db __LIST
+		db __VERIFY
+ECODE_BYTE_COM
 
 ; ’€‹ˆ–€ €„…‘Ž‚ ˆ‘Ž‹…ˆŸ ŠŽŒ€„
 SPIS_ADR_COM	dw CAT
@@ -5122,7 +5464,11 @@ SPIS_ADR_COM	dw CAT
 		dw OPEN
 		dw CLOSE
 		dw COPY
+		IF EVODOS=1
+		DW COM_DOT
+		ELSE
 		dw COM_40
+		ENDIF
 		dw GOTO
 		dw COM_80
 		dw LIST
@@ -5300,29 +5646,29 @@ TBL_KEYWORD	db "SAVE",80h
 		DC "LINE"
 		db "VERIFY",80h
 		DC "VERIFY"
-		db 0FFh,0FFh
+		dw 0FFFFh
 
-BYTES_COM	dw 0F8F8h		; SAVE
-		dw 0EFEFh		; LOAD
-		dw 0F7F7h		; RUN
-		dw 0CFCFh		; CAT
-		dw 0D2D2h		; ERASE
-		dw 0E6E6h		; NEW
-		dw 0D1D1h		; MOVE
-		dw 0D5D5h		; MERGE
-		dw 0BEBEh		; PEEK
-		dw 0F4F4h		; POKE
-		dw 0D4D3h		; OPEN CLOSE
-		dw 0AFAFh		; CODE
-		dw 0A5A5h		; RND
-		dw 0E4E4h		; DATA
-		dw 0AAAAh		; SCREEN
-		dw 0FFFFh		; COPY
-		dw 0D0D0h		; FORMAT
-		dw 0ECECh		; GOTO
-		dw 0F0F0h		; LIST
-		dw 0CACAh		; LINE
-		dw 0D6D6h		; VERIFY
+BYTES_COM	dw __SAVE<<8+__SAVE
+		dw __LOAD<<8+__LOAD
+		dw __RUN<<8+__RUN
+		dw __CAT<<8+__CAT
+		dw __ERASE<<8+__ERASE
+		dw __NEW<<8+__NEW
+		dw __MOVE<<8+__MOVE
+		dw __MERGE<<8+__MERGE
+		dw __PEEK<<8+__PEEK
+		dw __POKE<<8+__POKE
+		dw __CLOSE<<8+__OPEN
+		dw __CODE<<8+__CODE
+		dw __RND<<8+__RND
+		dw __DATA<<8+__DATA
+		dw __SCREENS<<8+__SCREENS
+		dw __COPY<<8+__COPY
+		dw __FORMAT<<8+__FORMAT
+		dw __GOTO<<8+__GOTO
+		dw __LIST<<8+__LIST
+		dw __LINE<<8+__LINE
+		dw __VERIFY<<8+__VERIFY
 		db 0
 
 ; Ž‚…Š€ €‹ˆ—ˆŸ TR-DOS ……Œ…›•
@@ -5332,7 +5678,12 @@ CP_VARSTRDOS	ld	hl,(CHANS)
 		sbc	hl,bc
 		ret
 
+;===============FREE SPACE 2============
 		include patch.a80
+		IF EVODOS=1
+		include extend.a80
+		ENDIF
+;===============FREE SPACE 2============
 
 		DUPL 0X3C01-$,0FFh
 		jr	loc_3C06
@@ -5344,9 +5695,18 @@ loc_3C06	jp	loc_3D00
 
 loc_3C09	jp	loc_3D03
 
+;===============FREE SPACE 3============
 		DUPL 0X3C30-$,0XFF
 		IN A,(0X1F)
 		RET
+
+		IF EVODOS=1
+		include int_vars.a80
+
+		DUPL ADR_RST8END-$,0XFF
+		JP EDOS2RST8
+		ENDIF
+;===============FREE SPACE 3============
 
 		DUPL 0X3CFA-$,0FFh
 FOR_INTERFACE1	NOP
@@ -5379,12 +5739,17 @@ loc_3D16	nop
 
 IN_DOS_15619	call	CREATE_VARS_TRD
 		push	hl
-		jp	loc_16C
+		jp	CONTINUE_15619
 
 CREATE_VARS_TRD	call	CP_VARSTRDOS	; Ž‚…Š€ €‹ˆ—ˆŸ TR-DOS ……Œ…›•
+		IF EVODOS=1
+		RST 0X30
+		DB SET_BYTE_DRIVE		;“‘’€Ž‚Š€ ……Œ…Ž‰ ‚ˆ’“€‹œŽƒŽ/…€‹œŽƒŽ „ˆ‘Š€ ˆ‡ CMOS
+		ELSE
 		nop
 		nop
-		call	c,loc_3D67;CREATE_VARS
+		ENDIF
+		call	c,CREATE_VARS
 		ld	hl,TRD_5CC2	; ‘Ž„…†ˆ’ #C9.„‹Ÿ ……•Ž„€ ˆ‡ TR-DOS ‚	BASIC
 		ret
 
@@ -5398,7 +5763,7 @@ IN_DOS_15616	call	CREATE_VARS_TRD
 		jp	IN_COMMAND_CPU	; ‚•Ž†„…ˆ… ‚ ŠŽŒ€„›‰	Ž–…‘‘Ž „Ž‘€
 
 INI_INTERFACE1	xor	a
-		DW 0			;out	(0F7h),a
+		DUPL 2,0
 		in	a,(0F7h)
 		cp	1Eh
 		jr	z,loc_3D44
@@ -5411,8 +5776,14 @@ loc_3D44	rst	8
 		ret
 
 CREATE_VARS	xor	a
+		IF EVODOS=1
+		RST 0X30
+		DB WOUTFF
+		ELSE
 		out	(0FFh),a
-		in	a,(0F6h)
+		ENDIF
+		JR loc_3D67
+
 		ld	hl,INI_INTERFACE1
 		ld	de,MEMBOT
 		ld	bc,14h
@@ -5423,7 +5794,11 @@ CREATE_VARS	xor	a
 		push	hl
 		jp	MEMBOT
 
-loc_3D67	ld	hl,SET_VARS
+loc_3D67	IF EVODOS=1
+		CALL CMP_RAMDISK_		;Ž‚…Š€ Œ€Š…€ RAMDISK
+		ELSE
+		ld	hl,SET_VARS
+		ENDIF
 		push	hl
 		ld	hl,loc_3D2F
 		push	hl
@@ -5440,9 +5815,7 @@ PRINT_0D	ld	a,0Dh
 PRINT_A_	push	hl
 		push	bc
 		push	de
-		push	af
-		DUPL 3,0
-		pop	af
+		DUPL 5,0
 		call	PRINT_SYM
 		DUPL 3,0
 		pop	de
@@ -5456,7 +5829,12 @@ PRINT_SYM	rst	20h
 
 ; ‚Ž‘‘’€Ž‚‹…ˆ… ‚ƒ93
 COM_00		LD A,8
-COM2VG_WAIT	out	(1Fh),a
+COM2VG_WAIT	IF EVODOS=1
+		RST 0X30
+		DB WOUT1F
+		ELSE
+		out	(1Fh),a
+		ENDIF
 COM2VGWAIT1	push	hl
 		rst	20h
 		dw 1F54h		; Ž‚…Š€ BREAK
@@ -5464,7 +5842,12 @@ COM2VGWAIT1	push	hl
 		rst	20h
 		dw 1B7Bh		; ‚›‚Ž„	‘ŽŽ™…ˆŸ Ž Ž˜ˆŠ…,…‘‹ˆ €†€’	BREAK
 COM2VGWAIT2	pop	hl
+		IF EVODOS=1
+		RST 0X30
+		DB WINFF
+		ELSE
 		in	a,(0FFh)
+		ENDIF
 		and	80h
 		jr	z,COM2VGWAIT1
 		ret
@@ -5473,13 +5856,27 @@ COM2VGWAIT2	pop	hl
 CP_PRESENT_DISK	LD A,8
 		call	COM2VG_WAIT
 		ld	de,0
+		IF EVODOS=1
+		RST 0X30
+		DB WIN1F
+		ELSE
 		in	a,(1Fh)
+		ENDIF
 		and	2
 		ld	b,a
-CPPRESENTDSK1	in	a,(1Fh)
+CPPRESENTDSK1	IF EVODOS=1
+		RST 0X30
+		DB WIN1F
+		ELSE
+		in	a,(1Fh)
+		ENDIF
 		and	2
 		cp	b
+;		IF EVODOS=1
+;		RET
+;		ELSE
 		ret	nz
+;		ENDIF
 		inc	de
 		ld	a,e
 		or	d
@@ -5493,6 +5890,31 @@ COM_01		ld	(TRD_5CF6),a	; €‘’Ž‰Š€ € „ˆ‘ŠŽ‚Ž„
 		ld	c,a
 		ld	a,3Ch
 		or	c
+		IF EVODOS=1
+		RST 0X30
+		DB WOUTFF
+		LD B,0
+		RST 0X30
+		DB WIN3F
+		RST 0X30
+		DB WOUT7F
+		LD A,0X18
+		RST 0X30
+		DB WOUT1F
+		RST 0X30
+		DB WIN1F
+		AND 0X80
+		JP NZ,DISK_NOT_FOUND
+		JP WR_NUM_TRACK
+
+WR_BYTE_RET	OUT (C),A
+		NOP
+		RET
+
+WRPORT_RET	OUTI
+		NOP
+		RET
+		ELSE
 		out	(0FFh),a
 		ld	(hl),a
 		call	GET_TIME_HEAD	; Ž‹“—…ˆ… ‚…Œ…ˆ ……Œ…™…ˆŸ	ƒŽ‹Ž‚Šˆ
@@ -5511,10 +5933,17 @@ COM_01		ld	(TRD_5CF6),a	; €‘’Ž‰Š€ € „ˆ‘ŠŽ‚Ž„
 		jr	nz,loc_3DF9
 		ld	a,80h
 loc_3DF9	ld	(hl),a
+		ENDIF
+
+		DUPL 0X3DFA-$,0
 loc_3DFA	call	WR_NUM_TRACK
 PAUSE725779T	ld	a,50h
 PAUSE_C_A	ld	c,0FFh
-loc_3E01	dec	c
+loc_3E01	IF EVODOS=1
+		RET
+		ELSE
+		dec	c
+		ENDIF
 		jr	nz,loc_3E01
 		dec	a
 		jr	nz,PAUSE_C_A
@@ -5544,12 +5973,22 @@ loc_3E1D	ld	(hl),b
 		ld	b,(hl)
 		ld	a,1
 		call	HEAD_POSITION
+		IF EVODOS=1
+		RST 0X30
+		DB WIN1F
+		ELSE
 		in	a,(1Fh)
+		ENDIF
 		and	4
 		jr	nz,loc_3E3F
 		xor	a
 		call	HEAD_POSITION
+		IF EVODOS=1
+		RST 0X30
+		DB WIN1F
+		ELSE
 		in	a,(1Fh)
+		ENDIF
 		and	4
 		ret	nz
 loc_3E3F	inc	b
@@ -5557,23 +5996,48 @@ loc_3E3F	inc	b
 		ret	z
 		jr	loc_3E1D
 
-HEAD_POSITION	out	(7Fh),a
+HEAD_POSITION	IF EVODOS=1
+		RST 0X30
+		DB WOUT7F
+		NOP
+		LD A,0X18
+		ELSE
+		out	(7Fh),a
 		ld	a,b
 		or	18h
+		ENDIF
 		jp	COM2VG_WAIT
 
-POSITIONIREN	out	(7Fh),a
+POSITIONIREN	IF EVODOS=1
+		RST 0X30
+		DB WOUT7F
+		ELSE
+		out	(7Fh),a
+		ENDIF
 		push	bc
 		ld	b,a
+		IF EVODOS=1
+		RST 0X30
+		DB WIN3F
+		ELSE
 		in	a,(3Fh)
+		ENDIF
 		cp	b
 		pop	bc
 		push	af
+		IF EVODOS=1
+		NOP
+		LD A,0X18
+		CALL COM2VG_WAIT
+		POP AF
+		RET
+		ELSE
 		ld	a,b
 		or	18h
 		call	COM2VG_WAIT
 		pop	af
 		ret	z
+		ENDIF
 		push	bc
 		call	PAUSE725779T
 		pop	bc
@@ -5590,17 +6054,32 @@ COM_02		ld	c,a
 		jr	z,loc_3E83
 		bit	0,(hl)
 		jr	nz,loc_3E83
+		IF EVODOS=1
+		RST 0X30
+		DB WIN3F
+		ELSE
 		in	a,(3Fh)
+		ENDIF
 		cp	c
 		jr	z,loc_3E82
 		rlca
+		IF EVODOS=1
+		RST 0X30
+		DB WOUT3F
+		ELSE
 		out	(3Fh),a
+		ENDIF
 		ld	a,c
 		rlca
 loc_3E82	ld	c,a
 loc_3E83	call	GET_TIME_HEAD	; Ž‹“—…ˆ… ‚…Œ…ˆ ……Œ…™…ˆŸ	ƒŽ‹Ž‚Šˆ
 		ld	b,a
+		IF EVODOS=1
+		RST 0X30
+		DB WIN3F
+		ELSE
 		in	a,(3Fh)
+		ENDIF
 		cp	c
 		push	bc
 		call	nz,PAUSE725779T
@@ -5609,7 +6088,12 @@ loc_3E83	call	GET_TIME_HEAD	; Ž‹“—…ˆ… ‚…Œ…ˆ ……Œ…™…ˆŸ	ƒŽ‹Ž‚Šˆ
 		call	POSITIONIREN
 		pop	bc
 		ld	a,c
+		IF EVODOS=1
+		RST 0X30
+		DB WOUT3F
+		ELSE
 		out	(3Fh),a
+		ENDIF
 		ld	a,(TRD_5CCD)	; #80-ƒŽ’Ž‚Ž‘’œ „ˆ‘ŠŽ‚Ž„€
 		or	a
 		ret	z
@@ -5629,20 +6113,40 @@ SET_SIDE_DISK	ld	a,c
 		jp	COM_17		; “‘’€Ž‚Š€ 1 ‘’ŽŽ› „ˆ‘Š€
 
 GET_NUM_TRACK	call	COM_16		; “‘’€Ž‚Š€ 0 ‘’ŽŽ› „ˆ‘Š€
-loc_3EB5	in	a,(1Fh)
+loc_3EB5	IF EVODOS=1
+		RST 0X30
+		DB WIN1F
+		ELSE
+		in	a,(1Fh)
+		ENDIF
 		and	80h
 		ld	(TRD_5CCD),a	; #80-ƒŽ’Ž‚Ž‘’œ „ˆ‘ŠŽ‚Ž„€
+		IF EVODOS=1
+		RST 0X30
+		DB WIN3F
+		ELSE
 		in	a,(3Fh)
+		ENDIF
 		ld	h,a
 		CALL BUGFIX_3EBF
 		ld	c,7Fh
 		ld	d,1
 		di
 		ld	a,0C0h
+		IF EVODOS=1
+		RST 0X30
+		DB WOUT1F
+		ELSE
 		out	(1Fh),a
+		ENDIF
 		push	bc
 		ld	b,3
-loc_3ECE	in	a,(0FFh)
+loc_3ECE	IF EVODOS=1
+		RST 0X30
+		DB WINFF
+		ELSE
+		in	a,(0FFh)
+		ENDIF
 		and	0C0h
 		jr	nz,loc_3EF2
 		inc	de
@@ -5653,7 +6157,12 @@ loc_3ECE	in	a,(0FFh)
 		pop	bc
 		ei
 		ld	a,0D0h
+		IF EVODOS=1
+		RST 0X30
+		DB WOUT1F
+		ELSE
 		out	(1Fh),a
+		ENDIF
 		LD A,(TRD_5D17)
 		cp	0FFh
 		ret	z
@@ -5663,8 +6172,18 @@ DISK_NOT_FOUND	call	SET_TAPELDERR
 		jp	loc_271B
 
 loc_3EF2	pop	bc
+		IF EVODOS=1
+		RST 0X30
+		DB WINHC
+		ELSE
 		in	h,(c)
-loc_3EF5	in	a,(0FFh)
+		ENDIF
+loc_3EF5	IF EVODOS=1
+		RST 0X30
+		DB WINFF
+		ELSE
+		in	a,(0FFh)
+		ENDIF
 		and	0C0h
 		jr	z,loc_3EF5
 		ei
@@ -5686,16 +6205,30 @@ SAVE_SECTOR	ld	a,0A0h
 
 LOAD_SECTOR	ld	a,80h
 loc_3F10	ld	(TRD_5CFE),a
-RD_OR_WR_SEC	ld	d,0Ah
+RD_OR_WR_SEC	IF EVODOS=1
+		LD D,1
+		ELSE
+		ld	d,0Ah
+		ENDIF
 loc_3F15	push	de
 		di
 		ld	a,(TRD_5CFF)
 		inc	a
+		IF EVODOS=1
+		RST 0X30
+		DB WOUT5F
+		ELSE
 		out	(5Fh),a
+		ENDIF
 		ld	hl,(TRD_5D00)
 		ld	c,7Fh
 		ld	a,(TRD_5CFE)
+		IF EVODOS=1
+		RST 0X30
+		DB WOUT1F
+		ELSE
 		out	(1Fh),a
+		ENDIF
 		cp	0A0h
 		push	af
 		call	z,WRITE_SEC	; Ž†ˆ„€ˆ… ƒŽ’Ž‚Ž‘’ˆ ˆ	‡€ˆ‘œ ‘…Š’Ž€
@@ -5703,7 +6236,12 @@ loc_3F15	push	de
 		call	nz,READ_SEC
 		pop	de
 		ei
+		IF EVODOS=1
+		RST 0X30
+		DB WIN1F
+		ELSE
 		in	a,(1Fh)
+		ENDIF
 		ld	b,a
 		and	7Fh
 		ret	z
@@ -5717,14 +6255,29 @@ loc_3F39	ld	hl,READ_ONLY	; Read Only
 		jr	nz,loc_3F15
 loc_3F48	ld	hl,TXT_DISCERROR_
 loc_3F4B	ld	a,0D0h
+		IF EVODOS=1
+		RST 0X30
+		DB WOUT1F
+		ELSE
 		out	(1Fh),a
+		ENDIF
 		ld	a,b
 		and	1
 		jp	nz,DISK_NOT_FOUND
+		IF EVODOS=1
+		RST 0X30
+		DB WIN3F
+		ELSE
 		in	a,(3Fh)
+		ENDIF
 		or	a
 		jr	nz,loc_3F5F
+		IF EVODOS=1
+		RST 0X30
+		DB WIN5F
+		ELSE
 		in	a,(5Fh)
+		ENDIF
 		cp	0Ah
 		ret	z
 loc_3F5F	push	hl
@@ -5733,11 +6286,21 @@ loc_3F5F	push	hl
 		rst	18h
 		ld	hl,TXT_TRK_
 		rst	18h
+		IF EVODOS=1
+		RST 0X30
+		DB WIN3F
+		ELSE
 		in	a,(3Fh)
+		ENDIF
 		call	PRINT_CHISLO_A_
 		ld	hl,TXT_SEC_	; " sec"
 		rst	18h
+		IF EVODOS=1
+		RST 0X30
+		DB WIN5F
+		ELSE
 		in	a,(5Fh)
+		ENDIF
 		call	PRINT_CHISLO_A_
 		ld	hl,TXT_RIA_
 		rst	18h
@@ -5773,7 +6336,12 @@ loc_3FAD	call	COM_00		; ‚Ž‘‘’€Ž‚‹…ˆ… ‚ƒ93
 
 ; Ž†ˆ„€ˆ… ƒŽ’Ž‚Ž‘’ˆ ˆ	‡€ˆ‘œ ‘…Š’Ž€
 WRITE_SEC	ld	b,4
-WAIT4WRITE	in	a,(0FFh)
+WAIT4WRITE	IF EVODOS=1
+		RST 0X30
+		DB WWRITE_SEC_
+		ELSE
+		in	a,(0FFh)
+		ENDIF
 		and	0C0h
 		jr	nz,WR_DATAPORT1
 		inc	de
@@ -5783,15 +6351,30 @@ WAIT4WRITE	in	a,(0FFh)
 		djnz	WAIT4WRITE
 		ret
 
-WR_DATAPORT	in	a,(0FFh)
+WR_DATAPORT	IF EVODOS=1
+		RST 0X30
+		DB WWRITE_SEC_
+		ELSE
+		in	a,(0FFh)
+		ENDIF
 		and	0C0h
 		jr	z,WR_DATAPORT
 		ret	m
-WR_DATAPORT1	outi
+WR_DATAPORT1	IF EVODOS=1
+		RST 0X30
+		DB WWRITE_SEC_
+		ELSE
+		outi
+		ENDIF
 		jr	WR_DATAPORT
 
 READ_SEC	ld	b,4
-WAIT4READ	in	a,(0FFh)
+WAIT4READ	IF EVODOS=1
+		RST 0X30
+		DB WREAD_SEC_
+		ELSE
+		in	a,(0FFh)
+		ENDIF
 		and	0C0h
 		jr	nz,RD_DATAPORT1
 		inc	de
@@ -5801,17 +6384,33 @@ WAIT4READ	in	a,(0FFh)
 		djnz	WAIT4READ
 		ret
 
-RD_DATAPORT	in	a,(0FFh)
+RD_DATAPORT	IF EVODOS=1
+		RST 0X30
+		DB WREAD_SEC_
+		ELSE
+		in	a,(0FFh)
+		ENDIF
 		and	0C0h
 		jr	z,RD_DATAPORT
 		ret	m
-RD_DATAPORT1	ini
+RD_DATAPORT1	IF EVODOS=1
+		RST 0X30
+		DB WINI_RET
+		ELSE
+		ini
+		ENDIF
 		jr	RD_DATAPORT
 
-		OUT (C),A
+OUT_C_A		OUT (C),A
 		RET
 
-		IN A,(C)
+IN_A_C		IN A,(C)
 		RET
 
-		DUPL 0X4000-$,0FFh
+		DUPL 0X3FF8-$,0FFh
+		IF EVODOS=1
+		DB "EVODOS"
+		ELSE
+		DB "TR-DOS"
+		ENDIF
+		DW DATA_VERS

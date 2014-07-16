@@ -1,13 +1,13 @@
 
-;LAST UPDATE: 02.02.2014 savelij
+;LAST UPDATE: 10.07.2014 savelij
 
 		include ../../macros.a80
 		include ../../define.a80
 		include ../../global_vars.a80
-		include bas_trd_vars.a80
+		include ../../bas_trd_vars.a80
 
 ;		     0123456789012345678
-NUMBER_VERS	EQU " EVO-DOS Ver 0.37  "
+NUMBER_VERS	EQU " EVO-DOS Ver 0.38  "
 ZASTV_X		EQU 7					;ŠŽŽ„ˆ€’€ X …—€’ˆ €„ˆ‘ˆ BETA128
 ZASTV_Y		EQU 6					;ŠŽŽ„ˆ€’€ Y …—€’ˆ €„ˆ‘ˆ BETA128
 ZASTV_PIX	EQU ZASTV_Y*0X20+0X4000+ZASTV_X+9	;€„…‘ ‚›‚Ž„€ ‘ŠŽ˜…›• “ƒŽ‹ŠŽ‚
@@ -49,7 +49,7 @@ LOC_2B		LD I,A
 		XOR A
 		JR LOC_33
 
-		JP RST08_WORK			;RST 30
+		JP RST30_WORK			;RST 30
 
 LOC_33		LD SP,HL
 		LD B,A
@@ -1012,8 +1012,6 @@ WR_NEW_FREE_SEC	CALL READ_9SEC		; —’…ˆ… 9 ‘…Š’Ž€
 		ADD HL,DE
 		LD (TRD_5E0A),HL
 		JP REWRITE_9SEC		; ……‡€ˆ‘œ 9 ‘…Š’Ž€
-
-		DB 0XFF			;DCU
 
 ;===============FREE SPACE 1============
 		include virtual.a80
@@ -2573,6 +2571,8 @@ LOC_1C5C	LD (HL)," "
 		EX DE,HL
 		CALL SETUP_DSK
 		LD A,C
+		AND A
+		JP Z,SINTAX_ERROR
 		CP 9
 		JR C,LOC_1C73
 		LD C,8
@@ -3217,12 +3217,13 @@ LOC_211C	POP AF
 		RET
 
 ;“„€‹…ˆ… ‚‚…„…Ž‰ ‘’ŽŠˆ Ž‘‹… ‚›Ž‹…ˆŸ ŠŽŒ€„›
-CLRBUF_EDITOR	LD HL,(K_CUR)
+CLRBUF_EDITOR
+		LD HL,(K_CUR)
 		LD DE,(E_LINE)
 		RST 0X20
 		DW 0X19E5
 		RST 0X20
-		DW 0X16BF
+		DW 0X16B0;F
 		LD HL,(E_LINE)		; €„…‘	€—€‹€ …„€Š’ˆ“…ŒŽ‰ ‘’ŽŠˆ
 		LD (HL),0X0D
 		LD (K_CUR),HL
@@ -4304,6 +4305,7 @@ CREATE_BUF	PUSH HL
 		ADD HL,BC
 		JR LOC_298F
 
+		DUPL 0X2970-$,0XFF
 DEL_BUF		PUSH HL
 		PUSH DE
 		PUSH BC
@@ -4797,46 +4799,7 @@ LOC_3C09	JP LOC_3D03
 		IN A,(0X1F)
 		RET
 
-		DUPL ADR_RST8END-$-0X40,0XFF
-IREG_E		DB 0
-IREG_D		DB 0
-IREG_L		DB 0
-IREG_H		DB 0
-DOS_STEK	DW 0			;2 ‘Ž•€…ˆ… Ž‘Ž‚ŽƒŽ ‘’…Š€ ˆ „Ž ‚“’……ƒŽ ‘’…Š€
-WR_1F		DB 0			;1 ŠŽˆŸ ‡€ˆ‘€ŽƒŽ ‚ Ž’ 1F (…ƒˆ‘’ ŠŽŒ€„)
-RD_1F		DB 0			;1 Ž’‚…’ „‹Ÿ —’…ˆŸ ˆ‡ Ž’€
-WR_FF		DB 0			;1 ŠŽˆŸ ‡€ˆ‘€ŽƒŽ ‚ Ž’ FF
-RD_FF		DB 0			;1 Ž’‚…’ „‹Ÿ —’…ˆŸ ˆ‡ Ž’€
-BUFF_SECT	DW 0			;2 €„…‘ —’…ˆŸ/‡€ˆ‘ˆ ‘…Š’Ž€
-ADDR_RET	DW 0			;2 €„…‘ ‚Ž‡‚€’€
-REG_IF		DB 0			;1
-REG_I		DB 0			;1
-REG_C		DB 0			;1 
-REG_B		DB 0			;1
-REG_F		DB 0			;1
-REG_A		DB 0			;1
-REG_L		DB 0			;1 €„…‘ ‡€ƒ“‡Šˆ/‡€ˆ‘ˆ
-REG_H		DB 0			;1
-WR_BF		DB 0			;1
-WR_77		DB 0			;1
-WR_EFF7		DB 0			;1
-WR_7FFD		DB 0			;1
-WR_DOS7FFD	DB 0			;1
-WR_RAMNROM	DB 0			;1
-WR_1WINA3	DB 0			;1
-WR_1WINA2	DB 0			;1
-WR_1WINA1	DB 0			;1
-WR_1WINA0	DB 0			;1
-WR_0WINA3	DB 0			;1
-WR_0WINA2	DB 0			;1
-WR_0WINA1	DB 0			;1
-WR_0WINA0	DB 0			;1
-MINT_STACK	DW 0			;2
-TEK_ROMPAGE	DB 0			;1
-MASK_DRV	DB 0			;1
-TEMP_SP		DW 0			;2
-SAVED_RAM	DUPL 0X10,0		;10
-END_VARS
+		include int_vars.a80
 
 		DUPL ADR_RST8END-$,0XFF
 		JP EDOS2RST8
