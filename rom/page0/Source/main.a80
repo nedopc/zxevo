@@ -1,12 +1,12 @@
 
-;LAST UPDATE: 10.07.2014 savelij
+;LAST UPDATE: 17.07.2014 savelij
 	
 		include ../../macros.a80
 		include ../../define.a80
 		include ../../global_vars.a80
 
 ;VERSION
-VERSBIOS	EQU "0.55e "
+VERSBIOS	EQU "0.55f "
 
 ;BIT 4,(IY+55)
 ;BIT 3,(IY+55)-0-‡€…’ €ˆŒ€–ˆˆ Š˜€Š€, 1-€‡…˜…ˆ…
@@ -913,6 +913,7 @@ PERFECT		DI
 PERFECT1	LD BC,WIN_A0
 		OUT (C),E
 		ELSE
+		LD BC,WIN_A0
 		LD A,0X83
 		OUT (C),A
 		ENDIF
