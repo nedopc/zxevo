@@ -8,12 +8,13 @@
  *
  * @subsection current Current version.
  *
+ * - Fix update_keys function.
  * - Add EEPROM access via RTC interface.
- * - Add reset PS2 keyboard after error. 
+ * - Add reset PS2 keyboard after error.
  * - Fix change resolution command (need for some PS2 mouses).
  *
  * @subsection ver_2014_04_13 Version 13.04.2014.
- * 
+ *
  * - Fix access to users keyboard map.
  *
  * @subsection ver_2013_11_08 Version 08.11.2013.
