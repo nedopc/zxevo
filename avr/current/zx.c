@@ -291,7 +291,7 @@ void zx_task(UBYTE operation) // zx task, tracks when there is need to send new 
 
 void zx_clr_kb(void)
 {
-	BYTE i;
+	UBYTE i;
 
 	for( i=0; i<sizeof(zx_map)/sizeof(zx_map[0]); i++ )
 	{
@@ -432,41 +432,40 @@ void to_zx(UBYTE scancode, UBYTE was_E0, UBYTE was_release)
 
 void update_keys(UBYTE zxcode, UBYTE was_release)
 {
-	BYTE i;
+	if( zxcode!=NO_KEY )
+	{
+   		BYTE i;
 
-	if( zxcode==NO_KEY )
-	{
-		/* NOTHING */
-	}
-	else if( (zxcode==CLRKYS) && (!was_release) ) // does not have release option
-	{
-		i=39;
-		do zx_counters[i]=0; while( (--i)>=0 );
-
-		if( !zx_fifo_isfull() )
-			zx_fifo_put(CLRKYS);
-	}
-//	else if( zxcode>=RSTSYS ) // resets - press and release
-//	{
-//		if( !zx_fifo_isfull() )
-//			zx_fifo_put( (was_release ? 0 : PRESS_MASK) | zxcode );
-//	}
-	else if( zxcode < 40 ); // ordinary keys too
-	{
-		if( was_release )
+		if( (zxcode==CLRKYS) && (!was_release) ) // does not have release option
 		{
-			if( zx_counters[zxcode] && !(--zx_counters[zxcode]) ) // left-to-right evaluation and shortcutting
-			{
-				if( !zx_fifo_isfull() )
-					zx_fifo_put(zxcode);
-			}
+			i=39;
+			do zx_counters[i]=0; while( (--i)>=0 );
+
+			if( !zx_fifo_isfull() )
+				zx_fifo_put(CLRKYS);
 		}
-		else // key pressed
+	//	else if( zxcode>=RSTSYS ) // resets - press and release
+	//	{
+	//		if( !zx_fifo_isfull() )
+	//			zx_fifo_put( (was_release ? 0 : PRESS_MASK) | zxcode );
+	//	}
+		else if( zxcode < 40 ) // ordinary keys too
 		{
-			if( !(zx_counters[zxcode]++) )
+			if( was_release )
 			{
-				if( !zx_fifo_isfull() )
-					zx_fifo_put( PRESS_MASK | zxcode );
+				if( zx_counters[zxcode] && !(--zx_counters[zxcode]) ) // left-to-right evaluation and shortcutting
+				{
+					if( !zx_fifo_isfull() )
+						zx_fifo_put(zxcode);
+				}
+			}
+			else // key pressed
+			{
+				if( !(zx_counters[zxcode]++) )
+				{
+					if( !zx_fifo_isfull() )
+						zx_fifo_put( PRESS_MASK | zxcode );
+				}
 			}
 		}
 	}
