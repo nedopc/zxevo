@@ -274,7 +274,7 @@ module zports(
 
 
 	reg [7:0] savport [3:0];
-
+	reg [5:0] vgFF;
 
 
 
@@ -403,7 +403,7 @@ module zports(
 		//PORTFD:
 
 		VGSYS:
-			dout = { vg_intrq, vg_drq, 6'b111111 };
+			dout = { vg_intrq, vg_drq, vgFF }; // 6'b111111 };
 
 		SAVPORT1, SAVPORT2, SAVPORT3, SAVPORT4:
 			dout = savport[ loa[6:5] ];
@@ -439,6 +439,10 @@ module zports(
 			dout = portbemux;
 		end
 
+		ULAPLUS: begin
+			dout = up_lastwritten;
+		end
+
 
 		default:
 			dout = 8'hFF;
@@ -459,6 +463,8 @@ module zports(
 	                      ( (loa==PORTF7) && (a[8]==1'b0) && port_rd &&   shadow  ) ;
 
 	assign vg_wrFF = ( ( (loa==VGSYS)&&shadow ) && port_wr);
+	always @(posedge zclk) if( vg_wrFF )
+		vgFF <= din[5:0];
 
 	assign comport_wr   = ( (loa==COMPORT) && port_wr);
 	assign comport_rd   = ( (loa==COMPORT) && port_rd);
@@ -911,6 +917,7 @@ module zports(
 // now:             543210 -> 4205xx31
 
 	5'hE: portbemux = fontrom_readback;
+	5'hF: portbemux = { 4'bXXXX, border };
 
 	5'h10: portbemux = brk_addr[7:0];
 	5'h11: portbemux = brk_addr[15:8];
@@ -939,6 +946,7 @@ module zports(
 
 
 	// ULAPLUS ports
+	reg [7:0] up_lastwritten;
 	reg up_select; // 0 -- ena/dis, 1 -- palette write
 	//
 	wire up_wr = port_wr_fclk && (loa==ULAPLUS);
@@ -957,6 +965,9 @@ module zports(
 			up_paladdr[5:0] <= din[5:0];
 		end
 	end
+	//
+	always @(posedge fclk) if( up_wr && a[14] )
+		up_lastwritten <= din;
 	//
 	assign up_palwr = up_wr && a[14] && !up_select;
 	//
