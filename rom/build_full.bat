@@ -103,7 +103,7 @@ copy /B /Y ff_64k.rom+ff_64k.rom+glukpent.rom+profrom\evoprofrom.rom+ers.rom zxe
 del ers.rom
 del glukpent.rom
 
-rem copy /B /Y zxevo.rom ..\tools\unreal_fix\0.37.6\fix_build\x32\zxevo_.rom
+copy /B /Y zxevo.rom ..\tools\unreal_fix\0.37.6\fix_build\x32\zxevo.rom
 copy /B /Y zxevo.rom d:\unrealspeccy\zxevo.rom
 
 pause
