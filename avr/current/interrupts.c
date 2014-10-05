@@ -70,7 +70,7 @@ ISR(TIMER2_OVF_vect)
 
 	//check soft reset and F12 key
 	if ( !( SOFTRES_PIN & (1<<SOFTRES)) ||
-	     (kb_status & KB_F12_MASK) )
+	     (kb_ctrl_status & KB_F12_MASK) )
 	{
 		//pressed
 		atx_counter++;
