@@ -79,8 +79,10 @@ UBYTE rtc_read(UBYTE addr);
 #define GLUK_B_24_12_MODE     0x02
 /** C register 4 bit - Update-ended interrupt flag [UF] (Bit is set after each update cycle, UF is cleared by reading Register C or a RESET). */
 #define GLUK_C_UPDATE_FLAG    0x10
-/** C register 0 bit - unused in original, but in ZXEVO clear PS2 keyboard log. */
+/** C register 0 bit - unused in original, but in ZXEVO clear PS2 keyboard log on write. */
+/** C register 0 bit - unused in original, but in ZXEVO NUM LED status of PS2 keyboard on read. */
 #define GLUK_C_CLEAR_LOG_FLAG 0x01
+#define GLUK_C_NUM_LED_FLAG   0x01
 /** C register 1 bit - unused in original, but in ZXEVO switch CAPS LED mode on PS2 keyboard. */
 #define GLUK_C_CAPS_LED_FLAG  0x02
 /** C register 2 bit - unused in original, but in ZXEVO switch EEPROM mode on extra bytes (>0xF0). */

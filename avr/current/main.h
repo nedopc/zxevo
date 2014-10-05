@@ -8,6 +8,9 @@
  *
  * @subsection current Current version.
  *
+ * - Add any (left or right) Ctrl,Alt keys and exclude mapped Ctrl,Alt keys from Ctrl-Alt-Del functionality (reset).
+ * - Add reading state of LCTRL,RCTRL,LALT,RALT,LSHIFT,RSHIFT,F12 keyboard states from RTC register D (bits 0-6).
+ * - Add reading state of NUM LOCK LED from RTC register C (bit 0).
  * - Fix update_keys function.
  * - Add EEPROM access via RTC interface.
  * - Add reset PS2 keyboard after error.
