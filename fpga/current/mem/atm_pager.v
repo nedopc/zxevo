@@ -169,12 +169,27 @@ module atm_pager(
 
 	// port reading: sets pages, ramnrom, dos_7ffd
 	//
-	always @(posedge fclk)
-	if( pager_off )
+	always @(posedge fclk, negedge rst_n)
+	if( !rst_n )
 	begin
 		wrdisables <= 2'b00;
 	end
 	else if( atmF7_wr )
+	begin
+		if( za[15:14]==ADDR )
+		case( {za[11],za[10]} )
+			2'b10: begin // xxBF7 port -- ROM/RAM readonly bit
+				wrdisables[ pent1m_ROM ] <= zd[0];
+			end
+
+			default: begin
+				// nothing
+			end
+		endcase
+	end
+	//
+	always @(posedge fclk)
+	if( atmF7_wr )
 	begin
 		if( za[15:14]==ADDR )
 		case( {za[11],za[10]} )
@@ -190,13 +205,12 @@ module atm_pager(
 				// dos_7ffd - UNCHANGED!!! (possibility to use 7ffd 1m and 128k addressing in the whole 4m!)
 			end
 
-			2'b10: begin // xxBF7 port -- ROM/RAM readonly bit
-				wrdisables[ pent1m_ROM ] <= ~zd[0];
-			end
-
 			default: begin
 				// nothing
 			end
+
+		endcase
+	end
 
 /*			if( za[11] ) // xff7 ports - 1 meg
 			begin
@@ -210,8 +224,6 @@ module atm_pager(
 				ramnrom [ pent1m_ROM ] <= 1'b1; // RAM on
 				// dos_7ffd - UNCHANGED!!! (possibility to use 7ffd 1m and 128k addressing in the whole 4m!)
 			end*/
-		endcase
-	end
 
 
 	// DOS turn on/turn off
