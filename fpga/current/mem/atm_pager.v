@@ -117,10 +117,10 @@ module atm_pager(
 		end
 		else // pager on
 		begin
-			wrdisable <= wrdisables[ pent1m_ROM ];
-
 			if( (ADDR==2'b00) && (pent1m_ram0_0 || in_nmi) ) // pent ram0 OR nmi
 			begin
+				wrdisable <= 1'b0;
+				
 				if( in_nmi )
 				begin
 					romnram <= 1'b0;
@@ -134,6 +134,8 @@ module atm_pager(
 			end
 			else
 			begin
+				wrdisable <= wrdisables[ pent1m_ROM ];
+				
 				romnram <= ~ramnrom[ pent1m_ROM ];
 
 				if( dos_7ffd[ pent1m_ROM ] ) // 7ffd memmap switching
