@@ -4,7 +4,7 @@
 //  with additions to support 4m addressable memory
 //  and pent1m mode.
 //
-// contain ports xFF7, x7F7
+// contain ports xFF7, x7F7, xBF7
 
 /*
     This file is part of ZX-Evo Base Configuration firmware.
