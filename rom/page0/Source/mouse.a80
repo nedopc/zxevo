@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 04.06.2011 savelij
+;LAST UPDATE: 20.09.2014 savelij
 
 ;‘Ž•€…ˆ… Š“‘Š€ Š€€
 SAVE2X2		LD HL,(ADR_REST)
@@ -100,8 +100,8 @@ MOUPY		ADD A,H
 MOUNY		LD (ARXY),HL
 		RET
 
-MOUOPT		LD H,(IX+1)
-		LD L,(IX+0)
+MOUOPT		LD H,(IX+_Y_COORD)
+		LD L,(IX+_X_COORD)
 		LD DE,(ARXY)
 		LD B,3
 		SRL D
@@ -111,7 +111,7 @@ MOUOPT		LD H,(IX+1)
 		CP L
 		RET C		;Š“‘Ž ‹…‚…… ŽŠ€
 		LD A,L
-		ADD A,(IX+3)
+		ADD A,(IX+_H_SIZE)
 		DEC A
 		CP E
 		RET C		;Š“‘Ž €‚…… ŽŠ€
@@ -120,23 +120,23 @@ MOUOPT		LD H,(IX+1)
 		CP H
 		RET C		;Š“‘Ž ‚›˜… ŽŠ€ ˆ‹ˆ € ‚…•…‰ Ž‹Ž‘Š…
 		LD A,H
-		ADD A,(IX+2)
+		ADD A,(IX+_V_SIZE)
 		SUB 3
 		CP D
 		RET C		;Š“‘Ž ˆ†… ŽŠ€ ˆ‹ˆ € Ž‘‹…„…‰ Ž‹Ž‘Š…
 		LD A,D
 		SUB H
 		LD C,A
-		LD L,(IX+8)
-		LD H,(IX+9)
+		LD L,(IX+_TEK_PKT_L)
+		LD H,(IX+_TEK_PKT_H)
 		LD B,0
 		LD D,B
-		LD E,(IX+7)
+		LD E,(IX+_NUM_PKT)
 		SBC HL,DE
 		ADD HL,BC
-		LD (IX+8),L
-		LD (IX+9),H
-		LD (IX+7),C
+		LD (IX+_TEK_PKT_L),L
+		LD (IX+_TEK_PKT_H),H
+		LD (IX+_NUM_PKT),C
 		JP COLOR_CURSOR
 
 DRAW_MOUSE	LD BC,0
@@ -202,8 +202,8 @@ PRAR1		SCF
 		RET
 
 ;Œ…‘’ŽŽ‹Ž†…ˆ… Š“‘Ž€
-OPMSPL		LD E,(IX+0X10)
-		LD D,(IX+0X11)
+OPMSPL		LD E,(IX+_ADR_MOUSE_L)
+		LD D,(IX+_ADR_MOUSE_H)
 		LD A,D
 		OR E
 		RET Z			;€„…‘ Žˆ‘€’…‹…‰ … ‡€„€

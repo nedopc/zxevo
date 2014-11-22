@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 04.07.2014 savelij
+;LAST UPDATE: 16.11.2014 savelij
 
 MASTER		EQU 0
 SLAVE		EQU 0X80
@@ -138,6 +138,15 @@ DEVFIND4	LD HL,FLAGS_DRV
 		LDIR
 		LD IX,DEVICES
 		LD IYL,INTERNAL
+		LD A,(HDDTIMEOUT)
+DEVFIND41	EI
+		HALT
+		HALT
+		DI
+		DEC A
+		JR NZ,DEVFIND41
+		INC A
+		LD (HDDTIMEOUT),A
 ;NEMO
 		LD HL,BUF_512			;ÄÑêÖë ÅìîÖêÄ Ñãü áÄÉêìáäà ëÖäíéêÄ (512 ÅÄâí)
 		CALL COMHDDN
@@ -450,23 +459,23 @@ RDMBR2		LD DE,0X10
 		OR (IY+0X0F)
 		JR Z,$+3
 		INC E
-		LD A,(IY+0X13)
-		OR (IY+0X14)
-		JR Z,$+3
-		INC E
-		LD A,(IY+0X20)
-		OR (IY+0X21)
-		OR (IY+0X22)
-		OR (IY+0X22)
-		JR Z,$+3
-		INC E
+;		LD A,(IY+0X13)
+;		OR (IY+0X14)
+;		JR Z,$+3
+;		INC E
+;		LD A,(IY+0X20)
+;		OR (IY+0X21)
+;		OR (IY+0X22)
+;		OR (IY+0X22)
+;		JR Z,$+3
+;		INC E
 		LD A,(IY+0X15)
 		AND 0XF0
 		CP 0XF0
 		JR NZ,$+3
 		INC E
 		LD A,E
-		CP 4
+		CP 3;4
 		RET NZ
 		LD A,(TEK_TYPE)
 		BIT 7,A

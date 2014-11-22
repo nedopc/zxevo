@@ -1,10 +1,13 @@
 
 ;www.fruitcake.plus.com
 
-;LAST UPDATE: 08.07.2014 savelij
+;LAST UPDATE: 17.11.2014 savelij
 
+		include ../../macros.a80
+		include ../../global_vars.a80
 		include ../../define.a80
 
+;BAS48_ONLY	EQU 0
 TAP_EMU_BORDER	EQU 0
 
 ; **************************************
@@ -76,10 +79,7 @@ L0000:  DI                      ; disable interrupts.
 ;; ERROR-1
 L0008		NOP
 		JP RST8_CMP
-
-;		LD HL,($5C5D)		; fetch the character address from CH_ADD.
-;		LD ($5C5F),HL		; copy it to the error pointer X_PTR.
-;		JR L0053		; forward to continue at ERROR-2.
+		DUPL 0X0010-$,0XFF
 
 ; -----------------------------
 ; THE 'PRINT CHARACTER' RESTART
@@ -90,7 +90,6 @@ L0008		NOP
 ; so there is no need to preserve any of the current registers (HL,DE,BC).
 ; This restart is used 21 times.
 
-		DUPL 0X0010-$,0XFF
 ;; PRINT-A
 L0010:  JP      L15F2           ; jump forward to continue at PRINT-A-2.
 
@@ -100,13 +99,6 @@ L0010:  JP      L15F2           ; jump forward to continue at PRINT-A-2.
 L0014		OUT (C),A
 		NOP
 		RET
-
-		DUPL 0X0018-$,0XFF
-
-;        DB    $FF             ; this byte is used by the SPECTRUM command in
-                                ; ROM 0 to generate an error report "0 OK".
-;        DB    $FF, $FF        ; four unused locations.
-;        DB    $FF, $FF        ;
 
 ; -------------------------------
 ; THE 'COLLECT CHARACTER' RESTART
@@ -200,12 +192,8 @@ L0038:  PUSH    AF              ; save the registers.
 L0048:  PUSH    BC              ; save the other
         PUSH    DE              ; main registers.
 
-		IF BAS48_ONLY=1
-		CALL L02BF
-		ELSE
 		CALL L386E		; Spectrum 128 patch: read the keypad and keyboard
 					; in the process of reading a key-press.
-		ENDIF
 
 L004D:  POP     DE              ;
         POP     BC              ; restore registers.
@@ -268,15 +256,12 @@ L0055:  LD      (IY+$00),L      ; store it in the system variable ERR_NR.
 ; routine was reversed.
 
 ;; RESET
-		DUPL 0X0066-$,0XFF
-L0066		NOP
-;		PUSH AF		; save the
+L0066		PUSH AF
 		PUSH HL		; registers.
 		LD HL,($5CB0)	; fetch the system variable NMIADD.
 		LD A,H		; test address
 		OR L		; for zero.
-;		JR NZ,L0070	; skip to NO-RESET if NOT ZERO
-		JR Z,L0070
+		JR NZ,L0070	; skip to NO-RESET if NOT ZERO
 		JP (HL)		; jump to routine ( i.e. L0000 )
 
 ;; NO-RESET
@@ -1782,8 +1767,6 @@ L0556:  INC     D               ; reset the zero flag without disturbing carry.
 ;===============================
 		RST 8
 		DB _TAPE_EMUL
-;		LD C,A		; and store initial state long-term in C.
-;		CP A		; set the zero flag.
 ;=============================== 
 
 ;; LD-BREAK
@@ -3438,13 +3421,8 @@ L0B4C:  LD      (HL),A          ; store bit patterns in temporary buffer
 ; Tokens and User defined graphics are now separated.
 
 ;; PO-T&UDG
-L0B52		IF BAS48_ONLY=1
-		SUB 0XA5
-		JR NC,L0B5F
-		ELSE
-		JP L3B9F		;Spectrum 128 patch
+L0B52		JP L3B9F		;Spectrum 128 patch
 		NOP
-		ENDIF
 
 L0B56:  ADD     A,$15           ; add 21d to restore to 0 - 20
         PUSH    BC              ; save current print position
@@ -4334,7 +4312,6 @@ L0EAC:  DI                      ; disable interrupts as this is time-critical.
 ;===============================
 		RST 8
 		DB _AY_PRN_SCR
-;		LD B,$B0		; top 176 lines.
 ;===============================
 
 L0EAF		LD HL,$4000		; address start of the display file.
@@ -4444,14 +4421,10 @@ L0EE7:  LD      (HL),A          ; set addressed location to zero.
 
 ;; COPY-LINE
 ;===============================
-L0EF4		
-		LD A,(HL)
+L0EF4		LD A,(HL)
 		RST 8
 		DB _AY_PRN_A_
 		RET
-;		LD A,B			; fetch the counter 1-8 or 1-176
-;		CP $03			; is it 01 or 02 ?.
-;		SBC A,A			; result is $FF if so else $00.
 ;===============================
 		AND $02			; result is 02 now else 00.
 					; bit 1 set slows the printer.
@@ -5358,8 +5331,6 @@ L11CB:  LD      B,A             ; save the flag for later branching.
         NOP                     ;
         NOP                     ;
         NOP                     ;
-;        NOP                     ;
-;        NOP                     ;
 		RST 8
 		DB _TAPE_INIT
 
@@ -5511,8 +5482,6 @@ L1219:  LD      ($5CB2),HL      ; set system variable RAMTOP to HL.
 
 ;===============================
 		CALL PRINTER_INITER
-;		CALL L0EDF			; call routine CLEAR-PRB to initialize system
-						; variables associated with printer.
 ;===============================
 
         LD      (IY+$31),$02    ; set DF_SZ the lower screen display size to
@@ -5671,14 +5640,8 @@ L133C:  CALL    L15EF           ; call routine OUT-CODE to print the code.
         LD      DE,L1391        ; address: rpt-mesgs.
         CALL    L0C0A           ; call routine PO-MSG to print.
 
-X1349
-		IF BAS48_ONLY=1
-		XOR A
-		LD DE,L1536
-		ELSE
-		CALL L3B3B		; Spectrum 128 patch
+X1349		CALL L3B3B		; Spectrum 128 patch
 		NOP
-		ENDIF
  
 L134D:  CALL    L0C0A           ; routine PO-MSG prints them although it would
                                 ; be more succinct to use RST $10.
@@ -5930,7 +5893,6 @@ L15AF		DW L09F4		; PRINT-OUT
 		DB "R"
 ;=======================================
 		DW PRN_TOKEN
-;		DW L09F4		; PRINT-OUT
 ;=======================================
 		DW L15C4		; REPORT-J
 		DB "P"
@@ -8164,12 +8126,8 @@ L1B7B:  RST     08H             ; ERROR-1
         DB    $14             ; Error Report: BREAK into program
 
 ;; STMT-R-1
-L1B7D		IF BAS48_ONLY=1
-		BIT 7,(IY+0X0A)
-		ELSE
-		CALL L3B4D		; Spectrum 128 patch
+L1B7D		CALL L3B4D		; Spectrum 128 patch
 		NOP
-		ENDIF
 
 L1B81:  JR      NZ,L1BF4        ; forward to STMT-NEXT if a program line.
 
@@ -8339,13 +8297,7 @@ L1BEE:  CALL    L2530           ; routine SYNTAX-Z
 ; If so go to next statement which in the first case will be on next line.
 
 ;; STMT-NEXT
-L1BF4		IF BAS48_ONLY=1
-		RST 0X18
-		CP 0X0D
-		ELSE
-		CALL L3B5D		; Spectrum 128 patch
-		ENDIF
-
+L1BF4		CALL L3B5D		; Spectrum 128 patch
 L1BF7:  JR      Z,L1BB3         ; back to LINE-END if so.
 
         CP      $3A             ; is it ':' ?
@@ -11729,11 +11681,7 @@ L2634:  LD      BC,$105A        ; priority $10, operation code $1A ('read-in')
         JR      Z,L2665         ; forward to S-INK$-EN if so
 
 ;===============================
-		IF BAS48_ONLY=1
-		CALL L028E
-		ELSE
 		JP L3B6C		; Spectrum 128 patch
-		ENDIF
 ;===============================
 
 L2649:  LD      C,$00           ; the length of an empty string
@@ -19431,64 +19379,13 @@ L3C8F:  DB    $13, $00         ; Bright, off
         DB    $13, $01         ; Bright, on
         DB    $38, $36         ; '8', '6'
 
-RST8_CMP	EX (SP),HL		;HL
-		PUSH AF			;AF
-		LD A,(HL)
-		CP _AY_PRN_INIT
-		JR NC,RST8_YES
-RST8_NO		POP AF
-		EX (SP),HL
-		LD HL,($5C5D)
-		LD ($5C5F),HL
-		JP L0053
-
-RST8_YES	CP _AY_PRN_INIT+0X40
-		JR NC,RST8_NO
-		CP 0X73
-		JR NC,RST8_NO
-		PUSH BC			;BC
-		LD A,R
-		JP PE,RST8YES1
-		LD A,R
-RST8YES1	DI
-		PUSH AF			;RF
-		PUSH HL			;ADR_RET
-		PUSH DE			;RAMNROM+DOS7FFD
-		LD BC,RD_1WINA0
-		IN H,(C)
-		IN A,(PEVO_CONF)
-		LD L,A
-		OR 1
-		OUT (PEVO_CONF),A
-		LD B,HIGH (RD_DOS7FFD)
-		IN E,(C)
-		DEC B
-		IN D,(C)
-		LD BC,WIN_A0
-		LD A,3
-		OUT (C),A
-		LD B,HIGH (WIN_P0)
-		XOR A
-		JP ADR_SEL_ROM
-
-		DUPL ADR_RST8END-$,0
-RST8_END	LD A,L
-		OUT (PEVO_CONF),A
-		POP DE
-		POP HL
-		POP AF
-		JP PO,RST8END1
-		EI
-RST8END1	POP BC
-		POP AF
-		EX (SP),HL
-		RET
+		include rst8.a80
 
 ; ------
 ; UNUSED
 ; ------
 
-		DUPL 0X3D00-$,0
+		DUPL 0X3D00-$,0XFF
 
 ; -------------------------------
 ; THE 'ZX SPECTRUM CHARACTER SET'
