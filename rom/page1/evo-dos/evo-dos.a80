@@ -1,34 +1,34 @@
 
-;LAST UPDATE: 17.07.2014 savelij
+;LAST UPDATE: 22.11.2014 savelij
 
 		include ../../macros.a80
 		include ../../define.a80
 		include ../../global_vars.a80
 		include ../../bas_trd_vars.a80
 		include ../../evodos_vars.a80
+		include ../../basic_tokens.a80
+		include macros.a80
 
 ;		     0123456789012345678
-NUMBER_VERS	EQU " EVO-DOS Ver 0.38  "
+NUMBER_VERS	EQU " EVO-DOS Ver 0.39  "
 ZASTV_X		EQU 7					;„€’€ X …—€’ €„‘ BETA128
-ZASTV_Y		EQU 6					;„€’€ Y …—€’ €„‘ BETA128
+ZASTV_Y		EQU 7					;„€’€ Y …—€’ €„‘ BETA128
 ZASTV_PIX	EQU ZASTV_Y*0X20+0X4000+ZASTV_X+9	;€„…‘ ‚›‚„€ ‘…›• “ƒ‹‚
 ZASTV_ATR	EQU ZASTV_Y*0X20+0X5800+ZASTV_X		;€„…‘ ‚›‚„€ –‚…’€ „‹ ‘…›• “ƒ‹‚
 
-		ORG 0X0000
-		DI
-		LD A,7
-		OUT (0XFE),A
-		JR LOC_09
+		ORG 0
+		di
+		ld de,0xffff
+		ld a,7
+		jr loc_09
 
-		DB 1				;‡€ƒ‹“€ „‹ DCU
+		nop
+loc_09		out (0xfe),a
+		ld a,0x3f
+		jr loc_24
 
-		JP DOS2RST8			;RST 08
-
-LOC_09		LD A,0X3F
-		JR LOC_24
-
-		DUPL 0X0010-$,0XFF
-		JP PRINT_A_			;RST 10 …—€’ ‘‚‹€
+		DUPL 0X0010-$,0
+		jp PRINT_A_			;RST 10 …—€’ ‘‚‹€
 
 		DUPL ADR_SEL_ROM-$,0XFF
 LOC_14		OUT (C),A
@@ -36,17 +36,17 @@ LOC_14		OUT (C),A
 		RET
 
 		DUPL 0X0018-$,0XFF
-		JP PRINT_MSG			;RST 18 …—€’ ’…‘’‚ƒ ‘™…
+		jp PRINT_MSG			;RST 18 …—€’ ’…‘’‚ƒ ‘™…
 
 		DUPL 0X0020-$,0XFF
-		JP CALL2BASIC			;RST 20 ‚›‡‚ „ƒ€ ‡ €‘€ 48
+		jp CALL2BASIC			;RST 20 ‚›‡‚ „ƒ€ ‡ €‘€ 48
 
-LOC_24		LD HL,0XFFFF
-		JR LOC_2B
+loc_24		LD HL,0XFFFF
+		jr loc_2B
 
-		JP SUB_2323			;RST 28
+		jp ADR_OPEN_CHAN		;RST 28
 
-LOC_2B		LD I,A
+loc_2B		LD I,A
 		XOR A
 		JR LOC_33
 
@@ -55,423 +55,422 @@ LOC_2B		LD I,A
 LOC_33		LD SP,HL
 		LD B,A
 		LD C,A
-		JR LOC_3A
+		JR loc_3A
 
-		DUPL 0X0038-$,0XFF
-		EI				;RST 38
-		RET
+		ei				;RST 38
+		ret
 
-LOC_3A		REPT 8
+loc_3A		REPT 8
 		PUSH BC
 		ENDM
 		LD HL,0XA500
 		ADD HL,SP
-		JR C,LOC_3A
-		LD (P_RAMT),HL
-		LD DE,0X3EAF
-		LD BC,0XA8
-		LD A,E
-		EX DE,HL
-		LD SP,0X6000
-		LD (TRD_5F00),HL
-		LD HL,LOC_79
-		PUSH HL
-		LD HL,LOC_3D2F
-		PUSH HL
-		LD HL,0XB8ED			;€„€ LDDR
-		JR EXECUTECOM2HL
+		JR C,loc_3A
+		ld (P_RAMT),hl
+		ld de,0x3eaf
+		ld bc,0xa8
+		ld a,e
+		ex de,hl
+		ld sp,0x6000
+		ld (TRD_5F00),hl
+		ld hl,loc_79
+		push hl
+		ld hl,loc_3D2F
+		push hl
+		ld hl,0xb8ed			;€„€ LDDR
+		jr EXECUTECOM2HL
 
-		DUPL 0X0066-$,0XFF
-		NOP				;€’— NMI-’‘“‘’‚“…’
-		RETN
+		jp MAGIC
 
-EXECUTECOM2HL	LD (TRD_5F10),HL
-		PUSH AF
-		LD A,0XC9
-		LD (TRD_5F12),A
-		POP AF
-		LD HL,(TRD_5F00)
-		JP TRD_5F10
+EXECUTECOM2HL	ld (TRD_5F10),hl
+		push af
+		ld a,0xc9
+		ld (TRD_5F12),a
+		pop af
+		ld hl,(TRD_5F00)
+		jp TRD_5F10
 
-LOC_79		EX DE,HL
-		LD (RAMTOP),HL
-		INC HL
-		LD (UDG),HL
-		DEC HL
-		LD (HL),0X3E
-		DEC HL
-		LD SP,HL
-		DEC HL
-		DEC HL
-		LD (ERR_SP),HL
-		LD HL,0X40		;€„…‹ ’’ ‘  ‘‘“
-		LD (RASP),HL
-		LD HL,0X3C00
-		LD (CHARS),HL
-		LD DE,0X1303
-		PUSH DE
-		IM 1
-		LD IY,ERR_NR
-		LD HL,TRD_5CB6		; „‹ ‚… €‹— INTERFACE1
-		LD (CHANS),HL
-		LD DE,0X15AF
-		LD BC,0X15
-		EX DE,HL
-		CALL COPY_BAS2VARS
-		EX DE,HL
-		DEC HL
-		LD (DATADD), HL
-		INC HL
-		LD (PROG),HL
-		LD (VARS),HL
-		LD (HL),0X80
-		INC HL
-		LD (E_LINE),HL		; €„…‘	€—€‹€ …„€’“…‰ ‘’
-		LD (HL),0X0D
-		INC HL
-		LD (HL),0X80
-		INC HL
-		LD (WORKSP),HL
-		LD (STKBOT),HL
-		LD (STKEND),HL
-		LD A,0X38
-		LD (ATTR_P),A
-		LD (ATTR_T),A
-		LD (BORDCR),A
-		LD HL,0X0223;0X0523
-		LD (REPDEL),HL
-		DEC (IY-0X3A)
-		DEC (IY-0X36)
-		LD HL,0X15C6
-		LD DE,STRMS
-		LD BC,0X0E
-		CALL COPY_BAS2VARS
-		SET 1,(IY+1)
-		LD HL,TRD_5CC2		; ‘„…†’ #C9.„‹ ……•„€ ‡ TR-DOS ‚	BASIC
-		LD (HL),0XC9
-		RST 0X20
-		DW 0X0EDF		; —‘’€ “”…€ ’…€
-		LD HL,DF_SZ		;‹—…‘’‚ ‘’ ‚ ‘‹“†… €…
-		LD (HL),2
-		LD HL,0X128B
-		PUSH HL
-		LD A,0XAA
-		LD (NOT_USED),A
-		EI
-		JP IN_DOS_15616
+loc_79		ex de,hl
+		inc hl
+		ld (UDG),hl
+		dec hl
+		ld bc,0x40		;€„…‹ ’’ ‘  ‘‘“
+		ld (RASP),bc
+		ld (RAMTOP),hl
+		ld hl,0x3C00
+		ld (CHARS),hl
+		ld hl,(RAMTOP)
+		ld (hl),0x3e
+		dec hl
+		ld sp,hl
+		dec hl
+		dec hl
+		ld (ERR_SP),hl
+		ld de,0x1303
+		push de
+		im 1
+		ld iy,ERR_NR
+		ld hl,TRD_5CB6		; „‹ ‚… €‹— INTERFACE1
+		ld (CHANS),hl
+		ld de,0x15af
+		ld bc,0x15
+		ex de,hl
+		call COPY_BAS2VARS
+		ex de,hl
+		dec hl
+		ld (DATADD),hl
+		inc hl
+		ld (PROG),hl
+		ld (VARS),hl
+		ld (hl),0x80
+		inc hl
+		ld (E_LINE),hl		; €„…‘	€—€‹€ …„€’“…‰ ‘’
+		ld (hl),0x0d
+		inc hl
+		ld (hl),0x80
+		inc hl
+		ld (WORKSP),hl
+		ld (STKBOT),hl
+		ld (STKEND),hl
+		ld a,0x38
+		ld (ATTR_P),a
+		ld (ATTR_T),a
+		ld (BORDCR),a
+		ld hl,0x0523
+		ld (REPDEL),hl
+		dec (iy-0x3a)
+		dec (iy-0x36)
+		ld hl,0x15c6
+		ld de,STRMS
+		ld bc,0x0e
+		call COPY_BAS2VARS
+		set 1,(iy+1)
+		ld hl,TRD_5CC2		; ‘„…†’ #C9.„‹ ……•„€ ‡ TR-DOS ‚	BASIC
+		ld (hl),0xc9
+		rst 0x20
+		dw 0x0edf		; ®η¨αβª  ΅γδ¥ΰ  ―ΰ¨­β¥ΰ 
+		ld hl,DF_SZ		;‹—…‘’‚ ‘’ ‚ ‘‹“†… €…
+		ld (hl),2
+		ld hl,0x128b
+		push hl
+		ld a,0xaa
+		ld (NOT_USED),a
+		ei
+		jp IN_DOS_15616
 
-COPY_BAS2VARS	LD (TRD_5F00),HL
-		LD HL,LOC_3D2F
-		PUSH HL
-		LD HL,0XB0ED		;€„€ LDIR
-		LD (TRD_5F10),HL
-		LD HL,(TRD_5F00)
-		JP TRD_5F10
+COPY_BAS2VARS	ld (TRD_5F00),hl
+		ld hl,loc_3D2F
+		push hl
+		ld hl,0xb0ed		;€„€ LDIR
+		ld (TRD_5F10),hl
+		ld hl,(TRD_5F00)
+		jp TRD_5F10
 
 ;€’€ …€ ‘’ €‚’‘’€’€ ƒ€› € …‰‘…
-WORK4AUTORUN	CALL DELETE_BUF		;“„€‹…… “”…€, …‘‹ €€‹ … ’›’
-		CALL CLEAR_SCREEN	; —‘’€ ‘‚ƒ €€
-		LD HL,(E_LINE)		;€„…‘ ’“„€ ‚‡’ … ‘’ €‚’‘’€’€
-		INC HL
-		LD E,(HL)
-		INC HL
-		LD D,(HL)		;‹“—‹ … ‘’ €‚’‘’€’€
-		LD A,D
-		OR E
-		EX DE,HL
-		JR Z,LOC_140		;…‘‹ … ‘’ =0, ’ …‡ €‚’‡€“‘€
-		XOR A
-		LD (TRD_5D10),A		; ‘’€‰ €‰’ 
-LOC_140		PUSH HL
-		CALL RESTORE_SP		; ‚‘‘’€‚‹…… ……•‚€’—€ 
-		POP HL
-		LD (NEWPPC),HL
-		XOR A
-		LD (NSPPS),A
-		RST 0X20
-		DW 0X16B0		; “‘’€‚€ ‹€‘’ …„€’‚€ „ “€
-		LD HL,(PROG)
-		DEC HL
-		LD (DATADD),HL
-		LD SP,(ERR_SP)
-		LD A,(TRD_5D10)		; ‘’€‰ €‰’ 
-		OR A
-		LD HL,0X1B76
-		JR Z,LOC_166
-		RST 0X20
-		DW 0X1BB0		; ‘™…… "OK"
-LOC_166		PUSH HL
-		JP TRD_5CC2
+WORK4AUTORUN	call DELETE_BUF		;“„€‹…… “”…€, …‘‹ €€‹ … ’›’
+		call CLEAR_SCREEN	; —‘’€ ‘‚ƒ €€
+		ld hl,(E_LINE)		;€„…‘ ’“„€ ‚‡’ … ‘’ €‚’‘’€’€
+		inc hl
+		ld e,(hl)
+		inc hl
+		ld d,(hl)		;‹“—‹ … ‘’ €‚’‘’€’€
+		ld a,d
+		or e
+		ex de,hl
+		jr z,loc_140		;…‘‹ … ‘’ =0, ’ …‡ €‚’‡€“‘€
+		xor a
+		ld (TRD_5D10),a		; ‘’€‰ €‰’ 
+loc_140		push hl
+		call RESTORE_SP		; ‚‘‘’€‚‹…… ……•‚€’—€ 
+		pop hl
+		ld (NEWPPC),hl
+		xor a
+		ld (NSPPS),a
+		rst 0x20
+		dw 0x16b0		; “‘’€‚€ ‹€‘’ …„€’‚€ „ “€
+		ld hl,(PROG)
+		dec hl
+		ld (DATADD),hl
+		ld sp,(ERR_SP)
+		ld a,(TRD_5D10)		; ‘’€‰ €‰’ 
+		or a
+		ld hl,0x1b76
+		jr z,loc_166
+		rst 0x20
+		dw 0x1bb0		; ‘™…… "OK"
+loc_166		push hl
+		ld hl,TRD_5CC2
+		push hl
+		ret
 
-CONTINUE_15619	CALL CREATE_BUF		; ‘‡„€… “”…€
-		XOR A
-		LD (TRD_5CF7),A
-		DEC A
-		LD (TRD_5D15),A		; …‘‹ 0, …—€’€’ €“ TR-DOS. €—… … …—€’€’
-		LD A,0XAA
-		LD (TRD_5D17),A		; ‘‚€… ‡€‘’€‚, …‘‹ #AA
-		LD HL,CP_ERROR
-		LD (TRD_5D1A),HL	; ‚“’…‰ €„…‘ ‡€‚…… ’……’€’€ €„
-		LD HL,0
-		ADD HL,SP
-		LD (TRD_5D1C),HL	; ‘•€…… …ƒ‘’€ SP
-		DEC HL
-		DEC HL
-		LD SP,HL
-		CALL MARK_SP		; “‘’€‚€ ‘’…€ „‹ ……•‚€’€	
-		LD HL,(RAMTOP)
-		LD DE,(CH_ADD)
-		SBC HL,DE
-		EX DE,HL
-		JR NC,LOC_1A5
-		OR A
-		LD DE,0X101
-		SBC HL,DE
-LOC_1A5		LD (CH_ADD),HL
-LOC_1A8		CALL CP_0D_OR_80
-LOC_1AB		JP Z,END_COMAND
-		CP 0XEA			;REM
-		INC HL
-		JR NZ,LOC_1A8
-		CALL CP_0D_OR_80
-		JR Z,LOC_1AB
-		CP ":"
-		JP NZ,END_COMAND
-		INC HL
-		CALL SAE2_HL_
-		LD HL,(TRD_5D11)	; €„…‘	‘’ €„› TR_DOS
-		JP LOC_30A
+CONTINUE_15619	DUPL 3,0
+		call CREATE_BUF		; ‘‡„€… “”…€
+		ld a,0xff
+		ld (TRD_5D15),a		; …‘‹ 0, …—€’€’ €“ TR-DOS. €—… … …—€’€’
+		xor a
+		ld (TRD_5CF7),a
+		ld a,0xaa
+		ld (TRD_5D17),a		; ‘‚€… ‡€‘’€‚, …‘‹ #AA
+		ld hl,CP_ERROR
+		ld (TRD_5D1A),hl	; ‚“’…‰ €„…‘ ‡€‚…… ’……’€’€ €„
+		ld hl,0
+		add hl,sp
+		ld (TRD_5D1C),hl	; ‘•€…… …ƒ‘’€ SP
+		dec hl
+		dec hl
+		ld sp,hl
+		call MARK_SP		; “‘’€‚€ ‘’…€ „‹ ……•‚€’€	
+		ld hl,(RAMTOP)
+		ld de,(CH_ADD)
+		sbc hl,de
+		ex de,hl
+		jr nc,loc_1A5
+		or a
+		ld de,0x101
+		sbc hl,de
+loc_1A5		ld (CH_ADD),hl
+loc_1A8		call CP_0D_OR_80
+loc_1AB		jp z,END_COMAND
+		cp __REM
+		inc hl
+		jr nz,loc_1A8
+		call CP_0D_OR_80
+		jr z,loc_1AB
+		cp ":"
+		jp nz,END_COMAND
+		inc hl
+		call SAE2_HL_
+		ld hl,(TRD_5D11)	; €„…‘	‘’ €„› TR_DOS
+		jp loc_30A
 
-CP_0D_OR_80	LD A,(HL)
-		CP 0X0D
-		RET Z
-		CP 0X80
-		RET Z
-		OR A
-		RET
+CP_0D_OR_80	CALL READ_BYTE_HL	;DCU
+		ret z
+		cp 0x80
+		ret z
+		or a
+		ret
 
-		DUPL 0X01C7-$,0XFF
-		JP READ_BYTE_HL_		;DCU
-
+		call REWRITE_9SEC
 ;„ƒ€€ ‡€‚……… €„ƒ –…‘‘€
-END_COMAND	LD HL,0
-		LD (TRD_5CF8),HL	; „‘‚„  …€–	‘ 2 ”€‰‹€
-		CALL DELETE_BUF
-		CALL CLEAR_WORKSPACE
-		LD HL,TRD_5D17		; ‘‚€… ‡€‘’€‚, …‘‹ #AA
-		LD (HL),0XAA
-		LD HL,TRD_5D1F
-		LD A,(HL)
-		OR A
-		LD (HL),0
-		JR NZ,LOC_1F3
-		CALL DEL_5BYTES
-		CALL FIND_ENDSTR	; ‘	–€ ‘’
-LOC_1F3		LD SP,(TRD_5D1C)	; ‘•€…… …ƒ‘’€ SP
-		LD HL,(TRD_5D1A)	; ‚“’…‰ €„…‘ ‡€‚…… ’……’€’€ €„
-		LD BC,(TRD_5D0F)	; …	 TR-DOS
-		LD B,0
-		JP (HL)
+END_COMAND	ld hl,0
+		ld (TRD_5CF8),hl	; „‘‚„  …€–	‘ 2 ”€‰‹€
+		call DELETE_BUF
+		call CLEAR_WORKSPACE
+		ld hl,TRD_5D17		; ‘‚€… ‡€‘’€‚, …‘‹ #AA
+		ld (hl),0xaa
+		ld hl,TRD_5D1F
+		ld a,(hl)
+		or a
+		ld (hl),0
+		jr nz,loc_1F3
+		call DEL_5BYTES
+		call FIND_ENDSTR	; ‘	–€ ‘’
+loc_1F3		ld sp,(TRD_5D1C)	; ‘•€…… …ƒ‘’€ SP
+		ld hl,(TRD_5D1A)	; ‚“’…‰ €„…‘ ‡€‚…… ’……’€’€ €„
+		ld bc,(TRD_5D0F)	; …	 TR-DOS
+		ld b,0
+		jp (hl)
 
-		DUPL 0X0201-$,0XFF
 ;DCU (‚›‡›‚€…’ ‘ €„…‘€ 0X0207)
-CP_ERROR	CALL RESTORE_SP		; ‚…€ € “
-		BIT 7,(IY+0)
-		RET NZ
-		LD SP,(ERR_SP)
-		JP TRD_5CC2
+CP_ERROR	call RESTORE_SP		; ‚…€ € “
+		bit 7,(iy+0)
+		ret nz
+		ld de,TRD_5CC2
+		ld sp,(ERR_SP)
+		push de
+		ret
 
 ; ‘	–€ ‘’
-FIND_ENDSTR	CALL GET_SYMSTR
-		CP 0X0D
-		RET Z
-		CALL GET_NEXT_SYM
-		JR FIND_ENDSTR		; ‘	–€ ‘’
+FIND_ENDSTR	call GET_SYMSTR
+		cp 0x0d
+		ret z
+		call GET_NEXT_SYM
+		jr FIND_ENDSTR		; ‘	–€ ‘’
 
-		DUPL 0X21D-$,0XFF
 ; “‘’€‚€ ‘’…€ „‹ ……•‚€’€	
-MARK_SP		LD HL,(ERR_SP)
-		LD (TRD_5D13),HL	; 	ERR_SP
-		LD HL,(TRD_5D1C)	; ‘•€…… …ƒ‘’€ SP
-		DEC HL
-		DEC HL
-		LD (ERR_SP),HL
-		LD DE,LOC_3D16
-		LD (HL),E
-		INC HL
-		LD (HL),D
-		RET
+MARK_SP		ld hl,(ERR_SP)
+		ld (TRD_5D13),hl	; 	ERR_SP
+		ld hl,(TRD_5D1C)	; ‘•€…… …ƒ‘’€ SP
+		dec hl
+		dec hl
+		ld (ERR_SP),hl
+		ld de,loc_3D16
+		ld (hl),e
+		inc hl
+		ld (hl),d
+		ret
 
 ; ‚‘‘’€‚‹…… ……•‚€’—€ 
-RESTORE_SP	LD HL,(TRD_5D13)	; 	ERR_SP
-LOC_0235	LD (ERR_SP),HL
-		RET
+RESTORE_SP	ld hl,(TRD_5D13)	; 	ERR_SP
+loc_0235	ld (ERR_SP),hl
+		ret
 
-IN_COMMAND_CPU	LD HL,0			; ‚•†„…… ‚ €„›‰	–…‘‘ „‘€
-		LD (TRD_5CF7),HL
-		ADD HL,SP
-		LD (TRD_5D1C),HL	; ‘•€…… …ƒ‘’€ SP
-		DEC HL
-		DEC HL
-		LD SP,HL
-		CALL MARK_SP		; “‘’€‚€ ‘’…€ „‹ ……•‚€’€	
-		CALL CLEAR_SCREEN	; —‘’€ ‘‚ƒ €€
-		CALL OPEN_CHAN_2	; ’›’… €€‹€ 2
-		LD HL,TRD_5D17		; ‘‚€… ‡€‘’€‚, …‘‹ #AA
-		LD A,(HL)
-		CP 0XAA
-		LD A,0
-		LD (TRD_5D0F),A		; …	 TR-DOS
-		JP Z,COMMAND_CPU
-		LD (HL),0XAA
-		LD HL,ZASTAVKA		; ’…‘’	‡€‘’€‚ „‘€
-		RST 0X18
-		CALL OUT_COLOR_LINE	; ‘‚€… –‚…’›• ‹‰ ‡€‘’€‚ „‘€
-		LD HL,TEXT4VIRTDRV	;’…‘’  ‚’“€‹›‰ „‘‚„
-		RST 0X18		;…—€’ € €…
-		LD H,VIRT_REAL_DRIVE
-		CALL READCMOS		;—’…… …€ ‚’“€‹ƒ „‘€
-		AND 3			;€ “†› ’‹ 2 ‹€„• ’€
-		ADD A,"A"		;…€‡‚€‹ ‚ ’…‘’
-		RST 0X10		;€…—€’€‹ “‚“
-LOC_271		LD A,(NOT_USED)		; ‚…€ € #AA
-		CP 0XAA
-		JR NZ,COMMAND_CPU	; …‘‹ … #AA,’ ‚•„ ‚	€„›‰ –…‘‘
-LOC_27B		LD HL,(E_LINE)		; €„…‘	€—€‹€ …„€’“…‰ ‘’
-		XOR A
-		LD (TRD_5D0E),A		; #FE-€’€…’ BASIC,€—… TR-DOS
-		LD (HL),0XF7
-		INC HL
-		LD (HL),0X22
-		INC HL
-		LD (HL),"b"
-		INC HL
-		LD (HL),"o"
-		INC HL
-		LD (HL),"o"
-		INC HL
-		LD (HL),"t"
-		INC HL
-		LD (HL),0X22
-		INC HL
-		LD (K_CUR),HL
-		LD (HL),0X0D
-		INC HL
-		LD (HL),0X80
-		INC HL
-		LD (WORKSP),HL
-		LD (STKBOT),HL
-		LD (STKEND),HL
-		SET 3,(IY+1)
-		JR GO2RUNBOOT
+IN_COMMAND_CPU	ld hl,0			; ‚•†„…… ‚ €„›‰	–…‘‘ „‘€
+		ld (TRD_5CF7),hl
+		add hl,sp
+		ld (TRD_5D1C),hl	; ‘•€…… …ƒ‘’€ SP
+		dec hl
+		dec hl
+		ld sp,hl
+		call MARK_SP		; “‘’€‚€ ‘’…€ „‹ ……•‚€’€	
+;2 ‚›‡‚€ ………‘…› „‹ “‘’€… €„€ “‘€
+; ‚’ ‚•„… ‚ TR-DOS ‡ … BASIC 128
+		call CLEAR_SCREEN	; —‘’€ ‘‚ƒ €€
+		call OPEN_CHAN_2	; ’›’… €€‹€ 2
+		ld hl,TRD_5D17		; ‘‚€… ‡€‘’€‚, …‘‹ #AA
+		ld a,(hl)
+		cp 0xaa
+		ld a,0
+		ld (TRD_5D0F),a		; …	 TR-DOS
+		jp z,COMMAND_CPU
+		ld (hl),0xaa
+		ld hl,ZASTAVKA		; ’…‘’	‡€‘’€‚ „‘€
+		rst 0x18
+		call OUT_COLOR_LINE	; ‘‚€… –‚…’›• ‹‰ ‡€‘’€‚ „‘€
+		CALL ADD_TXT_VERS
+
+		DUPL 0X0271-$,0
+loc_271		ld a,(NOT_USED)		; ‚…€ € #AA
+		cp 0xaa
+		jr nz,COMMAND_CPU	; …‘‹ … #AA,’ ‚•„ ‚	€„›‰ –…‘‘
+
+		DUPL 0X027B-$,0
+loc_27B		ld hl,(E_LINE)		; €„…‘	€—€‹€ …„€’“…‰ ‘’
+		ld a,0xfe
+		ld (TRD_5D0E),a		; #FE-€’€…’ BASIC,€—… TR-DOS
+		ld (hl),0xf7
+		inc hl
+		ld (hl),0x22
+		inc hl
+		ld (hl),"b"
+		inc hl
+		ld (hl),"o"
+		inc hl
+		ld (hl),"o"
+		inc hl
+		ld (hl),"t"
+		inc hl
+		ld (hl),0x22
+		inc hl
+		ld (K_CUR),hl
+		ld (hl),0x0d
+		inc hl
+		ld (hl),0x80
+		inc hl
+		ld (WORKSP),hl
+		ld (STKBOT),hl
+		ld (STKEND),hl
+		set 3,(iy+1)
+		jr GO2RUNBOOT
 
 ; ……‘ 3 €‰’
-LDI3_HL2DE	LDI
-		LDI
-		LDI
-		RET
+LDI3_HL2DE	ld b,3
+loc_2B2		ld a,(hl)
+		ld (de),a
+		inc hl
+		inc de
+		djnz loc_2B2
+		ret
 
-		DUPL 0X02B9-$,0XFF
-;FIX
 ;‘’€‚€ ’€ „‘‚„€
-STOP_MOTOR	LD B,0X20
-LOC_2BB		PUSH BC
-		XOR 8
-		OUT (0XFF),A
-		PUSH AF
-		LD A,5
-		CALL PAUSE_C_A
-		POP AF
-		POP BC
-		DJNZ LOC_2BB
-		RET
+STOP_MOTOR	ld b,0x20   
+loc_2BB		push bc     
+		xor 8       
+		out (0xff),a
+		push af     
+		ld a,5      
+		call PAUSE_C_A
+		pop af
+		pop bc
+		djnz loc_2BB
+		ret
 
-		DUPL 0X2CF-$,0XFF
 ;€„›‰ –…‘‘ DOS
-COMMAND_CPU	LD HL,(TRD_5D1C)	; ‘•€…… …ƒ‘’€ SP
-		DEC HL
-		DEC HL
-		LD SP,HL
-		CALL OPEN_CHAN_0	; ’›’… €€‹€ 0
-		LD A,(0X5D16)
-		XOR 3
-		CALL STOP_MOTOR
-		XOR 3
-		CALL STOP_MOTOR
-		XOR A
-		LD (TRD_5D15),A		; …‘‹ 0,…—€’€’ €“	TR-DOS.€—… …	…—€’€’
-		CALL GET_COMMAND	; ’…  €’€ €„
-		CALL SAE2E_LINE
-GO2RUNBOOT	CALL CLEAR_DOWN_SCR	; —‘’€ †…‰ —€‘’ €€
-		LD HL,COMMAND_CPU
-		LD (TRD_5D1A),HL	; ‚“’…‰ €„…‘ ‡€‚…… ’……’€’€ €„
-		XOR A
-		LD (TRD_5D0F),A		; …	 TR-DOS
-		LD (TRD_5CEF),A
-		LD HL,(E_LINE)		; €„…‘	€—€‹€ …„€’“…‰ ‘’
-		PUSH HL
-		LD DE,TRD_5D20		; „‹ ‘•€… 3 ‘‚‹‚ ‚‚…„…‰ ‘’
-		CALL LDI3_HL2DE		; ……‘ 3 €‰’
-		POP HL
-		LD (TRD_5D11),HL	; €„…‘	‘’ €„› TR_DOS
-LOC_30A		LD A,(HL)
-		BIT 7,A
-		JR Z,LOC_31A
-		CP 0XFE
-		JR Z,LOC_31A
-		PUSH AF
-		CALL ACTIV_DEF_DSK	; ‚›	„‘‚„€  “‹—€
-		POP AF
-LOC_31A		LD HL,CODE_BYTE_COM	; ’€‹–€ …‰‘ €„ „‹ TR-DOS
-		DEC HL
-		LD C,0
-LOC_320		INC C
-		LD D,A
-		LD A,LOW (ECODE_BYTE_COM-CODE_BYTE_COM);0X15
-		CP C
-		JP C,END_COMAND
-		LD A,D
-		INC HL
-		CP (HL)
-		JR NZ,LOC_320
-		CP 0XFE
-		CALL NZ,CREATE_BUF	; ‘‡„€… “”…€
-		LD A,9
-		LD (TRD_5D06),A		; ‹—…‘’‚ ‘‚‹‚ … ”€‰‹€  ‘…
-		XOR A
-		LD (TRD_5D0F),A		; …	 TR-DOS
-		LD (TRD_5CD6),A		; #FF-€„€ ’€ ‘’€‘—…‘ €€‹‡€’
-		LD (TRD_5D10),A		; ‘’€‰ €‰’ 
-		LD HL,FLAGS
-		RES 7,(HL)
-		LD B,A
-		LD HL,SPIS_ADR_COM	; ’€‹–€ €„…‘‚ ‘‹… €„
-		DEC C
-		ADD HL,BC
-		ADD HL,BC
-		LD E,(HL)
-		INC HL
-		LD D,(HL)
-		EX DE,HL
-		PUSH HL
-		LD DE,END_COM
-		PUSH DE
-		JP (HL)
+COMMAND_CPU	ld hl,(TRD_5D1C)	; ‘•€…… …ƒ‘’€ SP
+		dec hl
+		dec hl
+		ld sp,hl
+		call OPEN_CHAN_0	; ’›’… €€‹€ 0
+		ld a,(0X5D16)
+		or 3
+		call STOP_MOTOR
+		ld a,(TRD_5D16)
+		call STOP_MOTOR
+		xor a
+		ld (TRD_5D15),a		; …‘‹ 0,…—€’€’ €“	TR-DOS.€—… …	…—€’€’
+		call GET_COMMAND	; ’…  €’€ €„
+		call SAE2E_LINE
+GO2RUNBOOT	call CLEAR_DOWN_SCR	; —‘’€ †…‰ —€‘’ €€
+		ld hl,COMMAND_CPU
+		ld (TRD_5D1A),hl	; ‚“’…‰ €„…‘ ‡€‚…… ’……’€’€ €„
+		xor a
+		ld (TRD_5D0F),a		; …	 TR-DOS
+		ld (TRD_5CEF),a
+		ld hl,(E_LINE)		; €„…‘	€—€‹€ …„€’“…‰ ‘’
+		push hl
+		ld de,TRD_5D20		; „‹ ‘•€… 3 ‘‚‹‚ ‚‚…„…‰ ‘’
+		call LDI3_HL2DE		; ……‘ 3 €‰’
+		pop hl
+		ld (TRD_5D11),hl	; €„…‘	‘’ €„› TR_DOS
+loc_30A		ld a,(hl)
+		ld b,a
+		and 0x80
+		ld a,b
+		jr z,loc_31A
+		cp 0xfe
+		jr z,loc_31A
+		push af
+		call ACTIV_DEF_DSK	; ‚›	„‘‚„€  “‹—€
+		pop af
+loc_31A		ld hl,CODE_BYTE_COM	; ’€‹–€ …‰‘ €„ „‹ TR-DOS
+		dec hl
+		ld c,0
+loc_320		inc c
+		ld d,a
+		ld a,LOW (ECODE_BYTE_COM-CODE_BYTE_COM)
+		cp c
+		JP C,ENDCOMAND
+		ld a,d
+		inc hl
+		cp (hl)
+		jr nz,loc_320
+LOC_32D		cp __RETURN
+		call nz,CREATE_BUF	; ‘‡„€… “”…€
+		ld a,9
+		ld (TRD_5D06),a		; ‹—…‘’‚ ‘‚‹‚ … ”€‰‹€  ‘…
+		xor a
+		ld (TRD_5D0F),a		; …	 TR-DOS
+		ld (TRD_5CD6),a		; #FF-€„€ ’€ ‘’€‘—…‘ €€‹‡€’
+		ld (TRD_5D10),a		; ‘’€‰ €‰’ 
+		ld hl,FLAGS
+		res 7,(hl)
+		ld b,0
+		ld hl,SPIS_ADR_COM	; ’€‹–€ €„…‘‚ ‘‹… €„
+		dec c
+		sla c
+		add hl,bc
+		ld e,(hl)
+		inc hl
+		ld d,(hl)
+		ex de,hl
+LOC_353		push hl
+		ld de,END_COM
+		push de
+		jp (hl)
 
-END_COM		LD HL,FLAGS
-		SET 7,(HL)
-		RET
+END_COM		ld hl,FLAGS
+		set 7,(hl)
+		pop hl
+		jp (hl)
 
-		DUPL 0X0360-$,0XFF
-;FIX
 ;’…‘’ ‡€‘’€‚ „‘€
-ZASTAVKA	DB 0X16,0X00,0X06
+ZASTAVKA	DB 0X16,0X01,0X06
 ZASTAVKA_VER	EQU $+9
 		DB NUMBER_VERS
 		DB 0X0D,0X0D,0X7F
 		;  12345678901234567890123456789012
 		DB " 2010 Created for PentEvo 4MB "
-		DB 0X16,0X04,0X0C
+		DB 0X16,0X05,0X0C
 		DB "NedoPC"
 		DB 0X16,ZASTV_Y,ZASTV_X
 		IF EMU3D2F=1
@@ -480,2497 +479,2441 @@ ZASTAVKA_VER	EQU $+9
 		DC "EMUL 3D13"
 		ENDIF
 
-END_OUT_DIR	CALL READ_9SEC		; —’…… 9 ‘…’€
-		CALL PRINT_0D
-		CALL PRINT_0D
-LOC_3B5		LD BC,(TRD_5E0A)
-		CALL PRINT_CHISLO	; …—€’ —‘‹€
-		LD HL,TXT_FREE_
-		RST 0X18
-GOTO_END	JP END_COMAND
+END_OUT_DIR	call READ_9SEC		; —’…… 9 ‘…’€
+		call PRINT_0D
+		call PRINT_0D
+loc_3B5		ld bc,(TRD_5E0A)
+		call PRINT_CHISLO	; …—€’ —‘‹€
+		ld hl,TXT_FREE_
+		rst 0x18
+GOTO_END	jp END_COMAND
 
 ; …—€’ ‘™…  …
-PRINT_ERROR	PUSH AF
-		LD A,(TRD_5D0E)		; #FE-€’€…’ BASIC,€—… TR-DOS
-		CP 0XFE
-		JR NZ,CP4PRINT_HEAD
-		POP AF
-		RET
+PRINT_ERROR	push af
+		ld a,(TRD_5D0E)		; #FE-€’€…’ BASIC,€—… TR-DOS
+		cp 0xfe
+		jr nz,CP4PRINT_HEAD
+		pop af
+		ret
 
-CP4PRINT_HEAD	POP AF
-		LD (TRD_5D0F),A		; …	 TR-DOS
-		LD A,(TRD_5D15)		; …‘‹ 0,…—€’€’ €“	TR-DOS.€—… …	…—€’€’
-		OR A
-		JP Z,PRINT_MSG		; …—€’ ’…‘’‚ƒ ‘™…
-		RET
+CP4PRINT_HEAD	pop af
+		ld (TRD_5D0F),a		; …	 TR-DOS
+		ld a,(TRD_5D15)		; …‘‹ 0,…—€’€’ €“	TR-DOS.€—… …	…—€’€’
+		or a
+		call z,PRINT_MSG	; …—€’ ’…‘’‚ƒ ‘™…
+		ret
 
-ERR_NOFILES	LD HL,TXT_NOFILES_
-		LD A,1
-		JP PRINT_TXTERR
+ERR_NOFILES	ld hl,TXT_NOFILES_
+		ld a,1
+		jp PRINT_TXTERR
 
-ERR_OK		LD HL,TXT_OK_		; "O.K."
-		XOR A
-		JP PRINT_TXTERR
+ERR_OK		ld hl,TXT_OK_		; "O.K."
+		xor a
+		jp PRINT_TXTERR
 
 ; —’…… ‘…’€ 0 €’€‹ƒ€
-RD_0SEC2BUF	XOR A
-		LD (TRD_5CCC),A		; ’…“™‰ …	‘…’€	 —’… €’€‹ƒ€
-
+RD_0SEC2BUF	xor a
+		ld (TRD_5CCC),a		; ’…“™‰ …	‘…’€	 —’… €’€‹ƒ€
 ; —’…… ‘…’€ €’€‹ƒ€  …“
-READ_NUM_SEC	LD DE,(TRD_5CCC)	; ’…“™‰ …	‘…’€	 —’… €’€‹ƒ€
-		LD D,0
-READ_SEC4NEM	CALL CREATE_BUF		; ‘‡„€… “”…€
-		LD HL,TRD_5D25
-		LD B,1
-		JP COM_05		; —’…… ‘…’‚
+READ_NUM_SEC	ld de,(TRD_5CCC)	; ’…“™‰ …	‘…’€	 —’… €’€‹ƒ€
+		ld d,0
+READ_SEC4NEM	call CREATE_BUF		; ‘‡„€… “”…€
+		ld hl,TRD_5D25
+		ld b,1
+		jp COM_05		; —’…… ‘…’‚
 
 ; —’…… 9 ‘…’€
-READ_9SEC	CALL CREATE_BUF		; ‘‡„€… “”…€
-		LD DE,8
-		JR READ_SEC4NEM
+READ_9SEC	call CREATE_BUF		; ‘‡„€… “”…€
+		ld de,8
+		jr READ_SEC4NEM
 
 ;€‘’‰€ € „‘…’“
-COM_18		CALL READ_9SEC		; —’…… 9 ‘…’€
-		LD A,(TRD_5E0C)
-		CP 0X10
-		JR Z,CP_TYPE_DSK
-DISCERROR_	LD HL,TXT_DISCERROR_
-		LD A,7
-		JP PRINT_TXTERR
+COM_18		call READ_9SEC		; —’…… 9 ‘…’€
+		ld a,(TRD_5E0C)
+		cp 0x10
+		jr z,CP_TYPE_DSK
+		ld hl,TXT_DISCERROR_
+		rst 0x18
+		jr GOTO_END
 
-CP_TYPE_DSK	CALL GET_TYPE_DISK
-		RES 0,(HL)
-		RES 1,(HL)
-		LD A,(TRD_5E08)
-		BIT 0,A
-		JR NZ, LOC_425
-		SET 0,(HL)
-LOC_425		BIT 3,A
-		RET NZ
-		SET 1,(HL)
-		RET
+CP_TYPE_DSK	call GET_TYPE_DISK
+		res 0,(hl)
+		res 1,(hl)
+		ld a,(TRD_5E08)
+		bit 0,a
+		jr nz, loc_425
+		set 0,(hl)
+loc_425		bit 3,a
+		ret nz
+		set 1,(hl)
+		ret
 
-CP_SECOND_SYM	LD HL,(TRD_5D11)	; €„…‘	‘’ €„› TR_DOS
-		INC HL
-		LD A,(HL)
-		CP 0X0D
-		RET
+CP_SECOND_SYM	ld hl,(TRD_5D11)	; €„…‘	‘’ €„› TR_DOS
+		inc hl
+		ld a,(hl)
+		cp 0x0d
+		ret
 
-CAT		CALL CP_SECOND_SYM	; ‚›‹…… €„› CAT
-		LD BC,2
-		LD (TRD_5CDB),BC
-		JR Z,LOC_46A
-		CP "#"
-		JR NZ,CODES
-		LD (CH_ADD),HL
-		CALL SET_NUM_CHAN
-		CALL GET_SYMSTR
-		CP 0X0D
-		JR Z,LOC_46A
-		CP ","
-		JP NZ,SINTAX_ERROR
-		CALL GET_NEXT_SYM
-		CALL PUT_NUMDSK_STK
-		JR LOC_460
+CAT		call CP_SECOND_SYM	; ‚›‹…… €„› CAT
+		ld bc,2
+		ld (TRD_5CDB),bc
+		jr z,loc_46A
+		cp "#"
+		jr nz,CODES
+		ld (CH_ADD),hl
+		call SET_NUM_CHAN
+		call GET_SYMSTR
+		cp 0x0d
+		jr z,loc_46A
+		cp ","
+		jp nz,SINTAX_ERROR
+		call GET_NEXT_SYM
+		call PUT_NUMDSK_STK
+		jr loc_460
 
-CODES		CALL SET_AND_PUT
-LOC_460		CALL EXIT_IF_SINTAX
-		CALL GET_STKBOT_
-		EX DE,HL
-		CALL SETUP_DSK
-LOC_46A		CALL EXIT_IF_SINTAX
-		LD A,(TRD_5CF6)		; „‘‚„ „‹ ‚……‰ …€–
-		LD (TRD_5CF9),A		; „‘‚„  …€–	‘ 2 ”€‰‹€
-		CALL COM_18		; €‘’‰€ € „‘…’“
-		LD A,(TRD_5CDB)
-LOC_479		CP 2
-		PUSH AF
-		CALL Z,CLEAR_SCREEN	; —‘’€ ‘‚ƒ €€
-		POP AF
-		CP 0X11
-		JP NC,SINTAX_ERROR
-		CALL OPENSTREAM
-		LD A,0XFF
-		LD (TRD_5CF8),A		; „‘‚„  …€–	‘ 2 ”€‰‹€
-		LD HL,TXT_TITLE_	; "TITLE:"
-		RST 0X18
-		LD HL,TRD_5E1A
-		CALL PRINT8SYM
-		CALL PRINT_0D
-		LD A,(TRD_5E09)
-		LD HL,TRD_5E19
-		SUB (HL)
-		PUSH HL
-		CALL PRINT_CHISLO_A_
-		LD HL,TXT_NOFILES+2
-		RST 0X18
-		POP HL
-		LD C,(HL)
-		CALL CONV2_2BYTES
-		LD HL,TXT_DELFILE_	; " DEL. FILE"
-		RST 0X18
-		CALL RD_0SEC2BUF	; —’…… ‘…’€ 0 €’€‹ƒ€
-		LD HL,TRD_5D25
-LOC_4B6		CALL CP_END_DIR		; ‚…€ —€ „…’
-		CALL PRINT_0D
-		LD A,(TRD_5CF6)		; „‘‚„ „‹ ‚……‰ …€–
-		ADD A,"A"
-		RST 0X10
-		LD B,2
-LOC_4C4		CALL CP_END_DIR		; ‚…€ —€ „…’
-		PUSH BC
-		LD A,":"
-		RST 0X10
-		PUSH HL
-		CALL PRINT_FILENAME	; …—€’ … ”€‰‹€
-		LD BC,0X0D
-		POP HL
-		PUSH HL
-		ADD HL,BC
-		LD C,(HL)
-		PUSH BC
-		LD A,C
-		LD B,2
-		CP 0X0A
-		JR C,LOC_4DF
-		DEC B
-LOC_4DF		CP 0X64
-		JR NC,LOC_4E8
-LOC_4E3		LD A," "
-		RST 0X10
-		DJNZ LOC_4E3
-LOC_4E8		POP BC
-		CALL PRINT_CHISLO	; …—€’ —‘‹€
-		POP HL
-		POP BC
-		LD DE,0X10
-		ADD HL,DE
-		DJNZ LOC_4C4
-		JR LOC_4B6
+CODES		call SET_AND_PUT
+loc_460		call EXIT_IF_SINTAX
+		call GET_STKBOT_
+		ex de,hl
+		call SETUP_DSK
+loc_46A		call EXIT_IF_SINTAX
+		ld a,(TRD_5CF6)		; „‘‚„ „‹ ‚……‰ …€–
+		ld (TRD_5CF9),a		; „‘‚„  …€–	‘ 2 ”€‰‹€
+		call COM_18		; €‘’‰€ € „‘…’“
+		ld a,(TRD_5CDB)
+loc_479		cp 2
+		push af
+		call z,CLEAR_SCREEN	; —‘’€ ‘‚ƒ €€
+		pop af
+		cp 0x11
+		jp nc,SINTAX_ERROR
+		call OPENSTREAM
+		ld a,0xff
+		ld (TRD_5CF8),a		; „‘‚„  …€–	‘ 2 ”€‰‹€
+		ld hl,TXT_TITLE_	; "TITLE:"
+		rst 0x18
+		ld hl,TRD_5E1A
+		rst 0x18
+		call PRINT_0D
+		ld a,(TRD_5E09)
+		ld hl,TRD_5E19
+		sub (hl)
+		push hl
+		call PRINT_CHISLO_A_
+		ld hl,TXT_NOFILES+2
+		rst 0x18
+		pop hl
+		ld c,(hl)
+		call CONV2_2BYTES
+		ld hl,TXT_DELFILE_	; " DEL. FILE"
+		rst 0x18
+		call RD_0SEC2BUF	; —’…… ‘…’€ 0 €’€‹ƒ€
+		ld hl,TRD_5D25
+loc_4B6		call CP_END_DIR		; ‚…€ —€ „…’
+		call PRINT_0D
+		ld a,(TRD_5CF6)		; „‘‚„ „‹ ‚……‰ …€–
+		add a,"A"
+		rst 0x10
+		ld b,2
+loc_4C4		call CP_END_DIR		; ‚…€ —€ „…’
+		push bc
+		ld a,":"
+		rst 0x10
+		push hl
+		call PRINT_FILENAME	; …—€’ … ”€‰‹€
+		ld bc,0x0d
+		pop hl
+		push hl
+		add hl,bc
+		ld c,(hl)
+		push bc
+		ld a,c
+		ld b,2
+		cp 0x0a
+		jr c,loc_4DF
+		dec b
+loc_4DF		cp 0x64
+		jr nc,loc_4E8
+loc_4E3		ld a," "
+		rst 0x10
+		djnz loc_4E3
+loc_4E8		pop bc
+		call PRINT_CHISLO	; …—€’ —‘‹€
+		pop hl
+		pop bc
+		ld de,0x10
+		add hl,de
+		djnz loc_4C4
+		jr loc_4B6
 
 ; ‚…€ —€ „…’
-CP_END_DIR	PUSH HL
-		PUSH BC
-		LD A,(TRD_5CF9)		; „‘‚„  …€–	‘ 2 ”€‰‹€
-		LD HL,TRD_5CF6		; „‘‚„ „‹ ‚……‰ …€–
-		CP (HL)
-		CALL NZ,COM_01		; €‘’‰€ € „‘‚„
-		POP BC
-		POP HL
-		JP CP_END_CAT
+CP_END_DIR	push hl
+		push bc
+		ld a,(TRD_5CF9)		; „‘‚„  …€–	‘ 2 ”€‰‹€
+		ld hl,TRD_5CF6		; „‘‚„ „‹ ‚……‰ …€–
+		cp (hl)
+		call nz,COM_01		; €‘’‰€ € „‘‚„
+		pop bc
+		pop hl
+		jp CP_END_CAT
 
-ADD_10		LD DE,0X10
-		ADD HL,DE
-		RET
+ADD_10		ld de,0x10
+		add hl,de
+		ret
 
-CP_END_BUF	PUSH HL
-		PUSH BC
-		LD BC,0XA1DB
-		ADD HL,BC
-		JR C,READ_SEC2BUF
-		POP BC
-		POP HL
-		RET
+CP_END_BUF	push hl
+		push bc
+		ld bc,0xa1db
+		add hl,bc
+		jr c,READ_SEC2BUF
+		pop bc
+		pop hl
+		ret
 
-READ_SEC2BUF	LD HL,TRD_5CCC		; ’…“™‰ …	‘…’€	 —’… €’€‹ƒ€
-		INC (HL)
-		CALL READ_NUM_SEC	; —’…… ‘…’€ €’€‹ƒ€  …“
-		POP BC
-		POP HL
-		LD HL,TRD_5D25
-		RET
+READ_SEC2BUF	ld hl,TRD_5CCC		; ’…“™‰ …	‘…’€	 —’… €’€‹ƒ€
+		inc (hl)
+		call READ_NUM_SEC	; —’…… ‘…’€ €’€‹ƒ€  …“
+		pop bc
+		pop hl
+		ld hl,TRD_5D25
+		ret
 
-NUMDSK2BYTE	AND 0XDF
-		SUB A,"A"
-		JP C,SINTAX_ERROR
-		CP 4
-		JP NC,SINTAX_ERROR
-		RET
+NUMDSK2BYTE	and 0xdf
+		sbc a,"A"
+		jp c,SINTAX_ERROR
+		cp 4 
+		jp nc,SINTAX_ERROR
+		ret  
 
-CP_ON_STKBOT	CALL GET_STKBOT_
-		LD A,C
-		OR B
-		JP Z,SINTAX_ERROR
-		LD A,B
-		AND A
-		JP NZ,SINTAX_ERROR
-		RET
+CP_ON_STKBOT	call GET_STKBOT_
+		ld a,c
+		or b
+		jp z,SINTAX_ERROR
+		ret
 
-NEW		CALL INPUT_2STR2STKBOT	; ‚›‹…… €„› NEW
-		CALL EXIT_IF_SINTAX
-		CALL INPUT_EXTFILENAME	; … €‘… ”€‰‹€
-		CALL SET_CP_FILENAME
-		LD A,(TRD_5CF6)		; „‘‚„ „‹ ‚……‰ …€–
-		LD (TRD_5CF8),A		; „‘‚„  …€–	‘ 2 ”€‰‹€
-		JP NZ,ERR_NOFILES
-		PUSH BC
-		CALL RD_HEAD_FILENAME	; —’…… ‘€’…‹ ”€‰‹€
-		CALL SET_CP_FILENAME
-		PUSH AF
-		LD A,(TRD_5CF8)		; „‘‚„  …€–	‘ 2 ”€‰‹€
-		LD HL,TRD_5CF6		; „‘‚„ „‹ ‚……‰ …€–
-		CP (HL)
-		JP NZ,SINTAX_ERROR
-		CALL COM_18		; €‘’‰€ € „‘…’“
-		POP AF
-		JP Z,FILE_EXISTS
-		POP BC
-LOC_569		CALL SET_HEAD_FILENAME
-		CALL REWRITE_9SEC	; ……‡€‘ 9 ‘…’€
-		JP ERR_OK
+NEW		call INP_2STR2STKBOT	; ‚›‹…… €„› NEW
+		call EXIT_IF_SINTAX
+		call INP_EXTFILENAME	; … €‘… ”€‰‹€
+		call SET_CP_FILENAME
+		ld a,(TRD_5CF6)		; „‘‚„ „‹ ‚……‰ …€–
+		ld (TRD_5CF8),a		; „‘‚„  …€–	‘ 2 ”€‰‹€
+		jp nz,ERR_NOFILES
+		push bc
+		call RDHEAD_FILENAME	; —’…… ‘€’…‹ ”€‰‹€
+		call SET_CP_FILENAME
+		push af
+		ld a,(TRD_5CF8)		; „‘‚„  …€–	‘ 2 ”€‰‹€
+		ld hl,TRD_5CF6		; „‘‚„ „‹ ‚……‰ …€–
+		cp (hl)
+		jp nz,SINTAX_ERROR
+		call COM_18		; €‘’‰€ € „‘…’“
+		pop af
+		jp z,FILE_EXISTS
+		pop bc
+loc_569		call SETHEADFILENAME
+		call REWRITE_9SEC	; ……‡€‘ 9 ‘…’€
+		jp ERR_OK
 
-CP_HIGH_ERR	LD A,(TRD_5D10)		; ‘’€‰ €‰’ 
-		OR A
-		RET
+CP_HIGH_ERR	ld a,(TRD_5D10)		; ‘’€‰ €‰’ 
+		or a 
+		ret  
 
-CP_ERASED_FILES	LD A,(TRD_5D07)		; ‘—…’— “„€‹…›• ”€‰‹‚
-		OR A
-		JP Z,ERR_NOFILES
-		JP ERR_OK
+CP_ERASED_FILES	ld a,(TRD_5D07)		; ‘—…’— “„€‹…›• ”€‰‹‚
+		or a 
+		jp z,ERR_NOFILES
+		jp ERR_OK
 
 ; ‡€‘ € “„€‹…… ”€‰‹€
-GET_OVERWRITE_	PUSH BC
-		CALL CLEAR_SCREEN	; —‘’€ ‘‚ƒ €€
-		LD A,(TRD_5CF6)		; „‘‚„ „‹ ‚……‰ …€–
-		ADD A,"A"
-		CALL PRINT_A_
-		LD A,":"
-		CALL PRINT_A_
-		LD HL,TRD_5CDD		;  ”€‰‹€
-		CALL PRINT_FILENAME	; …—€’ … ”€‰‹€
-		LD HL,ASC_2820		; "FILE EXISTS"
-		RST 0X18		; …—€’ ’…‘’‚ƒ ‘™…
-		CALL GET_KEYS		; †„€… €†€’ ‹€‚
-		CP "Y"
-		PUSH AF
-		CALL CLEAR_SCREEN	; —‘’€ ‘‚ƒ €€
-		POP AF
-		POP BC
-		RET NZ
-		PUSH BC
-		CALL CLEAR_SCREEN	; —‘’€ ‘‚ƒ €€
-		POP BC
-		CALL ERASE_FILE		; “„€‹…… ”€‰‹€
-		XOR A
-		RET
+GET_OVERWRITE_	push bc
+		call CLEAR_SCREEN	; —‘’€ ‘‚ƒ €€
+		ld a,(TRD_5CF6)		; „‘‚„ „‹ ‚……‰ …€–
+		add a,"A"
+		call PRINT_A_
+		ld a,":"
+		call PRINT_A_
+		ld hl,TRD_5CDD		;  ”€‰‹€
+		call PRINT_FILENAME	; …—€’ … ”€‰‹€
+		ld hl,TXT_FILEEXIST	; "FILE EXISTS"
+		call PRINT_MSG		; ―¥η βμ β¥ªαβ®Ά®£® α®®΅ι¥­¨ο
+		call GET_KEYS		; †„€… €†€’ ‹€‚
+		cp "Y"
+		push af
+		call CLEAR_SCREEN	; —‘’€ ‘‚ƒ €€
+		pop af
+		pop bc
+		ret nz
+		push bc
+		call CLEAR_SCREEN	; —‘’€ ‘‚ƒ €€
+		pop bc
+		call ERASE_FILE		; “„€‹…… ”€‰‹€
+		xor a
+		ret
 
-CP_EXT_SHARP	LD A,(TRD_5CE5)		; €‘…… ”€‰‹€
-		CP "#"
-		JR Z,FIND_FILENAME_0A
-		XOR A
-		RET
+CP_EXT_SHARP	ld a,(TRD_5CE5)		; €‘…… ”€‰‹€
+		cp "#"
+		jr z,FINDFILENAME_0A
+		xor a
+		ret
 
-FIND_FILENAME_0A
-		LD A,0X0A
-		LD (TRD_5D06),A		; ‹—…‘’‚ ‘‚‹‚ … ”€‰‹€  ‘…
-		CALL FIND_FILENAME	; ‘	”€‰‹€  … ”€‰‹€
-		LD A,9
-		LD (TRD_5D06),A		; ‹—…‘’‚ ‘‚‹‚ … ”€‰‹€  ‘…
-		RET
+FINDFILENAME_0A	ld a,0x0a
+		ld (TRD_5D06),a		; ‹—…‘’‚ ‘‚‹‚ … ”€‰‹€  ‘…
+		call FIND_FILENAME	; ‘	”€‰‹€  … ”€‰‹€
+		ld a,9
+		ld (TRD_5D06),a		; ‹—…‘’‚ ‘‚‹‚ … ”€‰‹€  ‘…
+		ret
 
-COPY_STAR_STAR	LD A,(TRD_5CDD)		; ‚›‹…… €„› COPY *,*
-		CP "*"
-		JP NZ,ERR_NOFILES
-		CALL GET_STKBOT_
-		EX DE,HL
-		CALL SETUP_DSK
-		LD A,(HL)
-		CP "*"
-		JP NZ,SINTAX_ERROR
-		LD A,(TRD_5CF6)		; „‘‚„ „‹ ‚……‰ …€–
-		LD (TRD_5CF9),A		; „‘‚„  …€–	‘ 2 ”€‰‹€
-		LD A,(TRD_5CF9)		; „‘‚„  …€–	‘ 2 ”€‰‹€
-		CALL COM_01		; €‘’‰€ € „‘‚„
-		CALL COM_18		; €‘’‰€ € „‘…’“
-		LD A,0XFF
-		LD (TRD_5D0D),A
-LOC_5F4		LD A,(TRD_5CF8)		; „‘‚„  …€–	‘ 2 ”€‰‹€
-		CALL COM_01		; €‘’‰€ € „‘‚„
-		CALL COM_18		; €‘’‰€ € „‘…’“
-		LD A,(TRD_5D0D)
-		INC A
-		LD (TRD_5D0D),A
-		LD C,A
-		CALL RD_HEAD_FILENAME	; —’…… ‘€’…‹ ”€‰‹€
-		LD A,(TRD_5CDD)		;  ”€‰‹€
-		AND A
-		JP Z,ERR_OK
-		DEC A
-		JR Z,LOC_5F4
-		LD HL,TRD_5CE6		; „‹ <C>-‘’€’‚›‰ €„…‘,„‹ <B>-„‹€	ƒ€›
-		LD DE,TRD_5CED		; …	…‚ƒ	’…€ ”€‰‹€
-		LD BC,7
-		LDIR
-		LD A,(TRD_5CF9)		; „‘‚„  …€–	‘ 2 ”€‰‹€
-		CALL COM_01		; €‘’‰€ € „‘‚„
-		CALL FIND_FILENAME	; ‘	”€‰‹€  … ”€‰‹€
-		JR NZ,LOC_634
-		CALL CP_EXT_SHARP
-		JR NZ,LOC_634
-		CALL GET_OVERWRITE_	; ‡€‘ € “„€‹…… ”€‰‹€
-		JR NZ, LOC_5F4
-LOC_634		CALL COPY_FILE_ON2DSK	; ‚€… ”€‰‹‚ € 2 „‘‚„€•
-		CALL REWRITE_9SEC	; ……‡€‘ 9 ‘…’€
-		JR LOC_5F4
+COPY_STAR_STAR	ld a,(TRD_5CDD)		; ‚›‹…… €„› COPY *,*
+		cp "*"
+		jp nz,ERR_NOFILES
+		call GET_STKBOT_
+		ex de,hl
+		call SETUP_DSK
+		ld a,(hl)
+		cp "*"
+		jp nz,SINTAX_ERROR
+		ld a,(TRD_5CF6)		; „‘‚„ „‹ ‚……‰ …€–
+		ld (TRD_5CF9),a		; „‘‚„  …€–	‘ 2 ”€‰‹€
+		ld a,(TRD_5CF9)		; „‘‚„  …€–	‘ 2 ”€‰‹€
+		call COM_01		; €‘’‰€ € „‘‚„
+		call COM_18		; €‘’‰€ € „‘…’“
+		ld a,0xff
+		ld (TRD_5D0D),a
+loc_5F4		ld a,(TRD_5CF8)		; „‘‚„  …€–	‘ 2 ”€‰‹€
+		call COM_01		; €‘’‰€ € „‘‚„
+		call COM_18		; €‘’‰€ € „‘…’“
+		ld a,(TRD_5D0D)
+		inc a
+		ld (TRD_5D0D),a
+		ld c,a
+		call RDHEAD_FILENAME	; —’…… ‘€’…‹ ”€‰‹€
+		ld a,(TRD_5CDD)		;  ”€‰‹€
+		cp 0
+		jp z,ERR_OK
+		cp 1
+		jr z,loc_5F4
+		ld hl,TRD_5CE6		; „‹ <C>-‘’€’‚›‰ €„…‘,„‹ <B>-„‹€	ƒ€›
+		ld de,TRD_5CED		; …	…‚ƒ	’…€ ”€‰‹€
+		ld bc,7
+		ldir 
+		ld a,(TRD_5CF9)		; „‘‚„  …€–	‘ 2 ”€‰‹€
+		call COM_01		; €‘’‰€ € „‘‚„
+		call FIND_FILENAME	; ‘	”€‰‹€  … ”€‰‹€
+		jr nz,loc_634
+		call CP_EXT_SHARP
+		jr nz,loc_634
+		call GET_OVERWRITE_	; ‡€‘ € “„€‹…… ”€‰‹€
+		jr nz,loc_5F4
+loc_634		call COPY_FILE2DSK	; ‚€… ”€‰‹‚ € 2 „‘‚„€•
+		call REWRITE_9SEC	; ……‡€‘ 9 ‘…’€
+		jr loc_5F4
 
 ; ‚€… ”€‰‹‚ €	2 „‘‚„€•
-COPY_FILE_ON2DSK	
-		CALL READ_9SEC		; —’…… 9 ‘…’€
-		LD A,(TRD_5E09)
-		CP 0X80
-		JP Z,ERR_DIRFULL	;‚ „…’ …‘’€ …’“ 
-		LD HL,TRD_5CED		; …	…‚ƒ	’…€ ”€‰‹€
-		LD DE,TRD_5CE6		; „‹ <C>-‘’€’‚›‰ €„…‘,„‹ <B>-„‹€	ƒ€›
-		LD BC,7
-		LDIR
-		LD A,(TRD_5CEA)		; „‹€	”€‰‹€ ‚	‘…’€•
-		LD E,A
-		XOR A
-		LD D,A
-		LD HL,(TRD_5E0A)
-		SBC HL,DE
-		JP C,LOC_1C45
-		LD (TRD_5E0A),HL
-		LD HL,(TRD_5E06)
-		LD (TRD_5CEB),HL	; …	…‚ƒ	‘…’€	”€‰‹€
-		PUSH HL
-		CALL COPY_FILE		; ‚€… ”€‰‹€ € 2 „‘‚„€•
-		POP HL
-		LD (TRD_5CEB),HL	; …	…‚ƒ	‘…’€	”€‰‹€
-		LD HL,(TRD_5CF4)
-		LD (TRD_5E06),HL
-		LD HL,TRD_5E09
-		INC (HL)
-		LD C,(HL)
-		DEC C
-		LD B,0
-		PUSH BC
-		LD DE,9
-		LD (TRD_5CF4),DE
-		CALL REWRITE_9SEC	; ……‡€‘ 9 ‘…’€
-		POP BC
-		JP SET_HEAD_FILENAME
+COPY_FILE2DSK	call READ_9SEC		; —’…… 9 ‘…’€
+		ld a,(TRD_5E09)
+		cp 0x80
+		jp z,ERR_DIRFULL	;‚ „…’ …‘’€ …’“ 
+		ld hl,TRD_5CED		; …	…‚ƒ	’…€ ”€‰‹€
+		ld de,TRD_5CE6		; „‹ <C>-‘’€’‚›‰ €„…‘,„‹ <B>-„‹€	ƒ€›
+		ld bc,7
+		ldir 
+		ld de,(TRD_5CEA)	; „‹€	”€‰‹€ ‚	‘…’€•
+		ld d,0
+		or a
+		ld hl,(TRD_5E0A)
+		sbc hl,de
+		jp c,loc_1C45
+		ld (TRD_5E0A),hl
+		ld hl,(TRD_5E06)
+		ld (TRD_5CEB),hl	; …	…‚ƒ	‘…’€	”€‰‹€
+		push hl
+		call COPY_FILE		; ‚€… ”€‰‹€ € 2 „‘‚„€•
+		pop hl
+		ld (TRD_5CEB),hl	; …	…‚ƒ	‘…’€	”€‰‹€
+		ld hl,(TRD_5CF4)
+		ld (TRD_5E06),hl
+		ld hl,TRD_5E09
+		inc (hl)
+		ld c,(hl)
+		dec c
+		ld b,0
+		push bc
+		ld de,9
+		ld (TRD_5CF4),de
+		call REWRITE_9SEC	; ……‡€‘ 9 ‘…’€
+		pop bc
+		call SETHEADFILENAME
+		ret
 
-COPY		LD HL,(TRD_5D11)	; €„…‘	‘’ €„› TR_DOS
-		INC HL
-		LD A,(HL)
-		AND 0XDF
-		CP "S"
-		JP Z,COPY_S
-		CP "B"
-		JP Z,COPY_B
-		CALL INPUT_2STR2STKBOT
-		CALL EXIT_IF_SINTAX
-		CALL RESERVED_RAM
-		CALL INPUT_EXTFILENAME	; … €‘… ”€‰‹€
-		CALL SET_CP_FILENAME
-		LD A,(TRD_5CF6)		; „‘‚„ „‹ ‚……‰ …€–
-		LD (TRD_5CF8),A		; „‘‚„  …€–	‘ 2 ”€‰‹€
-		JP NZ,COPY_STAR_STAR	; ‚›‹…… €„› COPY *,*
-		CALL RD_HEAD_FILENAME	; —’…… ‘€’…‹ ”€‰‹€
-		LD HL,TRD_5CE6		; „‹ <C>-‘’€’‚›‰ €„…‘,„‹ <B>-„‹€	ƒ€›
-		LD DE,TRD_5CED		; …	…‚ƒ	’…€ ”€‰‹€
-		LD BC,7
-		LDIR
-		CALL SET_CP_FILENAME
-		PUSH AF
-		PUSH BC
-		LD A,(TRD_5CF6)		; „‘‚„ „‹ ‚……‰ …€–
-		LD (TRD_5CF9),A		; „‘‚„  …€–	‘ 2 ”€‰‹€
-		LD A,(TRD_5CF8)		; „‘‚„  …€–	‘ 2 ”€‰‹€
-		CALL COM_01		; €‘’‰€ € „‘‚„
-		CALL COM_18		; €‘’‰€ € „‘…’“
-		LD A,(TRD_5CF9)		; „‘‚„  …€–	‘ 2 ”€‰‹€
-		CALL COM_01		; €‘’‰€ € „‘‚„
-		CALL COM_18		; €‘’‰€ € „‘…’“
-		POP BC
-		POP AF
-		JR NZ,LOC_6F3
-		CALL CP_EXT_SHARP
-		JR NZ,LOC_6F3
-		CALL GET_OVERWRITE_	; ‡€‘ € “„€‹…… ”€‰‹€
-		JP NZ,ERR_OK
-LOC_6F3		CALL COPY_FILE_ON2DSK	; ‚€… ”€‰‹‚ € 2 „‘‚„€•
-		CALL REWRITE_9SEC	; ……‡€‘ 9 ‘…’€
-		LD A,(TRD_5CE5)		; €‘…… ”€‰‹€
-		CP "#"
-		JP NZ,ERR_OK
-		LD A,0X0A
-		LD (TRD_5D06),A		; ‹—…‘’‚ ‘‚‹‚ … ”€‰‹€  ‘…
-		LD HL,TRD_5CE6		; „‹ <C>-‘’€’‚›‰ €„…‘,„‹ <B>-„‹€	ƒ€›
-		INC (HL)
-		LD A,(TRD_5CF8)		; „‘‚„  …€–	‘ 2 ”€‰‹€
-		CALL COM_01		; €‘’‰€ € „‘‚„
-		CALL CP_EXT_SHARP
-		JP NZ,ERR_OK
-		CALL RD_HEAD_FILENAME	; —’…… ‘€’…‹ ”€‰‹€
-		LD HL,TRD_5CE6		; „‹ <C>-‘’€’‚›‰ €„…‘,„‹ <B>-„‹€	ƒ€›
-		LD DE,TRD_5CED		; …	…‚ƒ	’…€ ”€‰‹€
-		LD BC,7
-		LDIR
-		LD A,(TRD_5CF9)		; „‘‚„  …€–	‘ 2 ”€‰‹€
-		CALL COM_01		; €‘’‰€ € „‘‚„
-		CALL COM_18		; €‘’‰€ € „‘…’“
-		JR LOC_6F3
+COPY		ld hl,(TRD_5D11)	; €„…‘	‘’ €„› TR_DOS
+		inc hl
+		ld a,(hl)
+		and 0xdf
+		cp "S"
+		jp z,COPY_S
+		cp "B"
+		jp z,COPY_B
+		call INP_2STR2STKBOT
+		call EXIT_IF_SINTAX
+		call RESERVED_RAM
+		call INP_EXTFILENAME	; … €‘… ”€‰‹€
+		call SET_CP_FILENAME
+		ld a,(TRD_5CF6)		; „‘‚„ „‹ ‚……‰ …€–
+		ld (TRD_5CF8),a		; „‘‚„  …€–	‘ 2 ”€‰‹€
+		jp nz,COPY_STAR_STAR	; ‚›‹…… €„› COPY *,*
+		call RDHEAD_FILENAME	; —’…… ‘€’…‹ ”€‰‹€
+		ld hl,TRD_5CE6		; „‹ <C>-‘’€’‚›‰ €„…‘,„‹ <B>-„‹€	ƒ€›
+		ld de,TRD_5CED		; …	…‚ƒ	’…€ ”€‰‹€
+		ld bc,7
+		ldir 
+		call SET_CP_FILENAME
+		push af
+		push bc
+	 	ld a,(TRD_5CF6)		; „‘‚„ „‹ ‚……‰ …€–
+		ld (TRD_5CF9),a		; „‘‚„  …€–	‘ 2 ”€‰‹€
+		ld a,(TRD_5CF8)		; „‘‚„  …€–	‘ 2 ”€‰‹€
+		call COM_01		; €‘’‰€ € „‘‚„
+		call COM_18		; €‘’‰€ € „‘…’“
+		ld a,(TRD_5CF9)		; „‘‚„  …€–	‘ 2 ”€‰‹€
+		call COM_01		; €‘’‰€ € „‘‚„
+		call COM_18		; €‘’‰€ € „‘…’“
+		pop bc
+		pop af
+		jr nz,loc_6F3
+		call CP_EXT_SHARP
+		jr nz,loc_6F3
+		call GET_OVERWRITE_	; ‡€‘ € “„€‹…… ”€‰‹€
+		jp nz,ERR_OK
+loc_6F3		call COPY_FILE2DSK	; ‚€… ”€‰‹‚ € 2 „‘‚„€•
+		call REWRITE_9SEC	; ……‡€‘ 9 ‘…’€
+		ld a,(TRD_5CE5)		; €‘…… ”€‰‹€
+		cp "#"
+		jp nz,ERR_OK
+		ld a,0x0a
+		ld (TRD_5D06),a		; ‹—…‘’‚ ‘‚‹‚ … ”€‰‹€  ‘…
+		ld hl,TRD_5CE6		; „‹ <C>-‘’€’‚›‰ €„…‘,„‹ <B>-„‹€	ƒ€›
+		inc (hl)
+		ld a,(TRD_5CF8)		; „‘‚„  …€–	‘ 2 ”€‰‹€
+		call COM_01		; €‘’‰€ € „‘‚„
+		call CP_EXT_SHARP
+		jp nz,ERR_OK
+		call RDHEAD_FILENAME	; —’…… ‘€’…‹ ”€‰‹€
+		ld hl,TRD_5CE6		; „‹ <C>-‘’€’‚›‰ €„…‘,„‹ <B>-„‹€	ƒ€›
+		ld de,TRD_5CED		; …	…‚ƒ	’…€ ”€‰‹€
+		ld bc,7
+		ldir 
+		ld a,(TRD_5CF9)		; „‘‚„  …€–	‘ 2 ”€‰‹€
+		call COM_01		; €‘’‰€ € „‘‚„
+		call COM_18		; €‘’‰€ € „‘…’“
+		jr loc_6F3
 
 ; ‚€… ”€‰‹€ € 2 „‘‚„€•
-COPY_FILE	LD A,(TRD_5CF1)
-		OR A
-		RET Z
-		PUSH HL
-		LD HL,TRD_5D23
-		SUB (HL)
-		POP HL
-		JR NC,LOC_775
-		LD A,(TRD_5CF1)
-		LD B,A
-		XOR A
-		LD (TRD_5CF1),A
-LOC_744		PUSH BC
-		LD A,(TRD_5CF8)		; „‘‚„  …€–	‘ 2 ”€‰‹€
-		CALL COM_01		; €‘’‰€ € „‘‚„
-		POP BC
-		PUSH BC
-		LD HL,(TRD_5CCF)	; ‚……… ‘•€…… WORK_SP
-		PUSH HL
-		LD DE,(TRD_5CF2)
-		CALL COM_05		; —’…… ‘…’‚
-		LD HL,(TRD_5CF4)
-		LD (TRD_5CF2),HL
-		LD A,(TRD_5CF9)		; „‘‚„  …€–	‘ 2 ”€‰‹€
-		CALL COM_01		; €‘’‰€ € „‘‚„
-		POP HL
-		POP BC
-		LD DE,(TRD_5CEB)	; …	…‚ƒ	‘…’€	”€‰‹€
-		CALL COM_06		; ‡€‘ ‘…’‚
-		LD HL,(TRD_5CF4)
-		LD (TRD_5CEB),HL	; …	…‚ƒ	‘…’€	”€‰‹€
-		JR COPY_FILE		; ‚€… ”€‰‹€ € 2 „‘‚„€•
+COPY_FILE	ld a,(TRD_5CF1)
+		or a
+		ret z
+		push hl
+		ld hl,TRD_5D23
+		sub (hl)
+		pop hl
+		jr nc,loc_775
+		ld a,(TRD_5CF1)
+		ld b,a
+		xor a
+		ld (TRD_5CF1),a
+loc_744		push bc
+		ld a,(TRD_5CF8)		; „‘‚„  …€–	‘ 2 ”€‰‹€
+		call COM_01		; €‘’‰€ € „‘‚„
+		pop bc
+		push bc
+		ld hl,(TRD_5CCF)	; ‚……… ‘•€…… WORK_SP
+		push hl
+		ld de,(TRD_5CF2)
+		call COM_05		; —’…… ‘…’‚
+		ld hl,(TRD_5CF4)
+		ld (TRD_5CF2),hl
+		ld a,(TRD_5CF9)		; „‘‚„  …€–	‘ 2 ”€‰‹€
+		call COM_01		; €‘’‰€ € „‘‚„
+		pop hl
+		pop bc
+		ld de,(TRD_5CEB)	; …	…‚ƒ	‘…’€	”€‰‹€
+		call COM_06		; ‡€‘ ‘…’‚
+		ld hl,(TRD_5CF4)
+		ld (TRD_5CEB),hl	; …	…‚ƒ	‘…’€	”€‰‹€
+		jr COPY_FILE		; ‚€… ”€‰‹€ € 2 „‘‚„€•
 
-LOC_775		LD (TRD_5CF1),A
-		LD A,(TRD_5D23)
-		LD B,A
-		XOR A
-		JR LOC_744
-
-ERASE		CALL SET_AND_PUT	; ‚›‹…… €„› ERASE
-		CALL EXIT_IF_SINTAX
-		CALL INPUT_EXTFILENAME	; … €‘… ”€‰‹€
-		XOR A
-		LD (TRD_5D07),A		; ‘—…’— “„€‹…›• ”€‰‹‚
-		CALL FIND_FILE		; ‘	”€‰‹€  …
-		CALL ERASE_FILES
-		JP NZ,CP_ERASED_FILES
-		JP ERR_OK
+loc_775		ld (TRD_5CF1),a
+		push hl
+		ld hl,TRD_5D23
+		ld b,(hl)
+		pop hl
+		xor a
+		jr loc_744
 
 ;“„€‹…… ”€‰‹€
-ERASE_FILE	XOR A
-		LD (TRD_5D07),A		; ‘—…’— “„€‹…›• ”€‰‹‚
-ERASE_FILES	LD A,(TRD_5CDD)		;  ”€‰‹€
-		LD (TRD_5D08),A		; …‚›‰ ‘‚‹	… ”€‰‹€
-		RET NZ
-		LD HL,TRD_5D07		; ‘—…’— “„€‹…›• ”€‰‹‚
-		INC (HL)
-		PUSH BC
-		CALL READ_9SEC		; —’…… 9 ‘…’€
-		LD A,(TRD_5E09)
-		POP BC
-		INC C
-		CP C
-		JR NZ,LOC_7BC
-		DEC A
-		LD (TRD_5E09),A
-		XOR A
-LOC_7BC		PUSH AF
-		JR Z,LOC_7C3
-		LD HL,TRD_5E19
-		INC (HL)
-LOC_7C3		PUSH BC
-		CALL REWRITE_9SEC	; ……‡€‘ 9 ‘…’€
-		POP BC
-		DEC C
-		CALL RD_HEAD_FILENAME	; —’…… ‘€’…‹ ”€‰‹€
-		POP AF
-		JP Z,LOC_7D2
-		LD A,1
-LOC_7D2		LD (TRD_5CDD),A		;  ”€‰‹€
-		PUSH AF
-		CALL WR_HEAD_FILENAME	; ‘•€…… ‘€’…‹ ”€‰‹€
-		LD A,(TRD_5D08)		; …‚›‰ ‘‚‹	… ”€‰‹€
-		LD (TRD_5CDD),A		;  ”€‰‹€
-		POP AF
-		JR Z,WR_NEW_FREE_SEC
-		CALL FIND_FILENAME	; ‘	”€‰‹€  … ”€‰‹€
-		JR ERASE_FILES
+ERASE_FILE	xor a
+		ld (TRD_5D07),a		; ‘—…’— “„€‹…›• ”€‰‹‚
+		jr ERASE_FILES
 
-		DUPL 0X07E7-$,0XFF
-WR_NEW_FREE_SEC	CALL READ_9SEC		; —’…… 9 ‘…’€
-		LD HL,(TRD_5CEB)	; …	…‚ƒ	‘…’€	”€‰‹€
-		LD (TRD_5E06),HL
-		LD DE,(TRD_5CEA)	; „‹€	”€‰‹€ ‚	‘…’€•
-		LD HL,(TRD_5E0A)
-		LD D,0
-		ADD HL,DE
-		LD (TRD_5E0A),HL
-		JP REWRITE_9SEC		; ……‡€‘ 9 ‘…’€
+ERASE		call SET_AND_PUT	; ‚›‹…… €„› ERASE
+		call EXIT_IF_SINTAX
+		call INP_EXTFILENAME	; … €‘… ”€‰‹€
+		xor a
+		ld (TRD_5D07),a		; ‘—…’— “„€‹…›• ”€‰‹‚
+		call FIND_FILE		; ‘	”€‰‹€  …
+		call ERASE_FILES
+		jp nz,CP_ERASED_FILES
+		jp ERR_OK
+
+ERASE_FILES	ld a,(TRD_5CDD)		;  ”€‰‹€
+		ld (TRD_5D08),a		; …‚›‰ ‘‚‹	… ”€‰‹€
+		ret nz
+		ld hl,TRD_5D07		; ‘—…’— “„€‹…›• ”€‰‹‚
+		inc (hl)
+		push bc
+		call READ_9SEC		; —’…… 9 ‘…’€
+		ld a,(TRD_5E09)
+		pop bc
+		inc c
+		cp c
+		jr nz,loc_7BC
+		dec a
+		ld (TRD_5E09),a
+		xor a
+loc_7BC		push af
+		jr z,loc_7C3
+		ld hl,TRD_5E19
+		inc (hl)
+loc_7C3		push bc
+		call REWRITE_9SEC	; ……‡€‘ 9 ‘…’€
+		pop bc
+		dec c
+		call RDHEAD_FILENAME	; —’…… ‘€’…‹ ”€‰‹€
+		pop af
+		jp z,loc_7D2
+		ld a,1
+loc_7D2		ld (TRD_5CDD),a		;  ”€‰‹€
+		push af
+		call WRHEAD_FILENAME	; ‘•€…… ‘€’…‹ ”€‰‹€
+		ld a,(TRD_5D08)		; …‚›‰ ‘‚‹	… ”€‰‹€
+		ld (TRD_5CDD),a		;  ”€‰‹€
+		pop af
+		jr z,WR_NEW_FREE_SEC
+		call FIND_FILENAME	; ‘	”€‰‹€  … ”€‰‹€
+		jr ERASE_FILES
+
+WR_NEW_FREE_SEC	call READ_9SEC		; —’…… 9 ‘…’€
+		ld hl,(TRD_5CEB)	; …	…‚ƒ	‘…’€	”€‰‹€
+		ld (TRD_5E06),hl
+		ld de,(TRD_5CEA)	; „‹€	”€‰‹€ ‚	‘…’€•
+		ld hl,(TRD_5E0A)
+		ld d,0
+		add hl,de
+		ld (TRD_5E0A),hl
+		jp REWRITE_9SEC		; ……‡€‘ 9 ‘…’€
 
 ;===============FREE SPACE 1============
 		include virtual.a80
-
-WORK4ERROR	LD HL,(TRD_5D1C)	; ‘•€…… …ƒ‘’€ SP
-		DEC HL
-		DEC HL
-		LD SP,HL
-		JP LOC_1D2F
-
-CP_VARSTRDOS	CALL SET_RWPORT0
-		LD HL,(CHANS)
-		OR A
-		LD BC,TRD_5D25
-		SBC HL,BC
-		CALL C,CREATE_VARS
-		LD HL,TRD_5CC2			;„‹ ‚›•„€ ‡ TR-DOS ‚ BASIC  €„… RETURN
-		RET
-
-RUN_CODE	CALL RESTORE_SP
-		LD BC,(TRD_5CC6)		;€„…‘ ‡€ƒ“‡ ‡ €„‰ ‘’LD BC,(TRD_5CD9)
-		PUSH BC
-		RET
-
-; …—€’ … ”€‰‹€
-PRINT_FILENAME	PUSH BC
-		CALL PRINT8SYM
-		LD A,0X3C
-		RST 0X10
-		LD A,(HL)
-		RST 0X10
-		LD A,0X3E
-		RST 0X10
-		POP BC
-		RET
-
-;…—€’ ’…“™…ƒ ”€’“…ƒ ’…€  ‘’›
-PRINT_NUM_TRK	PUSH DE
-		PUSH AF
-		PUSH DE
-		LD A,0X16
-		RST 0X10
-		LD A,(0X5C6B)
-		DEC A
-		RST 0X10
-		LD A,0
-		RST 0X10
-		LD HL,TXT_FORMAT_TRK
-		RST 0X18
-		POP DE
-		LD C,E
-		LD B,0
-		CALL PRINT_CHISLO
-		LD HL,TXT_FSIDE
-		RST 0X18
-		POP AF
-		LD A,"0"
-		ADC A,0
-		RST 0X10
-		POP DE
-		RET
-
-TXT_FORMAT_TRK	DC "FORMAT TRACK: "
-TXT_FSIDE	DC "  SIDE: "
-
-PRINT8SYM	PUSH BC
-		LD B,8
-PRINT8SYM1	LD A,(HL)
-		AND 0X7F
-		INC HL
-		RST 0X20
-		DW 0X10
-		DJNZ PRINT8SYM1
-		POP BC
-		RET
 ;=======END OF FREE SPACE 1=============
 
-COM_STAR	CALL SET_AND_PUT
-		CALL EXIT_IF_SINTAX
-		CALL CP_ON_STKBOT
-		LD A,(DE)
-		CALL NUMDSK2BYTE
-		LD (TRD_5D19),A		; „‘‚„  “‹—€
-		CALL COM_01		; €‘’‰€ € „‘‚„
-		JP ERR_OK
+		DUPL 0X1018-$,0XFF
+COM_STAR	call SET_AND_PUT
+		call EXIT_IF_SINTAX
+		call CP_ON_STKBOT
+		ld a,(de)
+		call NUMDSK2BYTE
+		ld (TRD_5D19),a		; „‘‚„  “‹—€
+		call COM_01		; €‘’‰€ € „‘‚„
+		jp ERR_OK
 
 ; …	€‘… ”€‰‹€
-INPUT_EXTFILENAME
-		LD B,"C"
-		LD A,(TRD_5CD6)		; #FF-€„€ ’€ ‘’€‘—…‘ €€‹‡€’
-		OR A
-		JR NZ,LOC_104D
-		CALL GET_SYMSTR
-		CP 0XAF			;CODE
-		LD B,"C"
-		JR Z,LOC_104D
-		CP 0XE4			;DATA
-		LD B,"D"
-		JR Z,LOC_104D
-		CP "#"
-		LD B,"#"
-		JR Z,LOC_104D
-		LD B,"B"
-LOC_104D	LD HL,TRD_5CE5		; €‘…… ”€‰‹€
-		LD (HL),B
-		RET
+INP_EXTFILENAME	ld b,"C"
+		ld a,(TRD_5CD6)		; #FF-€„€ ’€ ‘’€‘—…‘ €€‹‡€’
+		or a 
+		jr nz,loc_104D
+		call GET_SYMSTR
+		cp __CODE
+		ld b,"C"
+		jr z,loc_104D
+		cp __DATA
+		ld b,"D"
+		jr z,loc_104D
+		cp "#"
+		ld b,"#"
+		jr z,loc_104D
+		ld b,"B"
+loc_104D	ld hl,TRD_5CE5		; €‘…… ”€‰‹€
+		ld (hl),b
+		ret
 
 ; †„€… €†€’ ‹€‚
-GET_KEYS	DI
-		PUSH HL
-		PUSH BC
-		PUSH DE
-LOC_1056	RST 0X20
-		DW 0X028E			; ‘€‚€… ‹€‚€’“›
-		LD C,0
-		JR NZ,LOC_1056
-		RST 0X20
-		DW 0X031E			; ‚…€ ‡€—… €†€’‰ ‹€‚
-		JR NC,LOC_1056
-		DEC D
-		LD E,A
-		RST 0X20
-		DW 0X0333			; „…„‚€…	‹€‚€’“›
-		POP DE
-		POP BC
-		POP HL
-		AND 0XDF
-		EI
-		RET
+GET_KEYS	di
+		push hl
+		push bc
+		push de
+loc_1056	rst 0x20
+		dw 0x028e			; ‘€‚€… ‹€‚€’“›
+		ld c,0
+		jr nz,loc_1056
+		rst 0x20 
+		dw 0x031e			; ‚…€ ‡€—… €†€’‰ ‹€‚
+		jr nc,loc_1056
+		dec d
+		ld e,a
+		rst 0x20
+		dw 0x0333			; „…„‚€…	‹€‚€’“›
+		pop de
+		pop bc
+		pop hl
+		and 0xdf
+		ei
+		ret
 
 ; ‘‚€… –‚…’›• ‹‰ ‡€‘’€‚ „‘€
-OUT_COLOR_LINE	LD HL,ZASTV_ATR
-		LD B,0X0A
-LOC_1073	LD (HL),7
-		INC HL
-		DJNZ LOC_1073
-		LD (HL),2
-		INC HL
-		LD (HL),0X16
-		INC HL
-		LD (HL),0X34
-		INC HL
-		LD (HL),0X25
-		INC HL
-		LD (HL),0X28
-		INC HL
-		LD (HL),7
-		LD HL,ZASTV_PIX
-		LD B,8
-		XOR A
-LOC_108F	PUSH BC
-		SCF
-		RLA
-		PUSH HL
-		PUSH AF
-		LD B,5
-LOC_1096	INC HL
-		LD (HL), A
-		DJNZ LOC_1096
-		POP AF
-		POP HL
-		POP BC
-		INC H
-		DJNZ LOC_108F
-		RET
+OUT_COLOR_LINE	ld hl,ZASTV_ATR
+		ld b,0x0a
+loc_1073	ld (hl),7
+		inc hl
+		djnz loc_1073
+		ld (hl),2
+		inc hl
+		ld (hl),0x16
+		inc hl
+		ld (hl),0x34
+		inc hl
+		ld (hl),0x25
+		inc hl
+		ld (hl),0x28
+		inc hl
+		ld (hl),7
+		ld hl,ZASTV_PIX
+		ld b,8
+		xor a
+loc_108F	push bc
+		scf
+		rla
+		push hl
+		push af
+		ld b,5
+loc_1096	inc hl
+		ld (hl), a
+		djnz loc_1096
+		pop af
+		pop hl
+		pop bc
+		ld de,0x100
+		add hl,de
+		djnz loc_108F
+		ret
 
-		DUPL 0X10A5-$,0XFF
-ASC_10A5	DC " Del. File(s)"
-ASC_10B3	DC "Title: "
-BYTE_10BA	DB 0X17,0X11
-		DC " Disk Drive: "
-BYTE_10CA	DB 0X17,0X10,0XA0
-BYTE_10CE	DB 0X17,0X10
-		DC " 40 Track S. Side"
-BYTE_10E2	DB 0X17,0X10
-		DC " 80 Track S. Side"
-BYTE_10F6	DB 0X17,0X10
-		DC " 40 Track D. Side"
-BYTE_110A	DB 0X17,0X10
-		DC " 80 Track D. Side"
-BYTE_111E	DB 0X17,0X10
-		DC " Free Sector "
-BYTE_112E	DB 0X0D,0X0D
-		DC "  File Name    Start Length Line"
+		ret
 
-CREATE_222BYTES	LD HL,(WORKSP)
-		LD (TRD_5CCF),HL	; ‚……… ‘•€…… WORK_SP
-		LD BC,0X222
-		JP CREATE_FREERAM
+TXT_DELFILES	db " Del."
+TXT_FILE_S_	DZ " File(s)"
+TXT_TITLE	DC "Title: "
+TXT_DISKDRIVE	DB 0X17,0X11," Disk Drive: ",0
+TXT_1SPACE	DB 0X17,0X10," ",0
+TXT_40TRK_SS	DB 0X17,0X10," 40 Track S. Side",0
+TXT_80TRK_SS	DB 0X17,0X10," 80 Track S. Side",0
+TXT_40TRK_DS	DB 0X17,0X10," 40 Track D. Side",0
+TXT_80TRK_DS	DB 0X17,0X10," 80 Track D. Side",0
+TXT_FREESECS	DB 0X17,0X10," Free Sector ",0
+TXT_FILENAME	DB 0X0D,0X0D,"  File Name    Start Length Line",0
+
+CREATE_222BYTES	ld hl,(WORKSP)
+		ld (TRD_5CCF),hl	; ‚……… ‘•€…… WORK_SP
+		ld bc,0x222
+		jp CREATE_FREERAM
 
 ;…—€’ —‘‹€ ‡ …ƒ‘’€ HL ‚ „…‘’— ‚„…
-PRINT_HL_CHISLO	XOR A
-		LD DE,10000
-LOC_1161	SBC HL,DE
-		JR C,LOC_1168
-		INC A
-		JR LOC_1161
+PRINT_HL_CHISLO	xor a
+		ld de,10000
+loc_1161	sbc hl,de
+		jr c,loc_1168
+		inc a
+		jr loc_1161
 
-LOC_1168	ADD A,"0"
-		CALL PRINT_A_
-		ADD HL,DE
-		XOR A
-		LD DE,1000
-LOC_1172	SBC HL,DE
-		JR C,LOC_1179
-		INC A
-		JR LOC_1172
+loc_1168	add a,"0"
+		call PRINT_A_CHISLO
+		add hl,de
+		xor a
+		ld de,1000
+loc_1172	sbc hl,de
+		jr c,loc_1179
+		inc a
+		jr loc_1172
 
-LOC_1179	ADD A,"0"
-		CALL PRINT_A_
-		ADD HL,DE
-		XOR A
-		LD DE,100
-LOC_1183	SBC HL,DE
-		JR C,LOC_118A
-		INC A
-		JR LOC_1183
+loc_1179	add a,"0"
+		call PRINT_A_CHISLO
+		add hl,de
+		xor a
+		ld de,100
+loc_1183	sbc hl,de
+		jr c,loc_118A
+		inc a
+		jr loc_1183
 
-LOC_118A	ADD A,"0"
-		CALL PRINT_A_
-		ADD HL,DE
-		XOR A
-		LD DE,10
-LOC_1194	SBC HL,DE
-		JR C,LOC_119B
-		INC A
-		JR LOC_1194
+loc_118A	add a,"0"
+		call PRINT_A_CHISLO
+		add hl,de
+		xor a
+		ld de,10
+loc_1194	sbc hl,de
+		jr c,loc_119B
+		inc a
+		jr loc_1194
 
-LOC_119B	ADD A,"0"
-		CALL PRINT_A_
-		ADD HL,DE
-		LD A,L
-		ADD A,"0"
-		JP PRINT_A_
+loc_119B	add a,"0"
+		call PRINT_A_CHISLO
+		add hl,de
+		ld a,l
+		add a,"0"
+		call PRINT_A_CHISLO
+		ret
 
-FIND_END_BUFDIR	PUSH HL
-		PUSH BC
-		LD A,(TRD_5CF9)		; „‘‚„  …€–	‘ 2 ”€‰‹€
-		LD HL,TRD_5CF6		; „‘‚„ „‹ ‚……‰ …€–
-		CP (HL)
-		CALL NZ,COM_01		; €‘’‰€ € „‘‚„
-		POP BC
-		POP HL
-		CALL CP_END_BUF
-		LD A,(HL)
-		OR A
-		JP Z,END_COMAND
-		CP 1
-		CALL Z,ADD_10
-		RET NZ
-		JR FIND_END_BUFDIR
+PRINT_A_CHISLO	push hl
+		push de
+		call PRINT_A_
+		pop de
+		pop hl
+		ret
 
-LIST		CALL CP_SECOND_SYM
-		LD BC,2
-		LD (TRD_5CDB),BC
-		JR Z,LOC_1205
-		CP "#"
-		JR NZ,LIST4CODES
-		LD (CH_ADD),HL
-		CALL SET_NUM_CHAN
-		CALL GET_SYMSTR
-		CP 0X0D
-		JR Z,LOC_1205
-		CP ","
-		JP NZ,SINTAX_ERROR
-		CALL GET_NEXT_SYM
-		CALL PUT_NUMDSK_STK
-		JR LOC_11FB
+FIND_END_BUFDIR	push hl
+		push bc
+		ld a,(TRD_5CF9)		; „‘‚„  …€–	‘ 2 ”€‰‹€
+		ld hl,TRD_5CF6		; „‘‚„ „‹ ‚……‰ …€–
+		cp (hl)
+		call nz,COM_01		; €‘’‰€ € „‘‚„
+		pop bc
+		pop hl
+		call CP_END_BUF
+		ld a,(hl)
+		or a
+		jp z,END_COMAND
+		cp 1
+		call z,ADD_10
+		ret nz
+		jr FIND_END_BUFDIR
 
-LIST4CODES	CALL SET_AND_PUT
-LOC_11FB	CALL EXIT_IF_SINTAX
-		CALL GET_STKBOT_
-		EX DE,HL
-		CALL SETUP_DSK
-LOC_1205	CALL EXIT_IF_SINTAX
-		LD A,(TRD_5CF6)		; „‘‚„ „‹ ‚……‰ …€–
-		LD (TRD_5CF9),A		; „‘‚„  …€–	‘ 2 ”€‰‹€
-		CALL COM_18		; €‘’‰€ € „‘…’“
-		LD A,(TRD_5CDB)
-		CP 2
-		PUSH AF
-		CALL Z,CLEAR_SCREEN	; —‘’€ ‘‚ƒ €€
-		POP AF
-		CP 0X11
-		JP NC,SINTAX_ERROR
-		CALL OPENSTREAM
-		LD A,0XFF
-		LD (TRD_5CF8),A		; „‘‚„  …€–	‘ 2 ”€‰‹€
-		CALL CREATE_222BYTES
-		LD HL,TRD_5E06
-		LD DE,(TRD_5CCF)	; ‚……… ‘•€…… WORK_SP
-		LD BC,0X20
-		LDIR
-		CALL RD_0SEC2BUF	; —’…… ‘…’€ 0 €’€‹ƒ€
-		LD HL,TRD_5D25
-		PUSH HL
-LOC_123E	LD HL,ASC_10B3		; "TITLE:"
-		PUSH BC
-		RST 0X18
-		LD HL,(TRD_5CCF)	; ‚……… ‘•€…… WORK_SP
-		LD BC,0X14
-		ADD HL,BC
-		CALL PRINT8SYM
-		LD HL,BYTE_10BA
-		RST 0X18
-		LD A,(TRD_5CF6)		; „‘‚„ „‹ ‚……‰ …€–
-		ADD A,"A"
-		CALL PRINT_A_
-		CALL PRINT_0D
-		LD HL,(TRD_5CCF)	; ‚……… ‘•€…… WORK_SP
-		LD BC,3
-		ADD HL,BC
-		LD A,(HL)
-		LD HL,(TRD_5CCF)	; ‚……… ‘•€…… WORK_SP
-		LD BC,0X13
-		ADD HL,BC
-		SUB (HL)
-		PUSH HL
-		CALL PRINT_CHISLO_A_
-		LD HL,ASC_10A5+5
-		RST 0X18
-		LD HL,(TRD_5CCF)	; ‚……… ‘•€…… WORK_SP
-		LD BC,2
-		ADD HL,BC
-		LD A,(HL)
-		LD HL,BYTE_10CE
-		CP 0X19
-		JR Z,LOC_1292
-		LD HL,BYTE_10E2
-		CP 0X18
-		JR Z,LOC_1292
-		LD HL,BYTE_10F6
-		CP 0X17
-		JR Z,LOC_1292
-		LD HL,BYTE_110A
-LOC_1292	RST 0X18
-		POP HL
-		LD C,(HL)
-		CALL CONV2_2BYTES
-		LD HL,ASC_10A5		; " DEL. FILE(S)"
-		RST 0X18
-		LD HL,BYTE_111E
-		RST 0X18
-		LD HL,(TRD_5CCF)	; ‚……… ‘•€…… WORK_SP
-		LD BC,4
-		ADD HL,BC
-		LD C,(HL)
-		INC HL
-		LD B,(HL)
-		CALL PRINT_CHISLO	; …—€’ —‘‹€
-		LD HL,BYTE_112E
-		RST 0X18
-		POP BC
-		POP HL
-		LD B,0X10		;‘‹ … ”€‰‹‚ ‡€ •„ ‚›‚…‘’ € €
-LOC_12B5	CALL FIND_END_BUFDIR	;‚…€ € —€… „…’
-		CALL PRINT_0D		;……‚„ ‘’
-		PUSH BC
-		PUSH HL
-		CALL PRINT_FILENAME	; …—€’ … ”€‰‹€
-		LD BC,0X0D
-		POP HL
-		PUSH HL
-		ADD HL,BC
-		LD C,(HL)
-		PUSH BC
-		LD A,C
-		LD B,2
-		CP 0X0A
-		JR C,LOC_12D0
-		DEC B
-LOC_12D0	CP 0X64
-		JR NC,LOC_12D9
-LOC_12D4	LD A," "
-		RST 0X10
-		DJNZ LOC_12D4
-LOC_12D9	POP BC
-		CALL PRINT_CHISLO	; …—€’ —‘‹€
-		LD HL,BYTE_10CA
-		RST 0X18
-		POP HL
-		PUSH HL
-		LD BC,9
-		ADD HL,BC
-		LD E,(HL)
-		INC HL
-		LD D,(HL)
-		PUSH HL
-		EX DE,HL
-		CALL PRINT_HL_CHISLO
-		LD A," "
-		CALL PRINT_A_
-		POP HL
-		INC HL
-		LD E,(HL)
-		INC HL
-		LD D,(HL)
-		EX DE,HL
-		CALL PRINT_HL_CHISLO
-		POP HL
-		PUSH HL
-		LD BC,8
-		ADD HL,BC
-		LD A,(HL)
-		CP "B"
-		CALL Z,PRN_ADR_ASTART
-		POP HL
-		POP BC
-		LD DE,0X10
-		ADD HL,DE
-		DJNZ LOC_12B5
-		PUSH HL
-		CALL PRINT_0D
-		CALL PRINT_0D
-		JP LOC_123E
+LIST		call CP_SECOND_SYM
+		ld bc,2
+		ld (TRD_5CDB),bc
+		jr z,loc_1205
+		cp "#"
+		jr nz,LIST4CODES
+		ld (CH_ADD),hl
+		call SET_NUM_CHAN
+		call GET_SYMSTR
+		cp 0x0d
+		jr z,loc_1205
+		cp ","
+		jp nz,SINTAX_ERROR
+		call GET_NEXT_SYM
+		call PUT_NUMDSK_STK
+		jr loc_11FB
 
-PRN_ADR_ASTART	LD BC,5
-		ADD HL,BC
-		LD B,(HL)
-		INC HL
-		LD E,(HL)
-		INC HL
-		LD D,(HL)
-		DEC B
-		JR Z,LOC_1335
-		DEC B
-		JR Z,LOC_1335
-		LD A,0X10
-LOC_132C	INC E
-		CP E
-		JR NZ,LOC_1333
-		LD E,0
-		INC D
-LOC_1333	DJNZ LOC_132C
-LOC_1335	LD HL,(TRD_5CCF)	; ‚……… ‘•€…… WORK_SP
-		LD BC,0X21
-		ADD HL,BC
-		LD B,2
-		PUSH HL
-		CALL COM_05		; —’…… ‘…’‚
-		LD A,0X80
-		POP HL
-		LD BC,0X200
-		CPIR
-		LD A,(HL)
-		CP 0XAA
-		RET NZ
-		INC HL
-		LD C,(HL)
-		INC HL
-		LD B,(HL)
-		LD A,B
-		OR C
-		RET Z
-		LD A,0X20
-		CALL PRINT_A_
-		JP PRINT_CHISLO		; …—€’ —‘‹€
+LIST4CODES	call SET_AND_PUT
+loc_11FB	call EXIT_IF_SINTAX
+		call GET_STKBOT_
+		ex de,hl
+		call SETUP_DSK
+loc_1205	call EXIT_IF_SINTAX
+		ld a,(TRD_5CF6)		; „‘‚„ „‹ ‚……‰ …€–
+		ld (TRD_5CF9),a		; „‘‚„  …€–	‘ 2 ”€‰‹€
+		call COM_18		; €‘’‰€ € „‘…’“
+		ld a,(TRD_5CDB)
+		cp 2
+		push af
+		call z,CLEAR_SCREEN	; —‘’€ ‘‚ƒ €€
+		pop af
+		cp 0x11
+		jp nc,SINTAX_ERROR
+		call OPENSTREAM
+		ld a,0xff
+		ld (TRD_5CF8),a		; „‘‚„  …€–	‘ 2 ”€‰‹€
+		call CREATE_222BYTES
+		ld hl,TRD_5E06
+		ld de,(TRD_5CCF)	; ‚……… ‘•€…… WORK_SP
+		ld bc,0X20
+		ldir 
+		call RD_0SEC2BUF	; —’…… ‘…’€ 0 €’€‹ƒ€
+		ld hl,TRD_5D25
+		push hl
+loc_123E	ld hl,TXT_TITLE		; "TITLE:"
+		push bc
+		rst 0x18
+		ld hl,(TRD_5CCF)	; ‚……… ‘•€…… WORK_SP
+		ld bc,0x14
+		add hl,bc
+		rst 0x18
+		ld hl,TXT_DISKDRIVE
+		rst 0x18
+		ld a,(TRD_5CF6)		; „‘‚„ „‹ ‚……‰ …€–
+		add a,"A"
+		call PRINT_A_
+		call PRINT_0D
+		ld hl,(TRD_5CCF)	; ‚……… ‘•€…… WORK_SP
+		ld bc,3
+		add hl,bc
+		ld a,(hl)
+		ld hl,(TRD_5CCF)	; ‚……… ‘•€…… WORK_SP
+		ld bc,0x13
+		add hl,bc
+		sub (hl)
+		push hl
+		call PRINT_CHISLO_A_
+		ld hl,TXT_DELFILES+5
+		rst 0x18
+		ld hl,(TRD_5CCF)	; ‚……… ‘•€…… WORK_SP
+		ld bc,2
+		add hl,bc
+		ld a,(hl)
+		ld hl,TXT_40TRK_SS
+		cp 0x19
+		jr z,loc_1292
+		ld hl,TXT_80TRK_SS
+		cp 0x18
+		jr z,loc_1292
+		ld hl,TXT_40TRK_DS
+		cp 0x17
+		jr z,loc_1292
+		ld hl,TXT_80TRK_DS
+loc_1292	rst 0x18
+		pop hl
+		ld c,(hl)
+		call CONV2_2BYTES
+		ld hl,TXT_DELFILES	; " DEL. FILE(S)"
+		rst 0x18
+		ld hl,TXT_FREESECS
+		rst 0x18
+		ld hl,(TRD_5CCF)	; ‚……… ‘•€…… WORK_SP
+		ld bc,4
+		add hl,bc
+		ld c,(hl)
+		inc hl
+		ld b,(hl)
+		call PRINT_CHISLO	; …—€’ —‘‹€
+		ld hl,TXT_FILENAME
+		rst 0x18
+		pop bc
+		pop hl
+		ld b,0x10		;‘‹ … ”€‰‹‚ ‡€ •„ ‚›‚…‘’ € €
+loc_12B5	call FIND_END_BUFDIR	;‚…€ € —€… „…’
+		call PRINT_0D		;……‚„ ‘’
+		push bc
+		push hl
+		call PRINT_FILENAME	; …—€’ … ”€‰‹€
+		ld bc,0x0d
+		pop hl
+		push hl
+		add hl,bc
+		ld c,(hl)
+		push bc
+		ld a,c
+		ld b,2
+		cp 10
+		jr c,loc_12D0
+		dec b
+loc_12D0	cp 100
+		jr nc,loc_12D9
+loc_12D4	ld a," "
+		rst 0x10
+		djnz loc_12D4
+loc_12D9	pop bc
+		call PRINT_CHISLO	; …—€’ —‘‹€
+		ld hl,TXT_1SPACE
+		rst 0x18
+		pop hl
+		push hl
+		ld bc,9
+		add hl,bc
+		ld e,(hl)
+		inc hl
+		ld d,(hl)
+		push hl
+		ex de,hl
+		call PRINT_HL_CHISLO
+		ld a," "
+		call PRINT_A_
+		pop hl
+		inc hl
+		ld e,(hl)
+		inc hl
+		ld d,(hl)
+		ex de,hl
+		call PRINT_HL_CHISLO
+		pop hl
+		push hl
+		ld bc,8
+		add hl,bc
+		ld a,(hl)
+		cp "B"
+		call z,PRN_ADR_ASTART
+		pop hl
+		pop bc
+		ld de,0x10
+		add hl,de
+		djnz loc_12B5
+		push hl
+		call PRINT_0D
+		call PRINT_0D
+		jp loc_123E
 
-COPY_S		CALL SET_CH_ADD
-		CALL GET_NEXT_SYM
-		CALL PUT_NUMDSK_STK
-		CALL EXIT_IF_SINTAX
-		CALL RESERVED_RAM
-		LD HL,ASC_27AA		; "INSERT SOURCE DISK THEN PRESS Y"
-		RST 0X18		; …—€’ ’…‘’‚ƒ ‘™…
-LOC_1375	CALL GET_KEYS		; †„€… €†€’ ‹€‚
-		CP "Y"
-		JR NZ,LOC_1375
-		CALL CLEAR_DOWN_SCR	; —‘’€ †…‰ —€‘’ €€
-		CALL INPUT_EXTFILENAME	; … €‘… ”€‰‹€
-		CALL SET_CP_FILENAME
-		JP NZ,ERR_NOFILES
-		CALL COPY_ON1DSK
-		LD A,(TRD_5CE5)		; €‘…… ”€‰‹€
-		CP "#"
-		JP NZ,ERR_OK
-LOC_1393	LD A,0X0A
-		LD (TRD_5D06),A		; ‹—…‘’‚ ‘‚‹‚ … ”€‰‹€  ‘…
-		LD HL,TRD_5CE6		; „‹ <C>-‘’€’‚›‰ €„…‘,„‹ <B>-„‹€	ƒ€›
-		INC (HL)
-		CALL CLEAR_SCREEN	; —‘’€ ‘‚ƒ €€
-		LD HL,ASC_27AA		; "INSERT SOURCE DISK THEN PRESS Y"
-		RST 0X18		; …—€’ ’…‘’‚ƒ ‘™…
-LOC_13A5	CALL GET_KEYS		; †„€… €†€’ ‹€‚
-		CP "Y"
-		JR NZ,LOC_13A5
-		CALL FIND_FILENAME	; ‘	”€‰‹€  … ”€‰‹€
-		JP NZ,ERR_OK
-		CALL COPY_ON1DSK
-		JR LOC_1393
+PRN_ADR_ASTART	ld bc,5
+		add hl,bc
+		ld b,(hl)
+		inc hl
+		ld e,(hl)
+		inc hl
+		ld d,(hl)
+		dec b
+		jr z,loc_1335
+		dec b
+		jr z,loc_1335
+		ld a,0x10
+loc_132C	inc e
+		cp e
+		jr nz,loc_1333
+		ld e,0
+		inc d
+loc_1333	djnz loc_132C
+loc_1335	ld hl,(TRD_5CCF)	; ‚……… ‘•€…… WORK_SP
+		ld bc,0x21
+		add hl,bc
+		ld b,2
+		push hl
+		call COM_05		; —’…… ‘…’‚
+		ld a,0x80
+		pop hl
+		ld bc,0x200
+		cpir
+		ld a,(hl)
+		cp 0xaa
+		ret nz
+		inc hl
+		ld c,(hl)
+		inc hl
+		ld b,(hl)
+		ld a,b
+		or c
+		ret z
+		push bc
+		ld a," "
+		call PRINT_A_
+		pop bc
+		call PRINT_CHISLO	; …—€’ —‘‹€
+		ret
 
-COPY_ON1DSK	CALL RD_HEAD_FILENAME	; —’…… ‘€’…‹ ”€‰‹€
-		LD HL,TRD_5CE6		; „‹ <C>-‘’€’‚›‰ €„…‘,„‹ <B>-„‹€	ƒ€›
-		LD DE,TRD_5CED		; …	…‚ƒ	’…€ ”€‰‹€
-		LD BC,7
-		LDIR
-		LD A,(TRD_5CF1)
-		LD (TRD_5D10),A		; ‘’€‰ €‰’ 
-		CALL COM_18		; €‘’‰€ € „‘…’“
-		CALL GET_TYPE_DISK
-		LD (TRD_5CD9), A	; …†“’—€	„‹€ „‹ <B> 	<C>
-		LD A,0XFF
-		LD (TRD_5D21),A
-		CALL COPY_ON1DSK_
-		LD HL,(TRD_5D1F)
-		LD (TRD_5CEB),HL	; …	…‚ƒ	‘…’€	”€‰‹€
-		LD HL,(TRD_5CF4)
-		LD (TRD_5E06),HL
-		LD HL,TRD_5E09
-		INC (HL)
-		LD C,(HL)
-		DEC C
-		LD B,0
-		PUSH BC
-		LD DE,9
-		LD (TRD_5CF4),DE
-		CALL REWRITE_9SEC	; ……‡€‘ 9 ‘…’€
-		POP BC
-		CALL SET_HEAD_FILENAME
-		JP REWRITE_9SEC		; ……‡€‘ 9 ‘…’€
+COPY_S		call SET_CH_ADD
+		call GET_NEXT_SYM
+		call PUT_NUMDSK_STK
+		call EXIT_IF_SINTAX
+		call RESERVED_RAM
+		ld hl,TXT_INS_SRC	; "INSERT SOURCE DISK THEN PRESS Y"
+		call PRINT_MSG		; …—€’ ’…‘’‚ƒ ‘™…
+loc_1375	call GET_KEYS		; †„€… €†€’ ‹€‚
+		cp "Y"
+		jr nz,loc_1375
+		call CLEAR_DOWN_SCR	; —‘’€ †…‰ —€‘’ €€
+		call INP_EXTFILENAME	; … €‘… ”€‰‹€
+		call SET_CP_FILENAME
+		jp nz,ERR_NOFILES
+		call COPY_ON1DSK
+		ld a,(TRD_5CE5)		; €‘…… ”€‰‹€
+		cp "#"
+		jp nz,ERR_OK
+loc_1393	ld a,0x0a
+		ld (TRD_5D06),a		; ‹—…‘’‚ ‘‚‹‚ … ”€‰‹€  ‘…
+		ld hl,TRD_5CE6		; „‹ <C>-‘’€’‚›‰ €„…‘,„‹ <B>-„‹€	ƒ€›
+		inc (hl)
+		call CLEAR_SCREEN	; —‘’€ ‘‚ƒ €€
+		ld hl,TXT_INS_SRC	; "INSERT SOURCE DISK THEN PRESS Y"
+		call PRINT_MSG		; …—€’ ’…‘’‚ƒ ‘™…
+loc_13A5	call GET_KEYS		; †„€… €†€’ ‹€‚
+		cp "Y"
+		jr nz,loc_13A5
+		call FIND_FILENAME	; ‘	”€‰‹€  … ”€‰‹€
+		jp nz,ERR_OK
+		call COPY_ON1DSK
+		jr loc_1393
 
-CP_FREESEC	XOR A
-		LD (TRD_5D21),A
-		CALL COM_18		; €‘’‰€ € „‘…’“
-		CALL GET_TYPE_DISK
-		LD (TRD_5CDA), A
-		CALL FIND_FILENAME	; ‘	”€‰‹€  … ”€‰‹€
-		JP Z,FILE_EXISTS
-		CALL READ_9SEC		; —’…… 9 ‘…’€
-		LD A,(TRD_5E09)
-		CP 0X80
-		JP Z,ERR_DIRFULL
-		LD HL,TRD_5CED		; …	…‚ƒ	’…€ ”€‰‹€
-		LD DE,TRD_5CE6		; „‹ <C>-‘’€’‚›‰ €„…‘,„‹ <B>-„‹€	ƒ€›
-		LD BC,7
-		LDIR
-		CALL READ_9SEC		; —’…… 9 ‘…’€
-		LD A,(TRD_5D10)		; ‘’€‰ €‰’ 
-		LD (TRD_5CEA),A		; „‹€	”€‰‹€ ‚	‘…’€•
-		LD DE,(TRD_5CEA)	; „‹€	”€‰‹€ ‚	‘…’€•
-		LD D,0
-		OR A
-		LD HL,(TRD_5E0A)
-		SBC HL,DE
-		JP C,LOC_1C45
-		LD (TRD_5E0A), HL
-		LD HL,(TRD_5E06)
-		LD (TRD_5CEB),HL	; …	…‚ƒ	‘…’€	”€‰‹€
-		LD (TRD_5D1F),HL
-		RET
+COPY_ON1DSK	call RDHEAD_FILENAME	; —’…… ‘€’…‹ ”€‰‹€
+		ld hl,TRD_5CE6		; „‹ <C>-‘’€’‚›‰ €„…‘,„‹ <B>-„‹€	ƒ€›
+		ld de,TRD_5CED		; …	…‚ƒ	’…€ ”€‰‹€
+		ld bc,7
+		ldir 
+		ld a,(TRD_5CF1)
+		ld (TRD_5D10),a		; ‘’€‰ €‰’ 
+		call COM_18		; €‘’‰€ € „‘…’“
+		call GET_TYPE_DISK
+		ld (TRD_5CD9),a		; …†“’—€	„‹€ „‹ <B> 	<C>
+		ld a,0xff
+		ld (TRD_5D21),a
+		call COPY_ON1DSK_
+		ld hl,(TRD_5D1F)
+		ld (TRD_5CEB),hl	; …	…‚ƒ	‘…’€	”€‰‹€
+		ld hl,(TRD_5CF4)
+		ld (TRD_5E06),hl
+		ld hl,TRD_5E09
+		inc (hl)
+		ld c,(hl)
+		dec c
+		ld b,0
+		push bc
+		ld de,9
+		ld (TRD_5CF4),de
+		call REWRITE_9SEC	; ……‡€‘ 9 ‘…’€
+		pop bc
+		call SETHEADFILENAME
+		call REWRITE_9SEC		; ……‡€‘ 9 ‘…’€
+		ret
 
-COPY_ON1DSK_	LD A,(TRD_5CF1)
-		OR A
-		RET Z
-		LD A,(TRD_5D21)
-		OR A
-		JR NZ,LOC_146F
-		CALL CLEAR_SCREEN	; —‘’€ ‘‚ƒ €€
-		LD HL,ASC_27AA		; "INSERT SOURCE DISK THEN PRESS Y"
-		RST 0X18		; …—€’ ’…‘’‚ƒ ‘™…
-LOC_1465	CALL GET_KEYS		; †„€… €†€’ ‹€‚
-		CP "Y"
-		JR NZ,LOC_1465
-		CALL CLEAR_DOWN_SCR	; —‘’€ †…‰ —€‘’ €€
-LOC_146F	LD A,(TRD_5CF1)
-		OR A
-		RET Z
-		PUSH HL
-		LD HL,TRD_5D23
-		SUB (HL)
-		POP HL
-		JR NC,LOC_14CB
-		LD A,(TRD_5CF1)
-		LD B,A
-		XOR A
-		LD (TRD_5CF1), A
-LOC_1484	PUSH BC
-		LD (TRD_5CCE),A		; #00-—’…… ‘…’€,#FF-‡€‘	‘…’€
-		LD HL,(TRD_5CCF)	; ‚……… ‘•€…… WORK_SP
-		PUSH HL
-		LD DE,(TRD_5CF2)
-		CALL SETUP_DSK_SOURCE
-		CALL COM_05		; —’…… ‘…’‚
-		LD HL,(TRD_5CF4)
-		LD (TRD_5CF2), HL
-		CALL CLEAR_SCREEN	; —‘’€ ‘‚ƒ €€
-		LD HL,ASC_2785		; "INSERT DESTINATION DISK"
-		RST 0X18		; …—€’ ’…‘’‚ƒ ‘™…
-LOC_14A5	CALL GET_KEYS		; †„€… €†€’ ‹€‚
-		CP "Y"
-		JR NZ,LOC_14A5
-		CALL CLEAR_DOWN_SCR	; —‘’€ †…‰ —€‘’ €€
-		LD A,(TRD_5D21)
-		OR A
-		CALL NZ,CP_FREESEC
-		POP HL
-		POP BC
-		LD DE,(TRD_5CEB)	; …	…‚ƒ	‘…’€	”€‰‹€
-		CALL SETUP_DSK_DEST
-		CALL COM_06
-		LD HL,(TRD_5CF4)
-		LD (TRD_5CEB),HL	; …	…‚ƒ	‘…’€	”€‰‹€
-		JP COPY_ON1DSK_
+CP_FREESEC	xor a
+		ld (TRD_5D21),a
+		call COM_18		; €‘’‰€ € „‘…’“
+		call GET_TYPE_DISK
+		ld (TRD_5CDA),a
+		call FIND_FILENAME	; ‘	”€‰‹€  … ”€‰‹€
+		jp z,FILE_EXISTS
+		call READ_9SEC		; —’…… 9 ‘…’€
+		ld a,(TRD_5E09)
+		cp 0x80
+		jp z,ERR_DIRFULL
+		ld hl,TRD_5CED		; …	…‚ƒ	’…€ ”€‰‹€
+		ld de,TRD_5CE6		; „‹ <C>-‘’€’‚›‰ €„…‘,„‹ <B>-„‹€	ƒ€›
+		ld bc,7
+		ldir 
+		call READ_9SEC		; —’…… 9 ‘…’€
+		ld a,(TRD_5D10)		; ‘’€‰ €‰’ 
+		ld (TRD_5CEA),a		; „‹€	”€‰‹€ ‚	‘…’€•
+		ld de,(TRD_5CEA)	; „‹€	”€‰‹€ ‚	‘…’€•
+		ld d,0
+		or a  
+		ld hl,(TRD_5E0A)
+		sbc hl,de
+		jp c,loc_1C45
+		ld (TRD_5E0A),hl
+		ld hl,(TRD_5E06)
+		ld (TRD_5CEB),hl	; …	…‚ƒ	‘…’€	”€‰‹€
+		ld (TRD_5D1F),hl
+		ret
 
-LOC_14CB	LD (TRD_5CF1),A
-		LD A,(TRD_5D23)
-		LD B,A
-		XOR A
-		JP LOC_1484
+COPY_ON1DSK_	ld a,(TRD_5CF1)
+		or a 
+		ret z
+		ld a,(TRD_5D21)
+		or a 
+		jr nz,loc_146F
+		call CLEAR_SCREEN	; —‘’€ ‘‚ƒ €€
+		ld hl,TXT_INS_SRC	; "INSERT SOURCE DISK THEN PRESS Y"
+		call PRINT_MSG		; …—€’ ’…‘’‚ƒ ‘™…
+loc_1465	call GET_KEYS		; †„€… €†€’ ‹€‚
+		cp "Y"
+		jr nz,loc_1465
+		call CLEAR_DOWN_SCR	; —‘’€ †…‰ —€‘’ €€
+loc_146F	ld a,(TRD_5CF1)
+		or a
+		ret z
+		push hl
+		ld hl,TRD_5D23
+		sub (hl)
+		pop hl
+		jr nc,loc_14CB
+		ld a,(TRD_5CF1)
+		ld b,a
+		xor a
+		ld (TRD_5CF1),a
+loc_1484	push bc
+		ld (TRD_5CCE),a		; #00-—’…… ‘…’€,#FF-‡€‘	‘…’€
+		ld hl,(TRD_5CCF)	; ‚……… ‘•€…… WORK_SP
+		push hl
+		ld de,(TRD_5CF2)
+		call SET_DSK_SOURCE
+		call COM_05		; —’…… ‘…’‚
+		ld hl,(TRD_5CF4)
+		ld (TRD_5CF2),hl
+		call CLEAR_SCREEN	; —‘’€ ‘‚ƒ €€
+		ld hl,TXT_INS_DEST	; "INSERT DESTINATION DISK"
+		call PRINT_MSG		; …—€’ ’…‘’‚ƒ ‘™…
+loc_14A5	call GET_KEYS		; †„€… €†€’ ‹€‚
+		cp "Y"
+		jr nz,loc_14A5
+		call CLEAR_DOWN_SCR	; —‘’€ †…‰ —€‘’ €€
+		ld a,(TRD_5D21)
+		or a 
+		call nz,CP_FREESEC
+		pop hl
+		pop bc
+		ld de,(TRD_5CEB)	; …	…‚ƒ	‘…’€	”€‰‹€
+		call SETUP_DSK_DEST
+		call COM_06
+		ld hl,(TRD_5CF4)
+		ld (TRD_5CEB),hl	; …	…‚ƒ	‘…’€	”€‰‹€
+		jp COPY_ON1DSK_
 
-		DUPL 0X14D8-$,0XFF
-SETUP_DSK_SOURCE
-		PUSH HL
-		PUSH DE
-		CALL GET_TYPE_DISK
-		LD A,(TRD_5CD9)		; …†“’—€	„‹€ „‹ <B> 	<C>
-		LD (HL),A
-		POP DE
-		POP HL
-		RET
+loc_14CB	ld (TRD_5CF1),a
+		push hl
+		ld hl,TRD_5D23
+		ld b,(hl)
+		pop hl
+		xor a
+		jp loc_1484
 
-SETUP_DSK_DEST	PUSH HL
-		PUSH DE
-		CALL GET_TYPE_DISK
-		LD A,(TRD_5CDA)
-		LD (HL),A
-		POP DE
-		POP HL
-		RET
+SET_DSK_SOURCE	push hl
+		push de
+		call GET_TYPE_DISK
+		ld a,(TRD_5CD9)		; …†“’—€	„‹€ „‹ <B> 	<C>
+		ld (hl),a
+		pop de
+		pop hl
+		ret
 
-CP_FREE_DEST	XOR A
-		LD (TRD_5D21),A
-		CALL COM_18		; €‘’‰€ € „‘…’“
-		CALL GET_TYPE_DISK
-		LD (TRD_5CDA),A
-		LD A,(TRD_5E08)
-		LD (TRD_5CE7),A		; „‹ <C>-‘’€’‚›‰ €„…‘,„‹ <B>-„‹€	ƒ€›
-		LD HL,0X280
-		CP 0X19
-		JR Z,SAVE_SECS_DEST
-		LD HL,0X500
-		CP 0X18
-		JR Z,SAVE_SECS_DEST
-		CP 0X17
-		JR Z,SAVE_SECS_DEST
-		LD HL,0X0A00
-		CP 0X16
-		JR Z,SAVE_SECS_DEST
-		JP SINTAX_ERROR
+SETUP_DSK_DEST	push hl
+		push de
+		call GET_TYPE_DISK
+		ld a,(TRD_5CDA)
+		ld (hl),a
+		pop de
+		pop hl
+		ret
 
-SAVE_SECS_DEST	LD (TRD_5CDD),HL	;  ”€‰‹€
-		LD BC,(TRD_5CDF)
-		SBC HL,BC
-		JP C,LOC_1C45
-		RET
+CP_FREE_DEST	xor a
+		ld (TRD_5D21),a
+		call COM_18		; €‘’‰€ € „‘…’“
+		call GET_TYPE_DISK
+		ld (TRD_5CDA),a
+		ld a,(TRD_5E08)
+		ld (TRD_5CE7),a		; „‹ <C>-‘’€’‚›‰ €„…‘,„‹ <B>-„‹€	ƒ€›
+		ld hl,640
+		cp 0x19
+		jr z,SAVE_SECS_DEST
+		ld hl,1280
+		cp 0x18
+		jr z,SAVE_SECS_DEST
+		cp 0x17
+		jr z,SAVE_SECS_DEST
+		ld hl,2560
+		cp 0x16
+		jr z,SAVE_SECS_DEST
+		jp SINTAX_ERROR
 
-COPY_B		CALL EXIT_IF_SINTAX
-		CALL RESERVED_RAM
-		LD HL,ASC_2779		; "BACKUP DISK"
-		RST 0X18		; …—€’ ’…‘’‚ƒ ‘™…
-		LD HL,ASC_27AA		; "INSERT SOURCE DISK THEN PRESS Y"
-		RST 0X18		; …—€’ ’…‘’‚ƒ ‘™…
-LOC_153E	CALL GET_KEYS		; †„€… €†€’ ‹€‚
-		CP "Y"
-		JR NZ,LOC_153E
-		CALL CLEAR_DOWN_SCR	; —‘’€ †…‰ —€‘’ €€
-		LD A,0XFF
-		LD (TRD_5D21),A
-		CALL COM_18		; €‘’‰€ € „‘…’“
-		CALL GET_TYPE_DISK
-		LD (TRD_5CD9),A		; …†“’—€	„‹€ „‹ <B> 	<C>
-		LD A,(TRD_5E08)
-		CP 0X19
-		LD HL,0X280
-		JR Z,LOC_1575
-		LD HL,0X500
-		CP 0X18
-		JR Z,LOC_1575
-		CP 0X17
-		JR Z,LOC_1575
-		LD HL,0X0A00
-		CP 0X16
-		JR Z,LOC_1575
-		JP DISCERROR_
+SAVE_SECS_DEST	ld (TRD_5CDD),hl	;  ”€‰‹€
+		ld bc,(TRD_5CDF)
+		sbc hl,bc
+		jp c,loc_1C45
+		ret
 
-LOC_1575	LD BC,(TRD_5E0A)
-		SBC HL,BC
-		LD (TRD_5CE5),HL	; €‘…… ”€‰‹€
-		LD (TRD_5CDF),HL
-		LD HL,0
-		LD (TRD_5CE1),HL
-		LD (TRD_5CE3),HL
-		CALL COPY_SECTORS
-		CALL COM_18		; €‘’‰€ € „‘…’“
-		LD A,(TRD_5CE7)		; „‹ <C>-‘’€’‚›‰ €„…‘,„‹ <B>-„‹€	ƒ€›
-		LD (TRD_5E08),A
-		LD HL,(TRD_5CDD)	;  ”€‰‹€
-		LD BC,(TRD_5CDF)
-		SBC HL,BC
-		LD (TRD_5E0A),HL
-		CALL SETUP_DSK_DEST
-		LD DE,9
-		LD (TRD_5CF4),DE
-		CALL REWRITE_9SEC	; ……‡€‘ 9 ‘…’€
+COPY_B		call EXIT_IF_SINTAX
+		call RESERVED_RAM
+		ld hl,TXT_BACKUPDISK	; "BACKUP DISK"
+		call PRINT_MSG		; …—€’ ’…‘’‚ƒ ‘™…
+		ld hl,TXT_INS_SRC	; "INSERT SOURCE DISK THEN PRESS Y"
+		call PRINT_MSG		; …—€’ ’…‘’‚ƒ ‘™…
+loc_153E	call GET_KEYS		; †„€… €†€’ ‹€‚
+		cp "Y"
+		jr nz,loc_153E
+		call CLEAR_DOWN_SCR	; —‘’€ †…‰ —€‘’ €€
+		ld a,0xff
+		ld (TRD_5D21),a
+		call COM_18		; €‘’‰€ € „‘…’“
+		call GET_TYPE_DISK
+		ld (TRD_5CD9),a		; …†“’—€	„‹€ „‹ <B> 	<C>
+		ld a,(TRD_5E08)
+		cp 0x19
+		ld hl,640
+		jr z,loc_1575
+		ld hl,1280
+		cp 0x18
+		jr z,loc_1575
+		cp 0x17
+		jr z,loc_1575
+		ld hl,2560
+		cp 0x16
+		jr z,loc_1575
+		jp SINTAX_ERROR
+
+loc_1575	ld bc,(TRD_5E0A)
+		sbc hl,bc
+		ld (TRD_5CE5),hl	; €‘…… ”€‰‹€
+		ld (TRD_5CDF),hl
+		ld hl,0         
+		ld (TRD_5CE1),hl
+		ld (TRD_5CE3),hl
+		call COPY_SECTORS
+		call COM_18		; €‘’‰€ € „‘…’“
+		ld a,(TRD_5CE7)		; „‹ <C>-‘’€’‚›‰ €„…‘,„‹ <B>-„‹€	ƒ€›
+		ld (TRD_5E08),a
+		ld hl,(TRD_5CDD)	;  ”€‰‹€
+		ld bc,(TRD_5CDF)
+		sbc hl,bc
+		ld (TRD_5E0A),hl
+		call SETUP_DSK_DEST
+		ld de,9
+		ld (TRD_5CF4),de
+		call REWRITE_9SEC	; ……‡€‘ 9 ‘…’€
 		JP ERR_OK
 
-		DUPL 0X15B2-$,0XFF
-CP_COPY_SECS	LD HL,(TRD_5CE5)	; €‘…… ”€‰‹€
-		LD A,H
-		OR L
-		RET
+CP_COPY_SECS	ld hl,(TRD_5CE5)	; €‘…… ”€‰‹€
+		ld a,h
+		or l
+		ret
 
-COPY_SECTORS	CALL CP_COPY_SECS
-		RET Z
-		LD A,(TRD_5D21)
-		OR A
-		JR NZ,LOC_15DB
-		CALL CLEAR_SCREEN	; —‘’€ ‘‚ƒ €€
-		LD HL,ASC_2779		; "BACKUP DISK"
-		RST 0X18		; …—€’ ’…‘’‚ƒ ‘™…
-		LD HL,ASC_27AA		; "INSERT SOURCE DISK THEN PRESS Y"
-		RST 0X18		; …—€’ ’…‘’‚ƒ ‘™…
-LOC_15D1	CALL GET_KEYS		; †„€… €†€’ ‹€‚
-		CP "Y"
-		JR NZ,LOC_15D1
-		CALL CLEAR_DOWN_SCR	; —‘’€ †…‰ —€‘’ €€
-LOC_15DB	CALL CP_COPY_SECS
-		RET Z
-		PUSH BC
-		LD A,(TRD_5D23)
-		LD C,A
-		XOR A
-		LD B,A
-		SBC HL,BC
-		POP BC
-		JP NC,LOC_1644
-		LD BC,(TRD_5CE5)	; €‘…… ”€‰‹€
-		LD HL,0
-		LD (TRD_5CE5),HL	; €‘…… ”€‰‹€
-LOC_15F8	PUSH BC
-		LD HL,(TRD_5CCF)	; ‚……… ‘•€…… WORK_SP
-		PUSH HL
-		CALL SETUP_DSK_SOURCE
-		LD DE,(TRD_5CE1)
-		LD B,C
-		CALL COM_05		; —’…… ‘…’‚
-		LD HL,(TRD_5CF4)
-		LD (TRD_5CE1),HL
-		CALL CLEAR_SCREEN	; —‘’€ ‘‚ƒ €€
-		LD HL,ASC_2779		; "BACKUP DISK"
-		RST 0X18		; …—€’ ’…‘’‚ƒ ‘™…
-		LD HL,ASC_2785		; "INSERT DESTINATION DISK"
-		RST 0X18		; …—€’ ’…‘’‚ƒ ‘™…
-LOC_161D	CALL GET_KEYS		; †„€… €†€’ ‹€‚
-		CP "Y"
-		JR NZ,LOC_161D
-		CALL CLEAR_DOWN_SCR	; —‘’€ †…‰ —€‘’ €€
-		LD A,(TRD_5D21)
-		OR A
-		CALL NZ,CP_FREE_DEST
-		POP HL
-		POP BC
-		LD DE,(TRD_5CE3)
-		LD B,C
-		CALL SETUP_DSK_DEST
-		CALL COM_06
-		LD HL,(TRD_5CF4)
-		LD (TRD_5CE3),HL
-		JP COPY_SECTORS
+COPY_SECTORS	call CP_COPY_SECS
+		ret z
+		ld a,(TRD_5D21)
+		or a
+		jr nz,loc_15DB
+		call CLEAR_SCREEN	; —‘’€ ‘‚ƒ €€
+		ld hl,TXT_BACKUPDISK	; "BACKUP DISK"
+		call PRINT_MSG		; …—€’ ’…‘’‚ƒ ‘™…
+		ld hl,TXT_INS_SRC	; "INSERT SOURCE DISK THEN PRESS Y"
+		call PRINT_MSG		; …—€’ ’…‘’‚ƒ ‘™…
+loc_15D1	call GET_KEYS		; †„€… €†€’ ‹€‚
+		cp "Y"
+		jr nz,loc_15D1
+		call CLEAR_DOWN_SCR	; —‘’€ †…‰ —€‘’ €€
+loc_15DB	call CP_COPY_SECS
+		ret z
+		push bc
+		push hl
+		ld hl,TRD_5D23
+		ld c,(hl)
+		ld b,0
+		pop hl
+		sbc hl,bc
+		pop bc
+		jp nc,loc_1644
+		ld bc,(TRD_5CE5)	; €‘…… ”€‰‹€
+		ld hl,0
+		ld (TRD_5CE5),hl	; €‘…… ”€‰‹€
+loc_15F8	push bc
+		ld hl,(TRD_5CCF)	; ‚……… ‘•€…… WORK_SP
+		push hl
+		call SET_DSK_SOURCE
+		ld de,(TRD_5CE1)
+		ld b,c
+		call COM_05		; —’…… ‘…’‚
+		ld hl,(TRD_5CF4)
+		ld (TRD_5CE1),hl
+		call CLEAR_SCREEN	; —‘’€ ‘‚ƒ €€
+		ld hl,TXT_BACKUPDISK	; "BACKUP DISK"
+		call PRINT_MSG		; …—€’ ’…‘’‚ƒ ‘™…
+		ld hl,TXT_INS_DEST	; "INSERT DESTINATION DISK"
+		call PRINT_MSG		; …—€’ ’…‘’‚ƒ ‘™…
+loc_161D	call GET_KEYS		; †„€… €†€’ ‹€‚
+		cp "Y"
+		jr nz,loc_161D
+		call CLEAR_DOWN_SCR	; —‘’€ †…‰ —€‘’ €€
+		ld a,(TRD_5D21)
+		or a
+		call nz,CP_FREE_DEST
+		pop hl
+		pop bc
+		ld de,(TRD_5CE3)
+		ld b,c
+		call SETUP_DSK_DEST
+		call COM_06
+		ld hl,(TRD_5CF4)
+		ld (TRD_5CE3),hl
+		jp COPY_SECTORS
 
-LOC_1644	LD (TRD_5CE5),HL	; €‘…… ”€‰‹€
-		LD A,(0X5D23)
-		LD C,A
-		XOR A
-		JP LOC_15F8
+loc_1644	ld (TRD_5CE5),hl	; €‘…… ”€‰‹€
+		push hl
+		ld hl,TRD_5D23
+		ld c,(hl)
+		ld b,0
+		pop hl
+		xor a
+		jp loc_15F8
 
-CP_ERASED_FILE	CALL RD_HEAD_FILENAME	; —’…… ‘€’…‹ ”€‰‹€
-		LD A,(TRD_5CDD)		;  ”€‰‹€
-		CP 1
-		RET
+CP_ERASED_FILE	call RDHEAD_FILENAME	; —’…… ‘€’…‹ ”€‰‹€
+		ld a,(TRD_5CDD)		;  ”€‰‹€
+		cp 1
+		ret
 
 ;‘—’›‚€… ‘€’…‹ ‚ “”… 0X5CDD
-COM_08		LD C,A
-RD_HEAD_FILENAME			; —’…… ‘€’…‹ ”€‰‹€
-		XOR A
-LOC_165E	PUSH BC
-		CALL RD_HEAD_COPY
-		POP BC
-		RET
+COM_08		ld c,a
+; —’…… ‘€’…‹ ”€‰‹€
+RDHEAD_FILENAME	xor a
+loc_165E	push bc
+		call RD_HEAD_COPY
+		pop bc
+		ret
 
 ;‡€‘ ‘€’…‹ ”€‰‹€ € „‘
-COM_09		LD C,A
-		CALL SET_HEAD_FILENAME
-		JP REWRITE_9SEC		; ……‡€‘ 9 ‘…’€
+COM_09		ld c,a
+		call SETHEADFILENAME
+		jp REWRITE_9SEC		; ……‡€‘ 9 ‘…’€
 
-SET_HEAD_FILENAME
-		LD A,0XFF
-		JR LOC_165E
+SETHEADFILENAME	ld a,0xff
+		jr loc_165E
 
-RESERVED_RAM	LD A,0XFF
-		LD (TRD_5D0E),A		; #FE-€’€…’ BASIC,€—… TR-DOS
-		CALL CP_FREE_SECS
-		LD HL,(WORKSP)
-		LD (TRD_5CCF), HL	; ‚……… ‘•€…… WORK_SP
-		JP CREATE_FREERAM
+RESERVED_RAM	ld a,0xff
+		ld (TRD_5D0E),a		; #FE-€’€…’ BASIC,€—… TR-DOS
+		call CP_FREE_SECS
+		ld hl,(WORKSP)
+		ld (TRD_5CCF),hl	; ‚……… ‘•€…… WORK_SP
+		jp CREATE_FREERAM
 
-CP_FREE_SECS	RST 0X20
-		DW 0X1F1A		; ‚…€ €‡…€ ‘‚„‰ €’
-		LD HL,0XFFFF
-		SBC HL,BC
-		LD A,H
-		CP 0X10
-		JR NC,LOC_168F
-		LD A,0X11
-LOC_168F	DEC A
-		LD (TRD_5D23),A
-		LD B,A
-		LD C,0
-		RET
+CP_FREE_SECS	rst 0x20    
+		dw 0x1f1a		; ‚…€ €‡…€ ‘‚„‰ €’
+		ld hl,0xffff
+		sbc hl,bc   
+		ld a,h      
+		cp 0x10     
+		jr nc,loc_168F
+		ld a,0x11
+loc_168F	dec a
+		ld (TRD_5D23),a
+		ld b,a
+		ld c,0
+		ret
 
-ADD_FILESIZE	LD (TRD_5CD7),HL	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+ADD_FILESIZE	ld (TRD_5CD7),hl	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
 					; ‘‹…	‚… ’€ „‘‚„€
-		LD (TRD_5CDB),HL
-		LD DE,(TRD_5CEA)	; „‹€	”€‰‹€ ‚	‘…’€•
-		LD HL,(TRD_5CD9)	; …†“’—€	„‹€ „‹ <B> 	<C>
-		LD D,0
-		ADD HL,DE
-		LD (TRD_5CD9),HL	; …†“’—€	„‹€ „‹ <B> 	<C>
-		RET
+		LD (TRD_5CDB),hl
+		ld de,(TRD_5CEA)	; „‹€	”€‰‹€ ‚	‘…’€•
+		ld hl,(TRD_5CD9)	; …†“’—€	„‹€ „‹ <B> 	<C>
+		ld d,0
+		add hl,de
+		ld (TRD_5CD9),hl	; …†“’—€	„‹€ „‹ <B> 	<C>
+		ret
 
-MOVE		CALL EXIT_IF_SINTAX
-		CALL RESERVED_RAM
-		CALL COM_18		; €‘’‰€ € „‘…’“
-		LD A,(TRD_5E19)
-		OR A
-		JP Z,ERR_OK
-		LD HL,0
-		LD (TRD_5CD9),HL	; …†“’—€	„‹€ „‹ <B> 	<C>
-		LD C,0XFF
-LOC_16C3	INC C
-		CALL CP_ERASED_FILE
-		JR NZ,LOC_16C3
-		LD A,C
-		LD (TRD_5CD4),A
-		LD HL,(TRD_5CEB)	; …	…‚ƒ	‘…’€	”€‰‹€
-		LD (TRD_5CD5),HL
-		CALL ADD_FILESIZE
-LOC_16D6	INC C
-		CALL CP_ERASED_FILE
-		JR Z,LOC_16D6
-		AND A
-		JP NZ,LOC_1710
-		LD A,(TRD_5CD4)
-		LD C,A
-LOC_16E5	INC C
-		CALL CP_ERASED_FILE
-		AND A
-		JP Z,REINIT_9SEC
-		XOR A
-		LD (TRD_5CDD),A		;  ”€‰‹€
-		CALL WR_HEAD_FILENAME	; ‘•€…… ‘€’…‹ ”€‰‹€
-		CALL ADD_FILESIZE
-		JR LOC_16E5
+MOVE		call EXIT_IF_SINTAX
+		call RESERVED_RAM
+		call COM_18		; €‘’‰€ € „‘…’“
+		ld a,(TRD_5E19)
+		or a 
+		jp z,ERR_OK
+		ld hl,0
+		ld (TRD_5CD9),hl	; …†“’—€	„‹€ „‹ <B> 	<C>
+		ld c,0xff
+loc_16C3	inc c
+		call CP_ERASED_FILE
+		jr nz,loc_16C3
+		ld a,c
+		ld (TRD_5CD4),a
+		ld hl,(TRD_5CEB)	; …	…‚ƒ	‘…’€	”€‰‹€
+		ld (TRD_5CD5),hl
+		call ADD_FILESIZE
+loc_16D6	inc c
+		call CP_ERASED_FILE
+		jr z,loc_16D6
+		cp 0
+		jp nz,loc_1710
+		ld a,(TRD_5CD4)
+		ld c,a
+loc_16E5	inc c
+		call CP_ERASED_FILE
+		cp 0
+		jr z,REINIT_9SEC
+		xor a
+		ld (TRD_5CDD),a		;  ”€‰‹€
+		call WRHEAD_FILENAME	; ‘•€…… ‘€’…‹ ”€‰‹€
+		call ADD_FILESIZE
+		jr loc_16E5
 
-LOC_1710	LD A,(TRD_5CEA)		; „‹€	”€‰‹€ ‚	‘…’€•
-		LD (TRD_5CD3),A
-		LD (TRD_5CD1),A
-		LD HL,(TRD_5CEB)	; …	…‚ƒ	‘…’€	”€‰‹€
-		LD (TRD_5CD5),HL
-		PUSH BC
-		CALL MOVE_FILE
-		POP BC
-		LD HL,(TRD_5CF4)
-		LD (TRD_5CD5),HL
-		LD (TRD_5CEB),HL	; …	…‚ƒ	‘…’€	”€‰‹€
-		XOR A
-		LD (TRD_5CEA),A		; „‹€	”€‰‹€ ‚	‘…’€•
-		LD A,(TRD_5CDD)		;  ”€‰‹€
-		PUSH AF
-		LD A,1
-		LD (TRD_5CDD),A		;  ”€‰‹€
-		CALL WR_HEAD_FILENAME	; ‘•€…… ‘€’…‹ ”€‰‹€
-		POP AF
-		LD (TRD_5CDD),A		;  ”€‰‹€
-		LD A,(TRD_5CD4)
-		LD C,A
-		LD HL,(TRD_5CDB)
-		LD (TRD_5CEB),HL	; …	…‚ƒ	‘…’€	”€‰‹€
-		LD A,(TRD_5CD1)
-		LD (TRD_5CEA),A		; „‹€	”€‰‹€ ‚	‘…’€•
-		CALL WR_HEAD_FILENAME	; ‘•€…… ‘€’…‹ ”€‰‹€
-		LD A,(TRD_5CD4)
-		INC A
-		LD C,A
-		CALL RD_HEAD_FILENAME	; —’…… ‘€’…‹ ”€‰‹€
-		LD HL,(TRD_5CD5)
-		LD (TRD_5CEB),HL	; …	…‚ƒ	‘…’€	”€‰‹€
-		CALL WR_HEAD_FILENAME	; ‘•€…… ‘€’…‹ ”€‰‹€
-		LD A,(TRD_5CD4)
-		LD C,A
-		JP LOC_16C3
+		DUPL 0X1710-$,0XFF
+loc_1710	ld a,(TRD_5CEA)		; „‹€	”€‰‹€ ‚	‘…’€•
+		ld (TRD_5CD3),a
+		ld (TRD_5CD1),a
+		ld hl,(TRD_5CEB)	; …	…‚ƒ	‘…’€	”€‰‹€
+		ld (TRD_5CD5),hl
+		push bc
+		call MOVE_FILE
+		pop bc
+		ld hl,(TRD_5CF4)
+		ld (TRD_5CD5),hl
+		ld (TRD_5CEB),hl	; …	…‚ƒ	‘…’€	”€‰‹€
+		xor a
+		ld (TRD_5CEA),a		; „‹€	”€‰‹€ ‚	‘…’€•
+		ld a,(TRD_5CDD)		;  ”€‰‹€
+		push af
+		ld a,1
+		ld (TRD_5CDD),a		;  ”€‰‹€
+		call WRHEAD_FILENAME	; ‘•€…… ‘€’…‹ ”€‰‹€
+		pop af
+		ld (TRD_5CDD),a		;  ”€‰‹€
+		ld a,(TRD_5CD4)
+		ld c,a
+		ld hl,(TRD_5CDB)
+		ld (TRD_5CEB),hl	; …	…‚ƒ	‘…’€	”€‰‹€
+		ld a,(TRD_5CD1)
+		ld (TRD_5CEA),a		; „‹€	”€‰‹€ ‚	‘…’€•
+		call WRHEAD_FILENAME	; ‘•€…… ‘€’…‹ ”€‰‹€
+		ld a,(TRD_5CD4)
+		inc a
+		ld c,a
+		call RDHEAD_FILENAME	; —’…… ‘€’…‹ ”€‰‹€
+		ld hl,(TRD_5CD5)
+		ld (TRD_5CEB),hl	; …	…‚ƒ	‘…’€	”€‰‹€
+		call WRHEAD_FILENAME	; ‘•€…… ‘€’…‹ ”€‰‹€
+		ld a,(TRD_5CD4)
+		ld c,a
+		jp loc_16C3
 
-REINIT_9SEC	LD HL,(TRD_5CCF)	; ‚……… ‘•€…… WORK_SP
-		LD BC,0X1000
-		CALL DEL_WORKRAM
-		CALL READ_9SEC		; —’…… 9 ‘…’€
-		LD HL,(TRD_5E0A)
-		LD DE,(TRD_5CD9)	; …†“’—€	„‹€ „‹ <B> 	<C>
-		ADD HL,DE
-		LD (TRD_5E0A),HL
-		LD A,(TRD_5E09)
-		LD HL,TRD_5E19
-		SUB (HL)
-		LD (TRD_5E09),A
-		LD (HL),0
-		LD HL,(TRD_5CD5)
-		LD (TRD_5E06),HL
-		PUSH AF
-		CALL REWRITE_9SEC	; ……‡€‘ 9 ‘…’€
-		POP AF
-		LD C,A
-		CALL RD_HEAD_FILENAME	; —’…… ‘€’…‹ ”€‰‹€
-		XOR A
-		LD (TRD_5CDD),A		;  ”€‰‹€
-		JP LOC_569
+REINIT_9SEC	ld hl,(TRD_5CCF)	; ‚……… ‘•€…… WORK_SP
+		ld bc,0x1000
+		call DEL_WORKRAM
+		call READ_9SEC		; —’…… 9 ‘…’€
+		ld hl,(TRD_5E0A)
+		ld de,(TRD_5CD9)	; …†“’—€	„‹€ „‹ <B> 	<C>
+		add hl,de
+		ld (TRD_5E0A),hl
+		ld a,(TRD_5E09)
+		ld hl,TRD_5E19
+		sub (hl)
+		ld (TRD_5E09),a
+		ld (hl),0
+		ld hl,(TRD_5CD5)
+		ld (TRD_5E06),hl
+		push af
+		call REWRITE_9SEC	; ……‡€‘ 9 ‘…’€
+		pop af
+		ld c,a
+		call RDHEAD_FILENAME	; —’…… ‘€’…‹ ”€‰‹€
+		xor a
+		ld (TRD_5CDD),a		;  ”€‰‹€
+		jp loc_569
 
-MOVE_FILE	LD A,(TRD_5CD3)
-		OR A
-		RET Z
-		PUSH HL
-		LD HL,TRD_5D23
-		SUB (HL)
-		POP HL
-		JR NC,LOC_17DD
-		LD A,(TRD_5CD3)
-		LD B,A
-		XOR A
-		LD (TRD_5CD3),A
-LOC_17BA	PUSH BC
-		LD HL,(TRD_5CCF)	; ‚……… ‘•€…… WORK_SP
-		PUSH HL
-		LD DE,(TRD_5CD5)
-		CALL COM_05		; —’…… ‘…’‚
-		LD HL,(TRD_5CF4)
-		LD (TRD_5CD5),HL
-		POP HL
-		POP BC
-		LD DE,(TRD_5CD7)	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+MOVE_FILE	ld a,(TRD_5CD3)
+		or a 
+		ret z
+		push hl
+		ld hl,TRD_5D23
+		sub (hl)
+		pop hl
+		jr nc,loc_17DD
+		ld a,(TRD_5CD3)
+		ld b,a
+		xor a
+		ld (TRD_5CD3),a
+loc_17BA	push bc
+		ld hl,(TRD_5CCF)	; ‚……… ‘•€…… WORK_SP
+		push hl
+		ld de,(TRD_5CD5)
+		call COM_05		; —’…… ‘…’‚
+		ld hl,(TRD_5CF4)
+		ld (TRD_5CD5),hl
+		pop hl
+		pop bc
+		ld de,(TRD_5CD7)	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
 					; ‘‹…	‚… ’€ „‘‚„€
-		CALL COM_06
-		LD HL,(TRD_5CF4)
-		LD (TRD_5CD7),HL	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+		call COM_06
+		ld hl,(TRD_5CF4)
+		ld (TRD_5CD7),hl	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
 					; ‘‹…	‚… ’€ „‘‚„€
-		JR MOVE_FILE
+		jr MOVE_FILE
 
-LOC_17DD	LD (TRD_5CD3),A
-		LD A,(TRD_5D23)
-		LD B,A
-		XOR A
-		JR LOC_17BA
+loc_17DD	ld (TRD_5CD3),a
+		push hl
+		ld hl,TRD_5D23
+		ld b,(hl)
+		pop hl
+		xor a
+		jr loc_17BA
 
-RD_HEAD_COPY	PUSH AF
-		LD HL,TRD_5CCC		; ’…“™‰ …	‘…’€	 —’… €’€‹ƒ€
-		LD (HL),0
-		LD A,C
-LOC_17F0	SUB 0X10
-		JR C,LOC_17F7
-		INC (HL)
-		JR LOC_17F0
+RD_HEAD_COPY	push af
+		ld hl,TRD_5CCC		; ’…“™‰ …	‘…’€	 —’… €’€‹ƒ€
+		ld (hl),0
+		ld a,c
+loc_17F0	sub 0x10
+		jr c,loc_17F7
+		inc (hl)
+		jr loc_17F0
 
-LOC_17F7	ADD A,0X10
-		LD C,A
-		PUSH BC
-		CALL READ_NUM_SEC	; —’…… ‘…’€ €’€‹ƒ€  …“
-		POP BC
-		POP AF
-		CALL FIND_HEAD_BUF
-		LD DE,TRD_5CDD		;  ”€‰‹€
-		LD BC,0X10
-		OR A
-		JR Z,LOC_180D
-		EX DE,HL
-LOC_180D	JP EMU_LDIR
-
-		DUPL 0X1803-$,0XFF	;FIX
-		LD DE,TRD_5CDD		;  ”€‰‹€
-		LD BC,0X10
-		OR A
-		JR Z,LOC_180D
-		EX DE,HL
-		IF EMU3D2F=1
+loc_17F7	add a,0x10
+		ld c,a
+		push bc
+		call READ_NUM_SEC	; —’…… ‘…’€ €’€‹ƒ€  …“
+		pop bc
+		pop af
+		call FIND_HEAD_BUF
+		ld de,TRD_5CDD		;  ”€‰‹€
+		ld bc,0x10
+		or a
+		jr z,loc_180D
+		ex de,hl
+loc_180D	IF EMU3D2F=1
 		JP EMU_LDIR
 		ELSE
-		LDIR
-		RET
+		ldir
+		ret
 		ENDIF
 
-VERIFY		LD A,0XFF
-		LD (TRD_5CF9),A		; „‘‚„  …€–	‘ 2 ”€‰‹€
-LOAD		CALL ZERO2HIGH_ERR
-LOC_1818	CALL LOAD_FILE
-		CALL EXIT_IF_SINTAX
-		LD A,0XFF
-		LD (TRD_5D10),A		; ‘’€‰ €‰’ 
-		LD A,(TRD_5CF9)		; „‘‚„  …€–	‘ 2 ”€‰‹€
-		CP 0XFF
-		JP Z,ERR_OK
-		LD A,(TRD_5CE5)		; €‘…… ”€‰‹€
-		CP "B"
-		JP Z,WORK4AUTORUN	; €’€ ‘’ €‚’‡€“‘€ …‰‘€
-		JP ERR_OK
+VERIFY		ld a,0xff
+		ld (TRD_5CF9),a		; „‘‚„  …€–	‘ 2 ”€‰‹€
+LOAD		call ZERO2HIGH_ERR
+loc_1818	call LOAD_FILE
+		call EXIT_IF_SINTAX
+		ld a,0xff
+		ld (TRD_5D10),a		; ‘’€‰ €‰’ 
+		ld a,(TRD_5CF9)		; „‘‚„  …€–	‘ 2 ”€‰‹€
+		cp 0xff
+		jp z,ERR_OK
+		ld a,(TRD_5CE5)		; €‘…… ”€‰‹€
+		cp "B"
+		jp z,WORK4AUTORUN	; €’€ ‘’ €‚’‡€“‘€ …‰‘€
+		jp ERR_OK
 
-LOAD_FILE	CALL GET_PARAMS
-		CALL EXIT_IF_SINTAX
-		CALL CP_PARAMS
-		JP RD_FILE
+LOAD_FILE	call GET_PARAMS
+		call EXIT_IF_SINTAX
+		call CP_PARAMS
+		jp RD_FILE
 
-GET_LOAD_CODE	LD HL,(CH_ADD)
-		INC HL
-		LD A,(HL)
-		CP 0X0D
-		RET Z
-		LD A,1
-		LD (TRD_5CD6),A		; #FF-€„€ ’€ ‘’€‘—…‘ €€‹‡€’
-		CALL INPUT_PARAMS
-ZERO2HIGH_ERR	XOR A
-		LD (TRD_5D10),A		; ‘’€‰ €‰’ 
-		RET
+GET_LOAD_CODE	ld hl,(CH_ADD)
+		inc hl
+		ld a,(hl)
+		cp 0x0d
+		ret z
+		ld a,1
+		ld (TRD_5CD6),a		; #FF-€„€ ’€ ‘’€‘—…‘ €€‹‡€’
+		call INPUT_PARAMS
+ZERO2HIGH_ERR	xor a
+		ld (TRD_5D10),a		; ‘’€‰ €‰’ 
+		ret
 
-SUB_1857	CALL INPUT_EXTFILENAME	; … €‘… ”€‰‹€
-		LD A,"B"
-		CP B
-		JR NZ,LOC_1866
-		LD HL,(CH_ADD)
-		DEC HL
-		LD (CH_ADD),HL
-LOC_1866	CALL INPUT_PARAMS
-		LD HL,(TRD_5CD9)	; …†“’—€	„‹€ „‹ <B> 	<C>
-		LD (TRD_5CD7),HL	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+sub_1857	call INP_EXTFILENAME	; … €‘… ”€‰‹€
+		ld a,"B"
+		cp b  
+		jr nz,loc_1866
+		ld hl,(CH_ADD)
+		dec hl
+		ld (CH_ADD),hl
+loc_1866	call INPUT_PARAMS
+		ld hl,(TRD_5CD9)	; …†“’—€	„‹€ „‹ <B> 	<C>
+		ld (TRD_5CD7),hl	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
 					; ‘‹…	‚… ’€ „‘‚„€
-		LD HL,(TRD_5CDB)
-		LD (TRD_5CD9),HL	; …†“’—€	„‹€ „‹ <B> 	<C>
-		XOR A
-		LD (TRD_5CD6),A		; #FF-€„€ ’€ ‘’€‘—…‘ €€‹‡€’
-		RET
+		ld hl,(TRD_5CDB)
+		ld (TRD_5CD9),hl	; …†“’—€	„‹€ „‹ <B> 	<C>
+		xor a           
+		ld (TRD_5CD6),a		; #FF-€„€ ’€ ‘’€‘—…‘ €€‹‡€’
+		ret
 
-GET_PARAMS	CALL CP_SECOND_SYM
-		JP Z,LOC_27B
-		CALL SET_AND_PUT
-		CALL CP_HIGH_ERR
-		CALL NZ,SUB_1857
-		CALL GET_SYMSTR
-		CP 0XAF
-		CALL Z,GET_LOAD_CODE
-		CP 0XE4
-		PUSH AF
-		CALL CP_HIGH_ERR
-		CALL Z,INPUT_EXTFILENAME; … €‘… ”€‰‹€
-		POP AF
-		CALL Z,READ_MASSIV
-		CALL EXIT_IF_SINTAX
-		CALL FIND_FILE		; ‘	”€‰‹€  …
-FIND_RD_HEAD	JP NZ,ERR_NOFILES
-		JP RD_HEAD_FILENAME	; —’…… ‘€’…‹ ”€‰‹€
+GET_PARAMS	call CP_SECOND_SYM
+		jp z,loc_27B
+		call SET_AND_PUT
+		call CP_HIGH_ERR
+		call nz,sub_1857
+		call GET_SYMSTR
+		cp __CODE
+		call z,GET_LOAD_CODE
+		cp __DATA
+		push af
+		call CP_HIGH_ERR
+		call z,INP_EXTFILENAME; … €‘… ”€‰‹€
+		pop af
+		call z,READ_MASSIV
+		call EXIT_IF_SINTAX
+		call FIND_FILE		; ‘	”€‰‹€  …
+FIND_RD_HEAD	jp nz,ERR_NOFILES
+		call RDHEAD_FILENAME	; —’…… ‘€’…‹ ”€‰‹€
+		ret
 
-CP_PARAMS	LD A,(TRD_5CD6)
-		OR A
-		LD HL,(TRD_5CE6)		;€„…‘ ‡€ƒ“‡ ‡ ‘€’…‹ ”€‰‹€
-		JR Z,LOC_18B7
-		LD HL,(TRD_5CD9)		;€„…‘ ‡€ƒ“‡ ‡ €„‰ ‘’
-LOC_18B7	LD (TRD_5CC6),HL
-		LD DE,(TRD_5CEB)		;’…  ‘…’ …‘’‹†… ”€‰‹€
-		CP 3
-		LD A,(TRD_5CEA)			;„‹€ ”€‰‹€ ‚ ‘…’€•
-		PUSH DE
-		LD DE,(TRD_5CE8)		;„‹€ ƒ€› ‡ ‘€’…‹
-		JR NZ,LOC_18CB
-		LD DE,(TRD_5CDB)		;„‹€ ”€‰‹€ „‹ ‡€ƒ“‡ ‡€„‰ ‘’
-LOC_18CB	LD B,A
-		LD (TRD_5CDB),DE
-		LD A,(TRD_5CE5)			;€‘…… ”€‰‹€
-		CP "C"
-		LD A,B
-		JR NZ,LOC_18FD
-		LD A,B
-		CP D
-		JR Z,LOC_18F6
-		DEC A
-		CP D
-		LD A,B
-		JR Z,LOC_18F6
-		LD A,(TRD_5CD6)		; #FF-€„€ ’€ ‘’€‘—…‘ €€‹‡€’
-		CP 3
-		LD A,B
-		JR Z,LOC_18F6
-		XOR A
-		LD (TRD_5CD6),A		; #FF-€„€ ’€ ‘’€‘—…‘ €€‹‡€’
-		LD D,B
-		LD E,A
-		LD (TRD_5CDB),DE
-		JR LOC_18F9
+CP_PARAMS	ld a,(TRD_5CD6)
+		or a  
+		ld hl,(TRD_5CE6)		;€„…‘ ‡€ƒ“‡ ‡ ‘€’…‹ ”€‰‹€
+		jr z,loc_18B7
+		ld hl,(TRD_5CD9)		;€„…‘ ‡€ƒ“‡ ‡ €„‰ ‘’
+loc_18B7	CALL ADR_START_COM
+		NOP
+		cp 3
+		ld a,(TRD_5CEA)			;„‹€ ”€‰‹€ ‚ ‘…’€•
+		push de
+		ld de,(TRD_5CE8)		;„‹€ ƒ€› ‡ ‘€’…‹
+		jr nz,loc_18CB
+		ld de,(TRD_5CDB)		;„‹€ ”€‰‹€ „‹ ‡€ƒ“‡ ‡€„‰ ‘’
+loc_18CB	ld b,a
+		ld (TRD_5CDB),de
+		ld a,(TRD_5CE5)			;€‘…… ”€‰‹€
+		cp "C"
+		ld a,b
+		jr nz,loc_18FD
+		ld a,b
+		cp d
+		jr z,loc_18F6
+		dec a
+		cp d
+		ld a,b
+		jr z,loc_18F6
+		ld a,(TRD_5CD6)		; #FF-€„€ ’€ ‘’€‘—…‘ €€‹‡€’
+		cp 3
+		ld a,b
+		jr z,loc_18F6
+		xor a
+		ld (TRD_5CD6),a		; #FF-€„€ ’€ ‘’€‘—…‘ €€‹‡€’
+		ld d,b
+		ld e,0
+		ld (TRD_5CDB),de
+		jr loc_18F9
 
-LOC_18F6	CALL LOAD_FULLFILE
-LOC_18F9	LD A,B
-		CALL KOLWO_SECS
-LOC_18FD	LD B,A
-		LD A,(TRD_5CE5)		; €‘…… ”€‰‹€
-		CP "C"
-		POP DE
-		RET Z
-		PUSH DE
-		CP "B"
-		PUSH AF
-		CALL Z,LOAD4BASIC
-		POP AF
-		CP "D"
-		CALL Z,LOAD4DATA
-		CALL LOAD_FULLFILE
-		LD A,(TRD_5CDC)
-		LD B,A
-		POP DE
-		RET
+loc_18F6	call LOAD_FULLFILE
+loc_18F9	ld a,b
+		call KOLWO_SECS
+loc_18FD	ld b,a
+		ld a,(TRD_5CE5)		; €‘…… ”€‰‹€
+		cp "C"
+		pop de
+		ret z
+		push de
+		cp "B"
+		push af
+		call z,LOAD4BASIC
+		pop af
+		cp "D"
+		call z,LOAD4DATA
+		call LOAD_FULLFILE
+		ld a,(TRD_5CDC)
+		ld b,a
+		pop de
+		ret
 
-LOAD_FULLFILE	LD A,3
-		LD (TRD_5CD6),A		; #FF-€„€ ’€ ‘’€‘—…‘ €€‹‡€’
-		RET
+LOAD_FULLFILE	ld a,3
+		ld (TRD_5CD6),a		; #FF-€„€ ’€ ‘’€‘—…‘ €€‹‡€’
+		ret
 
-RD_FILE		CALL CP_HIGH_ERR
-		JR Z,LOC_192D
-		PUSH AF
-		CALL NUM_SEC_FILE
-		POP AF
-		CP 0XFF
-LOC_192D	PUSH AF
-		CALL Z,RD_SECTORS
-		POP AF
-		JR Z,LOC_1937
-		JP COM_06
+RD_FILE		call CP_HIGH_ERR
+		jr z,loc_192D
+		push af
+		call NUM_SEC_FILE
+		pop af
+		cp 0xff
+loc_192D	push af
+		call z,RD_SECTORS
+		pop af
+		jr z,loc_1937
+		jp COM_06
 
-LOC_1937	LD A,(TRD_5CD6)		; #FF-€„€ ’€ ‘’€‘—…‘ €€‹‡€’
-		CP 3
-		CALL Z,RD_OR_VERIFY
-		LD HL,(E_LINE)		; €„…‘	€—€‹€ …„€’“…‰ ‘’
-		DEC HL
-		LD (HL),0X80
-		RET
+loc_1937	ld a,(TRD_5CD6)		; #FF-€„€ ’€ ‘’€‘—…‘ €€‹‡€’
+		cp 3  
+		call z,RD_OR_VERIFY
+		ld hl,(E_LINE)		; €„…‘	€—€‹€ …„€’“…‰ ‘’
+		dec hl
+		ld (hl),0x80
+		ret   
 
-RD_OR_VERIFY	LD A,(TRD_5CF9)		; „‘‚„  …€–	‘ 2 ”€‰‹€
-		CP 0XFF
-		JP NZ,LOAD_END_FILE
-		LD A,(TRD_5CDB)
-		OR A
-		RET Z
-		LD C,A
-		LD B,1
-		LD DE,(TRD_5CF4)
-		JR LOC_196A
+RD_OR_VERIFY	ld a,(TRD_5CF9)		; „‘‚„  …€–	‘ 2 ”€‰‹€
+		cp 0xff
+		jp nz,LOAD_END_FILE
+		ld a,(TRD_5CDB)
+		or a
+		ret z
+		ld c,a
+		ld b,1
+		ld de,(TRD_5CF4)
+		jr loc_196A
 
-RD_SECTORS	LD A,(TRD_5CF9)		; „‘‚„  …€–	‘ 2 ”€‰‹€
-		CP 0XFF
-		JP NZ,COM_05		; —’…… ‘…’‚
-		LD (TRD_5CF4),DE
-		LD C,0
-LOC_196A	LD A,B
-		OR A
-		RET Z
-		LD (TRD_5CD7),HL	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+RD_SECTORS	ld a,(TRD_5CF9)		; „‘‚„  …€–	‘ 2 ”€‰‹€
+		cp 0xff
+		jp nz,COM_05		; —’…… ‘…’‚
+		ld (TRD_5CF4),de
+		ld c,0
+loc_196A	ld a,b
+		or a
+		ret z
+		ld (TRD_5CD7),hl	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
 					; ‘‹…	‚… ’€ „‘‚„€
-		LD (TRD_5CD9),DE	; …†“’—€	„‹€ „‹ <B> 	<C>
-LOC_1974	PUSH BC
-		LD B,1
-		LD DE,(TRD_5CD9)	; …†“’—€	„‹€ „‹ <B> 	<C>
-		LD HL,TRD_5D25
-		CALL COM_05		; —’…… ‘…’‚
-		LD HL,(TRD_5CF4)
-		LD (TRD_5CD9), HL	; …†“’—€	„‹€ „‹ <B> 	<C>
-		POP BC
-		LD HL,(TRD_5CD7)	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+		ld (TRD_5CD9),de	; …†“’—€	„‹€ „‹ <B> 	<C>
+loc_1974	push bc
+		ld b,1
+		ld de,(TRD_5CD9)	; …†“’—€	„‹€ „‹ <B> 	<C>
+		ld hl,TRD_5D25
+		call COM_05		; —’…… ‘…’‚
+		ld hl,(TRD_5CF4)
+		ld (TRD_5CD9),hl	; …†“’—€	„‹€ „‹ <B> 	<C>
+		pop bc
+		ld hl,(TRD_5CD7)	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
 					; ‘‹…	‚… ’€ „‘‚„€
-		LD DE,TRD_5D25
-LOC_198E	LD A,(DE)
-		CP (HL)
-		JR NZ,LOC_199D
-		INC HL
-		INC DE
-		DEC C
-		JR NZ,LOC_198E
-		LD (TRD_5CD7),HL	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+		ld de,TRD_5D25
+loc_198E	ld a,(de)
+		cp (hl)
+		jr nz,loc_199D
+		inc hl
+		inc de
+		dec c
+		jr nz,loc_198E
+		ld (TRD_5CD7),hl	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
 					; ‘‹…	‚… ’€ „‘‚„€
-		DJNZ LOC_1974
-		RET
+		djnz loc_1974
+		ret
 
-LOC_199D	LD HL,ASC_276B		; "VERIFY ERROR."
-		LD A,0X0D
-		JP PRINT_TXTERR
+loc_199D	ld hl,TXT_VERIFYERR	; "VERIFY ERROR."
+		ld a,0x0d
+		jp PRINT_TXTERR
 
-PEEK		LD A,0XFF
-		JR LOC_19AB
+PEEK		ld a,0xff
+		jr loc_19AB
 
-POKE		LD A,0XEE
-LOC_19AB	LD (TRD_5D10),A		; ‘’€‰ €‰’ 
-		JP LOC_1818
+POKE		ld a,0xee
+loc_19AB	ld (TRD_5D10),a		; ‘’€‰ €‰’ 
+		jp loc_1818
 
-MERGE		LD A,0XFF
-		LD (TRD_5D1F),A
-		CALL GET_PARAMS
-		CALL EXIT_IF_SINTAX
-		LD A,(TRD_5CE5)		; €‘…… ”€‰‹€
-		CP "B"
-		JP NZ,SINTAX_ERROR
-		LD BC,(TRD_5CE6)	; „‹ <C>-‘’€’‚›‰ €„…‘,„‹ <B>-„‹€	ƒ€›
-		LD (TRD_5CDB), BC
-		PUSH BC
-		INC BC
-		RST 0X20
-		DW 0X30			; ‘‡„€… ‘‚„ƒ …‘’€
-		LD (HL),0X80
-		EX DE,HL
-		POP DE
-		PUSH HL
-		LD DE,(TRD_5CEB)	; …	…‚ƒ	‘…’€	”€‰‹€
-		CALL LOAD_FULLFILE
-		LD A,(TRD_5CDC)
-		LD B,A
-		CALL ZERO2HIGH_ERR
-		CALL RD_FILE
-		POP HL
-		LD DE,(PROG)
-		RST 0X20
-		DW 0X08D2		; €’€ ‘ ‘’€ ƒ€› € …‰‘…
-		JP ERR_OK
+MERGE		ld a,0xff
+		ld (TRD_5D1F),a
+		call GET_PARAMS
+		call EXIT_IF_SINTAX
+		ld a,(TRD_5CE5)		; €‘…… ”€‰‹€
+		cp "B"
+		jp nz,SINTAX_ERROR
+		ld bc,(TRD_5CE6)	; „‹ <C>-‘’€’‚›‰ €„…‘,„‹ <B>-„‹€	ƒ€›
+		ld (TRD_5CDB),bc
+		push bc
+		inc bc
+		rst 0x20
+		dw 0x30			; ‘‡„€… ‘‚„ƒ …‘’€
+		ld (hl),0x80
+		ex de,hl
+		pop de
+		push hl
+		ld de,(TRD_5CEB)	; …	…‚ƒ	‘…’€	”€‰‹€
+		call LOAD_FULLFILE
+		ld a,(TRD_5CDC)
+		ld b,a
+		call ZERO2HIGH_ERR
+		call RD_FILE
+		pop hl
+		ld de,(PROG)
+		rst 0x20
+		dw 0x08d2		; €’€ ‘ ‘’€ ƒ€› € …‰‘…
+		jp ERR_OK
 
-CP_FREE4PROG	EX DE,HL
-		SCF
-		SBC HL,DE
-		RET C
-		LD DE,0X0A
-		ADD HL,DE
-		LD B,H
-		LD C,L
-CP_FREE_RAM	RST 0X20
-		DW 0X1F05		; ‚…€ ‘‚„‰ €’
-		RET
+CP_FREE4PROG	ex de,hl
+		scf
+		sbc hl,de
+		ret c
+		ld de,0x0a
+		add hl,de
+		ld b,h
+		ld c,l
+CP_FREE_RAM	rst 0x20 
+		dw 0x1f05		; ‚…€ ‘‚„‰ €’
+		ret      
 
-LOAD4BASIC	LD DE,(PROG)
-		LD HL,(E_LINE)		; €„…‘	€—€‹€ …„€’“…‰ ‘’
-		DEC HL
-		PUSH HL
-		PUSH DE
-		SBC HL,DE
-		LD DE,(TRD_5CE6)	; „‹ <C>-‘’€’‚›‰ €„…‘,„‹ <B>-„‹€	ƒ€›
-		PUSH DE
-		PUSH HL
-		LD HL,0
-		LD A,(TRD_5CF9)		; „‘‚„  …€–	‘ 2 ”€‰‹€
-		CP 0XFF
-		JR Z,LOC_1A20
-		LD HL,5
-LOC_1A20	ADD HL,DE
-		LD (TRD_5CDB),HL
-		POP HL
-		LD A,(TRD_5CF9)		; „‘‚„  …€–	‘ 2 ”€‰‹€
-		CP 0XFF
-		JR NZ,LOC_1A31
-		POP DE
-		POP DE
-		POP HL
-		JR LOC_1A48
+LOAD4BASIC	ld de,(PROG)
+		ld hl,(E_LINE)		; €„…‘	€—€‹€ …„€’“…‰ ‘’
+		dec hl
+		push hl
+		push de
+		sbc hl,de
+		ld de,(TRD_5CE6)	; „‹ <C>-‘’€’‚›‰ €„…‘,„‹ <B>-„‹€	ƒ€›
+		push de
+		push hl
+		ld hl,0
+		ld a,(TRD_5CF9)		; „‘‚„  …€–	‘ 2 ”€‰‹€
+		cp 0xff
+		jr z,loc_1A20
+		ld hl,5
+loc_1A20	add hl,de
+		ld (TRD_5CDB),hl
+		pop hl
+		ld a,(TRD_5CF9)		; „‘‚„  …€–	‘ 2 ”€‰‹€
+		cp 0xff
+		jr nz,loc_1A31
+		pop de
+		pop de
+		pop hl
+		jr loc_1A48
 
-LOC_1A31	CALL CP_FREE4PROG
-		POP BC
-		POP DE
-		POP HL
-		PUSH BC
-		RST 0X20
-		DW 0X19E5		; ‚‘‘’€‚‹……
-		POP BC
-		CALL RESERV_RAM
-		INC HL
-		LD BC,(TRD_5CE8)	; „‹€	ƒ€›
-		ADD HL,BC
-		LD (VARS),HL
-LOC_1A48	LD HL,(PROG)
-		RET
+loc_1A31	call CP_FREE4PROG
+		pop bc
+		pop de
+		pop hl
+		push bc
+		rst 0x20
+		dw 0x19e5		; ‚‘‘’€‚‹……
+		pop bc
+		call RESERV_RAM
+		inc hl
+		ld bc,(TRD_5CE8)	; „‹€	ƒ€›
+		add hl,bc
+		ld (VARS),hl
+loc_1A48	ld hl,(PROG)
+		ret
 
-LOAD4DATA	LD DE,(TRD_5CE8)	; „‹€	ƒ€›
-		LD (TRD_5CDB),DE
-		LD HL,(TRD_5CD7)	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+LOAD4DATA	ld de,(TRD_5CE8)	; „‹€	ƒ€›
+		ld (TRD_5CDB),de
+		ld hl,(TRD_5CD7)	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
 					; ‘‹…	‚… ’€ „‘‚„€
-		LD A,(TRD_5CF9)		; „‘‚„  …€–	‘ 2 ”€‰‹€
-		CP 0XFF
-		RET Z
-		LD HL,(TRD_5CD9)	; …†“’—€	„‹€ „‹ <B> 	<C>
-		PUSH HL
-		CALL CP_FREE4PROG
-		POP HL
-		LD A,H
-		OR L
-		JR Z,LOC_1A79
-		LD HL,(TRD_5CD7)	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+		ld a,(TRD_5CF9)		; „‘‚„  …€–	‘ 2 ”€‰‹€
+		cp 0xff
+		ret z
+		ld hl,(TRD_5CD9)	; …†“’—€	„‹€ „‹ <B> 	<C>
+		push hl
+		call CP_FREE4PROG
+		pop hl
+		ld a,h
+		or l
+		jr z,loc_1A79
+		ld hl,(TRD_5CD7)	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
 					; ‘‹…	‚… ’€ „‘‚„€
-		DEC HL
-		DEC HL
-		DEC HL
-		LD BC,(TRD_5CD9)	; …†“’—€	„‹€ „‹ <B> 	<C>
-		INC BC
-		INC BC
-		INC BC
-		CALL DEL_WORKRAM
-LOC_1A79	LD HL,(E_LINE)		; €„…‘	€—€‹€ …„€’“…‰ ‘’
-		DEC HL
-		LD BC,(TRD_5CE8)	; „‹€	ƒ€›
-		PUSH BC
-		INC BC
-		INC BC
-		INC BC
-		CALL RESERV_RAM
-		INC HL
-		LD A,(TRD_5CD2)
-		LD (HL),A
-		INC HL
-		POP DE
-		LD (HL),E
-		INC HL
-		LD (HL),D
-		INC HL
-		RET
+		dec hl
+		dec hl
+		dec hl
+		ld bc,(TRD_5CD9)	; …†“’—€	„‹€ „‹ <B> 	<C>
+		inc bc
+		inc bc
+		inc bc
+		call DEL_WORKRAM
+loc_1A79	ld hl,(E_LINE)		; €„…‘	€—€‹€ …„€’“…‰ ‘’
+		dec hl
+		ld bc,(TRD_5CE8)	; „‹€	ƒ€›
+		push bc
+		inc bc
+		inc bc
+		inc bc
+		call RESERV_RAM
+		inc hl
+		ld a,(TRD_5CD2)
+		ld (hl),a
+		inc hl
+		pop de
+		ld (hl),e
+		inc hl
+		ld (hl),d
+		inc hl
+		ret
 
-NUM_SEC_FILE	LD A,(TRD_5CD9)		; …†“’—€	„‹€ „‹ <B> 	<C>
-		LD C,B
-		LD B,A
-		LD A,C
-		CP B
-		JR C,LOC_1AB6
-		LD A,B
-		OR A
-		JP Z,SINTAX_ERROR
-		DEC B
-		JR Z,LOC_1AB0
-		LD A,0X10
-LOC_1AA7	INC E
-		CP E
-		JR NZ,LOC_1AAE
-		LD E,0
-		INC D
-LOC_1AAE	DJNZ LOC_1AA7
-LOC_1AB0	LD B,1
-		LD HL,(TRD_5CD7)	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+NUM_SEC_FILE	ld a,(TRD_5CD9)		; …†“’—€	„‹€ „‹ <B> 	<C>
+		ld c,b
+		ld b,a
+		ld a,c
+		cp b
+		jr c,loc_1AB6
+		ld a,b
+		or a
+		jp z,SINTAX_ERROR
+		dec b
+		jr z,loc_1AB0
+		ld a,0x10
+loc_1AA7	inc e
+		cp e
+		jr nz,loc_1AAE
+		ld e,0
+		inc d
+loc_1AAE	djnz loc_1AA7
+loc_1AB0	ld b,1
+		ld hl,(TRD_5CD7)	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
 					; ‘‹…	‚… ’€ „‘‚„€
-		RET
+		ret
 
-LOC_1AB6	LD HL,TXT_R_O
-		LD A,5
-		JP PRINT_TXTERR
+loc_1AB6	ld hl,TXT_R_O
+		ld a,5
+		jp PRINT_TXTERR
 
-CP_FILE_FREE	CALL FIND_FILE		; ‘	”€‰‹€  …
-		JP Z,FILE_EXISTS
-CP_FREE_ON_DSK	CALL READ_9SEC		; —’…… 9 ‘…’€
-		LD A,(TRD_5E09)
-		CP 0X80
-		JP Z,ERR_DIRFULL
-		RET
+CP_FILE_FREE	call FIND_FILE		; ‘	”€‰‹€  …
+		jp z,FILE_EXISTS
+CP_FREE_ON_DSK	call READ_9SEC		; —’…… 9 ‘…’€
+		ld a,(TRD_5E09)
+		cp 0x80
+		jp z,ERR_DIRFULL
+		ret
 
-SAVE		CALL ZERO2HIGH_ERR
-		LD HL,0
-		LD (TRD_5CD1),HL
-		CALL SET_AND_PUT
-		CALL GET_SYMSTR
-		CP 0XAF			;CODE
-		JR Z,LOC_1B39
-		CP 0XCA			;LINE
-		JR NZ,LOC_1AF8
-		CALL SET_NUM_CHAN
-		CALL EXIT_IF_SINTAX
-		LD HL,(TRD_5CDB)
-		LD (TRD_5CD1),HL
-		LD HL,TRD_5CE5		; €‘…… ”€‰‹€
-		JR LOC_1B1F
+SAVE		call ZERO2HIGH_ERR
+		ld hl,0
+		ld (TRD_5CD1),hl
+		call SET_AND_PUT
+		call GET_SYMSTR
+		cp __CODE
+		jr z,loc_1B39
+		cp __LINE
+		jr nz,loc_1AF8
+		call SET_NUM_CHAN
+		call EXIT_IF_SINTAX
+		ld hl,(TRD_5CDB)
+		ld (TRD_5CD1),hl
+		ld hl,TRD_5CE5		; €‘…… ”€‰‹€
+		jr loc_1B1F
 
-LOC_1AF8	CP 0XAA
-		JR NZ,LOC_1B0D
-		LD HL,0X4000
-		LD (TRD_5CD7),HL	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+loc_1AF8	cp __SCREENS
+		jr nz,loc_1B0D
+		ld hl,0x4000
+		ld (TRD_5CD7),hl	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
 					; ‘‹…	‚… ’€ „‘‚„€
-		LD HL,0X1B00
-		LD (TRD_5CD9),HL	; …†“’—€	„‹€ „‹ <B> 	<C>
-		LD (TRD_5CDB),HL
-		JR LOC_1B48
+		ld hl,0x1b00
+		ld (TRD_5CD9),hl	; …†“’—€	„‹€ „‹ <B> 	<C>
+		ld (TRD_5CDB),hl
+		jr loc_1B48
 
-LOC_1B0D	CALL EXIT_IF_SINTAX
-		CALL GET_SYMSTR
-		LD HL,TRD_5CE5		; €‘…… ”€‰‹€
-		CP 0XE4			;DATA
-		JR Z,LOC_1B2C
-		CP 0X0D
-		JP NZ, SINTAX_ERROR
-LOC_1B1F	LD (HL),"B"
-		CALL CP_FILE_FREE
-		CALL DEL_5BYTES
-LOC_1B27	CALL SET_START_SIZE
-		JR LOC_1B53
+loc_1B0D	call EXIT_IF_SINTAX
+		call GET_SYMSTR
+		ld hl,TRD_5CE5		; €‘…… ”€‰‹€
+		cp __DATA
+		jr z,loc_1B2C
+		cp 0x0d
+		jp nz,SINTAX_ERROR
+loc_1B1F	ld (hl),"B"
+		call CP_FILE_FREE
+		call DEL_5BYTES
+loc_1B27	call SET_START_SIZE
+		jr loc_1B53
 
-LOC_1B2C	LD (HL),"D"
-		CALL CP_FILE_FREE
-		CALL CP_MASSIV
-		JR NC,LOC_1B53
-		JP C,SINTAX_ERROR
-LOC_1B39	CALL GET_START_SIZE
-		LD HL,(TRD_5CD9)	; …†“’—€	„‹€ „‹ <B> 	<C>
-		LD (TRD_5CD7),HL	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+loc_1B2C	ld (hl),"D"
+		call CP_FILE_FREE
+		call CP_MASSIV
+		jr nc,loc_1B53
+		jp c,SINTAX_ERROR
+loc_1B39	call GET_START_SIZE
+		ld hl,(TRD_5CD9)	; …†“’—€	„‹€ „‹ <B> 	<C>
+		ld (TRD_5CD7),hl	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
 					; ‘‹…	‚… ’€ „‘‚„€
-		LD HL,(TRD_5CDB)
-		LD (TRD_5CD9),HL	; …†“’—€	„‹€ „‹ <B> 	<C>
-LOC_1B48	CALL EXIT_IF_SINTAX
-		LD A,"C"
-		LD (TRD_5CE5),A		; €‘…… ”€‰‹€
-		CALL CP_FILE_FREE
-LOC_1B53	CALL SAVE_FILE
-		JP LOC_569
+		ld hl,(TRD_5CDB)
+		ld (TRD_5CD9),hl	; …†“’—€	„‹€ „‹ <B> 	<C>
+loc_1B48	call EXIT_IF_SINTAX
+		ld a,"C"
+		ld (TRD_5CE5),a		; €‘…… ”€‰‹€
+		call CP_FILE_FREE
+loc_1B53	call SAVE_FILE
+		jp loc_569
 
-SAVE_FILE	LD HL,(TRD_5CD7)	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+SAVE_FILE	ld hl,(TRD_5CD7)	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
 					; ‘‹…	‚… ’€ „‘‚„€
-		LD (TRD_5CE6),HL	; „‹ <C>-‘’€’‚›‰ €„…‘,„‹ <B>-„‹€	ƒ€›
-		EX DE,HL
-		LD HL,(TRD_5CD9)	; …†“’—€	„‹€ „‹ <B> 	<C>
-		LD A,L
-		OR H
-		JP Z,SINTAX_ERROR
-		LD A,L
-		OR A
-		JR Z,LOC_1B6D
-		INC H
-LOC_1B6D	LD A,H
-		LD (TRD_5CEA),A		; „‹€	”€‰‹€ ‚	‘…’€•
-		LD E,A
-		LD D,0
-		LD HL,(TRD_5E0A)
-		SBC HL,DE
-		JP C,LOC_1C45
-		PUSH HL
-		LD HL,(E_LINE)		; €„…‘	€—€‹€ …„€’“…‰ ‘’
-		LD (HL),0XAA
-		INC HL
-		LD DE,(TRD_5CD1)
-		LD (HL),E
-		INC HL
-		LD (HL),D
-		LD HL, (TRD_5CDB)
-		LD (TRD_5CE8),HL	; „‹€	ƒ€›
-		LD HL,(TRD_5E06)
-		LD (TRD_5CEB),HL	; …	…‚ƒ	‘…’€	”€‰‹€
-		EX DE,HL
-		LD HL,(TRD_5CE6)	; „‹ <C>-‘’€’‚›‰ €„…‘,„‹ <B>-„‹€	ƒ€›
-		LD A,(TRD_5CEA)		; „‹€	”€‰‹€ ‚	‘…’€•
-		LD B,A
-		CALL COM_06
-		LD HL,(TRD_5CF4)
-		PUSH HL
-		CALL READ_9SEC		; —’…… 9 ‘…’€
-		POP HL
-		LD (TRD_5E06),HL
-		POP HL
-		LD (TRD_5E0A),HL
-		LD HL,TRD_5E09
-		LD A,(HL)
-		LD (TRD_5D1E),A
-		INC (HL)
-		PUSH HL
-		CALL REWRITE_9SEC	; ……‡€‘ 9 ‘…’€
-		POP HL
-		LD C,(HL)
-		DEC C
-		LD A,(TRD_5CE5)		; €‘…… ”€‰‹€
-		CP "B"
-		RET NZ
+		ld (TRD_5CE6),hl	; „‹ <C>-‘’€’‚›‰ €„…‘,„‹ <B>-„‹€	ƒ€›
+		ex de,hl
+		ld hl,(TRD_5CD9)	; …†“’—€	„‹€ „‹ <B> 	<C>
+		ld a,l
+		or h
+		jp z,SINTAX_ERROR
+		ld a,l
+		or a
+		jr z,loc_1B6D
+		inc h
+loc_1B6D	ld a,h
+		ld (TRD_5CEA),a		; „‹€	”€‰‹€ ‚	‘…’€•
+		ld e,a
+		ld d,0
+		ld hl,(TRD_5E0A)
+		sbc hl,de
+		jp c,loc_1C45
+		push hl
+		ld hl,(E_LINE)		; €„…‘	€—€‹€ …„€’“…‰ ‘’
+		ld (hl),__SCREENS
+		inc hl 
+		ld de,(TRD_5CD1)
+		ld (hl),e
+		inc hl
+		ld (hl),d
+		ld hl,(TRD_5CDB)
+		ld (TRD_5CE8),hl	; „‹€	ƒ€›
+		ld hl,(TRD_5E06)
+		ld (TRD_5CEB),hl	; …	…‚ƒ	‘…’€	”€‰‹€
+		ex de,hl
+		ld hl,(TRD_5CE6)	; „‹ <C>-‘’€’‚›‰ €„…‘,„‹ <B>-„‹€	ƒ€›
+		ld a,(TRD_5CEA)		; „‹€	”€‰‹€ ‚	‘…’€•
+		ld b,a
+		call COM_06
+		ld hl,(TRD_5CF4)
+		push hl
+		call READ_9SEC		; —’…… 9 ‘…’€
+		pop hl
+		ld (TRD_5E06),hl
+		pop hl
+		ld (TRD_5E0A),hl
+		ld hl,TRD_5E09
+		ld a,(hl)
+		ld (TRD_5D1E),a
+		inc (hl)
+		push hl
+		call REWRITE_9SEC	; ……‡€‘ 9 ‘…’€
+		pop hl
+		ld c,(hl)
+		dec c
+		ld a,(TRD_5CE5)		; €‘…… ”€‰‹€
+		cp "B"
+		call z,SET_HEAD_STSZ
+		ret
 
-SET_HEAD_STSZ	LD HL,(E_LINE)		; €„…‘	€—€‹€ …„€’“…‰ ‘’
-		LD DE,(PROG)
-		SCF
-		SBC HL,DE
-		LD (TRD_5CE6),HL	; „‹ <C>-‘’€’‚›‰ €„…‘,„‹ <B>-„‹€	ƒ€›
-		LD HL,(VARS)
-		SBC HL,DE
-		LD (TRD_5CE8),HL	; „‹€	ƒ€›
-		RET
+SET_HEAD_STSZ	ld hl,(E_LINE)		; €„…‘	€—€‹€ …„€’“…‰ ‘’
+		ld de,(PROG)
+		scf
+		sbc hl,de
+		ld (TRD_5CE6),hl	; „‹ <C>-‘’€’‚›‰ €„…‘,„‹ <B>-„‹€	ƒ€›
+		ld hl,(VARS)
+		sbc hl,de
+		ld (TRD_5CE8),hl	; „‹€	ƒ€›
+		ret
 
-SET_START_SIZE	LD HL,(VARS)
-		LD DE,(PROG)
-		SBC HL,DE
-		LD (TRD_5CDB),HL
-		LD HL,(PROG)
-		LD (TRD_5CD7),HL	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+SET_START_SIZE	ld hl,(VARS)
+		ld de,(PROG)
+		sbc hl,de
+		ld (TRD_5CDB),hl
+		ld hl,(PROG)
+		ld (TRD_5CD7),hl	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
 					; ‘‹…	‚… ’€ „‘‚„€
-		LD HL,(E_LINE)		; €„…‘	€—€‹€ …„€’“…‰ ‘’
-		INC HL
-		INC HL
-		INC HL
-		SBC HL,DE
-		LD (TRD_5CD9),HL	; …†“’—€	„‹€ „‹ <B> 	<C>
-		RET
+		ld hl,(E_LINE)		; €„…‘	€—€‹€ …„€’“…‰ ‘’
+		inc hl
+		inc hl
+		inc hl
+		sbc hl,de
+		ld (TRD_5CD9),hl	; …†“’—€	„‹€ „‹ <B> 	<C>
+		ret
 
-READ_MASSIV	CALL FIND_MASSIV
-		RET NC
-		LD HL,0
-		LD (TRD_5CD9),HL	; …†“’—€	„‹€ „‹ <B> 	<C>
-		LD A,(TRD_5CF9)		; „‘‚„  …€–	‘ 2 ”€‰‹€
-		CP 0XFF
-		RET NZ
-		JP LOC_1C13
+READ_MASSIV	call FIND_MASSIV
+		ret nc
+		ld hl,0
+		ld (TRD_5CD9),hl	; …†“’—€	„‹€ „‹ <B> 	<C>
+		ld a,(TRD_5CF9)		; „‘‚„  …€–	‘ 2 ”€‰‹€
+		cp 0xff
+		ret nz
+		jp loc_1C13
 
-CP_MASSIV	CALL FIND_MASSIV
-		RET NC
-LOC_1C13	LD A,0X0E
-		LD HL,ASC_27DD		; "ARRAY NOT FOUND"
-		JP PRINT_TXTERR
+CP_MASSIV	call FIND_MASSIV
+		ret nc
+loc_1C13	ld a,0x0e
+		ld hl,TXT_ARRAYNOT	; "ARRAY NOT FOUND"
+		jp PRINT_TXTERR
 
-FIND_MASSIV	CALL GET_NEXT_SYM
-		CALL LOOK_VARS
-		SET 7,C
-		LD A,C
-		LD (TRD_5CD2),A
-		JR NC,LOC_1C2B
-LOC_1C29	SCF
-		RET
+FIND_MASSIV	call GET_NEXT_SYM
+		call LOOK_VARS
+		set 7,c
+		ld a,c
+		ld (TRD_5CD2),a
+		jr nc,loc_1C2B
+loc_1C29	scf
+		ret
 
-LOC_1C2B	JR NZ,LOC_1C29
-		INC HL
-		LD E,(HL)
-		INC HL
-		LD D,(HL)
-		INC HL
-		LD (TRD_5CD7),HL	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+loc_1C2B	jr nz,loc_1C29
+		inc hl
+		ld e,(hl)
+		inc hl
+		ld d,(hl)
+		inc hl
+		ld (TRD_5CD7),hl	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
 					; ‘‹…	‚… ’€ „‘‚„€
-		LD (TRD_5CDB),DE
-		LD (TRD_5CD9),DE	; …†“’—€	„‹€ „‹ <B> 	<C>
-		CALL GET_NEXT_SYM
-		CP ")"
-		JR NZ,LOC_1C2B
-		RET
+		ld (TRD_5CDB),de
+		ld (TRD_5CD9),de	; …†“’—€	„‹€ „‹ <B> 	<C>
+		call GET_NEXT_SYM
+		cp ")"
+		jr nz,loc_1C2B
+		ret
 
-LOC_1C45	LD HL,TXT_NOSPACE_
-		LD A,3
-PRINT_TXTERR	CALL PRINT_ERROR	; …—€’ ‘™…  …
-		JP END_COMAND
+loc_1C45	ld hl,TXT_NOSPACE_
+		ld a,3
+PRINT_TXTERR	call PRINT_ERROR	; …—€’ ‘™…  …
+		jp END_COMAND
 
-FILE_EXISTS	LD HL,TXT_FILEEXISTS_
-		LD A,2
-		JR PRINT_TXTERR
+FILE_EXISTS	ld hl,TXT_FILEEXISTS_
+		ld a,2
+		jr PRINT_TXTERR
 
-		DUPL 0X1C57+4-$,0XFF
-SET_FILENAME	LD HL,TRD_5CDD		;  ”€‰‹€
-		LD B,8
-LOC_1C5C	LD (HL)," "
-		INC HL
-		DJNZ LOC_1C5C
-		CALL CP_ON_STKBOT
-		EX DE,HL
-		CALL SETUP_DSK
-		LD A,C
-		AND A
-		JP Z,SINTAX_ERROR
-		CP 9
-		JR C,LOC_1C73
-		LD C,8
-LOC_1C73	LD A,(HL)
-		CP " "
-		JP C,SINTAX_ERROR
-		LD DE,TRD_5CDD		;  ”€‰‹€
-		PUSH BC
+SET_FILENAME	ld hl,TRD_5CDD		;  ”€‰‹€
+		ld b,8
+loc_1C5C	ld (hl)," "
+		inc hl
+		djnz loc_1C5C
+		call CP_ON_STKBOT
+		ex de,hl
+		call SETUP_DSK
+		ld a,c
+		or a
+		jp z,SINTAX_ERROR
+		cp 9
+		jr c,loc_1C73
+		ld c,8
+loc_1C73	ld a,(hl)
+		cp " "
+		jp c,SINTAX_ERROR
+		ld de,TRD_5CDD		;  ”€‰‹€
+		push bc
+		IF EMU3D2F=1
 		JP EMU_LDIR_RBC
+		
+		RET
+		ELSE
+		ldir
+		pop bc
+		ret
+		ENDIF
 
 ;‚› „‘€ „‹ ”€’‚€
-SETUP_DSK	INC HL
-		LD A,(HL)		;‚’‰ ‘‚‹ ‚ €‚›—€•
+SETUP_DSK	inc hl
+		ld a,(hl)		;‚’‰ ‘‚‹ ‚ €‚›—€•
 		CP ":"			;…‘‹ … ":", ’
-		JR NZ,LOC_1C98		;……•„ € ‚› ’…“™…ƒ „‘‚„€
-		DEC HL
-		LD A,(HL)		;€—… ‡€€… ‡ ‘’ “‚“ „‘‚„€
-		CALL NUMDSK2BYTE	;“‘’€‚€ „‘‚„€ € ’ “„…’ ”€’‚€…
-		CALL LOC_1C9C		; €‘’‰€ € „‘‚„
-		DEC BC
-		DEC BC			;“‘€…  „‘‚„€ ‚ … „‘€
-		INC HL
-		INC HL			;‘„‚“‹ “€‡€’…‹ ‚ ‚‚…„…‰ ‘’… € €—€‹ … „‘€
-		RET
+		jr nz,loc_1C98		;……•„ € ‚› ’…“™…ƒ „‘‚„€
+		dec hl
+		ld a,(hl)		;€—… ‡€€… ‡ ‘’ “‚“ „‘‚„€
+		call NUMDSK2BYTE	;“‘’€‚€ „‘‚„€ € ’ “„…’ ”€’‚€…
+		push bc
+		push hl
+		call COM_01		; €‘’‰€ € „‘‚„
+		pop hl
+		pop bc
+		dec bc
+		dec bc			;“‘€…  „‘‚„€ ‚ … „‘€
+		inc hl
+		inc hl			;‘„‚“‹ “€‡€’…‹ ‚ ‚‚…„…‰ ‘’… € €—€‹ … „‘€
+		ret
 
-LOC_1C98	DEC HL
-		LD A,(TRD_5D19)		; „‘‚„  “‹—€
-LOC_1C9C	PUSH BC
-		PUSH HL
-		CALL COM_01		; €‘’‰€ € „‘‚„
-		POP HL
-		POP BC
-		RET
+loc_1C98	dec hl
+		ld a,(TRD_5D19)		; „‘‚„  “‹—€
+		push bc
+		push hl
+		call COM_01		; €‘’‰€ € „‘‚„
+		pop hl
+		pop bc
+		ret
 
-FIND_HEAD_BUF	LD L,C
-		LD H,0
-		ADD HL,HL
-		ADD HL,HL
-		ADD HL,HL
-		ADD HL,HL
-		LD BC,TRD_5D25
-		ADD HL,BC
-		RET
+FIND_HEAD_BUF	ld l,c
+		ld h,0
+		add hl,hl
+		add hl,hl
+		add hl,hl
+		add hl,hl
+		ld bc,TRD_5D25
+		add hl,bc
+		ret
 
-SET_CP_FILENAME	CALL SET_FILENAME
+SET_CP_FILENAME	call SET_FILENAME
 ; ‘	”€‰‹€  … ”€‰‹€
-FIND_FILENAME	CALL RD_0SEC2BUF	; —’…… ‘…’€ 0 €’€‹ƒ€
-		LD BC,0X8000
-LOC_1CBA	PUSH BC
-		CALL FIND_HEAD_BUF
-		CALL CP_END_BUF
-		POP BC
-		PUSH BC
-		LD A,C
-		CP 0X10
-		JR NZ,LOC_1CCD
-		POP BC
-		LD C,0
-		JR LOC_1CBA
+FIND_FILENAME	call RD_0SEC2BUF	; —’…… ‘…’€ 0 €’€‹ƒ€
+		ld b,0x80
+		ld c,0
+loc_1CBA	push bc
+		call FIND_HEAD_BUF
+		call CP_END_BUF
+		pop bc
+		push bc
+		ld a,c
+		cp 0x10
+		jr nz,loc_1CCD
+		pop bc
+		ld c,0
+		jr loc_1CBA
 
-LOC_1CCD	LD DE,TRD_5CDD		;  ”€‰‹€
-		LD A,(TRD_5D06)		; ‹—…‘’‚ ‘‚‹‚ … ”€‰‹€  ‘…
-		LD B,A
-		XOR A
-		CP (HL)
-		JR NZ,LOC_1CDB
-		POP BC
-		JR LOC_1CE4
+loc_1CCD	ld de,TRD_5CDD		;  ”€‰‹€
+		ld a,(TRD_5D06)		; ‹—…‘’‚ ‘‚‹‚ … ”€‰‹€  ‘…
+		ld b,a
+		xor a 
+		cp (hl)
+		jr nz,loc_1CDB
+		pop bc
+		jr loc_1CE4
 
-LOC_1CDB	CALL COMPARE_B_SYM
-		POP BC
-		JR Z,LOC_1CE7
-		INC C
-		DJNZ LOC_1CBA
-LOC_1CE4	OR 0XFF
-		RET
+loc_1CDB	call COMPARE_B_SYM
+		pop bc
+		jr z,loc_1CE7
+		inc c
+		djnz loc_1CBA
+loc_1CE4	or 0xff
+		ret
 
-LOC_1CE7	LD A,0X80
-		SUB B
-		LD C,A
-		LD (TRD_5D1E),A
-		XOR A
-		RET
+loc_1CE7	ld a,0x80
+		sub b
+		ld c,a
+		ld (TRD_5D1E),a
+		xor a
+		ret z
 
 ;‘ ”€‰‹€  …  €‘…
-COM_0A		CALL FIND_FILENAME	; ‘	”€‰‹€  … ”€‰‹€
-		LD HL,TRD_5D0F		; …	 TR-DOS
-		LD (HL),C
-		RET Z
-		LD (HL),0XFF
-		RET
+COM_0A		call FIND_FILENAME	; ‘	”€‰‹€  … ”€‰‹€
+		ld hl,TRD_5D0F		; …	 TR-DOS
+		ld (hl),c
+		ret z
+		ld (hl),0xff
+		ret
 
-RETURN		CALL EXIT_IF_SINTAX
-		CALL DELETE_BUF
-		CALL CLRBUF_EDITOR
-		RES 3,(IY+1)
-		CALL RESTORE_SP		; ‚‘‘’€‚‹…… ……•‚€’—€ 
-		LD SP,(TRD_5D1C)	; ‘•€…… …ƒ‘’€ SP
-		EXX		;LD HL,(ERR_SP)
-		LD HL,0X2758	;DEC HL
-		EXX		;LD A,0X12
-		DEC HL		;CP (HL)
-		LD A,0X12	;JR NZ,LOCRET_1D19
-		CP (HL)		;DEC HL
-		RET NZ		;LD (ERR_SP),HL
-		DEC HL		;LOCRET_1D19	RET
-		JP LOC_0235
+RETURN		call EXIT_IF_SINTAX
+		CALL DELETE_BUFFER
+		res 3,(iy+1)
+		call RESTORE_SP		; ‚‘‘’€‚‹…… ……•‚€’—€ 
+		ld sp,(TRD_5D1C)	; ‘•€…… …ƒ‘’€ SP
+		exx		;LD HL,(ERR_SP)
+		ld hl,0x2758	;DEC HL
+		exx		;LD A,0X12
+		dec hl		;CP (HL)
+		ld a,0x12	;JR NZ,LOCRET_1D19
+		cp (hl)		;DEC HL
+		ret nz		;LD (ERR_SP),HL
+		dec hl		;LOCRET_1D19	RET
+		jp loc_0235
 
-SINTAX_ERROR	BIT 7,(IY+0)
-		JR Z,LOC_1D25
-		LD A,0X0B
-		LD (ERR_NR),A
-LOC_1D25	INC A
-		LD HL,TXT_ERROR_
-LOC_1D29	CALL PRINT_ERROR	; …—€’ ‘™…  …
-		JP END_COMAND
+SINTAX_ERROR	bit 7,(iy+0)
+		jr z,loc_1D25
+		ld a,0x0b
+		ld (ERR_NR),a
+loc_1D25	inc a
+		ld hl,TXT_ERROR_
+loc_1D29	call PRINT_ERROR	; …—€’ ‘™…  …
+		jp END_COMAND
 
-LOC_1D2F	LD A,(ERR_NR)
-		LD HL,ASC_27CA		; "*BREAK*"
-		CP 0X14
-		JR Z,LOC_1D29
-		CP 0X0C
-		JR Z,LOC_1D29
-		LD HL,ASC_27D2		; "OUT OF RAM"
-		CP 3
-		JR Z,LOC_1D29
-		LD HL,ASC_27DD		; "ARRAY NOT FOUND"
-		CP 1
-		JR Z,LOC_1D29
-		JR SINTAX_ERROR
+loc_1D2F	ld a,(ERR_NR)
+		ld hl,TXT_BREAK		; "*BREAK*"
+		cp 0x14
+		jr z,loc_1D29
+		cp 0x0c
+		jr z,loc_1D29
+		ld hl,TXT_OUTRAM	; "OUT OF RAM"
+		cp 3
+		jr z,loc_1D29
+		ld hl,TXT_ARRAYNOT	; "ARRAY NOT FOUND"
+		cp 1
+		jr z,loc_1D29
+		jr SINTAX_ERROR
 
-RUN		CALL ZERO2HIGH_ERR
-		CALL LOAD_FILE
-		CALL EXIT_IF_SINTAX
-		LD A,(TRD_5CE5)		; €‘…… ”€‰‹€
-		CP "B"
-		JP Z,WORK4AUTORUN	; €’€ ‘’ €‚’‡€“‘€ …‰‘€
-		CP "C"
-		JP NZ,SINTAX_ERROR
-		JP RUNCODE
+RUN		call ZERO2HIGH_ERR
+		call LOAD_FILE
+		call EXIT_IF_SINTAX
+		ld hl,(TRD_5CE6)
+		ld a,(TRD_5CE5)		; €‘…… ”€‰‹€
+		cp "B"
+		JP RUN_FILE
+		push hl
+		ret
 
-CLEAR_WORKSPACE	LD HL,TRD_5D0E		; #FF-€’€…’ BASIC,€—… TR-DOS
-		LD A,(HL)
-LOC_1D67	CP 0XFF
-		LD (HL),0
-		RET NZ
-		RST 0X20
-		DW 0X16BF		; —‘’€ €—…‰ ‹€‘’  ‘’…€ €‹“‹’€
-		RET
+CLEAR_WORKSPACE	ld hl,TRD_5D0E		; #FF-€’€…’ BASIC,€—… TR-DOS
+		ld a,(hl)
+loc_1D67	cp 0xff
+		ld (hl),0
+		ret nz
+		rst 0x20
+		dw 0x16bf		; —‘’€ €—…‰ ‹€‘’  ‘’…€ €‹“‹’€
+		ret
 
-CP_SINTAX	BIT 7,(IY+1)
-		RET
+CP_SINTAX	bit 7,(iy+1)
+		ret
 
-EXIT_IF_SINTAX	CALL CP_SINTAX
-		RET NZ
-		POP HL
-		RET
+EXIT_IF_SINTAX	call CP_SINTAX
+		ret nz
+		pop hl
+		ret
 
 ; ‡€…‘…… —‘‹€ € ‘’… €‹“‹’€
-CHISLO2STKBOT	CALL GET_NEXT_SYM
-		CALL BC2STKBOT
-		JR CP_SINTAX
+CHISLO2STKBOT	call GET_NEXT_SYM
+		call BC2STKBOT
+		jr CP_SINTAX
 
 ; ’›’… €€‹€ 0
-OPEN_CHAN_0	XOR A
-OPENSTREAM	RST 0X20
-		DW 0X1601		; ’›’… €€‹€
-		RET
+OPEN_CHAN_0	xor a
+OPENSTREAM	rst 0x20
+		dw 0x1601		; ’›’… €€‹€
+		ret
 
 ; ’›’… €€‹€ 2
-OPEN_CHAN_2	LD A,2
-		JR OPENSTREAM
+OPEN_CHAN_2	ld a,2
+		jr OPENSTREAM
 
-GET_SYMSTR	RST 0X20
-		DW 0X18			; ‚›€ ‘‚‹€ ‡ (CH_ADD)
-		RET
+GET_SYMSTR	rst 0x20
+		dw 0x18			; ‚›€ ‘‚‹€ ‡ (CH_ADD)
+		ret
 
-CALL2BASEDIT	CALL OPEN_CHAN_0	; ’›’… €€‹€ 0
-		RST 0X20
-		DW 0X0F2C		; …„€’ €„‰ ‘’
-		RET
+CALL2BASEDIT	call OPEN_CHAN_0	; ’›’… €€‹€ 0
+		rst 0x20
+		dw 0x0f2c		; …„€’ €„‰ ‘’
+		ret
 
 ; —‘’€ ‘‚ƒ €€
-CLEAR_SCREEN	RST 0X20
-		DW 0X0D6B		; —‘’€ €€
-		RET
+CLEAR_SCREEN	rst 0x20
+		dw 0x0d6b		; —‘’€ €€
+		ret
 
-LOOK_VARS	RST 0X20
-		DW 0X28B2		; LOOK-VARS. ”ƒ ‡€…’ —… „…‹€…’
-		RET
+LOOK_VARS	rst 0x20
+		dw 0x28b2		; LOOK-VARS. ”ƒ ‡€…’ —… „…‹€…’
+		ret
 
 ; —‘’€ †…‰ —€‘’ €€
-CLEAR_DOWN_SCR	RST 0X20
-		DW 0X0D6E		; —‘’€ †…‰ —€‘’ €€
-		RET
+CLEAR_DOWN_SCR	rst 0x20
+		dw 0x0d6e		; —‘’€ †…‰ —€‘’ €€
+		ret
 
-PRINT_CHISLO_A_	LD C,A
-CONV2_2BYTES	LD B,0
+PRINT_CHISLO_A_	ld c,a
+CONV2_2BYTES	ld b,0
+		jp PRINT_CHISLO
 
-PRINT_CHISLO	RST 0X20
-		DW 0X1A1B		; …—€’ ‘™…‰  …‚ ‘’
-		RET
+PRINT_CHISLO	push bc
+		DUPL 3,0
+		pop bc
+		rst 0x20
+		dw 0x1a1b		; …—€’ ‘™…‰  …‚ ‘’
+		DUPL 3,0
+		ret
 
-GET_STKBOT_	RST 0X20
-		DW 0X2BF1		; —’…… „€ ‘’…€ €‹“‹’€
-		RET
+GET_STKBOT_	rst 0x20
+		dw 0x2bf1		; —’…… „€ ‘’…€ €‹“‹’€
+		ret
 
-FIND_LAST	RST 0X20
-		DW 0X1E99		; ‘	‘‹…„…ƒ –…‹ƒ —‘‹€
-		RET
+FIND_LAST	rst 0x20
+		dw 0x1e99		; ‘	‘‹…„…ƒ –…‹ƒ —‘‹€
+		ret
 
-PUT_NUMDSK_STK	RST 0X20
-		DW 0X1C8C
-		RET
+PUT_NUMDSK_STK	rst 0x20
+		dw 0x1c8c
+		ret
 
-BC2STKBOT	RST 0X20
-		DW 0X1C82
-		RET
+BC2STKBOT	rst 0x20
+		dw 0x1c82
+		ret
 
-PRINT_0D	LD A,0X0D
-PRINT_A_	RST 0X20
-		DW 0X10
-		RET
+SET_CH_ADD	ld hl,(TRD_5D11)	; €„…‘	‘’ €„› TR_DOS
+		inc hl
+		ld (CH_ADD),hl
+		ret
 
-SET_CH_ADD	LD HL,(TRD_5D11)	; €„…‘	‘’ €„› TR_DOS
-		INC HL
-		LD (CH_ADD), HL
-		RET
+INP_2STR2STKBOT	call SET_AND_PUT
+loc_1DD0	call GET_SYMSTR
+		cp ","
+		jp nz,SINTAX_ERROR
+		call GET_NEXT_SYM
+		call PUT_NUMDSK_STK
+		ret
 
-INPUT_2STR2STKBOT
-		CALL SET_AND_PUT
-LOC_1DD0	CALL GET_SYMSTR
-		CP ","
-		JP NZ,SINTAX_ERROR
-		CALL GET_NEXT_SYM
-		JR PUT_NUMDSK_STK
+SET_AND_PUT	call SET_CH_ADD
+		jp PUT_NUMDSK_STK
 
-SET_AND_PUT	CALL SET_CH_ADD
-		JP PUT_NUMDSK_STK
+GET_START_SIZE	call GET_SYMSTR
+		cp __CODE
+		ret nz
+INPUT_PARAMS	call CHISLO2STKBOT	; ‡€…‘…… —‘‹€ € ‘’… €‹“‹’€
+		jr z,loc_1DFB
+		call FIND_LAST
+		ld (TRD_5CD9),bc	; …†“’—€	„‹€ „‹ <B> 	<C>
+		ld (TRD_5CDB),bc
+loc_1DFB	call GET_SYMSTR
+		cp ","
+		jr z,SET_NUM_CHAN
+		cp 0x0d
+		jp nz,SINTAX_ERROR
+		call EXIT_IF_SINTAX
+		ret
 
-GET_START_SIZE	CALL GET_SYMSTR
-		CP 0XAF
-		RET NZ
-INPUT_PARAMS	CALL CHISLO2STKBOT	; ‡€…‘…… —‘‹€ € ‘’… €‹“‹’€
-		JR Z,LOC_1DFB
-		CALL FIND_LAST
-		LD (TRD_5CD9),BC	; …†“’—€	„‹€ „‹ <B> 	<C>
-		LD (TRD_5CDB),BC
-LOC_1DFB	CALL GET_SYMSTR
-		CP ","
-		JR Z,SET_NUM_CHAN
-		CP 0X0D
-		JP NZ,SINTAX_ERROR
-		JP EXIT_IF_SINTAX
+SET_NUM_CHAN	call CHISLO2STKBOT	; ‡€…‘…… —‘‹€ € ‘’… €‹“‹’€
+		ret z
+		call FIND_LAST
+		ld (TRD_5CDB),bc
+		ld a,3
+		ld (TRD_5CD6),a		; #FF-€„€ ’€ ‘’€‘—…‘ €€‹‡€’
+		ret
 
-SET_NUM_CHAN	CALL CHISLO2STKBOT	; ‡€…‘…… —‘‹€ € ‘’… €‹“‹’€
-		RET Z
-		CALL FIND_LAST
-		LD (TRD_5CDB),BC
-		LD A,3
-		LD (TRD_5CD6),A		; #FF-€„€ ’€ ‘’€‘—…‘ €€‹‡€’
-		RET
+DEL_5BYTES	ld hl,(TRD_5D11)	; €„…‘	‘’ €„› TR_DOS
+		rst 0x20
+		dw 0x11a7		; “„€‹…… ‡ €„‰	‘’P ’€‰’›• —‘…‹
+		ret
 
-DEL_5BYTES	LD HL,(TRD_5D11)	; €„…‘	‘’ €„› TR_DOS
-		RST 0X20
-		DW 0X11A7		; “„€‹…… ‡ €„‰	‘’P ’€‰’›• —‘…‹
-		RET
+CREATE_FREERAM	ld hl,(WORKSP)
+		rst 0x20
+		dw 0x30			; ‘‡„€… ‘‚„ƒ …‘’€
+		ret
 
-CREATE_FREERAM	LD HL,(WORKSP)
-		RST 0X20
-		DW 0X30			; ‘‡„€… ‘‚„ƒ …‘’€
-		RET
+GET_NEXT_SYM	rst 0x20
+		dw 0x20			; …—€’ ‘‹…„“™…ƒ ‘‚‹€
+		ret
 
-GET_NEXT_SYM	RST 0X20
-		DW 0X20			; …—€’ ‘‹…„“™…ƒ ‘‚‹€
-		RET
+DEL_WORKRAM	rst 0x20
+		dw 0x19e8		; “„€‹…… ‹€‘’ €’
+		ret
 
-DEL_WORKRAM	RST 0X20
-		DW 0X19E8		; “„€‹…… ‹€‘’ €’
-		RET
+RESERV_RAM	rst 0x20
+		dw 0x1655
+		ret
 
-RESERV_RAM	RST 0X20
-		DW 0X1655
-		RET
+WR_NUM_TRACK	call GET_NUM_TRACK	;FIX
+		ld a,h
+		RST32 _OUT_3F,__OUT_N_A+0X3F<<8
+;		out (0x3f),a
+		ret
 
-		DUPL 0X1E36-$,0XFF
-WR_NUM_TRACK	CALL GET_NUM_TRACK	;FIX
-		LD A,H
-		IF EMU3D2F=1
-		RST 0X30	;OUT (0X4F),A
-		DB _OUT_3F
-		ELSE
-		OUT (0X3F),A
-		ENDIF
-		RET
-
-RUNCODE		LD HL,RUN_CODE
-		LD (TRD_5D1A),HL
-		JP END_COMAND
-
-		DUPL 0X1E52-$,0XFF
 ;—’…… ‘…’‚
-COM_05		XOR A
-		JR LOC_1E64
+COM_05		xor a
+		jr loc_1E64
 
-WR_HEAD_FILENAME
-		CALL SET_HEAD_FILENAME	; ‘•€…… ‘€’…‹ ”€‰‹€
-REWRITE_9SEC	LD DE,(TRD_5CF4)	; ……‡€‘ 9 ‘…’€
-		DEC DE
-		LD B,1
-		LD HL,TRD_5D25
+WRHEAD_FILENAME	call SETHEADFILENAME	; ‘•€…… ‘€’…‹ ”€‰‹€
+REWRITE_9SEC	ld de,(TRD_5CF4)	; ……‡€‘ 9 ‘…’€
+		dec de
+		ld b,1
+		ld hl,TRD_5D25
 ;‡€‘ ‘…’‚
-COM_06		LD A,0XFF
-LOC_1E64	LD (TRD_5CCE),A		; #00-—’…… ‘…’€,#FF-‡€‘	‘…’€
-LOC_1E67	LD (TRD_5CF4),DE
-		PUSH BC
-		PUSH HL
+COM_06		JR SAVE_SECTORS
+
+		DUPL 0X1E62-$,0
+SAVE_SECTORS	ld a,0xff
+loc_1E64	ld (TRD_5CCE),a		; #00-—’…… ‘…’€,#FF-‡€‘	‘…’€
+loc_1E67	ld (TRD_5CF4),de
+		push bc
+		push hl
 		CALL SV_LD_RAMDISK
-		POP HL
-		POP BC
-		XOR A
-		OR B
-		RET Z
-LOC_1E75	PUSH BC
-		PUSH HL
-		CALL COM_04
-		LD A,(TRD_5CF4)
-		CALL COM_03
-		LD A,(TRD_5CF5)
-		CALL COM_02
-		LD A,(TRD_5CCE)		; #00-—’…… ‘…’€,#FF-‡€‘	‘…’€
-		OR A
-		PUSH AF
-		CALL Z,LOAD_SECTOR
-		POP AF
-		CALL NZ,SAVE_SECTOR
-		LD A,0X10
-		LD HL,TRD_5CF4
-		INC (HL)
-		CP (HL)
-		JR NZ,LOC_1EA7
-		LD (HL),0
-		INC HL
-		INC (HL)
-LOC_1EA7	POP HL
-		POP BC
-		INC H
-		DJNZ LOC_1E75
-		RET
+		pop hl
+		pop bc
+		xor a
+		or b
+		ret z
+loc_1E75	push bc
+		push hl
+		call COM_04
+		ld a,(TRD_5CF4)
+		call COM_03
+		ld a,(TRD_5CF5)
+		call COM_02
+		ld a,(TRD_5CCE)		; #00-—’…… ‘…’€,#FF-‡€‘	‘…’€
+		or a
+		push af
+		call z,LOAD_SECTOR
+		pop af
+		call nz,SAVE_SECTOR
+		pop hl
+		ld de,0x100
+		add hl,de
+		push hl
+		ld a,0x10
+		ld hl,TRD_5CF4
+		inc (hl)
+		cp (hl)
+		jr nz,loc_1EA7
+		ld (hl),0
+		ld hl,TRD_5CF5
+		inc (hl)
+loc_1EA7	pop hl
+		pop bc
+		djnz loc_1E75
+		ret
 
-KOLWO_SECS	PUSH HL
-		LD H,A
-		LD L,0
-		PUSH HL
-		SBC HL,DE
-		CALL C,LOAD_FILLFILE
-		POP HL
-		LD A,H
-		POP HL
-		RET C
-		LD A,D
-		RET
+KOLWO_SECS	push hl
+		ld h,a
+		ld l,0
+		push hl
+		sbc hl,de
+		call c,LOAD_FILLFILE
+		pop hl
+		ld a,h
+		pop hl
+		ret c
+		ld a,d
+		ret
 
-LOAD_FILLFILE	XOR A
-		LD (TRD_5CD6),A		; #FF-€„€ ’€ ‘’€‘—…‘ €€‹‡€’
-		SCF
-		RET
+LOAD_FILLFILE	xor a
+		ld (TRD_5CD6),a		; #FF-€„€ ’€ ‘’€‘—…‘ €€‹‡€’
+		scf
+		ret
 
-FORMAT		LD HL,0XFFFF
-		LD (TRD_5CD7),HL	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+FORMAT		ld hl,0xffff
+		LD (TRD_5CD7),hl	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
 					; ‘‹…	‚… ’€ „‘‚„€
-		LD (TRD_5CD9),HL	; …†“’—€	„‹€ „‹ <B> 	<C>
-		LD (TRD_5CD1),HL
-		CALL CP_SECOND_SYM
-		JP Z,SINTAX_ERROR
-		CALL SET_AND_PUT
-		CALL EXIT_IF_SINTAX
-		CALL SET_FILENAME
+		ld (TRD_5CD9),hl	; …†“’—€	„‹€ „‹ <B> 	<C>
+		ld (TRD_5CD1),hl
+		call CP_SECOND_SYM
+		jp z,SINTAX_ERROR
+		call SET_AND_PUT
+		call EXIT_IF_SINTAX
+		call SET_FILENAME
+
+		DUPL 0X1EE1-$,0
 		CALL FORMAT_RAM
 		JR Z,END_FORMAT
-		LD A,0X50
-LOC_1EE8	LD (TRD_5CD7),A		; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+		ld a,80
+loc_1EE8	ld (TRD_5CD7),a		; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
 					; ‘‹…	‚… ’€ „‘‚„€
-		CALL COM_00
-		CALL COM_17
-		CALL PAUSE_3_C_A
-		LD E,1
-		CALL FORMAT_TREK
-		CALL COM_16
-		LD E,0
-		CALL FORMAT_TREK
-		CALL COM_17
-		CALL PAUSE_3_C_A
-		CALL LOC_3EB5
-		LD A,0X80
-		LD (TRD_5CDA),A
-LOC_1F1B	CALL FORMAT_DISK
+		call COM_00
+		call COM_17
+		call PAUSE_3_C_A
+		ld e,1
+		call FORMAT_TREK
+		call COM_16
+		ld e,0
+		call FORMAT_TREK
+
+		DUPL 0X1F08-$,0
+		call COM_17
+		call PAUSE_3_C_A
+		call loc_3EB5
+		ld a,0X80
+		ld (TRD_5CDA),a
+loc_1F1B	call FORMAT_DISK
+
 END_FORMAT	CALL CP_TYPEDRIVE
 		CALL Z,CREATE_TRDTABL
 		CALL CLEAR_DOWN_SCR
@@ -2979,1213 +2922,1228 @@ END_FORMAT	CALL CP_TYPEDRIVE
 		LD BC,0XFF
 		LD (HL),B
 		LDIR
-		LD A,0X16
-		LD HL,0X9F0
-LOC_1F55	LD (TRD_5E08),A
-		LD (TRD_5E0A),HL
-		LD A,1
-		LD (TRD_5E07),A
-		LD A,0X10
-		LD (TRD_5E0C),A
-		LD HL,TRD_5E0F
-		LD DE,TRD_5E10
-		LD BC,8
-		LD (HL)," "
-		LDIR
-		LD HL,TRD_5CDD		;  ”€‰‹€
-		LD DE,TRD_5E1A
-		LD C,8
-		LDIR			;……‘ … „‘€
-		CALL COM_16
-		LD B,1
-		LD DE,8
-		LD HL,TRD_5D25
-		CALL COM_06
-		LD A,(TRD_5CD6)		; #FF-€„€ ’€ ‘’€‘—…‘ €€‹‡€’
-		PUSH AF
-		XOR A
-		LD (TRD_5CE5),A		; €‘…… ”€‰‹€
-		LD HL,(TRD_5E0A)
-		LD (TRD_5CD7),HL	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+		JR loc_1F50
+
+		DUPL 0X1F50-$,0
+loc_1F50	ld a,0x16
+		ld hl,2544
+loc_1F55	ld (TRD_5E08),a
+		ld (TRD_5E0A),hl
+		ld a,1
+		ld (TRD_5E07),a
+		ld a,0X10
+		ld (TRD_5E0C),a
+		ld hl,TRD_5E0F
+		ld de,TRD_5E10
+		ld bc,8
+		ld (hl)," "
+		ldir
+		ld hl,TRD_5CDD		;  ”€‰‹€
+		ld de,TRD_5E1A
+		ld bc,8
+		ldir			;……‘ … „‘€
+		call COM_16
+		ld b,1
+		ld de,8
+		ld hl,TRD_5D25
+		call SAVE_SECTORS
+		ld a,(TRD_5CD6)		; #FF-€„€ ’€ ‘’€‘—…‘ €€‹‡€’
+		push af
+		xor a
+		ld (TRD_5CE5),a		; €‘…… ”€‰‹€
+		ld hl,(TRD_5E0A)
+		ld (TRD_5CD7),hl	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
 					; ‘‹…	‚… ’€ „‘‚„€
-		LD HL,TRD_5CDD		;  ”€‰‹€
-		CALL PRINT8SYM
-		LD A,0X0D
-		RST 0X10
-		LD HL,(TRD_5CD7)	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+		ld hl,TRD_5CDD		;  ”€‰‹€
+		rst 0x18
+		ld a,0x0d
+		rst 0x10
+		ld hl,(TRD_5CD7)	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
 					; ‘‹…	‚… ’€ „‘‚„€
-		POP AF
-		PUSH HL
-		LD D,0
-		LD E,A
-		SBC HL,DE
-		LD B,H
-		LD C,L
-		CALL PRINT_CHISLO	; …—€’ —‘‹€
-		LD A,"/"
-		RST 0X10
-		POP BC
-		CALL PRINT_CHISLO	; …—€’ —‘‹€
-		JP END_COMAND
+		pop af
+		push hl
+		ld d,0
+		ld e,a
+		sbc hl,de
+		ld b,h
+		ld c,l
+		call PRINT_CHISLO	; …—€’ —‘‹€
+		ld a,"/"
+		rst 0x10
+		pop bc
+		call PRINT_CHISLO	; …—€’ —‘‹€
+		jp END_COMAND
 
 ;’€‹–€ …‚ ‘…’‚ „‹ ”€’‚€
 TABL_SECTORS	DB 0X01,0X02,0X03,0X04,0X05,0X06,0X07,0X08,0X09,0X0A,0X0B,0X0C,0X0D,0X0E,0X0F,0X10,0X01
 
-		DUPL 0X1FEB-$,0XFF
+CP_DISK_TRACK	call GET_TIME_HEAD	; ‹“—…… ‚…… ………™…	ƒ‹‚
+		or 11h
+		ld b,a
+		ld a,32h
+		call HEAD_POSITION
+		ld a,2
+		call HEAD_POSITION
+		call PAUSE725779T
+		RST32 _IN_1F,__IN_A_N+0X1F<<8
+;		in a,(1Fh)
+		and 4
+		ld a,80			; 80 „†…
+		jr z,loc_1FE7
+		ld a,40			; 40 „†…
+loc_1FE7	ld (TRD_5CD7),a		; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+					; ‘‹…	‚… ’€ „‘‚„€
+		ret
+
 ;“‘’€‚€ ‘’› 0 „‘€
-COM_16		LD A,(TRD_5D16)		; 	‘‘’…ƒ …ƒ‘’€ (’ #FF)
-		OR 0X3C
-LOC_1FF0	LD (TRD_5D16),A		; 	‘‘’…ƒ …ƒ‘’€ (’ #FF)
-		IF EMUWRFF
-		RST 0X30
-		DB _OUT_FF
-		ELSE
-		OUT (0XFF),A
-		ENDIF
-		RET
+COM_16		ld a,(TRD_5D16)		; 	‘‘’…ƒ …ƒ‘’€ (’ #FF)
+		or 0x3c
+loc_1FF0	ld (TRD_5D16),a		; 	‘‘’…ƒ …ƒ‘’€ (’ #FF)
+		RST30 _OUT_FF
+;		out (0xff),a
+		ret
 
 ;“‘’€‚€ ‘’› 1 „‘€
-COM_17		LD A,(TRD_5D16)		; 	‘‘’…ƒ …ƒ‘’€ (’ #FF)
-		AND 0X6F
-		JR LOC_1FF0
+COM_17		ld a,(TRD_5D16)		; 	‘‘’…ƒ …ƒ‘’€ (’ #FF)
+		and 0x6f
+		jr loc_1FF0
 
-FORMAT_TREK	DI
-		LD A,0XF4
-		IF EMU3D2F=1
-		RST 0X30
-		DB _OUT_1F
-		ELSE
-		OUT (0X1F),A
-		ENDIF		
-		LD HL,TABL_SECTORS
-		LD C,0X7F
-LOC_2007	LD B,0X0A
-		LD D,0X4E
-		CALL WRITE_C_D_B
-		LD B,0X0C
-		LD D,0
-		CALL WRITE_C_D_B
-		LD B,3
-		LD D,0XF5
-		CALL WRITE_C_D_B
-		LD D,0XFE
-		CALL WRITE_C_D_1
-		LD D,E
-		CALL WRITE_C_D_1
-		LD D,0
-		CALL WRITE_C_D_1
-		LD D,(HL)
-		CALL WRITE_C_D_1
-		LD D,1
-		CALL WRITE_C_D_1
-		LD D,0XF7
-		CALL WRITE_C_D_1
-		LD B,0X16
-		LD D,0X4E
-		CALL WRITE_C_D_B
-		LD B,0X0C
-		LD D,0
-		CALL WRITE_C_D_B
-		LD B,3
-		LD D,0XF5
-		CALL WRITE_C_D_B
-		LD D,0XFB
-		CALL WRITE_C_D_1
-		LD B,0
-		LD D,0
-		CALL WRITE_C_D_B
-		LD D,0XF7
-		CALL WRITE_C_D_1
-		LD B,0X3C;0X32
-		LD D,0X4E
-		CALL WRITE_C_D_B
-		LD A,(HL)
-		INC HL
-		CP 0X10
-		JR NZ,LOC_2007
-		LD B,0
-		CALL WRITE_C_D_B
-		JP M,LOC_2076
-		CALL WRITE_C_D_B
-LOC_2076	IF EMU3D2F=1
-		RST 0X30
-		DB _IN_1F
-		ELSE
-		IN A,(0X1F)
-		ENDIF
-		AND 0X40
-		JP NZ,LOC_3F39		; READ ONLY
-CP_NUM_TRACK	LD A,(TRD_5CD8)		; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+FORMAT_TREK	di
+		ld a,0xf4
+		RST32 _OUT_1F,__OUT_N_A+0X1F<<8
+;		out (0x1f),a
+		ld hl,TABL_SECTORS
+		ld c,0x7f
+loc_2007	ld b,0x0a
+		ld d,0x4e
+		call WRITE_C_D_B
+		ld b,0x0c
+		ld d,0
+		call WRITE_C_D_B
+		ld b,3
+		ld d,0xf5
+		call WRITE_C_D_B
+		ld d,0xfe
+		call WRITE_C_D_1
+		ld d,e
+		call WRITE_C_D_1
+		ld d,0
+		call WRITE_C_D_1
+		ld d,(hl)
+		call WRITE_C_D_1
+		ld d,1
+		call WRITE_C_D_1
+		ld d,0xf7
+		call WRITE_C_D_1
+		ld b,0x16
+		ld d,0x4e
+		call WRITE_C_D_B
+		ld b,0x0c
+		ld d,0
+		call WRITE_C_D_B
+		ld b,3
+		ld d,0xf5
+		call WRITE_C_D_B
+		ld d,0xfb
+		call WRITE_C_D_1
+		ld b,0
+		ld d,0
+		call WRITE_C_D_B
+		ld d,0xf7
+		call WRITE_C_D_1
+		ld b,0x3c
+		ld d,0x4e
+		call WRITE_C_D_B
+		ld a,(hl)
+		inc hl
+		cp 0x10
+		jr nz,loc_2007
+		ld b,0
+		call WRITE_C_D_B
+		jp m,loc_2076
+		call WRITE_C_D_B
+loc_2076	RST32 _IN_1F,__IN_A_N+0X1F<<8
+;		in a,(0x1f)
+		and 0x40
+		jp nz,loc_3F39		; READ ONLY
+CP_NUM_TRACK	ld a,(TRD_5CD8)		; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
 					; ‘‹…	‚… ’€ „‘‚„€
-		OR A
-		RET NZ
-		LD C,0X7F
-		LD A,E
-		IF EMU3D2F=1
-		RST 0X30	;OUT (0X4F),A
-		DB _OUT_3F
-		ELSE
-		OUT (0X3F),A
-		ENDIF
-		LD HL,TABL_SECTORS+1
-LOC_208A	LD B,3
-		LD A,(HL)
-		IF EMU3D2F=1
-		RST 0X30	;OUT (0X6F),A
-		DB _OUT_5F
-		ELSE
-		OUT (0X5F),A
-		ENDIF
-		PUSH HL
-LOC_2090	DI
-		LD A,0X80
-		IF EMU3D2F=1
-		RST 0X30
-		DB _OUT_1F
-		ELSE
-		OUT (0X1F),A
-		ENDIF
-		PUSH BC
-		CALL RD_DATAPORT
-		IF EMU3D2F=1
-		RST 0X30
-		DB _IN_1F
-		ELSE
-		IN A,(0X1F)
-		ENDIF
-		AND 0X7F
-		POP BC
-		JR Z,LOC_20A6
-		DJNZ LOC_2090
-		LD HL,TRD_5CD6		; #FF-€„€ ’€ ‘’€‘—…‘ €€‹‡€’
-		INC (HL)
-LOC_20A6	POP HL
-		LD A,(HL)
-		INC HL
-		CP 1
-		JR NZ,LOC_208A
-		EI
-		RET
+		or a
+		ret nz
+		ld c,0x7f
+		ld a,e
+		RST32 _OUT_3F,__OUT_N_A+0X3F<<8
+;		out (0x3f),a
+		ld hl,TABL_SECTORS+1
+loc_208A	ld b,3
+		ld a,(hl)
+		RST32 _OUT_5F,__OUT_N_A+0X5F<<8
+;		out (0x5f),a
+		push hl
+loc_2090	di
+		ld a,0x80
+		RST32 _OUT_1F,__OUT_N_A+0X1F<<8
+;		out (0x1f),a
+		push bc
+		call RD_DATAPORT
+		RST32 _IN_1F,__IN_A_N+0X1F<<8
+;		in a,(0x1f)
+		and 0x7f
+		pop bc
+		jr z,loc_20A6
+		djnz loc_2090
+		ld hl,TRD_5CD6		; #FF-€„€ ’€ ‘’€‘—…‘ €€‹‡€’
+		inc (hl)
+loc_20A6	pop hl
+		ld a,(hl)
+		inc hl
+		cp 1
+		jr nz,loc_208A
+		ei
+		ret
 
-WRITE_C_D_1	LD B,1
-WRITE_C_D_B	IF EMU3D2F=1
-		RST 0X30
-		DB _IN_FF
-		ELSE
-		IN A,(0XFF)
-		ENDIF
-		AND 0XC0
-		JR Z,WRITE_C_D_B
-		RET M
-		IF EMU3D2F=1
-		RST 0X30
-		DB _OUT_C_D
-		ELSE
-		OUT (C),D
-		ENDIF
-		DJNZ WRITE_C_D_B
-		RET
+WRITE_C_D_1	ld b,1
+WRITE_C_D_B	RST32 _IN_FF,__IN_A_N+0XFF<<8
+;		in a,(0xff)
+		and 0xc0
+		jr z,WRITE_C_D_B
+		ret m
+		RST32 _OUT_C_D,__OUT_C_D
+;		out (c),d
+		djnz WRITE_C_D_B
+		ret
 
-FORMAT_DISK	LD HL,TRD_5CD7		; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+FORMAT_DISK	ld hl,TRD_5CD7		; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
 					; ‘‹…	‚… ’€ „‘‚„€
-		LD B,(HL)
-		XOR A
-		INC HL
-		LD (HL),A
-		LD E,0XFF
-LOC_20C6	PUSH BC
-		INC E
-		LD A,E
-		LD B,0X18;B
-		CALL HEAD_POSITION
-		CALL COM_16
-		AND A
-		CALL PRINT_NUM_TRK
-		CALL FORMAT_TREK
-		CALL COM_17
-		SCF
-		CALL PRINT_NUM_TRK
-		CALL FORMAT_TREK
-LOC_20E1	POP BC
-		DJNZ LOC_20C6
-		RET
+		ld b,(hl)
+		xor a
+		inc hl
+		ld (hl),a
+		ld e,0xff
+loc_20C6	push bc
+		inc e
+		ld a,e
+		ld b,0x18
+		call HEAD_POSITION
+		call COM_16
+		CALL loc_20D1
 
-DELETE_BUF	PUSH AF
-		LD A,(TRD_5CF8)		; „‘‚„  …€–	‘ 2 ”€‰‹€
-		CP 0XFF
-		JR Z,LOC_211C
-		POP AF
-		JP DEL_BUF
+		DUPL 0X20DE-$,0
+		call FORMAT_TREK
+loc_20E1	pop bc
+		djnz loc_20C6
+		ret
 
-LOC_211C	POP AF
-		RET
+DELETE_BUF	push af
+		ld a,(TRD_5CF8)		; „‘‚„  …€–	‘ 2 ”€‰‹€
+		cp 0xff
+		jr z,loc_211C
+		pop af
+		jp DEL_BUF
+
+; ‚…€ €‹— INTERFACE1
+CP_INTERFACE1	push af
+		ld a,(TRD_5CB6)		; „‹ ‚… €‹— INTERFACE1
+		cp 0F4h
+		jr z,loc_211C
+		xor a
+		ld hl,TRD_5D18
+		or (hl)
+		ld (hl),0FFh
+		jr z,loc_211C
+		ld a,(TRD_5D0C)
+		or a
+		ld hl,TRD_5CC3
+		ld de,TRD_5D33
+		jr nz,loc_2111
+		ld de,TRD_5E34
+loc_2111	ld b,2Dh
+loc_2113	ld c,(hl)
+		ld a,(de)
+		ld (hl),a
+		ld a,c
+		ld (de),a
+		inc hl
+		inc de
+		djnz loc_2113
+loc_211C	pop af
+		ret
 
 ;“„€‹…… ‚‚…„…‰ ‘’ ‘‹… ‚›‹… €„›
-CLRBUF_EDITOR
-		LD HL,(K_CUR)
-		LD DE,(E_LINE)
-		RST 0X20
-		DW 0X19E5
-		RST 0X20
-		DW 0X16B0;F
-		LD HL,(E_LINE)		; €„…‘	€—€‹€ …„€’“…‰ ‘’
-		LD (HL),0X0D
-		LD (K_CUR),HL
-		INC HL
-		LD (HL),0X80
-		RET
+CLRBUF_EDITOR	CALL CLRBUF_EDITOR2
+		ld (hl),0x0d
+		ld (K_CUR),hl
+		inc hl
+		ld (hl),0x80
+		ret
 
 ;‚‘‘’€‚‹…… ‚‚…„…‰ ‘’ ‚ “”…… …„€’€
-RESTORE_COMSTR	LD DE,(E_LINE)		; €„…‘	€—€‹€ …„€’“…‰ ‘’
-		LD HL,TRD_5D20		; „‹ ‘•€… 3 ‘‚‹‚ ‚‚…„…‰ ‘’
-		JP LDI3_HL2DE		; ……‘ 3 €‰’
+RESTORE_COMSTR	ld de,(E_LINE)		; €„…‘	€—€‹€ …„€’“…‰ ‘’
+		ld hl,TRD_5D20		; „‹ ‘•€… 3 ‘‚‹‚ ‚‚…„…‰ ‘’
+		call LDI3_HL2DE		; ……‘ 3 €‰’
+		ret
 
 ; ’…  €’€ €„
-GET_COMMAND	LD A,(TRD_5D0F)		; …	 TR-DOS
-		AND A
-		PUSH AF
-		CALL NZ,RESTORE_COMSTR	;…‘‹ ›‹€ €, ’ ‚‡‚€™€… 3 ‘•€…›• €‰’€
-		POP AF
-		CALL Z,CLRBUF_EDITOR	;…‘‹  … ›‹, ’ —‘’€ “”…€ ‘’ …„€’‚€
-		LD HL,(E_LINE)		; €„…‘	€—€‹€ …„€’“…‰ ‘’
-		CALL PRINT_0D
-		LD A,(TRD_5D19)		; „‘‚„  “‹—€
-		CALL GET_COMMAND2
-		LD A,">"
-		RST 0X10
-		LD HL,ERR_NR
-		LD (HL),0XFF
-		JP CALL2BASEDIT
+GET_COMMAND	ld a,(TRD_5D0F)		; …	 TR-DOS
+		or a
+		push af
+		call nz,RESTORE_COMSTR	;…‘‹ ›‹€ €, ’ ‚‡‚€™€… 3 ‘•€…›• €‰’€
+		pop af
+		call z,CLRBUF_EDITOR	;…‘‹  … ›‹, ’ —‘’€ “”…€ ‘’ …„€’‚€
+		ld hl,(E_LINE)		; €„…‘	€—€‹€ …„€’“…‰ ‘’
+		call PRINT_0D
+		ld a,(TRD_5D19)		; „‘‚„  “‹—€
+		call GET_COMMAND2
+		ld a,">"
+		rst 0x10
+		ld hl,ERR_NR
+		ld (hl),0xff
+		jp CALL2BASEDIT
 
-SUB_2158	CALL GET_NEXT_SYM
-		CALL GET_SYMSTR
-		CP ","
-		JP NZ,SINTAX_ERROR
-		LD HL,(TRD_5CDB)
-		LD (TRD_5CD9),HL	; …†“’—€	„‹€ „‹ <B> 	<C>
-		CALL SET_NUM_CHAN
-		CALL EXIT_IF_SINTAX
-		LD HL,(TRD_5CDB)
-		LD A,H
-		OR A
-		JP NZ,SINTAX_ERROR
-		INC HL
-		LD (TRD_5CD7),HL	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+sub_2158	call GET_NEXT_SYM
+		call GET_SYMSTR
+		cp ","
+		jp nz,SINTAX_ERROR
+		ld hl,(TRD_5CDB)
+		ld (TRD_5CD9),hl	; …†“’—€	„‹€ „‹ <B> 	<C>
+		call SET_NUM_CHAN
+		call EXIT_IF_SINTAX
+		ld hl,(TRD_5CDB)
+		ld a,h
+		or a
+		jp nz,SINTAX_ERROR
+		inc hl
+		ld (TRD_5CD7),hl	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
 					; ‘‹…	‚… ’€ „‘‚„€
-		LD HL,(TRD_5CD9)	; …†“’—€	„‹€ „‹ <B> 	<C>
-		LD (TRD_5CDB), HL
-		RET
+		ld hl,(TRD_5CD9)	; …†“’—€	„‹€ „‹ <B> 	<C>
+		ld (TRD_5CDB),hl
+		ret
 
-OPEN		LD HL,(TRD_5D11)	; €„…‘	‘’ €„› TR_DOS
-		LD (CH_ADD),HL
-		CALL SET_NUM_CHAN
-		CALL LOC_1DD0
-LOC_218E	CALL GET_SYMSTR
-		CP "A"
-		JR NC,LOC_219A
-		CALL GET_NEXT_SYM
-		JR LOC_218E
+OPEN		ld hl,(TRD_5D11)	; €„…‘	‘’ €„› TR_DOS
+		ld (CH_ADD),hl
+		call SET_NUM_CHAN
+		call loc_1DD0
+loc_218E	call GET_SYMSTR
+		cp "A"
+		jr nc,loc_219A
+		call GET_NEXT_SYM
+		jr loc_218E
 
-LOC_219A	CP 0XA5
-		PUSH AF
-		CALL Z,SUB_2158
-		POP AF
-		JR Z,LOC_21AE
-		AND 0XDF
-		CP "R"
-		JR Z,LOC_21AE
-		CP "W"
-		JP NZ,SINTAX_ERROR
-LOC_21AE	LD (TRD_5D09),A
-		CALL EXIT_IF_SINTAX
-		LD A,"#"
-		LD (TRD_5CE5),A		; €‘…… ”€‰‹€
-		LD A,0
-		LD (TRD_5CE6), A	; „‹ <C>-‘’€’‚›‰ €„…‘,„‹ <B>-„‹€	ƒ€›
-		CALL FIND_ENDFILE
-		PUSH AF
-		CALL CP_STREAMS
-		POP AF
-		PUSH AF
-		CALL NZ,CREATE_BLOCK0
-		POP AF
-		CALL OPEN_STREAM
-		LD HL,(TRD_5D11)	; €„…‘	‘’ €„› TR_DOS
-		LD BC,0X124
-		ADD HL,BC
-		LD (TRD_5D11),HL	; €„…‘	‘’ €„› TR_DOS
-		JP END_COMAND
+loc_219A	cp 0xa5
+		push af
+		call z,sub_2158
+		pop af
+		jr z,loc_21AE
+		and 0xdf
+		cp "R"
+		jr z,loc_21AE
+		cp "W"
+		jp nz,SINTAX_ERROR
+loc_21AE	ld (TRD_5D09),a
+		call EXIT_IF_SINTAX
+		ld a,"#"
+		ld (TRD_5CE5),a		; €‘…… ”€‰‹€
+		ld a,0
+		ld (TRD_5CE6),a		; „‹ <C>-‘’€’‚›‰ €„…‘,„‹ <B>-„‹€	ƒ€›
+		call FIND_ENDFILE
+		push af
+		call CP_STREAMS
+		pop af
+		push af
+		call nz,CREATE_BLOCK0
+		pop af
+		call OPEN_STREAM
+		ld hl,(TRD_5D11)	; €„…‘	‘’ €„› TR_DOS
+		ld bc,0x124
+		add hl,bc
+		ld (TRD_5D11),hl	; €„…‘	‘’ €„› TR_DOS
+		jp END_COMAND
 
-FIND_ENDFILE	LD A,0X0A
-		LD (TRD_5D06),A		; ‹—…‘’‚ ‘‚‹‚ … ”€‰‹€  ‘…
-		CALL SET_CP_FILENAME
-		PUSH AF
-		CALL COM_18		; €‘’‰€ € „‘…’“
-		POP AF
-		JR NZ,LOC_2206
-		LD A,(TRD_5D09)
-		CP "R"
-		JR Z,LOC_2201
-LOC_21F1	LD HL,TRD_5CE6		; „‹ <C>-‘’€’‚›‰ €„…‘,„‹ <B>-„‹€	ƒ€›
-		INC (HL)
-		CALL FIND_FILENAME	; ‘	”€‰‹€  … ”€‰‹€
-		JR Z,LOC_21F1
-		LD HL,TRD_5CE6		; „‹ <C>-‘’€’‚›‰ €„…‘,„‹ <B>-„‹€	ƒ€›
-		DEC (HL)
-		CALL FIND_FILENAME	; ‘	”€‰‹€  … ”€‰‹€
-LOC_2201	CALL RD_HEAD_FILENAME	; —’…… ‘€’…‹ ”€‰‹€
-		XOR A
-		RET
+FIND_ENDFILE	ld a,0x0a
+		ld (TRD_5D06),a		; ‹—…‘’‚ ‘‚‹‚ … ”€‰‹€  ‘…
+		call SET_CP_FILENAME
+		push af
+		call COM_18		; €‘’‰€ € „‘…’“
+		pop af
+		jr nz,loc_2206
+		ld a,(TRD_5D09)
+		cp "R"
+		jr z,loc_2201
+loc_21F1	ld hl,TRD_5CE6		; „‹ <C>-‘’€’‚›‰ €„…‘,„‹ <B>-„‹€	ƒ€›
+		inc (hl)
+		call FIND_FILENAME	; ‘	”€‰‹€  … ”€‰‹€
+		jr z,loc_21F1
+		ld hl,TRD_5CE6		; „‹ <C>-‘’€’‚›‰ €„…‘,„‹ <B>-„‹€	ƒ€›
+		dec (hl)
+		call FIND_FILENAME	; ‘	”€‰‹€  … ”€‰‹€
+loc_2201	call RDHEAD_FILENAME	; —’…… ‘€’…‹ ”€‰‹€
+		xor a
+		ret
 
-LOC_2206	LD A,(TRD_5D09)
-		CP "R"
-		RET NZ
-		JP ERR_NOFILES
+loc_2206	ld a,(TRD_5D09)
+		cp "R"
+		ret nz
+		jp ERR_NOFILES
 
-CP_STREAMS	LD A,(TRD_5CDB)
-		RST 0X20
-		DW 0X1727
-		LD A,B
-		OR C
-		RET Z
+CP_STREAMS	ld a,(TRD_5CDB)
+		rst 0x20
+		dw 0x1727
+		ld a,b
+		or c
+		jp nz,loc_221B
+		ret
 
-LOC_221B	LD A,0X19
-		LD (ERR_NR),A
-		LD HL,ASC_2804		; "STREAM OPENED"
-		LD A,0X0A
-LOC_2225	JP PRINT_TXTERR
+loc_221B	ld a,0x19
+		ld (ERR_NR),A
+		ld hl,TXT_STREAMOPEN	; "STREAM OPENED"
+		ld a,0x0a
+loc_2225	jp PRINT_TXTERR
 
-LOC_2228	LD A,0X0B
-		LD HL,ASC_2812		; "NOT DISK FILE"
-		JR LOC_2225
+loc_2228	ld a,0x0b
+		ld hl,TXT_NODISKFILE	; "NOT DISK FILE"
+		jr loc_2225
 
-INITFREEACCESS	PUSH HL
-		LD C,0X20
-		RST 0X28
-		LD A,(TRD_5CD7)		; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+INITFREEACCESS	push hl
+		ld c,0x20
+		rst 0x28
+		ld a,(TRD_5CD7)		; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
 					; ‘‹…	‚… ’€ „‘‚„€
-		LD (HL),A
-		INC HL
-		XOR A
-		LD (HL),A
-		INC HL
-		LD (HL),A
-		INC HL
-		LD (HL),A
-		LD A,0X7F
-		POP HL
-		RET
+		ld (hl),a
+		inc hl
+		xor a
+		ld (hl),a
+		inc hl
+		ld (hl),a
+		inc hl
+		ld (hl),a
+		ld a,0x7f
+		pop hl
+		ret
 
-OPEN_STREAM	PUSH AF
-		CALL CP_STREAMS
-		EX DE,HL
-		LD HL,(PROG)
-		LD BC,(CHANS)
-		SBC HL,BC
-		EX DE,HL
-		LD (HL),E
-		INC HL
-		LD (HL),D
-		CALL CREATE_HEADCHAN
-		LD A,(TRD_5D09)
-		CP 0XA5
-		CALL Z,INITFREEACCESS
-		JR Z,LOC_226B
-		LD A,(TRD_5D09)
-		CP "R"
-		LD A,0XFF
-		JR NZ,LOC_226B
-		XOR A
-LOC_226B	LD (HL),A
-		POP AF
-		JP LOC_2270
+OPEN_STREAM	push af
+		call CP_STREAMS
+		ex de,hl
+		ld hl,(PROG)
+		ld bc,(CHANS)
+		sbc hl,bc
+		ex de,hl
+		ld (hl),e
+		inc hl
+		ld (hl),d
+		call CREATE_HEADCHAN
+		ld a,(TRD_5D09)
+		cp 0xa5
+		call z,INITFREEACCESS
+		jr z,loc_226B
+		ld a,(TRD_5D09)
+		cp "R"
+		ld a,0xff
+		jr nz,loc_226B
+		xor a
+loc_226B	ld (hl),a
+		pop af
+		jp loc_2270
 
-LOC_2270	PUSH AF
-		LD BC,0X14
-		ADD HL,BC
-		PUSH HL
-		CALL GET_TEKSECFILE
-		POP HL
-		INC HL
-		LD B,1
-		POP AF
-		OR A
-		PUSH AF
-		CALL NZ,COM_06
-		POP AF
-		JP Z,COM_05		; —’…… ‘…’‚
-		RET
+loc_2270	push af
+		ld bc,0x14
+		add hl,bc
+		push hl
+		call GET_TEKSECFILE
+		pop hl
+		inc hl
+		ld b,1
+		pop af
+		or a
+		push af
+		call nz,COM_06
+		pop af
+		call z,COM_05		; —’…… ‘…’‚
+		ret
 
-CREATE_BLOCK0	LD HL,(TRD_5CD7)	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+CREATE_BLOCK0	ld hl,(TRD_5CD7)	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
 					; ‘‹…	‚… ’€ „‘‚„€
-		PUSH HL
-		LD HL,0X2000
-		LD (TRD_5CD7),HL	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+		push hl
+		ld hl,0x2000
+		ld (TRD_5CD7),hl	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
 					; ‘‹…	‚… ’€ „‘‚„€
-		CALL CREATE_BLOCK
-		POP HL
-		LD (TRD_5CD7),HL	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+		call CREATE_BLOCK
+		pop hl
+		ld (TRD_5CD7),hl	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
 					; ‘‹…	‚… ’€ „‘‚„€
-		RET
+		ret
 
-CREATE_BLOCK	LD HL,0X1000
-		LD (TRD_5CD9),HL	; …†“’—€	„‹€ „‹ <B> 	<C>
-		CALL CP_FREE_ON_DSK
-		CALL SAVE_FILE
-		LD HL,0
-		LD (TRD_5CE8),HL	; „‹€	ƒ€›
-		CALL SET_HEAD_FILENAME
-		JP REWRITE_9SEC		; ……‡€‘ 9 ‘…’€
+CREATE_BLOCK	ld hl,0x1000
+		ld (TRD_5CD9),hl	; …†“’—€	„‹€ „‹ <B> 	<C>
+		call CP_FREE_ON_DSK
+		call SAVE_FILE
+		ld hl,0
+		ld (TRD_5CE8),hl	; „‹€	ƒ€›
+		call SETHEADFILENAME
+		jp REWRITE_9SEC		; ……‡€‘ 9 ‘…’€
 
-CREATE_HEADCHAN	LD HL,(PROG)
-		DEC HL
-		LD (CURCHL),HL
-		PUSH HL
-		LD BC,0X124
-		CALL RESERV_RAM
-		XOR A
-		LD B,A
-LOC_22C4	LD (DE),A
-		DEC DE
-		DJNZ LOC_22C4
-		POP HL
-		PUSH HL
-		LD DE, LOC_3D0E
-		LD (HL),E
-		INC HL
-		LD (HL),D
-		INC HL
-		LD DE,LOC_3D06
-		LD (HL),E
-		INC HL
-		LD (HL),D
-		INC HL
-		LD (HL),"D"
-		INC HL
-		INC HL
-		INC HL
-		INC HL
-		INC HL
-		LD (HL),"$"
-		INC HL
-		LD (HL),1
-		INC HL
-		LD A,(TRD_5CF6)		; „‘‚„ „‹ ‚……‰ …€–
-		LD (HL), A
-		INC HL
-		LD A,(TRD_5D1E)
-		LD (HL),A
-		INC HL
-		LD A,(TRD_5D09)
-		CP "R"
-		LD (HL),0
-		JR Z,LOC_22FC
-		LD A,(TRD_5CE8)		; „‹€	ƒ€›
-		LD (HL),A
-LOC_22FC	INC HL
-		LD (HL),B
-		JR Z,LOC_2304
-		LD A,(TRD_5CE9)		; „‹€	ƒ€›
-		LD (HL),A
-LOC_2304	INC HL
-		EX DE,HL
-		POP HL
-		PUSH DE
-		LD DE,0X10
-		ADD HL,DE
-		EX DE,HL
-		LD HL,TRD_5CDD		;  ”€‰‹€
-		LD BC,0X10
+CREATE_HEADCHAN	ld hl,(PROG)
+		dec hl
+		ld (CURCHL),hl
+		push hl
+		ld bc,0x124
+		call RESERV_RAM
+		ld a,0
+		ld b,0
+loc_22C4	ld (de),a
+		dec de
+		djnz loc_22C4
+		pop hl
+		push hl
+		ld de,loc_3D0E
+		ld (hl),e
+		inc hl
+		ld (hl),d
+		inc hl
+		ld de,loc_3D06
+		ld (hl),e
+		inc hl
+		ld (hl),d
+		inc hl
+		ld (hl),"D"
+		inc hl
+		inc hl
+		inc hl
+		inc hl
+		inc hl
+		ld (hl),"$"
+		inc hl
+		ld (hl),1
+		inc hl
+		ld a,(TRD_5CF6)		; „‘‚„ „‹ ‚……‰ …€–
+		ld (hl),a
+		inc hl
+		ld a,(TRD_5D1E)
+		ld (hl),a
+		inc hl
+		ld a,(TRD_5D09)
+		cp "R"
+		ld (hl),0
+		jr z,loc_22FC
+		ld a,(TRD_5CE8)		; „‹€	ƒ€›
+		ld (hl),a
+loc_22FC	inc hl
+		ld (hl),b
+		jr z,loc_2304
+		ld a,(TRD_5CE9)		; „‹€	ƒ€›
+		ld (hl),a
+loc_2304	inc hl
+		ex de,hl
+		pop hl
+		push de
+		ld de,0x10
+		add hl,de
+		ex de,hl
+		ld hl,TRD_5CDD		;  ”€‰‹€
+		ld bc,0x10
+		IF EMU3D2F=1
 		JP EMU_LDIR_RHL
+		ELSE
+		ldir
+		pop hl
+		ENDIF
+		ret
 
-GET_ADRTEKSYM	LD C,0X0D
-		RST 0X28
-		LD C,(HL)
-		RST 0X28
-		LD BC,0X24
-		ADD HL,BC
-		RET
+GET_ADRTEKSYM	ld c,0x0d
+		rst 0x28
+		ld c,(hl)
+		rst 0x28
+		ld bc,0x24
+		add hl,bc
+		ret
 
-GET_ADRTEKFRG	LD C,0X24
-SUB_2323	LD B,0
-		LD HL,(CURCHL)
-		ADD HL,BC
-		RET
+GET_ADRTEKFRG	ld c,0x24
+ADR_OPEN_CHAN	ld b,0
+		ld hl,(CURCHL)
+		add hl,bc
+		ret
 
-CP_ENDOFSECTOR	LD C,0X0D
-		RST 0X28
-		INC (HL)
-		RET NZ
-		PUSH HL
-		CALL SET_DSK
-		CALL SAVE_TEKSECTOR	; ‡€‘ ’…“™…ƒ ‘…’€
-		POP HL
-		INC HL
-		INC (HL)
-		PUSH HL
-		CALL LOADINGSECTOR
-		POP HL
-		LD A,0X10
-		CP (HL)
-		RET NZ
-		PUSH HL
-		LD C,0X0F
-		RST 0X28
-		LD A,(HL)
-		CP 0X7F
-		POP HL
-		JR Z,LOC_2358
-		LD HL,(CURCHL)
-		CALL SAVE_HEAD_BLK
-		LD C,0X0E
-		RST 0X28
-		JP LOC_2379
+CP_ENDOFSECTOR	ld c,0x0d
+		rst 0x28
+		inc (hl)
+		ret nz
+		push hl
+		call SET_DISK
+		call SAVE_TEKSECTOR	; ‡€‘ ’…“™…ƒ ‘…’€
+		pop hl
+		inc hl
+		inc (hl)
+		push hl
+		call LOADINGSECTOR
+		pop hl
+		ld a,0x10
+		cp (hl)
+		ret nz
+		push hl
+		ld c,0x0f
+		rst 0x28
+		ld a,(hl)
+		cp 0x7f
+		pop hl
+		jr z,loc_2358
+		ld hl,(CURCHL)
+		call SAVE_HEAD_BLK
+		ld c,0x0e
+		rst 0x28
+		jp loc_2379
 
-LOC_2358	CALL FIND_NEXT_BLK
-		PUSH AF
-		CALL Z,LOADINGSECTOR
-		LD C,0X0E
-		RST 0X28
-		POP AF
-		JP NZ,CREATE_NEWBLOCK
-		RET
+loc_2358	call FIND_NEXT_BLK
+		push af
+		call z,LOADINGSECTOR
+		ld c,0x0e
+		rst 0x28
+		pop af
+		call nz,CREATE_NEWBLOCK
+		ret
 
-SUB_2367	LD (HL),0
-		LD C,0X19
-		RST 0X28
-		LD D,0X20
-		LD E,(HL)
-		RET
+sub_2367	ld (hl),0
+		ld c,0x19
+		rst 0x28
+		ld d,0x20
+		ld e,(hl)
+		ret
 
-CREATE_NEWBLOCK	CALL SUB_2367
-		LD (TRD_5CD7),DE	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+CREATE_NEWBLOCK	call sub_2367
+		ld (TRD_5CD7),de	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
 					; ‘‹…	‚… ’€ „‘‚„€
-		JR CREATE_BLK
+		jr CREATE_BLK
 
-LOC_2379	CALL SUB_2367
-		INC E
-		LD (TRD_5CD7), DE	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+loc_2379	call sub_2367
+		inc e
+		ld (TRD_5CD7),de	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
 					; ‘‹…	‚… ’€ „‘‚„€
-CREATE_BLK	CALL CREATE_BLOCK
-		CALL DEL_BUF
-		LD C,0X10
-		RST 0X28
-		EX DE,HL
-		LD HL,TRD_5CDD		;  ”€‰‹€
-		LD BC,0X10
-		LDIR
-		LD C,0X0C
-		RST 0X28
-		LD A,(TRD_5D1E)
-		LD (HL),A
-		RET
+CREATE_BLK	call CREATE_BLOCK
+		call DEL_BUF
+		ld c,0x10
+		rst 0x28
+		ex de,hl
+		ld hl,TRD_5CDD		;  ”€‰‹€
+		ld bc,0x10
+		ldir
+		ld c,0x0c
+		rst 0x28
+		ld a,(TRD_5D1E)
+		ld (hl),a
+		ret
 
-FIND_END_SEC	LD C,0X0D
-		RST 0X28
-		INC (HL)
-		RET NZ
-		INC HL
-		INC (HL)
-		PUSH HL
-		CALL SET_DSK
-		LD C,0X23
-		RST 0X28
-		LD A,(HL)
-		OR A
-		JR Z,LOC_23B6
-		POP HL
-		PUSH HL
-		DEC (HL)
-		CALL SAVE_TEKSECTOR	; ‡€‘ ’…“™…ƒ ‘…’€
-		POP HL
-		PUSH HL
-		INC (HL)
-LOC_23B6	CALL LOADINGSECTOR
-		POP HL
-		LD A,0X10
-		CP (HL)
-		RET NZ
+FIND_END_SEC	ld c,0x0d
+		rst 0x28
+		inc (hl)
+		ret nz
+		inc hl
+		inc (hl)
+		push hl
+		call SET_DISK
+		ld c,0x23
+		rst 0x28
+		ld a,(hl)
+		or a
+		jr z,loc_23B6
+		pop hl
+		push hl
+		dec (hl)
+		call SAVE_TEKSECTOR	; ‡€‘ ’…“™…ƒ ‘…’€
+		pop hl
+		push hl
+		inc (hl)
+loc_23B6	call LOADINGSECTOR
+		pop hl
+		ld a,0x10
+		cp (hl)
+		call z,OPEN_NEXT_BLK
+		ret
 
-OPEN_NEXT_BLK	CALL FIND_NEXT_BLK
-		PUSH AF
-		CALL DEL_BUF
-		POP AF
-		JP NZ,ERR_ENDOFFILE
-		JP LOADINGSECTOR
+OPEN_NEXT_BLK	call FIND_NEXT_BLK
+		push af
+		call DEL_BUF
+		pop af
+		jp nz,ERR_ENDOFFILE
+		jp LOADINGSECTOR
 
-FIND_NEXT_BLK	LD (HL),0
-		LD C,0X19
-		RST 0X28
-		INC (HL)
-		LD C,0X10
-		RST 0X28
-		LD DE,TRD_5CDD		;  ”€‰‹€
-		LD BC,0X10
-		LDIR
-		CALL FIND_FILENAME	; ‘	”€‰‹€  … ”€‰‹€
-		RET NZ
-OPEN_BLK	CALL RD_HEAD_FILENAME	; —’…… ‘€’…‹ ”€‰‹€
-		LD C,0X10
-		RST 0X28
-		EX DE,HL
-		LD HL,TRD_5CDD		;  ”€‰‹€
-		LD BC,0X10
-		LDIR
-		LD C,0X0C
-		RST 0X28
-		LD A,(TRD_5D1E)
-		LD (HL),A
-		XOR A
-		RET
+FIND_NEXT_BLK	ld (hl),0
+		ld c,0x19
+		rst 0x28
+		inc (hl)
+		ld c,0x10
+		rst 0x28
+		ld de,TRD_5CDD		;  ”€‰‹€
+		ld bc,0x10
+		ldir
+		call FIND_FILENAME	; ‘	”€‰‹€  … ”€‰‹€
+		ret nz
+OPEN_BLK	call RDHEAD_FILENAME	; —’…… ‘€’…‹ ”€‰‹€
+		ld c,0x10
+		rst 0x28
+		ex de,hl
+		ld hl,TRD_5CDD		;  ”€‰‹€
+		ld bc,0x10
+		ldir
+		ld c,0x0c
+		rst 0x28
+		ld a,(TRD_5D1E)
+		ld (hl),a
+		xor a
+		ret
 
 ; ‡€‘ ’…“™…ƒ ‘…’€
-SAVE_TEKSECTOR	CALL GET_TEKSECFILE
-		CALL GET_ADRTEKFRG
-		LD B,1
-		CALL COM_06
-		LD C,0X0F
-		RST 0X28
-		LD A,(HL)
-		CP 0X7F
-		RET Z
-		CALL GET_ADRTEKFRG
-		XOR A
-		LD B,A
-LOC_2413	LD (HL),A
-		INC HL
-		DJNZ LOC_2413
-		RET
+SAVE_TEKSECTOR	call GET_TEKSECFILE
+		call GET_ADRTEKFRG
+		ld b,1
+		call COM_06
+		ld c,0x0f
+		rst 0x28
+		ld a,(hl)
+		cp 0x7f
+		ret z
+		call GET_ADRTEKFRG
+		xor a
+		ld b,a
+loc_2413	ld (hl),a
+		inc hl
+		djnz loc_2413
+		ret
 
-LOADINGSECTOR	CALL GET_TEKSECFILE
-		CALL GET_ADRTEKFRG
-		LD B,1
-		JP COM_05		; —’…… ‘…’‚
+LOADINGSECTOR	call GET_TEKSECFILE
+		call GET_ADRTEKFRG
+		ld b,1
+		jp COM_05		; —’…… ‘…’‚
 
-GET_TEKSECFILE	LD HL,(CURCHL)
-		LD BC,0X1E
-		ADD HL,BC
-		LD E,(HL)
-		INC HL
-		LD D,(HL)
-		LD C,0X0E
-		RST 0X28
-		LD B,(HL)
-		DEC B
-		INC B
-		PUSH AF
-		LD A,0X10
-		JR Z,LOC_2441
-LOC_2438	INC E
-		CP E
-		JR NZ,LOC_243F
-		LD E,0
-		INC D
-LOC_243F	DJNZ LOC_2438
-LOC_2441	POP AF
-		RET
+GET_TEKSECFILE	ld hl,(CURCHL)
+		ld bc,0x1e
+		add hl,bc
+		ld e,(hl)
+		inc hl
+		ld d,(hl)
+		ld c,0x0e
+		rst 0x28
+		ld b,(hl)
+		dec b
+		inc b
+		push af
+		ld a,0x10
+		jr z,loc_2441
+loc_2438	inc e
+		cp e
+		jr nz,loc_243F
+		ld e,0
+		inc d
+loc_243F	djnz loc_2438
+loc_2441	pop af
+		ret
 
-SET_DSK		LD C,0X0B
-		RST 0X28
-		LD A,(HL)
-		JP COM_01		; €‘’‰€ € „‘‚„
+SET_DISK	ld c,0x0b
+		rst 0x28
+		ld a,(hl)
+		jp COM_01		; €‘’‰€ € „‘‚„
 
-OUT_SYM2FILE	LD HL,TRD_5CC2		; ‘„…†’ #C9. „‹ ……•„€ ‡ TR-DOS ‚ BASIC
-		PUSH HL
-		PUSH AF
-		LD A,0X0A
-		LD (TRD_5D06),A		; ‹—…‘’‚ ‘‚‹‚ … ”€‰‹€  ‘…
-		POP AF
-		CALL WORK4FREEACCESS
-		PUSH AF
-		CALL CP_FILE_OPENED
-		JP Z,ERR_INVALID_IO
-		POP AF
-		CALL GET_ADRTEKSYM
-		LD (HL),A
-		JP CP_ENDOFSECTOR
+OUT_SYM2FILE	ld hl,TRD_5CC2		; ‘„…†’ #C9. „‹ ……•„€ ‡ TR-DOS ‚ BASIC
+		push hl
+		DUPL 4,0
+		push af
+		DUPL 3,0
+		ld a,0x0a
+		ld (TRD_5D06),a		; ‹—…‘’‚ ‘‚‹‚ … ”€‰‹€  ‘…
+		pop af
+		call WORK4FREEACCESS
+		push af
+		call CP_FILE_OPENED
+		jp z,ERR_INVALID_IO
+		pop af
+		call GET_ADRTEKSYM
+		ld (hl),a
+		jp CP_ENDOFSECTOR
 
-CP_END_BLK	LD C,0X0D
-		RST 0X28
-		LD A,(HL)
-		LD BC,0X0E
-		ADD HL,BC
-		CP (HL)
-		RET NZ
-		LD C,0X0E
-		RST 0X28
-		LD A,(HL)
-		LD BC,0X0E
-		ADD HL,BC
-		CP (HL)
-		RET NZ
-		LD HL,TRD_5CB6		; „‹ ‚… €‹— INTERFACE1
-		LD A,(HL)
-		CP 0XF4
-		JR Z,ERR_ENDOFFILE
-		BIT 4,(HL)
-		JR Z,ERR_ENDOFFILE
-		OR 1
-		POP HL
-		RET
+CP_END_BLK	ld c,0x0d
+		rst 0x28
+		ld a,(hl)
+		ld bc,0x0e
+		add hl,bc
+		cp (hl)
+		ret nz
+		ld c,0x0e
+		rst 0x28
+		ld a,(hl)
+		ld bc,0x0e
+		add hl,bc
+		cp (hl)
+		ret nz
+		ld hl,TRD_5CB6		; „‹ ‚… €‹— INTERFACE1
+		ld a,(hl)
+		cp 0xf4
+		jr z,ERR_ENDOFFILE
+		bit 4,(hl)
+		jr z,ERR_ENDOFFILE
+		or 1
+		pop hl
+		ret
 
-ERR_ENDOFFILE	LD A,7
-LOC_2494	LD (ERR_NR),A
-		CALL DELETE_BUF
-		RST 0X20
-		DW 0X0058
-		RET
+ERR_ENDOFFILE	ld a,7
+loc_2494	ld (ERR_NR),a
+		call DELETE_BUF
+		rst 0x20
+		dw 0x0058
+		ret
 
-ERR_INVALID_IO	LD A,0X17
-		JR LOC_2494
+ERR_INVALID_IO	ld a,0x17
+		jr loc_2494
 
-WORK4FREEACCESS	LD D,A
-		LD C,0X0F
-		RST 0X28
-		LD A,(HL)
-		CP 0X7F
-		LD A,D
-		RET NZ
-		LD BC,0X13
-		ADD HL,BC
-		LD A,(HL)
-		OR A
-		LD A,D
-		JR NZ,LOC_24D5
-		DEC HL
-		LD A,(HL)
-		OR A
-		JR NZ,LOC_24C2
-		PUSH BC
-		PUSH HL
-		PUSH DE
-		CALL W16B2WORKSP
-		POP DE
-		POP HL
-		POP BC
-LOC_24C2	LD C,(HL)
-		LD A,D
-		EX DE,HL
-		LD HL,(TRD_5CCF)	; ‚……… ‘•€…… WORK_SP
-		ADD HL,BC
-		CP 6
-		LD (HL),A
-		CALL Z,WORK_NUMSAVE
-		LD C,0X21
-		RST 0X28
-		INC (HL)
-		POP HL
-		RET
+WORK4FREEACCESS	ld d,a
+		ld c,0x0f
+		rst 0x28
+		ld a,(hl)
+		cp 0x7f
+		ld a,d
+		ret nz
+		ld bc,0x13
+		add hl,bc
+		ld a,(hl)
+		or a
+		ld a,d
+		jr nz,loc_24D5
+		dec hl
+		ld a,(hl)
+		or a
+		jr nz,loc_24C2
+		push bc
+		push hl
+		push de
+		call W16B2WORKSP
+		pop de
+		pop hl
+		pop bc
+loc_24C2	ld c,(hl)
+		ld a,d
+		ex de,hl
+		ld hl,(TRD_5CCF)	; ‚……… ‘•€…… WORK_SP
+		add hl,bc
+		cp 6
+		ld (hl),a
+		call z,WORK_NUMSAVE
+		ld c,0x21
+		rst 0x28
+		inc (hl)
+		pop hl
+		ret
 
-LOC_24D5	DEC HL
-		LD A,(HL)
-		DEC HL
-		INC A
-		CP (HL)
-		INC HL
-		INC (HL)
-		PUSH HL
-		PUSH AF
-		LD C,0X23
-		RST 0X28
-		LD (HL),0XFF
-		POP AF
-		POP HL
-		JR C,LOC_24EE
-		LD A, D
-		CP 0X0D
-		JR Z,LOC_24F2
-		POP BC
-		RET
+loc_24D5	dec hl
+		ld a,(hl)
+		dec hl
+		inc a
+		cp (hl)
+		inc hl
+		inc (hl)
+		push hl
+		push af
+		ld c,0x23
+		rst 0x28
+		ld (hl),0xff
+		pop af
+		pop hl
+		jr c,loc_24EE
+		ld a,d
+		cp 0x0d
+		jr z,loc_24F2
+		pop bc
+		ret
 
-LOC_24EE	LD A,D
-		CP 0X0D
-		RET NZ
-LOC_24F2	XOR A
-		LD (HL),A
-		INC HL
-		LD (HL),A
-		LD A,D
-		RET
+loc_24EE	ld a,d
+		cp 0x0d
+		ret nz
+loc_24F2	xor a
+		ld (hl),a
+		inc hl
+		ld (hl),a
+		ld a,d
+		ret
 
-W16B2WORKSP	LD HL,(WORKSP)
-		LD (TRD_5CCF),HL	; ‚……… ‘•€…… WORK_SP
-		LD BC,0X10
-		JP CREATE_FREERAM
+W16B2WORKSP	ld hl,(WORKSP)
+		ld (TRD_5CCF),hl	; ‚……… ‘•€…… WORK_SP
+		ld bc,0x10
+		jp CREATE_FREERAM
 
-WORK_NUMSAVE	LD (HL),0X0D
-		LD HL,(CH_ADD)
-		LD (TRD_5CD7),HL	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+WORK_NUMSAVE	ld (hl),0x0d
+		ld hl,(CH_ADD)
+		ld (TRD_5CD7),hl	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
 					; ‘‹…	‚… ’€ „‘‚„€
-		LD HL,(TRD_5CCF)	; ‚……… ‘•€…… WORK_SP
-		LD (CH_ADD),HL
-		LD HL,FLAGS
-		RES 7,(HL)
-		CALL BC2STKBOT
-		LD HL,FLAGS
-		SET 7,(HL)
-		LD HL,(TRD_5CCF)	; ‚……… ‘•€…… WORK_SP
-		LD (CH_ADD),HL
-		CALL BC2STKBOT
-		CALL FIND_LAST
-		PUSH BC
-		POP DE
-		LD C,0X20
-		RST 0X28
-		LD B,(HL)
-		XOR A
-		LD H,A
-		LD L,A
-		LD (TRD_5CDB),HL
-LOC_2538	ADD HL,DE
-		JR NC,LOC_2544
-		PUSH HL
-		LD HL,(TRD_5CDB)
-		INC HL
-		LD (TRD_5CDB),HL
-		POP HL
-LOC_2544	DJNZ LOC_2538
-		LD (TRD_5CD9),HL	; …†“’—€	„‹€ „‹ <B> 	<C>
-		LD A,(TRD_5CDB)
-		LD HL,TRD_5CDA
-		RRD
-		AND 0X0F
-		LD (TRD_5CDB),A
-		LD HL,(TRD_5CD7)	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+		ld hl,(TRD_5CCF)	; ‚……… ‘•€…… WORK_SP
+		ld (CH_ADD),hl
+		ld hl,FLAGS
+		res 7,(hl)
+		call BC2STKBOT
+		ld hl,FLAGS
+		set 7,(hl)
+		ld hl,(TRD_5CCF)	; ‚……… ‘•€…… WORK_SP
+		ld (CH_ADD),hl
+		call BC2STKBOT
+		call FIND_LAST
+		push bc
+		pop de
+		ld c,0x20
+		rst 0x28
+		ld b,(hl)
+		xor a
+		ld hl,0
+		ld (TRD_5CDB),hl
+loc_2538	add hl,de
+		jr nc,loc_2544
+		push hl
+		ld hl,(TRD_5CDB)
+		inc hl
+		ld (TRD_5CDB),HL
+		pop hl
+loc_2544	djnz loc_2538
+		ld (TRD_5CD9),HL	; …†“’—€	„‹€ „‹ <B> 	<C>
+		ld a,(TRD_5CDB)
+		ld hl,TRD_5CDA
+		rrd
+		and 0x0f
+		ld (TRD_5CDB),a
+		ld hl,(TRD_5CD7)	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
 					; ‘‹…	‚… ’€ „‘‚„€
-		LD (CH_ADD), HL
-		CALL OPEN_SAVED
-		LD C,0X21
-		RST 0X28
-		LD A,0XFF
-		LD (HL),A
-		INC HL
-		LD (HL),A
-		RET
+		ld (CH_ADD),hl
+		call OPEN_SAVED
+		ld c,0x21
+		rst 0x28
+		ld a,0xff
+		ld (hl),a
+		inc hl
+		ld (hl),a
+		ret
 
-OPEN_SAVED	LD C,0X19
-		RST 0X28
-		LD A,(TRD_5CDA)
-		CP (HL)
-		JP NZ,LOC_2584
-		LD C,0X0E
-		RST 0X28
-		LD A,(TRD_5CDB)
-		CP (HL)
-		JP NZ,LOC_25A7
-LOC_257C	LD C,0X0D
-		RST 0X28
-		LD A,(TRD_5CD9)		; …†“’—€	„‹€ „‹ <B> 	<C>
-		LD (HL),A
-		RET
+OPEN_SAVED	ld c,0x19
+		rst 0x28
+		ld a,(TRD_5CDA)
+		cp (hl)
+		jp nz,loc_2584
+		ld c,0x0e
+		rst 0x28
+		ld a,(TRD_5CDB)
+		cp (hl)
+		jp nz,loc_25A7
+loc_257C	ld c,0x0d
+		rst 0x28
+		ld a,(TRD_5CD9)		; …†“’—€	„‹€ „‹ <B> 	<C>
+		ld (hl),a
+		ret
 
-LOC_2584	CALL CPANDZERO23
-		CALL NZ,SAVE_TEK_SEC
-		LD A,(TRD_5CDA)
-		LD C,0X19
-		RST 0X28
-		LD (HL),A
-		LD C,0X10
-		RST 0X28
-		LD DE,TRD_5CDD		;  ”€‰‹€
-		LD BC,0X10
-		LDIR
-		CALL FIND_FILENAME	; ‘	”€‰‹€  … ”€‰‹€
-		JP NZ,LOC_25D2
-		CALL OPEN_BLK
-		JR LOC_25AD
+loc_2584	call CPANDZERO23
+		call nz,SAVE_TEK_SEC
+		ld a,(TRD_5CDA)
+		ld c,0x19
+		rst 0x28
+		ld (hl),a
+		ld c,0x10
+		rst 0x28
+		ld de,TRD_5CDD		;  ”€‰‹€
+		ld bc,0x10
+		ldir
+		call FIND_FILENAME	; ‘	”€‰‹€  … ”€‰‹€
+		jp nz,loc_25D2
+		call OPEN_BLK
+		jr loc_25AD
 
-LOC_25A7	CALL CPANDZERO23
-		CALL NZ,SAVE_TEK_SEC
-LOC_25AD	LD A,(TRD_5CDB)
-		LD C,0X0E
-		RST 0X28
-		LD (HL),A
-		PUSH HL
-		CALL SET_DSK
-		CALL LOADINGSECTOR
-		POP HL
-		DEC HL
-		LD A,(TRD_5CD9)		; …†“’—€	„‹€ „‹ <B> 	<C>
-		LD (HL),A
-		JR LOC_257C
+loc_25A7	call CPANDZERO23
+		call nz,SAVE_TEK_SEC
+loc_25AD	ld a,(TRD_5CDB)
+		ld c,0x0e
+		rst 0x28
+		ld (hl),a
+		push hl
+		call SET_DISK
+		call LOADINGSECTOR
+		pop hl
+		dec hl
+		ld a,(TRD_5CD9)		; …†“’—€	„‹€ „‹ <B> 	<C>
+		ld (hl),a
+		jr loc_257C
 
-SAVE_TEK_SEC	CALL SET_DSK
-		JP SAVE_TEKSECTOR	; ‡€‘ ’…“™…ƒ ‘…’€
+SAVE_TEK_SEC	call SET_DISK
+		call SAVE_TEKSECTOR	; ‡€‘ ’…“™…ƒ ‘…’€
+		ret
 
-CPANDZERO23	LD C,0X23
-		RST 0X28
-		LD A,(HL)
-		OR A
-		LD (HL),0
-		RET
+CPANDZERO23	ld c,0x23
+		rst 0x28
+		ld a,(hl)
+		or a
+		ld (hl),0
+		ret
 
-LOC_25D2	LD HL,(TRD_5CDA)
-		LD H,0X20
-		LD (TRD_5CD7),HL	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+loc_25D2	ld hl,(TRD_5CDA)
+		ld h,0x20
+		ld (TRD_5CD7),hl	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
 					; ‘‹…	‚… ’€ „‘‚„€
-		LD HL,(TRD_5CD9)	; …†“’—€	„‹€ „‹ <B> 	<C>
-		PUSH HL
-		LD HL,(TRD_5CDB)
-		PUSH HL
-		CALL CREATE_BLK
-		POP HL
-		LD (TRD_5CDB),HL
-		POP HL
-		LD (TRD_5CD9),HL	; …†“’—€	„‹€ „‹ <B> 	<C>
-		JR LOC_25AD
+		ld hl,(TRD_5CD9)	; …†“’—€	„‹€ „‹ <B> 	<C>
+		push hl
+		ld hl,(TRD_5CDB)
+		push hl
+		call CREATE_BLK
+		pop hl
+		ld (TRD_5CDB),hl
+		pop hl
+		ld (TRD_5CD9),hl	; …†“’—€	„‹€ „‹ <B> 	<C>
+		jr loc_25AD
 
-INPUTDATAFILE	LD HL,TV_FLAG
-		RES 3,(HL)
-		LD HL,(ERR_SP)
-		LD E,(HL)
-		INC HL
-		LD D,(HL)
-		OR A
-		LD HL,0X107F
-		SBC HL,DE
-		JR NZ,LOC_2626
-		LD SP,(ERR_SP)
-		POP DE
-		POP DE
-		LD (ERR_SP),DE
-LOC_260F	CALL INPUT_SYM_FILE
-		JR C,LOC_261D
-LOC_2614	LD HL,TRD_5CC2		; ‘„…†’ #C9. „‹ ……•„€ ‡ TR-DOS ‚ BASIC
-		PUSH HL
-		LD HL,DELETE_BUF
-		JP (HL)
+INPUTDATAFILE	DUPL 3,0
+		ld hl,TV_FLAG
+		res 3,(hl)
+		ld hl,(ERR_SP)
+		ld e,(hl)
+		inc hl
+		ld d,(hl)
+		or a
+		ld hl,0x107F
+		sbc hl,de
+		jr nz,loc_2626
+		ld sp,(ERR_SP)
+		pop de
+		pop de
+		ld (ERR_SP),de
+loc_260F	call INPUT_SYM_FILE
+		jr c,loc_261D
+loc_2614	ld hl,TRD_5CC2		; ‘„…†’ #C9. „‹ ……•„€ ‡ TR-DOS ‚ BASIC
+		push hl
+		ld hl,DELETE_BUF
+		push hl
+		ret
 
-LOC_261D	CP 0X0D
-		JR Z,LOC_2614
-		RST 0X20
-		DW 0X0F85
-		JR LOC_260F
+loc_261D	cp 0x0d
+		jr z,loc_2614
+		rst 0x20
+		dw 0x0f85
+		jr loc_260F
 
-LOC_2626	CALL INPUT_SYM_FILE
-		JR LOC_2614
+loc_2626	call INPUT_SYM_FILE
+		jr loc_2614
 
-INPUT_SYM_FILE	LD A,0X0A
-		LD (TRD_5D06),A		; ‹—…‘’‚ ‘‚‹‚ … ”€‰‹€  ‘…
-		CALL CP_FILE_OPENED
-		JR Z,LOC_2642
-		CP 0X7F
-		JP NZ,ERR_INVALID_IO
-		LD BC,0X13
-		ADD HL,BC
-		LD (HL),0
-		JR LOC_2645
+INPUT_SYM_FILE	ld a,0x0a
+		ld (TRD_5D06),a		; ‹—…‘’‚ ‘‚‹‚ … ”€‰‹€  ‘…
+		call CP_FILE_OPENED
+		jr z,loc_2642
+		cp 0x7f
+		jp nz,ERR_INVALID_IO
+		ld bc,0x13
+		add hl,bc
+		ld (hl),0
+		jr loc_2645
 
-LOC_2642	CALL CP_END_BLK
-LOC_2645	CALL GET_ADRTEKSYM
-		LD A,(HL)
-		PUSH AF
-		CALL FIND_END_SEC
-		POP AF
-		SCF
-		RET
+loc_2642	call CP_END_BLK
+loc_2645	call GET_ADRTEKSYM
+		ld a,(hl)
+		push af
+		call FIND_END_SEC
+		pop af
+		scf
+		ret
 
-CP_FILE_OPENED	LD C,0X0F
-		RST 0X28
-		LD A,(HL)
-		OR A
-		RET
+CP_FILE_OPENED	ld c,0x0f
+		rst 0x28
+		ld a,(hl)
+		or a
+		ret
 
-CLOSE		LD HL,(TRD_5D11)	; €„…‘	‘’ €„› TR_DOS
-		LD (CH_ADD),HL
-		CALL SET_NUM_CHAN
-		CALL EXIT_IF_SINTAX
-		LD A,(TRD_5CDB)
-		RST 0X20
-		DW 0X1727
-		LD A,B
-		OR C
-		JP Z,END_COMAND
-		PUSH HL
-		LD HL,(CHANS)
-		ADD HL,BC
-		LD A,(HL)
-		LD HL,LOC_3D0E
-		CP H
-		POP HL
-		JP NZ,LOC_2228
-		LD (HL),0
-		INC HL
-		LD (HL),0
-		LD (TRD_5CD9),BC	; …†“’—€	„‹€ „‹ <B> 	<C>
-		LD HL,(CHANS)
-		ADD HL,BC
-		DEC HL
-		LD (TRD_5CD7), HL	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+CLOSE		ld hl,(TRD_5D11)	; €„…‘	‘’ €„› TR_DOS
+		ld (CH_ADD),hl
+		call SET_NUM_CHAN
+		call EXIT_IF_SINTAX
+		ld a,(TRD_5CDB)
+		rst 0x20
+		dw 0x1727
+		ld a,b
+		or c
+		jp z,END_COMAND
+		push hl
+		ld hl,(CHANS)
+		add hl,bc
+		ld a,(hl)
+		ld hl,loc_3D0E
+		cp h
+		pop hl
+		jp nz,loc_2228
+		ld (hl),0
+		inc hl
+		ld (hl),0
+		ld (TRD_5CD9),bc	; …†“’—€	„‹€ „‹ <B> 	<C>
+		ld hl,(CHANS)
+		add hl,bc
+		dec hl
+		ld (TRD_5CD7),hl	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
 					; ‘‹…	‚… ’€ „‘‚„€
-		CALL SUB_26CE
-		LD HL,(TRD_5CD7)	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+		call sub_26CE
+		ld hl,(TRD_5CD7)	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
 					; ‘‹…	‚… ’€ „‘‚„€
-		LD BC,0X124
-		CALL DEL_WORKRAM
-		LD HL,STRMS
-		LD B,0X10
-LOC_269D	PUSH BC
-		LD BC,(TRD_5CD9)	; …†“’—€	„‹€ „‹ <B> 	<C>
-		LD E,(HL)
-		INC HL
-		LD D,(HL)
-		EX DE,HL
-		SBC HL,BC
-		EX DE,HL
-		JR C,LOC_26BC
-		LD D,(HL)
-		DEC HL
-		LD E,(HL)
-		INC HL
-		PUSH HL
-		EX DE,HL
-		LD BC,0X124
-		SBC HL,BC
-		EX DE,HL
-		POP HL
-		LD (HL),D
-		DEC HL
-		LD (HL),E
-		INC HL
-LOC_26BC	INC HL
-		POP BC
-		DJNZ LOC_269D
-		LD HL,(TRD_5D11)	; €„…‘	‘’ €„› TR_DOS
-		LD BC,0X124
-		SBC HL,BC
-		LD (TRD_5D11),HL	; €„…‘	‘’ €„› TR_DOS
-		JP END_COMAND
+		ld bc,0x124
+		call DEL_WORKRAM
+		ld hl,STRMS
+		ld b,0x10
+loc_269D	push bc
+		ld bc,(TRD_5CD9)	; …†“’—€	„‹€ „‹ <B> 	<C>
+		ld e,(hl)
+		inc hl
+		ld d,(hl)
+		ex de,hl
+		sbc hl,bc
+		ex de,hl
+		jr c,loc_26BC
+		ld d,(hl)
+		dec hl
+		ld e,(hl)
+		inc hl
+		push hl
+		ex de,hl
+		ld bc,0x124
+		sbc hl,bc
+		ex de,hl
+		pop hl
+		ld (hl),d
+		dec hl
+		ld (hl),e
+		inc hl
+loc_26BC	inc hl
+		pop bc
+		djnz loc_269D
+		ld hl,(TRD_5D11)	; €„…‘	‘’ €„› TR_DOS
+		ld bc,0x124
+		sbc hl,bc
+		ld (TRD_5D11),hl	; €„…‘	‘’ €„› TR_DOS
+		jp END_COMAND
 
-SUB_26CE	LD BC,0X0F
-		ADD HL,BC
-		LD A,(HL)
-		OR A
-		RET Z
-		LD HL,(TRD_5CD7)	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+sub_26CE	ld bc,0x0f
+		add hl,bc
+		ld a,(hl)
+		or a
+		ret z
+		ld hl,(TRD_5CD7)	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
 					; ‘‹…	‚… ’€ „‘‚„€
-		LD (CURCHL),HL
-		CALL SAVE_HEAD_BLK
-		JP SAVE_TEKSECTOR	; ‡€‘ ’…“™…ƒ ‘…’€
+		ld (CURCHL),hl
+		call SAVE_HEAD_BLK
+		jp SAVE_TEKSECTOR	; ‡€‘ ’…“™…ƒ ‘…’€
 
-SAVE_HEAD_BLK	LD BC,0X0D
-		ADD HL,BC
-		LD E,(HL)
-		INC HL
-		LD D,(HL)
-		LD BC,0X0D
-		ADD HL,BC
-		LD (HL),E
-		INC HL
-		LD (HL),D
-		LD C,0X10
-		RST 0X28
-		LD DE,TRD_5CDD		;  ”€‰‹€
-		LD BC,0X10
-		LDIR
-		CALL SET_DSK
-		LD C,0X0C
-		RST 0X28
-		LD C,(HL)
-		CALL SET_HEAD_FILENAME
-		JP REWRITE_9SEC		; ……‡€‘ 9 ‘…’€
+SAVE_HEAD_BLK	ld bc,0x0d
+		add hl,bc
+		ld e,(hl)
+		inc hl
+		ld d,(hl)
+		ld bc,0x0d
+		add hl,bc
+		ld (hl),e
+		inc hl
+		ld (hl),d
+		ld c,0x10
+		rst 0x28
+		ld de,TRD_5CDD		;  ”€‰‹€
+		ld bc,0x10
+		ldir
+		call SET_DISK
+		ld c,0x0c
+		rst 0x28
+		ld c,(hl)
+		call SETHEADFILENAME
+		jp REWRITE_9SEC		; ……‡€‘ 9 ‘…’€
 
-PRINT_MSG	LD A,(HL)
-		AND 0X7F
-		RST 0X10
-		BIT 7,(HL)
-		INC HL
-		RET NZ
-		JR PRINT_MSG		; …—€’ ’…‘’‚ƒ ‘™…
+PRINT_MSG	ld a,(hl)
+		or a
+		ret z
+		and 0x7f
+		rst 0x10
+		bit 7,(hl)
+		ret nz
+		inc hl
+		jr PRINT_MSG		; …—€’ ’…‘’‚ƒ ‘™…
 
-COMPARE_B_SYM	LD A,(DE)
-		CP (HL)
-		RET NZ
-		INC DE
-		INC HL
-		DJNZ COMPARE_B_SYM
-		RET
+COMPARE_B_SYM	ld a,(de)
+		cp (hl)
+		ret nz
+		inc de
+		inc hl
+		djnz COMPARE_B_SYM
+		ret
 
-LOC_271B	LD HL,TXT_NODISK_	; "NO DISK"
-		LD A,6
-		JP PRINT_TXTERR
+loc_271B	ld hl,TXT_NODISK_	; "NO DISK"
+		ld a,6
+		jp PRINT_TXTERR
 
-ERR_DIRFULL	LD HL,ASC_27ED		; "DIRECTORY FULL"
-		LD A,4
-		JP PRINT_TXTERR
+ERR_DIRFULL	ld hl,TXT_DIRFULL	; "DIRECTORY FULL"
+		ld a,4
+		jp PRINT_TXTERR
 
-SET_TAPELDERR	LD A,0X1A
-SET_NUM_ERR	LD (ERR_NR),A
-		RET
+SET_TAPELDERR	ld a,0x1a
+		jr SET_NUM_ERR
 
-		DUPL 0X2739-$,0XFF
+		ld a,0x12
+SET_NUM_ERR	ld (ERR_NR),a
+		ret
+
+		ld a,3
+		jr SET_NUM_ERR
+
 ;‚…€ „†
-COM_15		XOR A
-		LD (TRD_5CD8),A		; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+COM_15		xor a
+		ld (TRD_5CD8),a		; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
 					; ‘‹…	‚… ’€ „‘‚„€
-		LD (TRD_5CD6),A		; #FF-€„€ ’€ ‘’€‘—…‘ €€‹‡€’
-		IF EMU3D2F=1
-		RST 0X30
-		DB _IN_1F
-		ELSE
-		IN A,(0X1F)
-		ENDIF
-		LD (TRD_5CCD),A		; #80-ƒ’‚‘’ „‘‚„€
-		LD E,D
-		PUSH DE
-		LD A,E
-		IF EMU3D2F=1
-		RST 0X30	;OUT (0X8F),A
-		DB _OUT_7F
-		ELSE
-		OUT (0X7F),A
-		ENDIF
-		LD A,0X18;0X1B
-		CALL COM2VG_WAIT
-		LD A,(TRD_5CCD)		; #80-ƒ’‚‘’ „‘‚„€
-		AND 0X80
-		CALL NZ,PAUSE_3_C_A
-		POP DE
-		CALL CP_NUM_TRACK
-		LD A,(TRD_5CD6)		; #FF-€„€ ’€ ‘’€‘—…‘ €€‹‡€’
-		OR A
-		RET Z
-		LD A,7
-		LD (TRD_5D0F),A		; …	 TR-DOS
-		RET
+		ld (TRD_5CD6),a		; #FF-€„€ ’€ ‘’€‘—…‘ €€‹‡€’
+		RST32 _IN_1F,__IN_A_N+0X1F<<8
+;		in a,(0x1f)
+		ld (TRD_5CCD),a		; #80-ƒ’‚‘’ „‘‚„€
+		ld e,d
+		push de
+		ld a,e
+		RST32 _OUT_7F,__OUT_N_A+0X7F<<8
+;		out (0x7f),a
+		ld a,0x18
+		call COM2VG_WAIT
+		ld a,(TRD_5CCD)		; #80-ƒ’‚‘’ „‘‚„€
+		and 0x80
+		call nz,PAUSE_3_C_A
+		pop de
+		call CP_NUM_TRACK
+		ld a,(TRD_5CD6)		; #FF-€„€ ’€ ‘’€‘—…‘ €€‹‡€’
+		or a
+		ret z
+		ld a,7
+		ld (TRD_5D0F),a		; …	 TR-DOS
+		ret
 
-TXT_OK_		DC "O.K."
-ASC_276B	DB "Verify Error.",0X8D
-ASC_2779	DB "BACKUP DISK",0X8D
-ASC_2785	DB "Insert Destination disk",0X0D
-		DC "Then press Y"
-ASC_27AA	DC "Insert Source disk then press Y"
-ASC_27CA	DB "*BREAK*",0X8D
-ASC_27D2	DB "Out Of RAM",0X8D
-ASC_27DD	DB "Array not found",0X8D
-ASC_27ED	DB "Directory full",0X8D
+TXT_OK_		DZ "O.K."
+TXT_VERIFYERR	DB "Verify Error.",0X8D
+TXT_BACKUPDISK	DB "BACKUP DISK",0X8D
+TXT_INS_DEST	DB "Insert Destination disk",0X0D
+		DZ "then press Y"
+TXT_INS_SRC	DZ "Insert Source disk then press Y"
+TXT_BREAK	DB "*BREAK*",0X8D
+TXT_OUTRAM	DB "Out of RAM",0X8D
+TXT_ARRAYNOT	DB "Array not found",0X8D
+TXT_DIRFULL	DB "Directory full",0X8D
 TXT_NODISK_	DB "No disk",0X8D
-ASC_2804	DB "Stream opened",0X8D
-ASC_2812	DB "Not disk file",0X8D
-ASC_2820	DB "File exists",0X0D
+TXT_STREAMOPEN	DB "Stream opened",0X8D
+TXT_NODISKFILE	DB "Not disk file",0X8D
+TXT_FILEEXIST	DB "File exists",0X0D
 		DC "Over write?(Y/N)"
 
-CALL_3D13	CALL SET_RWPORT0
-		LD (TRD_5D04),DE
-		LD (TRD_5D02),HL
-		LD HL,CP_ERROR		; €„…‘	‡€‚…… ’……’€’€
-		LD (TRD_5D1A),HL	; ‚“’…‰ €„…‘ ‡€‚…… ’……’€’€ €„
-		LD HL,0
-		ADD HL,SP
-		LD (TRD_5D1C),HL	; ‘•€…… ’…“™…ƒ ‘’…€
-		DEC HL
-		DEC HL
-		LD SP,HL
-		PUSH AF
+CALL_3D13	push af
+		push bc
+		ld (TRD_5D04),de
+		ld (TRD_5D02),hl
+		CALL SET_RWPORT0
 		LD A,0XFF
 		LD (TRD_5D15),A		; …‘‹ 0,…—€’€’ €“	TR-DOS.€—… …	…—€’€’
 		LD (TRD_5D1F),A
-		CALL MARK_SP		; “‘’€‚€ ‘’…€ „‹ ……•‚€’€	
-		LD HL,COMAND_TBL
+		pop bc
+		pop af
+		ld hl,CP_ERROR		; €„…‘	‡€‚…… ’……’€’€
+		ld (TRD_5D1A),hl	; ‚“’…‰ €„…‘ ‡€‚…… ’……’€’€ €„
+		ld hl,0
+		add hl,sp
+		ld (TRD_5D1C),hl	; ‘•€…… ’…“™…ƒ ‘’…€
+		dec hl
+		dec hl
+		ld sp,hl
+		push af
+		call MARK_SP		; “‘’€‚€ ‘’…€ „‹ ……•‚€’€	
+		ld hl,COMAND_TBL
 		LD A,C
 		CP LOW ((ECOMAND_TBL-COMAND_TBL)/2)+1
 		JP NC,END_COMAND
@@ -4231,113 +4189,145 @@ COMAND_TBL	DW COM_00		;‚‘‘’€‚‹…… ‚ƒ93
 		DW COM_18		;€‘’‰€ € „‘…’“
 ECOMAND_TBL
 
+		DUPL 0X28D8-$,0XFF
 ;‚›‚„ €’€‹ƒ€ ‚ €€‹
-COM_07		PUSH AF
-		CALL COM_18		; €‘’‰€ € „‘…’“
-		POP AF
-		JP LOC_479
+COM_07		push af
+		call COM_18		; €‘’‰€ € „‘…’“
+		pop af
+		jp loc_479
 
 ;……‘ ‘€’…‹ ”€‰‹€ ‚ “”… 0X5CDD
-COM_13		XOR A
-		JR LOC_28E5
+COM_13		xor a
+		jr loc_28E5
 
 ;……‘ ‘€’…‹ ”€‰‹€ ‡ “”…€ 0X5CDD
-COM_14		LD A,0XFF
-LOC_28E5	LD DE,TRD_5CDD		;  ”€‰‹€
-		LD BC,0X10
-		OR A
-		JR Z,LOC_28EF
-		EX DE,HL
-LOC_28EF	JP EMU_LDIR
+COM_14		ld a,0xff
+loc_28E5	ld de,TRD_5CDD		;  ”€‰‹€
+		ld bc,0x10
+		or a
+		jr z,loc_28EF
+		ex de,hl
+loc_28EF	IF EMU3D2F=1
+		JP EMU_LDIR
+		ELSE
+		ldir
+		ret
+		ENDIF
 
 ;‡€‘ …‰‘ ƒ€› € „‘
-COM_0C		CALL COM_18		; €‘’‰€ € „‘…’“
-		CALL CP_FREE_ON_DSK
-		JP LOC_1B27
+COM_0C		call COM_18		; €‘’‰€ € „‘…’“
+		call CP_FREE_ON_DSK
+		jp loc_1B27
 
 ;‡€‘ ‹€ „‚ € „‘
-COM_0B		LD (TRD_5CD7),HL	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+COM_0B		ld (TRD_5CD7),hl	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
 					; ‘‹…	‚… ’€ „‘‚„€
-		LD (TRD_5CD9),DE	; …†“’—€	„‹€ „‹ <B> 	<C>
-		LD (TRD_5CDB),DE
-		CALL COM_18		; €‘’‰€ € „‘…’“
-		CALL CP_FREE_ON_DSK
-		JP LOC_1B53
+		ld (TRD_5CD9),de	; …†“’—€	„‹€ „‹ <B> 	<C>
+		ld (TRD_5CDB),de
+		call COM_18		; €‘’‰€ € „‘…’“
+		call CP_FREE_ON_DSK
+		jp loc_1B53
 
-		DUPL 0X290F-$,0XFF
 ;‡€ƒ“‡€ ‹ ‚…€ ”€‰‹€
-COM_0E		OR A
-		LD (TRD_5CD6),A		; #FF-€„€ ’€ ‘’€‘—…‘ €€‹‡€’
-		LD (TRD_5CD9),HL	; …†“’—€	„‹€ „‹ <B> 	<C>
-		LD (TRD_5CDB),DE
-		CALL FIND_FILENAME	; ‘	”€‰‹€  … ”€‰‹€
-		CALL FIND_RD_HEAD
-		CALL CP_PARAMS		;WDC
-		JP RD_FILE
+COM_0E		or a
+		ld (TRD_5CD6),a		; #FF-€„€ ’€ ‘’€‘—…‘ €€‹‡€’
+		ld (TRD_5CD9),hl	; …†“’—€	„‹€ „‹ <B> 	<C>
+		ld (TRD_5CDB),de
+		call FIND_FILENAME	; ‘	”€‰‹€  … ”€‰‹€
+		call FIND_RD_HEAD
+		call CP_PARAMS		;WDC
+		jp RD_FILE
 
 ;“„€‹…… ”€‰‹€
-COM_12		CALL COM_18		; €‘’‰€ € „‘…’“
-		CALL FIND_FILENAME	; ‘	”€‰‹€  … ”€‰‹€
-		JP ERASE_FILES
+COM_12		call COM_18		; €‘’‰€ € „‘…’“
+		call FIND_FILENAME	; ‘	”€‰‹€  … ”€‰‹€
+		jp ERASE_FILES
 
 ; ‘	”€‰‹€  …
-FIND_FILE	CALL SET_FILENAME
-		CALL COM_18		; €‘’‰€ € „‘…’“
-		JP FIND_FILENAME	; ‘	”€‰‹€  … ”€‰‹€
+FIND_FILE	call SET_FILENAME
+		call COM_18		; €‘’‰€ € „‘…’“
+		jp FIND_FILENAME	; ‘	”€‰‹€  … ”€‰‹€
 
-		DUPL 0X294A-$,0XFF
+; …—€’ … ”€‰‹€
+PRINT_FILENAME	push bc
+		ld b,8
+loc_293B	ld a,(hl)
+		rst 0x10
+		inc hl
+		djnz loc_293B
+		ld a,"<"
+		rst 0x10
+		ld a,(hl)
+		rst 0x10
+		ld a,">"
+		rst 0x10
+		pop bc
+		ret
+
 ; ‘‡„€… “”…€
-CREATE_BUF	PUSH HL
-		PUSH DE
-		PUSH BC
-		PUSH AF
-		LD HL,TRD_5D0C
-		LD A,(HL)
-		OR A
-		JR Z,LOC_2992
-		PUSH HL
-		LD BC,0X101
-		PUSH BC
-		CALL CP_FREE_RAM
-		POP BC
-		POP HL
-		LD (HL),0
-		LD HL,TRD_5D25
-		PUSH BC
-		CALL RESERV_RAM
-		POP BC
-		LD HL,(TRD_5D11)	; €„…‘	‘’ €„› TR_DOS
-		ADD HL,BC
-		JR LOC_298F
+CREATE_BUF	push hl
+		push de
+		push bc
+		push af
+		ld hl,TRD_5D0C
+		ld a,(hl)
+		or a
+		jr z,loc_2992
+		push hl
+		ld bc,0x101
+		push bc
+		call CP_FREE_RAM
+		pop bc
+		pop hl
+		ld (hl),0
+		ld hl,TRD_5D25
+		call RESERV_RAM
+		ld hl,(TRD_5D11)	; €„…‘	‘’ €„› TR_DOS
+		ld bc,0x101
+		add hl,bc
+		jr loc_298F
 
-		DUPL 0X2970-$,0XFF
-DEL_BUF		PUSH HL
-		PUSH DE
-		PUSH BC
-		PUSH AF
-		LD HL,TRD_5D0C
-		LD A,(HL)
-		OR A
-		JR NZ,LOC_2992
-		LD (HL),0XFF
-		LD HL,TRD_5D25
-		LD BC,0X101
-		PUSH BC
-		CALL DEL_WORKRAM
-		POP BC
-		OR A
-		LD HL,(TRD_5D11)	; €„…‘	‘’ €„› TR_DOS
-		SBC HL,BC
-LOC_298F	LD (TRD_5D11),HL	; €„…‘	‘’ €„› TR_DOS
-LOC_2992	POP AF
-		POP BC
-		POP DE
-		POP HL
-		RET
+; “„€‹…… “”…€,…‘‹	 …‘’
+DEL_BUF		push hl
+		push de
+		push bc
+		push af
+		ld hl,TRD_5D0C
+		ld a,(hl)
+		or a
+		jr nz,loc_2992
+		ld (hl),0xff
+		ld hl,TRD_5D25
+		ld bc,0x101
+		call DEL_WORKRAM
+		or a
+		ld bc,0x101
+		ld hl,(TRD_5D11)	; €„…‘	‘’ €„› TR_DOS
+		sbc hl,bc
+loc_298F	ld (TRD_5D11),hl	; €„…‘	‘’ €„› TR_DOS
+loc_2992	pop af
+		pop bc
+		pop de
+		pop hl
+		ret
 
-		DUPL 0X29B2-$,0XFF
+COM_40		xor a
+loc_2998	ld (TRD_5CD7),a		; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+					; ‘‹…	‚… ’€ „‘‚„€
+		call EXIT_IF_SINTAX	; ‚‡‚€’ ‚ …„›„“™‰ ‚›‡‚,…‘‹ ‚…€ ‘’€‘‘€
+		call CP_SECOND_SYM	; ‚…€ ‘‹…„“™…ƒ ‘‚‹€
+		jp z,SINTAX_ERROR
+		call GET_TYPE_DISK	; ‹“—…… „€ …†€	€’› „‘‚„€
+		ld a,(TRD_5CD7)		; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+					; ‘‹…	‚… ’€ „‘‚„€
+		ld (hl),a
+		jp ERR_OK
+
+COM_80		ld a,80h
+		jr loc_2998
+
 TXT_ERROR_	DB 0X0D,"*ERROR*",0X8D
-TXT_NOSPACE_	DB 0X0D,"No Space",0X8D
+TXT_NOSPACE_	DB 0X0D,"No space",0X8D
 TXT_FILEEXISTS_	DB 0X0D,"File exists",0X8D
 TXT_FREE_	DB " Free",0X8D
 READ_ONLY	DB 0X0D
@@ -4348,462 +4338,1081 @@ TXT_R_O		DB 0X0D
 		DC "Rec.  O/F"
 TXT_TITLE_	DC "Title: "
 TXT_RIA_	DB 0X0D
-		DC "Retry,Abort,Ignore?"
+		DZ "Retry,Abort,Ignore?"
 TXT_TRK_	DB 0X0D
 		DC "Trk "
 TXT_SEC_	DC " sec "
 TXT_DELFILE_	DB " Del. File",0X8D
 TXT_NOFILES_	DB 0X0D
-TXT_NOFILES	DB "No File(s)",0X8D
+TXT_NOFILES	DB "No File(s)",0X8D,0
 
-;============DELETED MAGIC & GOTO===============
-		DUPL 0X2A3B-$,0XFF
+sub_2A35	ld hl,loc_2A41
+		ld de,4080h
+		ld bc,20h
+		IF EMU3D2F=1
 		JP EMU_LDIR
+		ELSE
+		ldir
+		ret
+		ENDIF
 
-		DUPL 0X2A4E-$,0XFF
-		LD BC,0X7FFD
-		LD A,0X10
+loc_2A41	ld a,(loc_3B5)
+		cp 0F3h
+		ld a,10h
+		jr z,loc_2A4B
+		xor a
+loc_2A4B	ld (KSTATE1),a
+		ld bc,7FFDh
+		ld a,10h
 		JP LOC_2A53_
 
-		DUPL 0X2D87-$,0XFF
-		IF EMU3D2F=1
-		RST 0X30
-		DB _IN_1F
-		ELSE
-		IN A,(0X1F)
-		ENDIF
-		AND 0X7F
-		RET Z
-		DEC D
-		PUSH HL
-		PUSH DE
-		HALT
+MAGIC		push af
+		push bc
+		push de
+		push hl
+		push ix
+		push iy
+		exx
+		push bc
+		push de
+		push hl
+		ex af,af'
+		push af
+		ld a,i
+		push af
+		ld a,r
+		push af
+		ld hl,0
+		add hl,sp
+		push hl
+		ld a,3Ch
+		RST30 _OUT_FF
+;		out (0FFh),a
+		ld a,3Fh
+		ld i,a
+		RST32 _IN_1F,__IN_A_N+0X1F<<8
+;		in a,(1Fh)
+		and 80h
+		rrca
+		rrca
+		rrca
+		ld (KSTATE1),a
+		call sub_2F65
+		call PAUSE_3_C_A
+		call PAUSE_3_C_A
+		ld de,0Ah
+		ld hl,4000h
+		push hl
+		call sub_2D73
+		ld hl,4100h
+		ld de,0Bh
+		call sub_2D73
+		pop hl
+		push hl
+		ld de,8
+		call sub_2F1B
+		ld hl,40E3h
+		ld a,(hl)
+		ld (KSTATE0),a
+		inc hl
+		ld a,(hl)
+		inc (hl)
+		inc hl
+		ld e,(hl)
+		inc hl
+		ld d,(hl)
+		or a
+		ex de,hl
+		ld de,0C0h
+		sbc hl,de
+		ld (40E5h),hl
+		ld hl,4000h
+		ld de,8
+		call sub_2D73
+		pop hl
+		ld de,(40E1h)
+		push de
+		ld de,0Ah
+		call sub_2F1B
+		pop de
+		call sub_2D4C
+		push de
+		ld a,3Ch
+		RST30 _OUT_FF
+;		out (0FFh),a
+		call sub_2F65
+		ld hl,4000h
+		ld de,8
+		ld b,1
+		call sub_2F1B
+		pop de
+		ld hl,(40E1h)
+		ld (40E1h),de
+		push hl
+		ld hl,4000h
+		ld de,8
+		ld b,1
+		call sub_2D73
+		ld a,(40E4h)
+		dec a
+		call sub_2CE5
+		ld (hl),"@"
+		inc hl
+		ld b,7
+loc_2B09	ld (hl)," "
+		inc hl
+		djnz loc_2B09
+		ld (hl),"C"
+		pop de
+		pop bc
+		inc hl
+		ld (hl),c
+		inc hl
+		ld (hl),b
+		inc hl
+		inc hl
+		inc hl
+		ld (hl),0C0h
+		inc hl
+		ld (hl),e
+		inc hl
+		ld (hl),d
+		ld hl,4000h
+		ld de,0
+		RST32 _IN_5F,__IN_A_N+0X5F<<8
+;		in a,(5Fh)
+		dec a
+		ld e,a
+		ld b,1
+		call sub_2D73
+		ld hl,0
+		add hl,sp
+		ld (4140h),hl
+		ld sp,41FFh
+		call sub_2A35
+		ld hl,0C000h
+		xor a
+loc_2B3F	add a,(hl)
+		inc hl
+		ld b,a
+		ld a,h
+		or a
+		ld a,b
+		jr nz,loc_2B3F
+		ld hl,4100h
+		ld (hl),a
+		push hl
+		ld hl,loc_2B58
+		push hl
+		ld hl,loc_3D2F
+		push hl
+		di
+		jp 4080h
 
-		DUPL 0X2F0A-$,0XFF
-		OR 0X3C
-LOC_2F0C	IF EMUWRFF
-		RST 0X30		;RST 0X30
-		DB _OUT_FF
-		ELSE
-		OUT (0XFF),A
-		ENDIF
-		RET
+loc_2B58	pop hl
+		ld bc,7FFDh
+		ld a,0AAh
+		ld (4130h),a
+		ld d,5
+		ld a,(KSTATE1)
+		or d
+		ld d,a
+		out (c),d
+		ld a,(0C130h)
+		cp 0AAh
+		jp nz,loc_2C1B
+		ld a,d
+		and 0F8h
+		ld d,a
+		inc hl
+		ld b,8
+loc_2B79	ld (hl),d
+		out (c),d
+		xor a
+		ld hl,0C000h
+loc_2B80	add a,(hl)
+		inc hl
+		ld e,a
+		ld a,h
+		or a
+		ld a,e
+		jr nz,loc_2B80
+		ld hl,4100h
+		cp (hl)
+		inc hl
+		jr z,loc_2B93
+		inc d
+		djnz loc_2B79
+		dec d
+loc_2B93	ld b,8
+loc_2B95	push bc
+		call sub_2C37
+		pop bc
+		djnz loc_2B95
+		ld c,0
+		call sub_2F3A
+		call sub_2D2A
+		ld a,(40E4h)
+		ld (4102h),a
+		inc a
+		ld (40E4h),a
+		ld hl,(40E5h)
+		ld de,1
+		sbc hl,de
+		ld (40E5h),hl
+		ret c
+		ld hl,(40E1h)
+		ld (411Eh),hl
+		call sub_2D1E
+		ld a,38h
+		ld (4111h),a
+		ld a,1
+		ld (411Dh),a
+		ld hl,4100h
+		ld (4119h),hl
+		ld hl,100h
+		ld (411Bh),hl
+		ld de,(40E1h)
+		call sub_2F65
+		ld c,d
+		call sub_2F3A
+		ld hl,4100h
+		ld b,1
+		call loc_2D58
+		ld (40E1h),de
+		ld c,0
+		call sub_2F3A
+		call sub_2D34
+		ld a,(4102h)
+		call sub_2CE5
+		ld de,4110h
+		ld bc,10h
+		ex de,hl
+		ldir
+		RST32 _IN_5F,__IN_A_N+0X5F<<8
+;		in a,(5Fh)
+		dec a
+		ld e,a
+		ld d,0
+		ld hl,4000h
+		call sub_2D73
+		ld bc,7FFDh
+		ld a,(4101h)
+		out (c),a
+loc_2C1B	ld hl,(4140h)
+		ld sp,hl
+		ld hl,4000h
+		ld de,0Ah
+		call sub_2F1B
+		ld hl,4100h
+		ld de,0Bh
+		call sub_2F1B
+		ld a,3Ch
+		push af
+		jp loc_2EBC
 
-		DUPL 0X2F17-$,0XFF
-		AND 0X6F		;LORD OF CHAOS
-		JR LOC_2F0C
+sub_2C37	ld a,b
+		dec a
+		ld (4103h),a
+		ld b,a
+		ld a,(4101h)
+		and 7
+		cp b
+		ret z
+		ld a,2
+		cp b
+		ret z
+		ld a,(4101h)
+		and 8
+		jr z,loc_2C55
+		ld a,b
+		cp 7
+		ret z
+		jr loc_2C59
 
-LOC_2F1B	LD A,E			;EXOLON
-		INC A
-		IF EMU3D2F=1
-		RST 0X30	;OUT (0X6F),A
-		DB _OUT_5F
-		ELSE
-		OUT (0X5F),A
-		ENDIF
-		PUSH HL
-		LD D,0X14
-		PUSH DE
-LOC_2F23	DI
-		LD C,0X7F
-		LD A,0X80
-		IF EMU3D2F=1
-		RST 0X30
-		DB _OUT_1F
-		ELSE
-		OUT (0X1F),A
-		ENDIF
-		CALL RD_DATAPORT
-		POP DE
-		POP HL
-		IF EMU3D2F=1
-		RST 0X30
-		DB _IN_1F
-		ELSE
-		IN A,(0X1F)
-		ENDIF
-		AND 0X7F
-		RET Z
-		DEC D
-		PUSH HL
-		PUSH DE
-		JR NZ,LOC_2F23
-		HALT
+loc_2C55	ld a,b
+		cp 5
+		ret z
+loc_2C59	call sub_2C5D
+		ret
 
-		DUPL 0X2F4D-$,0XFF
-		IF EMUWRFF
-		RST 0X30		;RST 0X30
-		DB _OUT_FF
-		ELSE
-		OUT (0XFF),A
-		ENDIF
-		LD A,C
-		IF EMU3D2F=1
-		RST 0X30	;OUT (0X8F),A
-		DB _OUT_7F
-		ELSE
-		OUT (0X7F),A
-		ENDIF
-		DUPL 3,0		;CALL PAUSE725779TAKTS
-		LD A,0X18		;0X1B
-LOC_2F57	IF EMU3D2F=1
-		RST 0X30
-		DB _OUT_1F
-		ELSE
-		OUT (0X1F),A
-		ENDIF
-LOC_2F59	IF EMU3D2F=1
-		RST 0X30
-		DB _IN_FF
-		ELSE
-		IN A,(0XFF)
-		ENDIF
-		AND 0X80
-		JR Z,LOC_2F59
-		RET
+sub_2C5D	ld hl,4101h
+		ld a,(hl)
+		and 0F8h
+		ld c,a
+		ld a,b
+		or c
+		push bc
+		ld bc,7FFDh
+		out (c),a
+		pop bc
+		ld hl,0C000h
+loc_2C70	ld a,(hl)
+		or a
+		jr nz,loc_2C7A
+		inc hl
+		ld a,h
+		or a
+		jr nz,loc_2C70
+		ret
 
-		DUPL 0X2F65-$,0XFF
-		LD A,0X08;0X0B		;SOLDIER OF THE FUTURE
-		JR LOC_2F57
-;============DELETED MAGIC & GOTO===============
+loc_2C7A	call sub_2C7E
+		ret
 
-		DUPL 0X2F6F-$,0XFF
-CALL2BASIC	LD (TRD_5D02),HL
-		LD (TRD_5D04),DE
-		POP HL
-		LD E,(HL)
-		INC HL
-		LD D,(HL)
-		INC HL
-		PUSH HL
-		LD HL,LOC_3D2F
-		PUSH HL
-		PUSH DE
-		LD HL,TRD_5CC2
-		PUSH HL
-		LD HL,(TRD_5D02)
-		LD DE,(TRD_5D04)
-		RET
+sub_2C7E	ld c,0
+		call sub_2F3A
+		call sub_2D2A
+		ld a,(40E4h)
+		ld (4102h),a
+		inc a
+		ld (40E4h),a
+		ld hl,(40E5h)
+		ld de,40h
+		sbc hl,de
+		ld (40E5h),hl
+		ret c
+		ld hl,(40E1h)
+		ld (411Eh),hl
+		call sub_2D1E
+		ld a,40h
+		ld (411Dh),a
+		ld hl,0C000h
+		ld (4119h),hl
+		ld hl,4000h
+		ld (411Bh),hl
+		ld de,(40E1h)
+		call sub_2D3E
+		ld (40E1h),de
+		ld c,0
+		call sub_2F3A
+		call sub_2D34
+		ld a,(4102h)
+		call sub_2CE5
+		ld de,4110h
+		ld bc,10h
+		ex de,hl
+		ldir
+		RST32 _IN_5F,__IN_A_N+0X5F<<8
+;		in a,(5Fh)
+		dec a
+		ld e,a
+		ld d,0
+		ld hl,4000h
+		call sub_2D73
+		ret
+
+sub_2CE5	ld c,a
+		and 0F0h
+		rrca
+		rrca
+		rrca
+		rrca
+		ld b,a
+		push bc
+		ld e,b
+		ld d,0
+		ld hl,4000h
+		push de
+		call sub_2F1B
+		pop de
+		pop bc
+		ld b,0
+		ld a,c
+		and 0Fh
+		rlca
+		rlca
+		rlca
+		rlca
+		ld hl,4000h
+		add a,l
+		ld l,a
+		ret
+
+sub_2D09	ld hl,4110h
+		ld b,9
+loc_2D0E	ld (hl)," "
+		inc hl
+		djnz loc_2D0E
+		ld a,"@"
+		ld (4110h),a
+		ld a,"C"
+		ld (4118h),a
+		ret
+
+sub_2D1E	call sub_2D09
+		ld a,(4103h)
+		add a,"0"
+		ld (4111h),a
+		ret
+
+sub_2D2A	ld hl,4000h
+		ld de,8
+		call sub_2F1B
+		ret
+
+sub_2D34	ld hl,4000h
+		ld de,8
+		call sub_2D73
+		ret
+
+sub_2D3E	call sub_2F65
+		ld c,d
+		call sub_2F3A
+		ld hl,0C000h
+		ld b,40h
+		jr loc_2D58
+
+sub_2D4C	call sub_2F65
+		ld c,d
+		call sub_2F3A
+		ld hl,4000h
+		ld b,0C0h
+loc_2D58	push bc
+		push de
+		call sub_2D73
+		ld de,100h
+		add hl,de
+		pop de
+		inc e
+		ld a,e
+		cp 10h
+		jr nz,loc_2D6F
+		ld e,0
+		inc d
+		ld c,d
+		call sub_2F3A
+loc_2D6F	pop bc
+		djnz loc_2D58
+		ret
+
+sub_2D73	ld a,e
+		inc a
+		RST32 _OUT_5F,__OUT_N_A+0X5F<<8
+;		out (5Fh),a
+		push hl
+		ld d,14h
+		push	de
+loc_2D7B	di
+		ld	c,7Fh
+		ld	a,0A0h
+		RST32 _OUT_1F,__OUT_N_A+0X1F<<8
+;		out	(1Fh),a
+		call	WR_DATAPORT
+		pop	de
+		pop	hl
+		RST32 _IN_1F,__IN_A_N+0X1F<<8
+;		in a,(0x1f)
+		and 0x7f
+		ret z
+		dec d
+		push hl
+		push de
+		jr nz,loc_2D7B
+		halt
+loc_2D92	ld hl,(TRD_5CE6)	; „‹ <C>-‘’€’‚›‰ €„…‘,„‹ <B>-„‹€	ƒ€›
+		ld de,(TRD_5CEB)	; …	…‚ƒ	‘…’€	”€‰‹€
+		ld a,(TRD_5CEA)		; „‹€	”€‰‹€ ‚	‘…’€•
+		ld b,a
+		call COM_05		; —’…… ‘…’‚
+		ret
+
+GOTO		call SET_AND_PUT
+		call EXIT_IF_SINTAX	; ‚‡‚€’ ‚ …„›„“™‰ ‚›‡‚,…‘‹ ‚…€ ‘’€‘‘€
+		call INP_EXTFILENAME	; …	€‘… ”€‰‹€
+		call SET_FILENAME	; ……‘ ‡€„€ƒ … ”€‰‹€	‚ “”…	#5CDD
+		ld (4020h),bc
+		ld a,c
+		cp 8
+		jr nc,loc_2DD2
+		call COM_18		; €‘’‰€ € „‘…’“
+		call FIND_FILENAME	; ‘	”€‰‹€  … ”€‰‹€
+		jp nz,ERR_NOFILES
+		ld hl,TRD_5CDD		;  ”€‰‹€
+		ld bc,(4020h)
+		add hl,bc
+		ld (hl),"8"
+		push hl
+		call FIND_FILENAME	; ‘	”€‰‹€  … ”€‰‹€
+		pop hl
+		jr z,loc_2DD8
+		ld (hl)," "
+loc_2DD2	call FIND_FILENAME	; ‘	”€‰‹€  … ”€‰‹€
+		jp loc_2E33
+
+loc_2DD8	call RDHEAD_FILENAME	; —’…… ‘€’…‹ ”€‰‹€
+		call loc_2D92
+		ld sp,40FFh
+		ld b,8
+loc_2DE3	push bc
+		ld a,b
+		ld bc,7FFDh
+		dec a
+		push af
+		or 10h
+		out (c),a
+		pop af
+		add a,"0"
+		ld hl,TRD_5CDD		;  ”€‰‹€
+		ld bc,(4020h)
+		add hl,bc
+		ld (hl),a
+		call FIND_FILENAME	; ‘	”€‰‹€  … ”€‰‹€
+		jr nz,loc_2E05
+		call RDHEAD_FILENAME	; —’…… ‘€’…‹ ”€‰‹€
+		call loc_2D92
+loc_2E05	pop bc
+		djnz loc_2DE3
+		ld a," "
+		ld hl,TRD_5CDD	;  ”€‰‹€
+		ld bc,(4020h)
+		add hl,bc
+		ld (hl),a
+		call FIND_FILENAME	; ‘	”€‰‹€  … ”€‰‹€
+		call RDHEAD_FILENAME	; —’…… ‘€’…‹ ”€‰‹€
+		push bc
+		push af
+		ld bc,7FFDh
+		ld a,(4101h)
+		out (c),a
+		pop af
+		pop bc
+		jr loc_2E39
+
+		call SET_AND_PUT
+		call EXIT_IF_SINTAX	; ‚‡‚€’ ‚ …„›„“™‰ ‚›‡‚,…‘‹ ‚…€ ‘’€‘‘€
+		call INP_EXTFILENAME	; …	€‘… ”€‰‹€
+		call FIND_FILE		; ‘	”€‰‹€  …
+loc_2E33	jp nz,ERR_NOFILES
+		call RDHEAD_FILENAME	; —’…… ‘€’…‹ ”€‰‹€
+loc_2E39	ld a,(TRD_5CDD)		;  ”€‰‹€
+		cp "$"
+		di
+		jr nz,loc_2E43
+		im 2
+loc_2E43	ld sp,40F0h
+		call GET_TYPE_DISK	; ‹“—…… „€ …†€	€’› „‘‚„€
+		ld (4010h),a
+		ld a,(TRD_5D16)		; 	‘‘’…ƒ …ƒ‘’€ (’ #FF)
+		ld (4011h),a
+		ld hl,(TRD_5CE6)	; „‹ <C>-‘’€’‚›‰ €„…‘,„‹ <B>-„‹€	ƒ€›
+		push hl
+		ld de,(TRD_5CEB)	; …	…‚ƒ	‘…’€	”€‰‹€
+		push de
+		inc e
+		ld a,e
+		cp 10h
+		jr nz,loc_2E64
+		ld e,0
+		inc d
+loc_2E64	ld c,d
+		call sub_2F07
+		ld a,(4010h)
+		and 2
+		call nz,sub_2F0F
+		ld a,c
+		call loc_2F50
+		ld hl,4100h
+		ld b,0BFh
+loc_2E79	push bc
+		push de
+		call sub_2F1B
+		ld de,100h
+		add hl,de
+		pop de
+		inc e
+		ld a,e
+		cp 10h
+		jr nz,loc_2E9C
+		ld e,0
+		inc d
+		ld c,d
+		call sub_2F07
+		ld a,(4010h)
+		and 2
+		call nz,sub_2F0F
+		ld a,c
+		call loc_2F50
+loc_2E9C	pop bc
+		djnz loc_2E79
+		pop de
+		pop hl
+		ld sp,hl
+		ld a,(4011h)
+		push af
+		ld c,d
+		call sub_2F07
+		ld a,(4010h)
+		and 2
+		call nz,sub_2F0F
+		ld a,c
+		call loc_2F50
+		ld hl,4000h
+		call sub_2F1B
+loc_2EBC	pop af
+		ex af,af'
+		pop af
+		ld r,a
+		pop af
+		ld i,a
+		di
+		ld a,0FFh
+		jp po,loc_2ECC
+		ld a,0
+loc_2ECC	ld (KSTATE0),a
+		pop af
+		pop hl
+		pop de
+		pop bc
+		exx
+		ex af,af'
+		pop iy
+		pop ix
+		pop hl
+		pop de
+		pop bc
+		ld a,(BORDCR)
+		and 38h
+		rrca
+		rrca
+		rrca
+		out (0FEh),a
+		ld a,(SWAP_8)
+		cp 0EEh
+		jr nz,loc_2EF7
+		push bc
+		ld bc,7FFDh
+		ld a,(BANKM)
+		out (c),a
+		pop bc
+loc_2EF7	ld a,(KSTATE0)
+		or a
+		ld a,0C9h
+		ld (KSTATE0),a
+		jr nz,loc_2F03
+		ei
+loc_2F03	pop af
+		jp KSTATE0
+
+sub_2F07	ld a,(4011h)
+		or 0x3c
+loc_2F0C	RST30 _OUT_FF
+;		out (0xff),a
+		ret
+
+sub_2F0F	ld a,c
+		or a
+		rra
+		ld c,a
+		ret nc
+		ld a,(4011h)
+		and 0x6f		;LORD OF CHAOS
+		jr loc_2F0C
+
+sub_2F1B	ld a,e			;exolon
+		inc a
+		RST32 _OUT_5F,__OUT_N_A+0X5F<<8
+;		out (0x5f),a
+		push hl
+		ld d,0x14
+		push de
+loc_2F23	di
+		ld c,0x7f
+		ld a,0x80
+		RST32 _OUT_1F,__OUT_N_A+0X1F<<8
+;		out (0x1f),a
+		call RD_DATAPORT
+		pop de
+		pop hl
+		RST32 _IN_1F,__IN_A_N+0X1F<<8
+;		in a,(0x1f)
+		and 0x7f
+		ret z
+		dec d
+		push hl
+		push de
+		jr nz,loc_2F23
+		halt
+sub_2F3A	ld a,3Ch
+		RST30 _OUT_FF
+;		out (0FFh),a
+		ld a,(KSTATE0)
+		and 8
+		jr nz,loc_2F4F
+		ld a,c
+		or a
+		rra
+		ld c,a
+		jr nc,loc_2F4F
+		ld a,2Ch
+		RST30 _OUT_FF
+;		out (0xff),a
+loc_2F4F	ld a,c
+loc_2F50	RST32 _OUT_7F,__OUT_N_A+0X7F<<8
+;		out (0x7f),a
+		call PAUSE725779T
+		ld a,0x18
+loc_2F57	RST32 _OUT_1F,__OUT_N_A+0X1F<<8
+;		out (0x1f),a
+loc_2F59	RST32 _IN_FF,__IN_A_N+0XFF<<8
+;		in a,(0xff)
+		and 0x80
+		jr z,loc_2F59
+		push bc
+		call PAUSE725779T
+		pop bc
+		ret
+
+sub_2F65	ld a,0x08		;SOLDIER OF THE FUTURE
+		jr loc_2F57
+
+WORK4ERROR	ld hl,(TRD_5D1C)	; ‘•€…… …ƒ‘’€ SP
+		dec hl
+		dec hl
+		ld sp,hl
+		jp loc_1D2F
+
+CALL2BASIC	ld (TRD_5D02),hl
+		ld (TRD_5D04),de
+		pop hl
+		ld e,(hl)
+		inc hl
+		ld d,(hl)
+		inc hl
+		push hl
+		ld hl,loc_3D2F
+		push hl
+		push de
+		ld hl,TRD_5CC2
+		push hl
+		ld hl,(TRD_5D02)
+		ld de,(TRD_5D04)
+		ret
 
 SET_VARS	LD HL,0X0808
-		LD (TRD_5CFA),HL	; ‚…	………™… „‘‚„€ A
-		LD (TRD_5CFC),HL	; ‚…	………™… „‘‚„€ C
+		ld (TRD_5CFA),hl	; ‚…	………™… „‘‚„€ A
+		ld (TRD_5CFC),hl	; ‚…	………™… „‘‚„€ C
 		LD HL,0X8383
-		LD (TRD_5CC8),HL	; …†	€’€ „‘‚„€ A
-		LD (TRD_5CCA),HL	; …†	€’€ „‘‚„€ C
-		XOR A
-		LD (TRD_5D17),A		; ‘‚€… ‡€‘’€‚, …‘‹ #AA
-		LD (TRD_5D18),A
-		LD (TRD_5D0F),A		; …	 TR-DOS
-		LD (TRD_5D1F),A
+		ld (TRD_5CC8),hl	; …†	€’€ „‘‚„€ A
+		ld (TRD_5CCA),hl	; …†	€’€ „‘‚„€ C
+		xor a
+		ld (TRD_5D17),a		; ‘‚€… ‡€‘’€‚, …‘‹ #AA
+		ld (TRD_5D18),a
+		ld (TRD_5D0F),a		; …	 TR-DOS
+		ld (TRD_5D1F),a
 		CALL SET_DRIVENAME
-		LD (TRD_5D16),A		; 	‘‘’…ƒ …ƒ‘’€ (’ #FF)
-		IF EMUWRFF
-		RST 0X30
-		DB _OUT_FF
-		ELSE
-		OUT (0XFF),A
-		ENDIF
-		LD A,0XFF
-		LD (ERR_NR),A
-		LD (TRD_5D0C),A
-		LD A,0XC9
-		LD (TRD_5CC2),A
-		LD A,0XD0
+		ld a,0xff
+		RST30 _OUT_FF
+;		out (0xff),a
+		ld (ERR_NR),a
+		ld (TRD_5D0C),a
+		ld a,0xc9
+		ld (TRD_5CC2),a
+		ld a,0xd0
+		RST32 _OUT_1F,__OUT_N_A+0X1F<<8
+;		out (0x1f),a
+		ret
+
+CP_END_CAT	call CP_END_BUF
+		ld a,(hl)
+		or a
+		jp z,END_OUT_DIR
+		cp 1
+		call z,ADD_10
+		ret nz
+		jr CP_END_CAT
+
+LOAD_SEC2BUF	ld b,1
+		ld hl,TRD_5D25
+		jp loc_1E67
+
+LOAD_END_FILE	push hl
+		ld de,(TRD_5CF4)
+		call LOAD_SEC2BUF
+		ld a,(TRD_5CDB)
+		pop de
+		or a
+		ret z
+		ld c,a
+		ld hl,TRD_5D25
 		IF EMU3D2F=1
-		RST 0X30
-		DB _OUT_1F
-		ELSE
-		OUT (0X1F),A	;FIX
-		ENDIF
-		RET
-
-CP_END_CAT	CALL CP_END_BUF
-		LD A,(HL)
-		OR A
-		JP Z,END_OUT_DIR
-		CP 1
-		CALL Z,ADD_10
-		RET NZ
-		JR CP_END_CAT
-
-LOAD_SEC2BUF	LD B,1
-		LD HL,TRD_5D25
-		JP LOC_1E67
-
-LOAD_END_FILE	PUSH HL
-		LD DE,(TRD_5CF4)
-		CALL LOAD_SEC2BUF
-		LD A,(TRD_5CDB)
-		POP DE
-		OR A
-		RET Z
-		LD C,A
-		LD HL,TRD_5D25
 		JP EMU_LDIR
-
-SAE2E_LINE	LD HL,(E_LINE)		; €„…‘	€—€‹€ …„€’“…‰ ‘’
-		LD (TRD_5D11),HL	; €„…‘	‘’ €„› TR_DOS
-		LD (TRD_5CD9),HL	; …†“’—€	„‹€ „‹ <B> 	<C>
-		LD A,0XFF
-		LD (TRD_5CD6),A		; #FF-€„€ ’€ ‘’€‘—…‘ €€‹‡€’
-		LD HL,TRD_5CDB
-		LD (TRD_5CD7),HL	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
-					; ‘‹…	‚… ’€ „‘‚„€
-		JR LOC_3057
-
-SAE2_HL_	LD (TRD_5D11),HL	; €„…‘	‘’ €„› TR_DOS
-		LD (TRD_5CD9),HL	; …†“’—€	„‹€ „‹ <B> 	<C>
-		CALL CP_ADR_STR
-		RET NZ
-		INC HL
-		INC HL
-		LD (TRD_5CD7),HL	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
-					; ‘‹…	‚… ’€ „‘‚„€
-LOC_3057	CALL CMP_SPECSYM	;CALL FIND_KEYWORD
-		JR NZ,LOC_3087
-		EX DE,HL
-		INC DE
-		LD B,0
-		LD HL,BYTES_COM
-		ADD HL,BC
-		LD A,(HL)
-		LD HL,(TRD_5CD9)	; …†“’—€	„‹€ „‹ <B> 	<C>
-		LD (HL),A
-		INC HL
-		EX DE,HL
-		RST 0X20
-		DW 0X19DD
-		PUSH BC
-		RST 0X20
-		DW 0X19E8
-		RST 0X20
-		DW 0X16B0
-		POP BC
-		LD A,(TRD_5CD6)		; #FF-€„€ ’€ ‘’€‘—…‘ €€‹‡€’
-		OR A
-		JR NZ,LOC_3087
-		LD HL,(TRD_5CD7)	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
-					; ‘‹…	‚… ’€ „‘‚„€
-		LD E,(HL)
-		INC HL
-		LD D,(HL)
-		EX DE,HL
-		OR A
-		SBC HL,BC
-		EX DE,HL
-		LD (HL),D
-		DEC HL
-		LD (HL),E
-LOC_3087	LD HL,(TRD_5CD9)	; …†“’—€	„‹€ „‹ <B> 	<C>
-		LD A,(HL)
-		CP 0X0D
-		RET Z
-		INC HL
-		LD (TRD_5CD9),HL	; …†“’—€	„‹€ „‹ <B> 	<C>
-		LD A,(HL)
-		CP 0X0D
-		RET Z
-		CP 0X22
-		JR NZ, LOC_3057
-LOC_309A	INC HL
-		LD A,(HL)
-		CP 0X0D
-		RET Z
-		CP 0X22
-		JR NZ,LOC_309A
-		INC HL
-		LD (TRD_5CD9),HL	; …†“’—€	„‹€ „‹ <B> 	<C>
-		JR LOC_3057
-
-FIND_KEYWORD	LD HL,(TRD_5CD9)	; …†“’—€	„‹€ „‹ <B> 	<C>
-		LD DE,TBL_KEYWORD	; "SAVE"
-		LD C,0
-LOC_30B1	LD A,(HL)
-		AND 0XDF
-		LD B,A
-		OR A
-		JR NZ,LOC_30BB
-		INC HL
-		JR LOC_30B1
-
-LOC_30BB	LD A,(DE)
-		AND 0X80
-		JR NZ,LOC_30C8
-		LD A,(DE)
-		CP B
-		JR NZ,LOC_30D9
-		INC HL
-		INC DE
-		JR LOC_30B1
-
-LOC_30C8	LD A,(DE)
-		AND 0X7F
-		CP B
-		RET Z
-LOC_30CD	INC C
-		LD HL,(TRD_5CD9)	; …†“’—€	„‹€ „‹ <B> 	<C>
-		INC DE
-		LD A,(DE)
-		CP 0XFF
-		JR NZ,LOC_30B1
-		OR A
-		RET
-
-LOC_30D9	INC DE
-		LD A,(DE)
-		AND 0X80
-		JR Z,LOC_30D9
-		JR LOC_30CD
-
-CP_ADR_STR	LD HL,(PPC)
-		INC HL
-		INC HL
-		LD A,H
-		OR L
-		JR Z,LOC_30F4
-		XOR A
-		LD (TRD_5CD6),A		; #FF-€„€ ’€ ‘’€‘—…‘ €€‹‡€’
-		DEC HL
-		DEC HL
-		RST 0X20
-		DW 0X196E
-		RET
-
-LOC_30F4	LD A,0XFF
-		LD (TRD_5CD6),A		; #FF-€„€ ’€ ‘’€‘—…‘ €€‹‡€’
-		LD HL,(E_LINE)		; €„…‘	€—€‹€ …„€’“…‰ ‘’
-		RET
+		ELSE
+		ldir
+		ret
+		ENDIF
 
 ; ’€‹–€ …‰‘ €„ „‹ TR-DOS
-CODE_BYTE_COM	DB 0XCF		;CAT
-		DB "*"
-		DB 0XD0		;FORMAT
-		DB 0XD1		;MOVE
-		DB 0XE6		;NEW
-		DB 0XD2		;ERASE
-		DB 0XEF		;LOAD
-		DB 0XF8		;SAVE
-		DB 0XFE		;RETURN
-		DB 0XBE		;PEEK
-		DB 0XF4		;POKE
-		DB 0XD5		;MERGE
-		DB 0XF7		;RUN
-		DB 0XD3		;OPEN
-		DB 0XD4		;CLOSE
-		DB 0XFF		;COPY
-		DB 0XF0		;LIST
-		DB 0XD6		;VERIFY
-		DB "."
+CODE_BYTE_COM	db __CAT
+		db "*"
+		db __FORMAT
+		db __MOVE
+		db __NEW
+		db __ERASE
+		db __LOAD
+		db __SAVE
+		db __RETURN
+		db __PEEK
+		db __POKE
+		db __MERGE
+		db __RUN
+		db __OPEN
+		db __CLOSE
+		db __COPY
+		db "4"
+		db __GOTO
+		db "8"
+		db __LIST
+		db __VERIFY
 ECODE_BYTE_COM
 
 ; ’€‹–€ €„…‘‚ ‘‹… €„
-SPIS_ADR_COM	DW CAT
-		DW COM_STAR
-		DW FORMAT
-		DW MOVE
-		DW NEW			; ‚›‹…… €„› NEW
-		DW ERASE		; ‚›‹…… €„› ERASE
-		DW LOAD
-		DW SAVE
-		DW RETURN
-		DW PEEK
-		DW POKE
-		DW MERGE
-		DW RUN
-		DW OPEN
-		DW CLOSE
-		DW COPY
-		DW LIST
-		DW VERIFY
-		DW COM_DOT
+SPIS_ADR_COM	dw CAT
+		dw COM_STAR
+		dw FORMAT
+		dw MOVE
+		dw NEW			; ‚›‹…… €„› NEW
+		dw ERASE		; ‚›‹…… €„› ERASE
+		dw LOAD
+		dw SAVE
+		dw RETURN
+		dw PEEK
+		dw POKE
+		dw MERGE
+		dw RUN
+		dw OPEN
+		dw CLOSE
+		dw COPY
+		dw COM_40
+		dw GOTO
+		dw COM_80
+		dw LIST
+		dw VERIFY
+
+SAE2E_LINE	ld hl,(E_LINE)		; €„…‘	€—€‹€ …„€’“…‰ ‘’
+		ld (TRD_5D11),hl	; €„…‘	‘’ €„› TR_DOS
+		ld (TRD_5CD9),hl	; …†“’—€	„‹€ „‹ <B> 	<C>
+		ld a,0xff
+		ld (TRD_5CD6),a		; #FF-€„€ ’€ ‘’€‘—…‘ €€‹‡€’
+		ld hl,TRD_5CDB
+		ld (TRD_5CD7),hl	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+					; ‘‹…	‚… ’€ „‘‚„€
+		jr loc_3057
+
+SAE2_HL_	ld (TRD_5D11),hl	; €„…‘	‘’ €„› TR_DOS
+		ld (TRD_5CD9),hl	; …†“’—€	„‹€ „‹ <B> 	<C>
+		call CP_ADR_STR
+		ret nz
+		inc hl
+		inc hl
+		ld (TRD_5CD7),hl	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+					; ‘‹…	‚… ’€ „‘‚„€
+loc_3057	call CMP_SPECSYM
+		jr nz,loc_3087
+		ex de,hl
+		inc de
+		ld b,0
+		ld hl,BYTES_COM
+		add hl,bc
+		ld a,(hl)
+		ld hl,(TRD_5CD9)	; …†“’—€	„‹€ „‹ <B> 	<C>
+		ld (hl),a
+		inc hl
+		ex de,hl
+		rst 0x20
+		dw 0x19dd
+		push bc
+		call CLRBUF_EDITOR1
+		pop bc
+		ld a,(TRD_5CD6)		; #FF-€„€ ’€ ‘’€‘—…‘ €€‹‡€’
+		or a
+		jr nz,loc_3087
+		ld hl,(TRD_5CD7)	; …†“’—›‰	‘’€’ ”€‰‹€ ‹	‹-‚ ’…‚
+					; ‘‹…	‚… ’€ „‘‚„€
+		ld e,(hl)
+		inc hl
+		ld d,(hl)
+		ex de,hl
+		or a
+		sbc hl,bc
+		ex de,hl
+		ld (hl),d
+		dec hl
+		ld (hl),e
+loc_3087	ld hl,(TRD_5CD9)	; …†“’—€	„‹€ „‹ <B> 	<C>
+		ld a,(hl)
+		cp 0x0d
+		ret z
+		inc hl
+		ld (TRD_5CD9),hl	; …†“’—€	„‹€ „‹ <B> 	<C>
+		ld a,(hl)
+		cp 0x0d
+		ret z
+		cp 0x22
+		jr nz,loc_3057
+loc_309A	inc hl
+		ld a,(hl)
+		cp 0x0d
+		ret z
+		cp 0x22
+		jr nz,loc_309A
+		inc hl
+		ld (TRD_5CD9),hl	; …†“’—€	„‹€ „‹ <B> 	<C>
+		jr loc_3057
+
+FIND_KEYWORD	ld hl,(TRD_5CD9)	; …†“’—€	„‹€ „‹ <B> 	<C>
+		ld de,TBL_KEYWORD	; "SAVE"
+		ld c,0
+loc_30B1	ld a,(hl)
+		and 0xdf
+		ld b,a
+		or a
+		jr nz,loc_30BB
+		inc hl
+		jr loc_30B1
+
+loc_30BB	ld a,(de)
+		and 0x80
+		jr nz,loc_30C8
+		ld a,(de)
+		cp b
+		jr nz,loc_30D9
+		inc hl
+		inc de
+		jr loc_30B1
+
+loc_30C8	ld a,(de)
+		and 0x7f
+		cp b
+		ret z
+loc_30CD	inc c
+		ld hl,(TRD_5CD9)	; …†“’—€	„‹€ „‹ <B> 	<C>
+		inc de
+		ld a,(de)
+		cp 0xff
+		jr nz,loc_30B1
+		or a
+		ret
+
+loc_30D9	inc de
+		ld a,(de)
+		and 0x80
+		jr z,loc_30D9
+		jr loc_30CD
+
+CP_ADR_STR	ld hl,(PPC)
+		inc hl
+		inc hl
+		ld a,h
+		or l
+		jr z,loc_30F4
+		xor a
+		ld (TRD_5CD6),A		; #FF-€„€ ’€ ‘’€‘—…‘ €€‹‡€’
+		dec hl
+		dec hl
+		rst 0x20
+		dw 0x196e
+		ret
+
+loc_30F4	ld a,0xff
+		ld (TRD_5CD6),a		; #FF-€„€ ’€ ‘’€‘—…‘ €€‹‡€’
+		ld hl,(E_LINE)		; €„…‘	€—€‹€ …„€’“…‰ ‘’
+		ret
 
 ;’€‹–€ ‹—…‚›• ‘‹‚
-TBL_KEYWORD	DB "SAVE",0X80
+TBL_KEYWORD	db "SAVE",0x80
 		DC "SAVE"
-		DB "LOAD",0X80
+		db "LOAD",0x80
 		DC "LOAD"
-		DB "RUN",0X80
+		db "RUN",0x80
 		DC "RUN"
-		DB "CAT",0X80
+		db "CAT",0x80
 		DC "CAT"
-		DB "ERASE",0X80
+		db "ERASE",0x80
 		DC "ERASE"
-		DB "NEW",0X80
+		db "NEW",0x80
 		DC "NEW"
-		DB "MOVE",0X80
+		db "MOVE",0x80
 		DC "MOVE"
-		DB "MERGE",0X80
+		db "MERGE",0x80
 		DC "MERGE"
-		DB "PEEK",0X80
+		db "PEEK",0x80
 		DC "PEEK"
-		DB "POKE",0X80
+		db "POKE",0x80
 		DC "POKE"
-		DB "OPEN",0X83
-		DB "CLOSE",0X83
-		DB "CODE",0X80
+		db "OPEN",0x83
+		db "CLOSE",0x83
+		db "CODE",0x80
 		DC "CODE"
-		DB "RND",0X80
+		db "RND",0x80
 		DC "RND"
-		DB "DATA",0X80
+		db "DATA",0x80
 		DC "DATA"
-		DB "SCREEN",4,0X84
-		DB "SCREEN",0X84
-		DB "COPY",0X80
+		db "SCREEN",4,0x84
+		db "SCREEN",0x84
+		db "COPY",0x80
 		DC "COPY"
-		DB "FORMAT",0X80
+		db "FORMAT",0x80
 		DC "FORMAT"
-		DB "LIST",0X80
+		db "GOTO",0x80
+		DC "GOTO"
+		db "LIST",0x80
 		DC "LIST"
-		DB "LINE",0X80
+		db "LINE",0x80
 		DC "LINE"
-		DB "VERIFY",0X80
+		db "VERIFY",0x80
 		DC "VERIFY"
-		DB 0XFF,0XFF
+		db 0xff,0xff
 
 ;€‰’‚›… „› ‹—…‚›• ‘‹‚
-BYTES_COM	DW 0XF8F8	;SAVE
-		DW 0XEFEF	;LOAD
-		DW 0XF7F7	;RUN
-		DW 0XCFCF	;CAT
-		DW 0XD2D2	;ERASE
-		DW 0XE6E6	;NEW
-		DW 0XD1D1	;MOVE
-		DW 0XD5D5	;MERGE
-		DW 0XBEBE	;PEEK
-		DW 0XF4F4	;POKE
-		DW 0XD4D3	;OPEN CLOSE
-		DW 0XAFAF	;CODE
-		DW 0XA5A5	;RND
-		DW 0XE4E4	;DATA
-		DW 0XAAAA	;SCREEN
-		DW 0XFFFF	;COPY
-		DW 0XD0D0	;FORMAT
-		DW 0XF0F0	;LIST
-		DW 0XCACA	;LINE
-		DW 0XD6D6	;VERIFY
-		DB 0
+BYTES_COM	dw __SAVE<<8+__SAVE
+		dw __LOAD<<8+__LOAD
+		dw __RUN<<8+__RUN
+		dw __CAT<<8+__CAT
+		dw __ERASE<<8+__ERASE
+		dw __NEW<<8+__NEW
+		dw __MOVE<<8+__MOVE
+		dw __MERGE<<8+__MERGE
+		dw __PEEK<<8+__PEEK
+		dw __POKE<<8+__POKE
+		dw __CLOSE<<8+__OPEN
+		dw __CODE<<8+__CODE
+		dw __RND<<8+__RND
+		dw __DATA<<8+__DATA
+		dw __SCREENS<<8+__SCREENS
+		dw __COPY<<8+__COPY
+		dw __FORMAT<<8+__FORMAT
+		dw __GOTO<<8+__GOTO
+		dw __LIST<<8+__LIST
+		dw __LINE<<8+__LINE
+		dw __VERIFY<<8+__VERIFY
+		db 0
+
+CP_VARSTRDOS	CALL CMP_VARSTRDOS
+		or a
+		ld bc,TRD_5D25
+		sbc hl,bc
+		ret
 
 ;===============FREE SPACE 2============
 		include extend.a80
 		include raznoe.a80
+		include patch.a80
 ;===============FREE SPACE 2============
 
-		DUPL 0X3BFF-$,0XFF
-		DW 0X0038			;‡€ƒ‹“€ …›‚€‰ € ‚… €’› DOS
+		DUPL 0X3C01-$,0XFF
+		jr loc_3C06
 
-		JR LOC_3C06
+		db 0xff
+		jr loc_3C09
 
-		DB 0XFF
-		JR LOC_3C09
+loc_3C06	jp loc_3D00
 
-LOC_3C06	JP LOC_3D00
-
-LOC_3C09	JP LOC_3D03
+loc_3C09	jp loc_3D03
 
 ;===============FREE SPACE 3============
 		DUPL 0X3C30-$,0XFF
-		IN A,(0X1F)
+		RST32 _IN_1F,__IN_A_N+0X1F<<8
+;		IN A,(0X1F)
 		RET
 
 		DUPL ADR_RST8END-$,0XFF
@@ -4811,594 +5420,501 @@ LOC_3C09	JP LOC_3D03
 ;===============FREE SPACE 3============
 
 		DUPL 0X3CFA-$,0XFF
-LOC_3CFA	NOP
-		JR LOC_3D2F
+loc_3CFA	nop
+		jr loc_3D2F
 
-LOC_3CFD	JP CALL_3D13
+loc_3CFD	jp CALL_3D13
 
 ;‚•„ ‚ DOS (15616)
-LOC_3D00	NOP
-		JR IN_DOS_15616
+loc_3D00	nop
+		jr IN_DOS_15616
 
 ;€™…… ‡ …‰‘€ (15619)
-LOC_3D03	NOP
-		JR IN_DOS_15619
+loc_3D03	nop
+		jr IN_DOS_15619
 
-LOC_3D06	NOP
-		JP INPUTDATAFILE
+loc_3D06	nop
+		jp INPUTDATAFILE
 
-LOC_3D0A	JP OUT_SYM2FILE
+loc_3D0A	jp OUT_SYM2FILE
 
-		NOP
-LOC_3D0E	JR LOC_3D0A
+		nop
+loc_3D0E	jr loc_3D0A
 
-		NOP
-		JR LOC_3CFA
+		nop
+		jr loc_3CFA
 
-		NOP
-		JR LOC_3CFD
+		nop
+		jr loc_3CFD
 
-LOC_3D16	NOP
-		JP WORK4ERROR
+loc_3D16	nop
+		jp WORK4ERROR
 
-IN_DOS_15619	CALL CREATE_VARS_TRD
-		PUSH HL
-		JP CONTINUE_15619
+IN_DOS_15619	call CREATE_VARS_TRD
+		push hl
+		jp CONTINUE_15619
 
-CREATE_VARS_TRD	JP CP_VARSTRDOS
+CREATE_VARS_TRD	call CP_VARSTRDOS
+		nop
+		nop
+		call c,JMP_CREATE_VARS
+		ld hl,TRD_5CC2
+		ret
 
-		DUPL 0X3D2B-$,0XFF
-WR_BYTE_RET	OUT (C),A
-		NOP
-		NOP
-LOC_3D2F	NOP
-		RET
+		nop
+		nop
+loc_3D2F	nop
+		ret
 
-IN_DOS_15616	CALL CREATE_VARS_TRD
-		PUSH HL
-		JP IN_COMMAND_CPU	; ‚•†„…… ‚ €„›‰	–…‘‘ „‘€
+IN_DOS_15616	call CREATE_VARS_TRD
+		push hl
+		jp IN_COMMAND_CPU	; ‚•†„…… ‚ €„›‰	–…‘‘ „‘€
 
-		DUPL 0X3D3B-$,0XFF
-WRPORT_RET	OUTI
-		NOP
-		NOP
-		RET		
+INI_INTERFACE1	xor a
+		DUPL 2,0
+		in a,(0xf7)
+		cp 0x1e
+		jr z,loc_3D44
+		cp 0x1f
+		ret nz
+loc_3D44	rst 8
+		db 0x31
+		ld a,1
+		ld (TRD_5CEF),a
+		ret
 
-		DUPL 0X3D46-$,0XFF
-		LD A,1
-		RET
+JMP_CREATE_VARS	xor a
+		RST30 _OUT_FF
+;		out (0xff),a
+		in a,(0xf6)
+		ld hl,INI_INTERFACE1
+		ld de,MEMBOT
+		ld bc,0x14
+		ldir				;ADS
+		ld hl,CREATE_VARS
+		push hl
+		LD hl,loc_3D2F
+		push hl
+		jp MEMBOT
 
-		DUPL 0X3D5A-$,0XFF
-		LDIR				;ADS
-		LD HL,0X3D2F
-		PUSH HL
-		PUSH HL
-		JP MEMBOT
-
-		DUPL 0X3D67-$,0XFF
 CREATE_VARS	CALL CMP_RAMDISK
-		LD HL,SET_VARS
-		PUSH HL
-		LD HL,LOC_3D2F
-		PUSH HL
-		LD HL,0X1655
-		PUSH HL
-		LD HL,TRD_5CC2
-		PUSH HL
-		LD (HL),0XC9
-		LD HL,P_RAMT+1
-		LD BC,0X70
-		RET
+		push hl
+		ld hl,loc_3D2F
+		push hl
+		ld hl,0x1655
+		push hl
+		ld hl,TSTACK_END
+		push hl
+		ld (hl),0xc9
+		ld hl,P_RAMT+1
+		ld bc,0x70
+		ret
 
-		DUPL 0X3D98-$,0XFF
+PRINT_0D	ld a,0x0d
+PRINT_A_	push hl
+		push bc
+		push de
+		push af
+		DUPL 3,0
+		pop af
+		call PRINT_SYM
+		DUPL 3,0
+		pop de
+		pop bc
+		pop hl
+		ret
+
+PRINT_SYM	rst 0x20
+		dw 0x10
+		ret
+
 ;‚‘‘’€‚‹…… ‚ƒ93
-COM_00		LD A,0X08		;0X0B
-COM2VG_WAIT	IF EMU3D2F=1
-		RST 0X30
-		DB _OUT_1F
-		ELSE
-		OUT (0X1F),A
-		ENDIF
-LOC_3D9C	PUSH HL
-		RST 0X20
-		DW 0X1F54
-		JR C,LOC_3DA5
-		RST 0X20
-		DW 0X1B7B
-LOC_3DA5	POP HL
-		IF EMU3D2F=1
-		RST 0X30
-		DB _IN_FF
-		ELSE
-		IN A,(0XFF)
-		ENDIF
-		AND 0X80
-		JR Z,LOC_3D9C
-		RET
+COM_00		ld a,0x08
+COM2VG_WAIT	RST32 _OUT_1F,__OUT_N_A+0X1F<<8
+;		out (0x1f),a
+loc_3D9C	push hl
+		rst 0x20
+		dw 0x1f54
+		jr c,loc_3DA5
+		rst 0x20
+		dw 0x1b7b
+loc_3DA5	pop hl
+		RST32 _IN_FF,__IN_A_N+0XFF<<8
+;		in a,(0xff)
+		and 0x80
+		jr z,loc_3D9C
+		ret
 
-CP_PRESENT_DSK	LD A,0X08		;0X0B
-		CALL COM2VG_WAIT
-		LD DE,0
-		IF EMU3D2F=1
-		RST 0X30
-		DB _IN_1F
-		ELSE
-		IN A,(0X1F)
-		ENDIF
-		AND 2
-		LD B,A
-LOC_3DBA	IF EMU3D2F=1
-		RST 0X30
-		DB _IN_1F
-		ELSE
-		IN A,(0X1F)
-		ENDIF
-		AND 2
-		CP B
+CP_PRESENT_DSK	ld a,0x08
+		call COM2VG_WAIT
+		ld de,0
+		RST32 _IN_1F,__IN_A_N+0X1F<<8
+;		in a,(0x1f)
+		and 2
+		ld b,a
+loc_3DBA	RST32 _IN_1F,__IN_A_N+0X1F<<8
+;		in a,(0x1f)
+		and 2
+		cp b
 		IF EMU3D2F=1
 		RET
 		ELSE
-		RET NZ
+		ret nz
 		ENDIF
-		INC DE
-		LD A,E
-		OR D
-		JR NZ,LOC_3DBA
-		JP LOC_3EE7
+		inc de
+		ld a,e
+		or d
+		jr nz,loc_3DBA
+		jp loc_3EE7
 
 ;‚› „‘‚„€  “‹—€
-ACTIV_DEF_DSK	LD A,(TRD_5D19)		; „‘‚„  “‹—€
+ACTIV_DEF_DSK	ld a,(TRD_5D19)		; „‘‚„  “‹—€
 ;€‘’‰€ € „‘‚„
-COM_01		LD (TRD_5CF6),A		; €‘’‰€ € „‘‚„
-		LD HL,TRD_5D16		; 	‘‘’…ƒ …ƒ‘’€ (’ #FF)
-		OR 0X3C
-		LD (HL),A
-		IF EMUWRFF
-		RST 0X30
-		DB _OUT_FF
-		ELSE
-		OUT (0XFF),A
-		ENDIF
+COM_01		ld (TRD_5CF6),a		; €‘’‰€ € „‘‚„
+		ld hl,TRD_5D16		; 	‘‘’…ƒ …ƒ‘’€ (’ #FF)
+		or 0x3c
+		ld (hl),a
+		RST30 _OUT_FF
+;		out (0xff),a
 		LD B,0
-		IF EMU3D2F
-		RST 0X30	;IN A,(0X4F)
-		DB _IN_3F
-		ELSE
-		IN A,(0X3F)
-		ENDIF
-		IF EMU3D2F=1
-		RST 0X30	;OUT (0X8F),A
-		DB _OUT_7F
-		ELSE
-		OUT (0X7F),A
-		ENDIF
+		RST32 _IN_3F,__IN_A_N+0X3F<<8
+;		in a,(0x3f)
+		RST32 _OUT_7F,__OUT_N_A+0X7F<<8
+;		out (0x7f),a
 		LD A,%00011000			;…‡ ‚… …€ „†
-		IF EMU3D2F=1
-		RST 0X30
-		DB _OUT_1F
-		ELSE
-		OUT (0X1F),A
-		ENDIF
+		RST32 _OUT_1F,__OUT_N_A+0X1F<<8
+;		out (0x1f),a
 		DJNZ $				;€“‡€
-COM_011		IF EMU3D2F=1
-		RST 0X30
-		DB _IN_1F
-		ELSE
-		IN A,(0X1F)
-		ENDIF
+COM_011		RST32 _IN_1F,__IN_A_N+0X1F<<8
+;		in a,(0x1f)
 		AND 0X80
-		JP NZ,LOC_3EE7
+		JP NZ,loc_3EE7
 LOC_3DFA	JP WR_NUM_TRACK
 
-		DUPL 0X3DFD-$,0XFF
-PAUSE725779TAKTS
-		LD A,0X50
-PAUSE_C_A	LD C,0XFF
-LOC_3E01	DEC C
-		JR NZ,LOC_3E01
-		DEC A
-		JR NZ,PAUSE_C_A
+WR_BYTE_RET	OUT (C),A
 		RET
+
+		DUPL 0X3DFD-$,0XFF
+PAUSE725779T	ld a,0x50
+PAUSE_C_A	ld c,0xff
+loc_3E01	dec c
+		jr nz,loc_3E01
+		dec a
+		jr nz,PAUSE_C_A
+		ret
 
 ; ‹“—…… ‚…… ………™…	ƒ‹‚
-GET_TIME_HEAD	PUSH DE
-		LD DE,TRD_5CFA		; ‚…	………™… „‘‚„€ A
-LOC_3E0B	LD HL,(TRD_5CF6)	; „‘‚„ „‹ ‚……‰ …€–
-		ADD HL,DE
-		POP DE
-		LD A,(HL)
-		RET
+GET_TIME_HEAD	ld de,TRD_5CFA		; ‚…	………™… „‘‚„€ A
+loc_3E0B	ld hl,(TRD_5CF6)	; „‘‚„ „‹ ‚……‰ …€–
+		add hl,de
+		ld a,(hl)
+		ret
 
-GET_TYPE_DISK	PUSH DE
-		LD DE,TRD_5CC8		; …†	€’€ „‘‚„€ A
-		JR LOC_3E0B
+GET_TYPE_DISK	ld de,TRD_5CC8		; …†	€’€ „‘‚„€ A
+		jr loc_3E0B
 
-		DUPL 0X3E3A-$,0XFF
-		IN A,(0X1F)
-		AND 4
-		RET NZ
-LOC_3E3F	INC B
-		DEC C
-		RET
+; …„…‹…… ‚…… ………™… ƒ‹‚
+CP_TIME_GOHEAD	call GET_TIME_HEAD	; ‹“—…… ‚…… ………™…	ƒ‹‚
+		ld b,8
+		ld c,4
+loc_3E1D	ld (hl),b
+		ld a,0Bh
+		call COM2VG_WAIT
+		ld a,20h
+		ld b,0Bh
+		call HEAD_POSITION
+		ld b,(hl)
+		ld a,1
+		call HEAD_POSITION
+		RST32 _IN_1F,__IN_A_N+0X1F<<8
+;		in a,(1Fh)
+		and 4
+		jr nz,loc_3E3F
+		xor a
+		call HEAD_POSITION
+		RST32 _IN_1F,__IN_A_N+0X1F<<8
+;		in a,(1Fh)
+		and 4
+		ret nz
+loc_3E3F	inc b
+		dec c
+		ret z
+		jr loc_3E1D
 
-		DUPL 0X3E44-$,0XFF
-HEAD_POSITION	IF EMU3D2F=1
-		RST 0X30	;OUT (0X8F),A
-		DB _OUT_7F
-		ELSE
-		OUT (0X7F),A
-		ENDIF
-FIND_TREK	LD A,0X18
-		JP COM2VG_WAIT
+HEAD_POSITION	RST32 _OUT_7F,__OUT_N_A+0X7F<<8
+;		out (0x7f),a
+		ld a,b
+		or 0x18
+		jp COM2VG_WAIT
 
-		DUPL 0X3E4C-$,0XFF
-POSITIONIREN	IF EMU3D2F=1
-		RST 0X30	;OUT (0X8F),A
-		DB _OUT_7F
-		ELSE
-		OUT (0X7F),A
-		ENDIF
-		PUSH BC
-		LD B,A
-		IF EMU3D2F
-		RST 0X30	;IN A,(0X4F)
-		DB _IN_3F
-		ELSE
-		IN A,(0X3F)
-		ENDIF
-		CP B
-		POP BC
-		PUSH AF
-		CALL FIND_TREK		;COM2VG_WAIT
-		POP AF
-		RET
+POSITIONIREN	RST32 _OUT_7F,__OUT_N_A+0X7F<<8
+;		out (0x7f),a
+		push bc
+		ld b,a
+		RST32 _IN_3F,__IN_A_N+0X3F<<8
+;		in a,(0x3f)
+		cp b
+		pop bc
+		push af
+		ld a,b
+		or 0x18
+		call COM2VG_WAIT
+		pop af
+		ret z
+		push bc
+		call PAUSE725779T
+		pop bc
+		ret
 
-		DUPL 0X3E63-$,0XFF
 ;“‘’€‚€ ƒ‹‚ € „†“
-COM_02		LD C,A
-		CALL COM_16
-		CALL GET_TYPE_DISK
-		AND 2
-		CALL NZ,SET_SIDE_DSK
-		PUSH BC
-		BIT 7,(HL)
-		JR Z,LOC_3E83
-		BIT 0,(HL)
-		JR NZ,LOC_3E83
-		IF EMU3D2F=1
-		RST 0X30	;IN A,(0X4F)
-		DB _IN_3F
-		ELSE
-		IN A,(0X3F)
-		ENDIF
-		CP C
-		JR Z,LOC_3E82
-		RLCA
-		IF EMU3D2F=1
-		RST 0X30	;OUT (0X4F),A
-		DB _OUT_3F
-		ELSE
-		OUT (0X3F),A
-		ENDIF
-		LD A,C
-		RLCA
-LOC_3E82	LD C,A
-LOC_3E83	CALL GET_TIME_HEAD	; ‹“—…… ‚…… ………™…	ƒ‹‚
-		LD B,A
-		LD A,C
-		CALL POSITIONIREN
-		POP BC
-		LD A,C
-		IF EMU3D2F=1
-		RST 0X30	;OUT (0X4F),A
-		DB _OUT_3F
-		ELSE
-		OUT (0X3F),A
-		ENDIF
-		LD A,(TRD_5CCD)		; #80-ƒ’‚‘’ „‘‚„€
-		OR A
-		RET Z
-		XOR A
-		LD (TRD_5CCD),A		; #80-ƒ’‚‘’ „‘‚„€
-		RET
+COM_02		ld c,a
+		call COM_16
+		call GET_TYPE_DISK
+		and 2
+		call nz,SET_SIDE_DSK
+		push bc
+		bit 7,(hl)
+		jr z,loc_3E83
+		bit 0,(hl)
+		jr nz,loc_3E83
+		RST32 _IN_3F,__IN_A_N+0X3F<<8
+;		in a,(0x3f)
+		cp c
+		jr z,loc_3E82
+		rlca
+		RST32 _OUT_3F,__OUT_N_A+0X3F<<8
+;		out (0x3f),a
+		ld a,c
+		rlca
+loc_3E82	ld c,a
+loc_3E83	call GET_TIME_HEAD	; ‹“—…… ‚…… ………™…	ƒ‹‚
+		ld b,a
+		ld a,c
+		call POSITIONIREN
+		pop bc
+		ld a,c
+		RST32 _OUT_3F,__OUT_N_A+0X3F<<8
+;		out (0x3f),a
+		ld a,(TRD_5CCD)		; #80-ƒ’‚‘’ „‘‚„€
+		or a
+		ret z
+		xor a
+		ld (TRD_5CCD),a		; #80-ƒ’‚‘’ „‘‚„€
+		ret
 
 		DUPL 0X3EA0-$,0XFF
-PAUSE_3_C_A	LD B,3
-LOC_3EA2	LD A,0XFF
-		CALL PAUSE_C_A
-		DJNZ LOC_3EA2
-		RET
+PAUSE_3_C_A	ld b,3
+loc_3EA2	ld a,0xff
+		call PAUSE_C_A
+		djnz loc_3EA2
+		ret
 
-SET_SIDE_DSK	LD A,C
-		OR A
-		RRA
-		LD C,A
-		RET NC
-		JP COM_17
+SET_SIDE_DSK	ld a,c
+		or a
+		rra
+		ld c,a
+		ret nc
+		jp COM_17
 
-GET_NUM_TRACK	CALL COM_16
-LOC_3EB5	IF EMU3D2F=1
-		RST 0X30
-		DB _IN_1F
-		ELSE
-		IN A,(0X1F)
-		ENDIF
-		AND 0X80
-		LD (TRD_5CCD),A		; #80-ƒ’‚‘’ „‘‚„€
-		IF EMU3D2F=1
-		RST 0X30	;IN A,(0X4F)
-		DB _IN_3F
-		ELSE
-		IN A,(0X3F)
-		ENDIF
-		LD H,A
-		CALL BUGFIX_3EBF	;HEAD_POSITION
-		LD C,0X7F
-		LD D,1
-		DI
-		LD A,0XC0
-		IF EMU3D2F=1
-		RST 0X30
-		DB _OUT_1F
-		ELSE
-		OUT (0X1F),A
-		ENDIF
-		PUSH BC
-		LD B,3
-LOC_3ECE	IF EMU3D2F=1
-		RST 0X30
-		DB _IN_FF
-		ELSE
-		IN A,(0XFF)
-		ENDIF
-		AND 0XC0
-		JR NZ,LOC_3EF2
-		INC DE
-		LD A,E
-		OR D
-		JR NZ,LOC_3ECE
-		DJNZ LOC_3ECE
-		POP BC
-		EI
-		LD A,0XD0
-		IF EMU3D2F=1
-		RST 0X30
-		DB _OUT_1F
-		ELSE
-		OUT (0X1F),A
-		ENDIF
-		LD A,(TRD_5D17)		;(TRD_5CD1)
-		CP 0XFF
-		RET Z
-LOC_3EE7	CALL SET_TAPELDERR
-		LD A,0XFF
-		LD (TRD_5D17),A		; ‘‚€… ‡€‘’€‚, …‘‹ #AA
-		JP LOC_271B
+GET_NUM_TRACK	call COM_16
+loc_3EB5	RST32 _IN_1F,__IN_A_N+0X1F<<8
+;		in a,(0x1f)
+		and 0x80
+		ld (TRD_5CCD),a		; #80-ƒ’‚‘’ „‘‚„€
+		RST32 _IN_3F,__IN_A_N+0X3F<<8
+;		in a,(0x3f)
+		ld h,a
+		call BUGFIX_3EBF
+		ld c,0x7f
+		ld d,1
+		di
+		ld a,0xc0
+		RST32 _OUT_1F,__OUT_N_A+0X1F<<8
+;		out (0x1f),a
+		push bc
+		ld b,3
+loc_3ECE	RST32 _IN_FF,__IN_A_N+0XFF<<8
+;		in a,(0xff)
+		and 0xc0
+		jr nz,loc_3EF2
+		inc de
+		ld a,e
+		or d
+		jr nz,loc_3ECE
+		djnz loc_3ECE
+		pop bc
+		ei
+		ld a,0xd0
+		RST32 _OUT_1F,__OUT_N_A+0X1F<<8
+;		out (0x1f),a
+		ld a,(TRD_5D17)
+		cp 0xff
+		ret z
+loc_3EE7	call SET_TAPELDERR
+		ld a,0xff
+		ld (TRD_5D17),a		; ‘‚€… ‡€‘’€‚, …‘‹ #AA
+		jp loc_271B
 
-LOC_3EF2	POP BC
-		IF EMU3D2F=1
-		RST 0X30
-		DB _IN_H_C
-		ELSE
-		IN H,(C)
-		ENDIF
-LOC_3EF5	IF EMU3D2F=1
-		RST 0X30
-		DB _IN_FF
-		ELSE
-		IN A,(0XFF)
-		ENDIF
-		AND 0XC0
-		JR Z,LOC_3EF5
-		EI
-		RET M
-		DI
-		IN A,(0X7F)
-		JR LOC_3EF5
+loc_3EF2	pop bc
+		RST32 _IN_H_C,__IN_H_C
+;		in h,(c)
+loc_3EF5	RST32 _IN_FF,__IN_A_N+0XFF<<8
+;		in a,(0xff)
+		and 0xc0
+		jr z,loc_3EF5
+		ei
+		ret m
+		di
+		in a,(0x7f)
+		jr loc_3EF5
 
 ;“‘’€‚€ …€ ‘…’€
-COM_03		LD (TRD_5CFF),A
-		RET
+COM_03		ld (TRD_5CFF),a
+		ret
 
 ;“‘’€‚€ €„…‘€ “”…€
-COM_04		LD (TRD_5D00),HL
-		RET
+COM_04		ld (TRD_5D00),hl
+		ret
 
-SAVE_SECTOR	LD A,0XA0
-		JR LOC_3F10
+SAVE_SECTOR	ld a,0xa0
+		jr loc_3F10
 
-LOAD_SECTOR	LD A,0X80
-LOC_3F10	LD (TRD_5CFE),A
-LOC_3F13	LD D,0X0A
-LOC_3F15	PUSH DE
-		DI
-		LD A,(TRD_5CFF)
-		INC A
-		IF EMU3D2F=1
-		RST 0X30	;OUT (0X6F),A
-		DB _OUT_5F
-		ELSE
-		OUT (0X5F),A
-		ENDIF
-		LD HL,(TRD_5D00)
-		LD C,0X7F
-		LD A,(TRD_5CFE)
-		IF EMU3D2F=1
-		RST 0X30
-		DB _OUT_1F
-		ELSE
-		OUT (0X1F),A
-		ENDIF
-		CP 0XA0
-		PUSH AF
-		CALL Z,WRITE_SEC
-		POP AF
-		CALL NZ,READ_SEC
-		POP DE
-		EI
-		IF EMU3D2F=1
-		RST 0X30
-		DB _IN_1F
-		ELSE
-		IN A,(0X1F)
-		ENDIF
-		LD B,A
-		AND 0X7F
-		RET Z
-LOC_3F39	LD HL,READ_ONLY		; READ ONLY
-		AND 0X40
-		JR NZ,LOC_3F4B
-		LD A,B
-		AND 4
-		JR Z,LOC_3FA0
-		DEC D
-		JR NZ,LOC_3F15
-LOC_3F48	LD HL,TXT_DISCERROR_	; DISC ERROR
-LOC_3F4B	LD A,0XD0
-		IF EMU3D2F=1
-		RST 0X30
-		DB _OUT_1F
-		ELSE
-		OUT (0X1F),A
-		ENDIF
-		LD A,B
-		AND 1
-		JP NZ,LOC_3EE7
-		IF EMU3D2F=1
-		RST 0X30	;IN A,(0X4F)
-		DB _IN_3F
-		ELSE
-		IN A,(0X3F)
-		ENDIF
-		OR A
-		JR NZ,LOC_3F5F
-		IF EMU3D2F=1
-		RST 0X30	;IN A,(0X6F)
-		DB _IN_5F
-		ELSE
-		IN A,(0X5F)
-		ENDIF
-		CP 0X0A
-		RET Z
-LOC_3F5F	PUSH HL
-		CALL CLEAR_SCREEN	; —‘’€ ‘‚ƒ €€
-		POP HL
-		RST 0X18
-		LD HL,TXT_TRK_		; TRACK
-		RST 0X18
-		IF EMU3D2F=1
-		RST 0X30	;IN A,(0X4F)
-		DB _IN_3F
-		ELSE
-		IN A,(0X3F)
-		ENDIF
-		CALL PRINT_CHISLO_A_
-		LD HL,TXT_SEC_		; SECTOR
-		RST 0X18
-		IF EMU3D2F=1
-		RST 0X30	;IN A,(0X6F)
-		DB _IN_5F
-		ELSE
-		IN A,(0X5F)
-		ENDIF
-		CALL PRINT_CHISLO_A_
-		LD HL,TXT_RIA_
-		RST 0X18
-LOC_3F7B	CALL GET_KEYS		; †„€… €†€’ ‹€‚
-		CP "I"			; IGNORE-RET ‚ €„…‘ #1E8E
-		RET Z
-		CP "R"			; RETRY
-		JR Z,PRESS_RETRY
-		CP "A"			; ABORT
-		JR NZ,LOC_3F7B
-		CALL SET_TAPELDERR	; PRESS	ABORT
-		LD A,7
-		LD (TRD_5D0F),A		; …	 TR-DOS
-		JP END_COMAND
+LOAD_SECTOR	ld a,0x80
+loc_3F10	ld (TRD_5CFE),a
+loc_3F13	ld d,0x0a
+loc_3F15	push de
+		di
+		ld a,(TRD_5CFF)
+		inc a
+		RST32 _OUT_5F,__OUT_N_A+0X5F<<8
+;		out (0x5f),a
+		ld hl,(TRD_5D00)
+		ld c,0x7f
+		ld a,(TRD_5CFE)
+		RST32 _OUT_1F,__OUT_N_A+0X1F<<8
+;		out (0x1f),a
+		cp 0xa0
+		push af
+		call z,WRITE_SEC
+		pop af
+		call nz,READ_SEC
+		pop de
+		ei
+		RST32 _IN_1F,__IN_A_N+0X1F<<8
+;		in a,(0x1f)
+		ld b,a
+		and 0x7f
+		ret z
+loc_3F39	ld hl,READ_ONLY		; READ ONLY
+		and 0x40
+		jr nz,loc_3F4B
+		ld a,b
+		and 4
+		jr z,loc_3FA0
+		dec d
+		jr nz,loc_3F15
+loc_3F48	ld hl,TXT_DISCERROR_	; DISC ERROR
+loc_3F4B	ld a,0xd0
+		RST32 _OUT_1F,__OUT_N_A+0X1F<<8
+;		out (0x1f),a
+		ld a,b
+		and 1
+		jp nz,loc_3EE7
+		RST32 _IN_3F,__IN_A_N+0X3F<<8
+;		in a,(0x3f)
+		or a
+		jr nz,loc_3F5F
+		RST32 _IN_5F,__IN_A_N+0X5F<<8
+;		in a,(0x5f)
+		cp 0x0a
+		ret z
+loc_3F5F	push hl
+		call CLEAR_SCREEN	; —‘’€ ‘‚ƒ €€
+		pop hl
+		rst 0x18
+		ld hl,TXT_TRK_		; TRACK
+		rst 0x18
+		RST32 _IN_3F,__IN_A_N+0X3F<<8
+;		in a,(0x3f)
+		call PRINT_CHISLO_A_
+		ld hl,TXT_SEC_		; SECTOR
+		rst 0x18
+		RST32 _IN_5F,__IN_A_N+0X5F<<8
+;		in a,(0x5f)
+		call PRINT_CHISLO_A_
+		ld hl,TXT_RIA_
+		rst 0x18
+loc_3F7B	call GET_KEYS		; †„€… €†€’ ‹€‚
+		cp "I"			; IGNORE-RET ‚ €„…‘ #1E8E
+		ret z
+		cp "R"			; RETRY
+		jr z,PRESS_RETRY
+		cp "A"			; ABORT
+		jr nz,loc_3F7B
+		call SET_TAPELDERR	; PRESS	ABORT
+		ld a,7
+		ld (TRD_5D0F),a		; …	 TR-DOS
+		jp END_COMAND
 
-PRESS_RETRY	LD A,(TRD_5CF5)
-		CALL COM_02
-		CALL PAUSE_3_C_A
-		JP LOC_3F13
+PRESS_RETRY	ld a,(TRD_5CF5)
+		call COM_02
+		call PAUSE_3_C_A
+		jp loc_3F13
 
-LOC_3FA0	DEC D
-		JP Z,LOC_3F48		; DISC ERROR
-		PUSH DE
-		CALL GET_TIME_HEAD	; ‹“—…… ‚…… ………™…	ƒ‹‚
-		AND 2
-		JR NZ,LOC_3FAD
-		INC (HL)
-LOC_3FAD	CALL COM_00
-		LD A,(TRD_5CF5)
-		CALL COM_02
-		POP DE
-		JP LOC_3F15
+loc_3FA0	dec d
+		jp z,loc_3F48		; DISC ERROR
+		push de
+		call GET_TIME_HEAD	; ‹“—…… ‚…… ………™…	ƒ‹‚
+		and 2
+		jr nz,loc_3FAD
+		inc (hl)
+loc_3FAD	call COM_00
+		ld a,(TRD_5CF5)
+		call COM_02
+		pop de
+		jp loc_3F15
 
-WRITE_SEC	LD B,4
-LOC_3FBC	IF EMU3D2F=1
-		RST 0X30
-		DB WWRITE_SEC_		;WINFF
-		ELSE
-		IN A,(0XFF)
-		ENDIF
-		AND 0XC0
-		JR NZ,LOC_3FD1
-		INC DE
-		LD A,E
-		OR D
-		JR NZ,LOC_3FBC
-		DJNZ LOC_3FBC
-		RET
+WRITE_SEC	ld b,4
+loc_3FBC	RST32 WWRITE_SEC_,__IN_A_N+0XFF<<8
+;		in a,(0xff)
+		and 0xc0
+		jr nz,loc_3FD1
+		inc de
+		ld a,e
+		or d
+		jr nz,loc_3FBC
+		djnz loc_3FBC
+		ret
 
-WR_DATAPORT	IF EMU3D2F=1
-		RST 0X30
-		DB WWRITE_SEC_		;WINFF
-		ELSE
-		IN A,(0XFF)
-		ENDIF
-		AND 0XC0
-		JR Z,WR_DATAPORT
-		RET M
-LOC_3FD1	IF EMU3D2F=1
-		RST 0X30
-		DB WWRITE_SEC_		;WOUTI
-		ELSE
-		OUTI
-		ENDIF
-		JR WR_DATAPORT
+WR_DATAPORT	RST32 WWRITE_SEC_,__IN_A_N+0XFF<<8
+;		in a,(0xff)
+		and 0xc0
+		jr z,WR_DATAPORT
+		ret m
+loc_3FD1	RST32 WWRITE_SEC_,__OUTI
+;		outi
+		jr WR_DATAPORT
 
-READ_SEC	LD B,4
-LOC_3FD7	IF EMU3D2F=1
-		RST 0X30
-		DB WREAD_SEC_		;WINFF
-		ELSE
-		IN A,(0XFF)
-		ENDIF
-		AND 0XC0
-		JR NZ,LOC_3FEC
-		INC DE
-		LD A,E
-		OR D
-		JR NZ,LOC_3FD7
-		DJNZ LOC_3FD7
-		RET
+READ_SEC	ld b,4
+loc_3FD7	RST32 WREAD_SEC_,__IN_A_N+0XFF<<8
+;		in a,(0xff)
+		and 0xc0
+		jr nz,loc_3FEC
+		inc de
+		ld a,e
+		or d
+		jr nz,loc_3FD7
+		djnz loc_3FD7
+		ret
 
-RD_DATAPORT	IF EMU3D2F=1
-		RST 0X30
-		DB WREAD_SEC_		;WINFF
-		ELSE
-		IN A,(0XFF)
-		ENDIF
-		AND 0XC0
-		JR Z,RD_DATAPORT
-		RET M
-LOC_3FEC	IF EMU3D2F=1
-		RST 0X30
-		DB WINI_RET
-		ELSE
-		INI
-		ENDIF
-		JR RD_DATAPORT
+RD_DATAPORT	RST32 WREAD_SEC_,__IN_A_N+0XFF<<8
+;		in a,(0xff)
+		and 0xc0
+		jr z,RD_DATAPORT
+		ret m
+loc_3FEC	RST32 WINI_RET,__INI
+;		ini
+		jr RD_DATAPORT
 
 		OUT (C),A
 FOR_RET		RET

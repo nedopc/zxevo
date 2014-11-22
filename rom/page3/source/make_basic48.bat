@@ -1,7 +1,7 @@
 
 @ECHO OFF
 
-..\..\..\tools\asw\bin\asw -U -L make_bas48_128.a80
-..\..\..\tools\asw\bin\p2bin make_bas48_128.p ..\basic48.rom -r $-$ -k
-
+..\..\..\tools\asw\bin\asw -U -L basic48.a80
+..\..\..\tools\asw\bin\p2bin basic48.p ..\basic48_128.rom -r $-$ -k
+ 
 pause
