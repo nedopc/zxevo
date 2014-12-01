@@ -1,0 +1,113 @@
+
+;LAST UPDATE: 01.12.2014 savelij
+
+;================áÄÉêìáóàä ë ZC SD äÄêíéóäà===================
+READ_SD		PUSH AF
+		LD A,1
+		OUT (P_CONF),A
+		POP AF
+		EX AF,AF'
+		LD A,CMD_18
+		CALL SECM200
+		EX AF,AF'
+RDMULT1		EX AF,AF'
+RDMULT2		CALL IN_OOUT
+		CP 0XFE
+		JR NZ,RDMULT2
+		PUSH BC
+		LD BC,P_DATA
+		INIR
+		NOP
+		INIR
+		NOP
+		IN A,(C)
+		NOP
+		IN A,(C)
+		POP BC
+		EX AF,AF'
+		DEC A
+		JR NZ,RDMULT1
+		LD A,CMD_12
+		CALL OUT_COM
+RDMULT3		CALL IN_OOUT
+		INC A
+		JR NZ,RDMULT3
+		PUSH AF
+		LD A,3
+		OUT (P_CONF),A
+		XOR A
+		OUT (P_DATA),A
+		POP AF
+		RET
+
+SECM200		PUSH HL
+		PUSH DE
+		PUSH BC
+		PUSH AF
+		PUSH BC
+		LD A,CMD_58
+		LD BC,P_DATA
+		CALL OUT_COM
+		CALL IN_OOUT
+		IN A,(C)
+		NOP
+		IN H,(C)
+		NOP
+		IN H,(C)
+		NOP
+		IN H,(C)
+		BIT 6,A
+		POP HL
+		JR NZ,SECN200
+		EX DE,HL
+		ADD HL,HL
+		EX DE,HL
+		ADC HL,HL
+		LD H,L
+		LD L,D
+		LD D,E
+		LD E,0
+SECN200		POP AF
+		LD BC,P_DATA
+		OUT (C),A
+		NOP
+		OUT (C),H
+		NOP
+		OUT (C),L
+		NOP
+		OUT (C),D
+		NOP
+		OUT (C),E
+		LD A,0XFF
+		OUT (C),A
+		POP BC
+		POP DE
+		POP HL
+		RET
+
+OUT_COM		PUSH BC
+		LD BC,P_DATA
+		OUT (C),A
+		XOR A
+		OUT (C),A
+		NOP
+		OUT (C),A
+		NOP
+		OUT (C),A
+		NOP
+		OUT (C),A
+		DEC A
+		OUT (C),A
+		POP BC
+		RET
+
+IN_OOUT		PUSH DE
+		LD DE,0X20FF
+IN_WAIT		IN A,(P_DATA)
+		CP E
+		JR NZ,IN_EXIT
+IN_NEXT		DEC D
+		JR NZ,IN_WAIT
+IN_EXIT		POP DE
+		RET
+;================áÄÉêìáóàä ë ZC SD äÄêíéóäà===================

@@ -1,0 +1,75 @@
+
+;LAST UPDATE: 01.12.2014 savelij
+
+;===============—’…ˆ… ‘ SD NEOGS=========================
+;—’…ˆ… "A" ‘…Š’ŽŽ‚
+READNGS		EX AF,AF'
+		LD A,_DEV_READ
+		CALL COMM2SD
+		EX AF,AF'
+		PUSH DE
+		PUSH BC
+		LD BC,GSDAT
+SDRDSN1		EX AF,AF'
+		OUT (GSCOM),A
+		CALL WC_
+		LD DE,0X0200
+SDRDSN2		CALL WN_
+		INI
+		DEC DE
+		LD A,D
+		OR E
+		JR NZ,SDRDSN2
+		EX AF,AF'
+		DEC A
+		JR NZ,SDRDSN1
+		CALL WN_
+SDRDSN3		IN A,(C)
+		CP 0X77
+		JR NZ,SDRDSN3
+		POP BC
+		POP DE
+		XOR A
+		RET
+
+;……„€’—ˆŠ ŠŽŒ€„/€€Œ…’Ž‚ ‚ „€‰‚… € NeoGS
+COMM2SD		OUT (GSDAT),A			;“˜‹€ ŠŽŒ€„€ „€‰‚…“
+		LD A,0X1E
+		OUT (GSCOM),A			;“˜‹€ ŠŽŒ€„€ Ž˜ˆ‚Š…
+		CALL WC_
+		LD A,B
+		OUT (GSDAT),A			;“˜‹ˆ ˆ’› 31-24 €€Œ…’Ž‚
+		CALL WD_
+		LD A,C
+		OUT (GSDAT),A			;“˜‹ˆ ˆ’› 23-16 €€Œ…’Ž‚
+		CALL WD_
+		LD A,D
+		OUT (GSDAT),A			;“˜‹ˆ ˆ’› 15-8 €€Œ…’Ž‚
+		CALL WD_
+		LD A,E
+		OUT (GSDAT),A			;“˜‹ˆ ˆ’› 7-0 €€Œ…’Ž‚
+		CALL WD_
+		EX AF,AF'
+		OUT (GSDAT),A			;“˜‹Ž ŠŽ‹-‚Ž ‘…Š’ŽŽ‚
+		EX AF,AF'
+		DUPL 9,0
+		RET
+
+;Ž†ˆ„€ˆ… ŠŽƒ„€ NeoGS €‰’ ‡€……’
+WD_		IN A,(GSCOM)
+		RLA
+		JR C,WD_
+		RET
+
+;Ž†ˆ„€ˆ… ŠŽƒ„€ NeoGS „€‘’ €‰’
+WN_		IN A,(GSCOM)
+		RLA
+		JR NC,WN_
+		RET
+
+;Ž†ˆ„€ˆ… ŠŽƒ„€ NeoGS ŠŽŒ€„“ ‡€……’
+WC_		IN A,(GSCOM)
+		RRA
+		JR C,WC_
+		RET
+;===============—’…ˆ… ‘ SD NEOGS=========================

@@ -1,0 +1,84 @@
+
+;LAST UPDATE: 01.12.2014 savelij
+
+;==================óíÖçàÖ ë PROFI ÇàçíÄ=======================
+RD_HDDP		PUSH BC
+		PUSH DE
+		PUSH AF
+		PUSH BC
+		LD BC,0XDFFD
+		LD A,0X20
+		OUT (C),A
+		POP BC
+		LD A,(MAS_SLA)
+		OR B
+		LD B,A
+		POP AF
+		CALL SETHPREG
+		EX AF,AF'
+		LD BC,PP_1F7W
+		LD A,0X20
+		OUT (C),A
+		LD BC,PP_1F7R
+HDDPRD1		IN A,(C)
+		AND 0X88
+		CP 8
+		JR NZ,HDDPRD1
+		EX AF,AF'
+HDDPRD2		EX AF,AF'
+		CALL READPSEC
+		LD BC,PP_1F7R
+HDDPRD3		IN A,(C)
+		AND 0X80
+		JR NZ,HDDPRD3
+		EX AF,AF'
+		DEC A
+		JR NZ,HDDPRD2
+		LD BC,0XDFFD
+		XOR A
+		OUT (C),A
+		POP DE
+		POP BC
+		LD A,B
+		AND 0X0F
+		LD B,A
+		XOR A
+		RET
+
+SETHPREG	PUSH DE
+		LD D,B
+		LD E,C
+		LD BC,PP_1F6W
+		OUT (C),D
+		EX AF,AF'
+		LD BC,PP_1F7R
+SETHPRE1	IN A,(C)
+		AND 0X80
+		JR NZ,SETHPRE1
+		LD BC,PP_1F5W
+		OUT (C),E
+		POP DE
+		LD BC,PP_1F4W
+		OUT (C),D
+		LD BC,PP_1F3W
+		OUT (C),E
+		LD BC,PP_1F2W
+		EX AF,AF'
+		OUT (C),A
+		RET
+
+READPSEC	LD A,0X40
+READPSC1	REPT 4
+		LD BC,PP_1F0R
+		IN E,(C)
+		LD BC,PP_HIR
+		IN D,(C)
+		LD (HL),E
+		INC HL
+		LD (HL),D
+		INC HL
+		ENDM
+		DEC A
+		JR NZ,READPSC1
+		RET
+;==================óíÖçàÖ ë PROFI ÇàçíÄ=======================

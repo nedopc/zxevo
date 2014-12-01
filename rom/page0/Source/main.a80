@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 18.11.2014 savelij
+;LAST UPDATE: 01.12.2014 savelij
 	
 		include ../../macros.a80
 		include ../../define.a80
@@ -7,7 +7,7 @@
 		include ../../ports_ide.a80
 
 ;VERSION
-VERSBIOS	EQU "0.56 "
+VERSBIOS	EQU "0.56a "
 
 ;BIT 4,(IY+55)
 ;BIT 3,(IY+55)-0-‡€…’ €ˆŒ€–ˆˆ ŠŽ˜€Š€, 1-€‡…˜…ˆ…
@@ -68,17 +68,11 @@ START1		CALL DETECTMOUSE		;Ž…„…‹…ˆ… €‹ˆ—ˆŸ Œ›˜ˆ
 		CALL MOUSE			;ŽŽ‘ Œ›˜ˆ
 		LD HL,0X6FCC
 		LD (ARXY),HL			;“‘’€Ž‚Š€ „…”Ž‹’Ž‰ Ž‡ˆ–ˆˆ Œ›˜ˆ ˆ ‘’€’…
-;		IF NEWDOS=1
-;		CALL SET_TRDOS
-;		ENDIF
 		CALL DISK_NONE
 		CALL RESET_VG			;‘Ž‘ ‚ƒ˜Šˆ ˆ “‘’€Ž‚Š€ ……•‚€’—ˆŠ€ Ž˜ˆŽŠ DOS
 		CALL SYSTEM
 		LD C,0
 		CALL 0X3D13
-;		IF NEWDOS=1
-;		CALL SETUP_DOS
-;		ENDIF
 RESTART		DI
 		LD A,0X10
 		CALL SET_7FFD			;‚Š‹ž—ˆ‹ˆ €‘ˆŠ48 ˆ ‘’€ˆ—Š“ 0
@@ -310,9 +304,6 @@ CHANGE_MODES	LD L,A
 		CALL REST2X2
 		CALL SET_MODES
 		CALL PRT_MODES
-;		IF NEWDOS=1
-;		CALL SETUP_DOS
-;		ENDIF
 		LD A,(FLAGS)
 		AND 2
 		JP Z,MAINLOP
@@ -462,12 +453,6 @@ PRT_MODES	LD HL,SPEED_MODE
 		RST8 _PRINT_MESSAGE
 		LD HL,ROMLOADFONT
 		RST8 _PRINT_MESSAGE
-;		IF NEWDOS=1
-;		LD HL,TXT_DOSTYPE
-;		ELSE
-;		LD HL,TXT_AYPRINTER
-;		ENDIF
-;		RST8 _PRINT_MESSAGE
 		LD HL,TYPESFONT
 		RST8 _PRINT_MESSAGE
 		LD HL,TXT_AUTOMOUNT
@@ -574,9 +559,6 @@ SET_7FFD	PUSH BC
 		RET
 
 MEMSET		CALL CLEAR_128K
-;		IF NEWDOS=1
-;		CALL SETUP_DOS
-;		ENDIF
 		LD A,(TURBO_NUM)		;“‘’€Ž‚Š€ TURBO …†ˆŒ€
 		AND A
 		LD DE,0X10A3			;3,5MHZ PORTS EFF7 BIT4=1 XX77 BIT3=0
@@ -702,9 +684,6 @@ SETMODES01	LD DE,TXT_MEM			;…†ˆŒ €ŒŸ’ˆ
 		LD A,C
 		LD BC,3
 		LDIR
-;		IF NEWDOS=1
-;		CALL RDSET_DOSTYPE
-;		ENDIF
 		LD H,CMOS_BYTE_01
 		CALL READCMOS
 		AND AUTOMOUNT
@@ -728,6 +707,26 @@ SET_ONOFF1	LD (HL),D
 		INC HL
 		LD (HL),E
 		RET
+
+TURBO_7MHZ	LD E,0XA3
+		LD BC,0XFF77
+		PEC_ON SHADOW_BF
+		OUT (C),E
+		PEC_OFF SHADOW_BF
+		XOR A
+		JP SET_EFF7
+
+		include menu_data.a80
+		include menu_execute.a80
+		include mouse.a80
+		include window.a80
+		include call_cmos.a80
+		include call_trdos.a80
+		include koshak.a80
+		include pc_keys_test.a80
+		include flasher.a80
+		include fat_boot.a80
+		include bmp_view.a80
 
 CLEAR_128K	DI
 		LD HL,0
@@ -779,25 +778,6 @@ SET_DRIVE	LD A,(DRV_SYM)			;ˆ‡Œ……ˆ… ‘ˆ‘’…Œ›• ……Œ…›• „‹Ÿ „ˆ‘Š€
 		LD (0X5D16),A
 		RET
 
-;		IF NEWDOS=1
-;SETUP_DOS	DI
-;		LD H,CMOS_BYTE_00
-;		CALL READCMOS
-;		AND _DOSTYPE
-;		LD E,P_BAS48|0X80		;‚›€ EVODOS
-;		JR Z,SETUPDOS1
-;		LD E,P_ADD_BAS48|0X80		;‚›€ TR-DOS
-;SETUPDOS1	PEC_ON SHADOW_BF
-;		LD BC,WIN_A0
-;		OUT (C),E
-;		PEC_OFF SHADOW_BF
-;		RET
-
-;SET_TRDOS	DI
-;		LD E,P_ADD_BAS48|0X80
-;		JR SETUPDOS1
-;		ENDIF
-
 GLUDIN		LD H,CMOS_BYTE_01
 		CALL READCMOS
 		AND SOUNDKEYS
@@ -837,36 +817,9 @@ TIMELP		CALL PRINTTIME
 		JR NZ,TIMELP			;ŽŠ€ … Ž’“‘’Ÿ’
 		RET
 
-TURBO_7MHZ	LD E,0XA3
-		LD BC,0XFF77
-		PEC_ON SHADOW_BF
-		OUT (C),E
-		PEC_OFF SHADOW_BF
-		XOR A
-		JP SET_EFF7
-
-		include mouse.a80
-		include menu_data.a80
-		include menu_execute.a80
-		include window.a80
-		include call_cmos.a80
-		include call_trdos.a80
-		include koshak.a80
-		include pc_keys_test.a80
-		include flasher.a80
-		include fat_boot.a80
-		include bmp_view.a80
-
 ;‡€“‘Š PERFECT COMMANDER
 PERFECT		DI
-;		IF NEWDOS=1
-;		LD H,CMOS_BYTE_00
-;		CALL READCMOS
-;		ENDIF
 		LD SP,0XC000
-;		IF NEWDOS=1
-;		PUSH AF
-;		ENDIF
 		PEC_ON SHADOW_BF
 		LD BC,WIN_A0
 		LD A,P_ADDON1
@@ -874,19 +827,9 @@ PERFECT		DI
 		LD HL,(ADR_PERFECT)
 		LD DE,0X5B00
 		CALL UNPACK
-;		IF NEWDOS=1
-;		POP AF
-;		AND _DOSTYPE
-;		LD E,P_BAS48|0X80		;‚›€ EVODOS
-;		JR Z,PERFECT1
-;		LD E,P_ADD_BAS48|0X80		;‚›€ TR-DOS
-;PERFECT1	LD BC,WIN_A0
-;		OUT (C),E
-;		ELSE
 		LD BC,WIN_A0
 		LD A,0X83
 		OUT (C),A
-;		ENDIF
 		PEC_OFF SHADOW_BF
 		LD A,0XC9
 		LD (0X66D2),A

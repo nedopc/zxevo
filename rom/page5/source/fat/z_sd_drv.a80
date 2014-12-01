@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 30.03.2014 savelij
+;LAST UPDATE: 01.12.2014 savelij
 
 ;‚•Ž„›… €€Œ…’› Ž™ˆ…:
 ;HL-€„…‘ ‡€ƒ“‡Šˆ ‚ €ŒŸ’œ
@@ -246,7 +246,9 @@ RD_SECT		PUSH BC
 		JR NZ,RD_SECT3			;…‘‹ˆ „‹Ÿ ‚…˜…‰ 
 		AND A
 		JR NZ,RD_SECT2
-RD_SECT3	LD A,(R_7FFD)
+RD_SECT3	
+;		LD A,(R_7FFD)
+		READ_7FFD
 		LD BC,(B0_CPU2)
 		JR Z,RD_SECT1
 		LD BC,(B1_CPU2)
