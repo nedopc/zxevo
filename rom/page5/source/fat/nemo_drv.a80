@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 16.11.2014 savelij
+;LAST UPDATE: 01.12.2014 savelij
 
 ;Ž™€Ÿ ’Ž—Š€ ‚•Ž„€ „‹Ÿ €Ž’› ‘ HDD NEMO
 COMHDDN		EX AF,AF'
@@ -199,7 +199,9 @@ READSEC		LD A,IYL
 		AND A
 		JR NZ,RD2MEM2			;‚“’…ˆ‰ ‚›‡Ž‚. —’…ˆ… ‘…Š’Ž€ ‚Ž ‚“’…ˆ‰ “”…
 ;‚…˜ˆ‰ ‚›‡Ž‚. —’…ˆ… ‘…Š’Ž€ ‚ €ŒŸ’œ ‚›‡‚€‚˜…ƒŽ
-RD2MEM		LD A,(R_7FFD)
+RD2MEM		
+;		LD A,(R_7FFD)
+		READ_7FFD
 		AND 0X10
 		LD BC,(B0_CPU2)
 		JR Z,RD2MEM1

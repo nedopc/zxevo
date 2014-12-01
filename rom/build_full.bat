@@ -3,8 +3,8 @@
 
 cd fat_boot\source
 
-..\..\..\tools\asw\bin\asw -U -L make_micro_boot_fat.a80
-..\..\..\tools\asw\bin\p2bin make_micro_boot_fat.p micro_boot_fat.rom -r $-$ -k
+..\..\..\tools\asw\bin\asw -U -L micro_boot_fat.a80
+..\..\..\tools\asw\bin\p2bin micro_boot_fat.p micro_boot_fat.rom -r $-$ -k
 ..\..\..\tools\mhmt\mhmt -mlz micro_boot_fat.rom micro_boot_fat_pack.rom
 
 cd ..\..\page0\source
@@ -35,9 +35,6 @@ cd ..\..\page1\evo-dos
 ..\..\..\tools\asw\bin\asw -U -L evo-dos_virt.a80
 ..\..\..\tools\asw\bin\p2bin evo-dos_virt.p ..\evo-dos_virt.rom -r $-$ -k
 
-..\..\..\tools\asw\bin\asw -U -L evo-dos_p2666.a80
-..\..\..\tools\asw\bin\p2bin evo-dos_p2666.p ..\evo-dos_p2666.rom -r $-$ -k
-
 cd ..\..\page2\source
 
 ..\..\..\tools\asw\bin\asw -U -L spec128_0.a80
@@ -53,21 +50,7 @@ cd ..\..\atm_cpm\source
 ..\..\..\tools\asw\bin\asw -U -L rbios.a80
 ..\..\..\tools\asw\bin\p2bin rbios.p ..\rbios.rom -r $-$ -k
 
-REM cd ..\..\msxdos1\src
-
-REM asw -U -L msxdos.a80
-REM p2bin msxdos.p ..\msxdos.rom -r $-$ -k
-
-cd ..\..\sts\source
-
-..\..\..\tools\asw\bin\asw -U -L -s sts.a80
-..\..\..\tools\asw\bin\p2bin sts.p ..\sts.rom -r $-$ -k
-
-cd ..
-
-..\..\tools\mhmt\mhmt -mlz sts.rom sts_pack.rom
-
-cd ..\page5\source
+cd ..\..\page5\source
 
 ..\..\..\tools\mhmt\mhmt -mlz 8x8_ar.fnt 8x8_ar_pack.bin
 ..\..\..\tools\mhmt\mhmt -mlz 866_code.fnt 866_code_pack.bin
@@ -84,43 +67,13 @@ cd ..\..\trdos_v6\source
 ..\..\..\tools\asw\bin\asw -U -L trdos_v6.a80
 ..\..\..\tools\asw\bin\p2bin trdos_v6.p ..\dosatm3.rom -r $-$ -k
 
-cd ..\..\profrom\source
-
-..\..\..\tools\asw\bin\asw -U -L -s make_evoprofrom.a80
-..\..\..\tools\asw\bin\p2bin make_evoprofrom.p ..\evoprofrom.rom -r $-$ -k
-
-REM cd ..\..\hegluk244\source
-
-REM ..\..\..\tools\asw\bin\asw -U -L make_micro_boot_fat.a80
-REM ..\..\..\tools\asw\bin\p2bin make_micro_boot_fat.p micro_boot_fat.rom -r $-$ -k
-
-REM ..\..\..\tools\asw\bin\asw -U -L main.a80
-REM ..\..\..\tools\asw\bin\p2bin main.p main.rom -r $-$ -k
-
-REM ..\..\..\tools\asw\bin\asw -U -L make_cmosset.a80
-REM ..\..\..\tools\asw\bin\p2bin make_cmosset.p cmosset.rom -r $-$ -k
-
-REM ..\..\..\tools\mhmt\mhmt -mlz main.rom main_pack.rom
-REM ..\..\..\tools\mhmt\mhmt -mlz cmosset.rom cmosset_pack.rom
-REM ..\..\..\tools\mhmt\mhmt -mlz chars_eng.bin chars_pack.bin
-
-REM ..\..\..\tools\asw\bin\asw -U -L services.a80
-REM ..\..\..\tools\asw\bin\p2bin services.p ../hegluk.rom -r $-$ -k
-
-REM del micro_boot_fat.rom
-REM del main.rom
-REM del cmosset.rom
-REM del main_pack.rom
-REM del cmosset_pack.rom
-
 cd ..\..
 
-copy /B /Y page3\basic48_128.rom+page1\evo-dos_virt.rom+msxdos1\msxdos.rom+atm_cpm\rbios.rom+page5\rst8service.rom+page3\basic48_128.rom+page1\evo-dos_emu3d13.rom+page2\basic128.rom+page0\services.rom ers.rom
+copy /B /Y page3\basic48_128.rom+page1\evo-dos_virt.rom+ff_16k.rom+atm_cpm\rbios.rom+page5\rst8service.rom+page3\basic48_128.rom+page1\evo-dos_emu3d13.rom+page2\basic128.rom+page0\services.rom ers.rom
 copy /B /Y page3\2006.rom+trdos_v6\dosatm3.rom+page2\basic128.rom+page0\glukpen.rom glukpent.rom
-copy /B /Y page3\basic48_128_std.rom+trdos_v6\dosatm3.rom+page2\basic128.rom+hegluk244\hegluk.rom only_hegluk.rom
 copy /B /Y ff_16k.rom+page3\basic48_128_std.rom+page2\128_std.rom+page3\basic48_orig.rom basics_std.rom
 
-rem              64            64            64                   128          192
+rem          64            64           64                   128          192
 copy /B /Y ff_64k.rom+basics_std.rom+glukpent.rom+profrom\evoprofrom.rom+ers.rom zxevo.rom
 
 copy /B /Y zxevo.rom ..\tools\unreal_fix\0.37.6\fix_build\x32\zxevo.rom
@@ -128,6 +81,6 @@ copy /B /Y zxevo.rom d:\unrealspeccy\zxevo.rom
 
 del ers.rom
 del glukpent.rom
-del only_hegluk.rom
+del basics_std.rom
 
 pause

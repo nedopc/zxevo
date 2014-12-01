@@ -1,5 +1,19 @@
 
-;LAST UPDATE: 25.08.2014 savelij
+;LAST UPDATE: 01.12.2014 savelij
+
+		include ../../macros.a80
+		include ../../define.a80
+		include ../../global_vars.a80
+		include ../../ports_ngs.a80
+		include ../../sdcomand.a80
+		include ../../ports_ide.a80
+
+DRV_VAR		EQU 0X4000
+
+		ORG DRV_VAR+0X200
+		include fat_vars.a80
+
+		ORG DRV_VAR+0X300
 
 BUF_512_	EQU DRV_VAR			;200 “”… ‘…Š’Ž€
 NUM_DEVICE	EQU DRV_VAR+0X2FF		;1 ŽŒ… “‘’Ž‰‘’‚€ „‹Ÿ ‡€“‘Š€ ŠŽ„€
@@ -107,7 +121,6 @@ READ02		AND A
 		CALL LOADSCS
 READ03		PUSH HL
 		LD A,IXL
-;		DEC A
 		LD L,A
 		LD H,0
 		ADD HL,DE
@@ -177,44 +190,44 @@ LD_FILE		PUSH BC				;‘’€˜ˆ… 16 ˆ’ ŽŒ…€ Š‹€‘’…€
 		PUSH HL				;‘Ž•€ˆ‹ˆ €„…‘ ‡€ƒ“‡Šˆ
 		CALL REALSEC			;……‚…‹ˆ ŽŒ… Š‹€‘’…€ ‚ ŽŒ… ‘…Š’Ž€
 		LD IX,(BYTSSEC)
-		LD A,IYH	;HY ‘Œ…™…ˆ… ‚ Š‹€‘’……
+		LD A,IYH			;‘Œ…™…ˆ… ‚ Š‹€‘’……
 		LD L,A
 		LD H,0
 		ADD HL,DE
 		EX DE,HL
 		JR NC,LDFILE1
 		INC BC				;BCDE=ŽŒ… ‘…Š’Ž€ Ž’Š“„€ ƒ“‡ˆ’œ
-LDFILE1		LD A,IYL;IXL		;LX ŠŽ‹ˆ—…‘’‚Ž ‘…Š’ŽŽ‚ „‹Ÿ ‡€ƒ“‡Šˆ
-		CP IXL;IXH		;HX €‡Œ… Š‹€‘’…€
+LDFILE1		LD A,IYL			;ŠŽ‹ˆ—…‘’‚Ž ‘…Š’ŽŽ‚ „‹Ÿ ‡€ƒ“‡Šˆ
+		CP IXL				;€‡Œ… Š‹€‘’…€
 		JP C,LDFILE2
-		LD A,IXL;IXH		;HX €‡Œ… Š‹€‘’…€
-LDFILE2		ADD A,IYH		;HY ‘Œ…™…ˆ… ‚ Š‹€‘’……
-		CP IXL;IXH			;HX €‡Œ… Š‹€‘’…€
-		LD A,IYL;IXL		;LX ŠŽ‹ˆ—…‘’‚Ž ‘…Š’ŽŽ‚ „‹Ÿ ‡€ƒ“‡Šˆ
+		LD A,IXL			;€‡Œ… Š‹€‘’…€
+LDFILE2		ADD A,IYH			;‘Œ…™…ˆ… ‚ Š‹€‘’……
+		CP IXL				;€‡Œ… Š‹€‘’…€
+		LD A,IYL			;ŠŽ‹ˆ—…‘’‚Ž ‘…Š’ŽŽ‚ „‹Ÿ ‡€ƒ“‡Šˆ
 		JP C,LDFILE5
-		LD A,IXL;IXH		;HX €‡Œ… Š‹€‘’…€
-		SUB IYH			;HY ‘Œ…™…ˆ… ‚ Š‹€‘’……
-LDFILE5		LD IXH,A;IYL,A		;LY,A TEMP VAR				;‘ŠŽ‹œŠŽ ‘…Š’ŽŽ‚ ‘…‰—€‘ ƒ“‡ˆŒ
+		LD A,IXL			;€‡Œ… Š‹€‘’…€
+		SUB IYH				;‘Œ…™…ˆ… ‚ Š‹€‘’……
+LDFILE5		LD IXH,A			;TEMP VAR, ‘ŠŽ‹œŠŽ ‘…Š’ŽŽ‚ ‘…‰—€‘ ƒ“‡ˆŒ
 		POP HL				;‚Ž‘‘’€Ž‚ˆ‹ˆ €„…‘ ‡€ƒ“‡Šˆ
 		CALL LOADSCS			;‡€ƒ“‡ˆ‹ˆ ‘…Š’Ž€
 		POP DE
 		POP BC				;‚Ž‘‘’€Ž‚ˆ‹ˆ ŽŒ… Š‹€‘’…€
-		LD A,IYH		;HY ‘Œ…™…ˆ… ‚ Š‹€‘’……
-		ADD A,IXH;IYL		;LY TEMP VAR
-		CP IXL;IXH			;HX €‡Œ… Š‹€‘’…€
+		LD A,IYH			;‘Œ…™…ˆ… ‚ Š‹€‘’……
+		ADD A,IXH			;TEMP VAR
+		CP IXL				;€‡Œ… Š‹€‘’…€
 		JP C,LDFILE3
-		SUB IXL;IXH			;HX €‡Œ… Š‹€‘’…€
-LDFILE3		LD IYH,A		;HY,A ‘Œ…™…ˆ… ‚ Š‹€‘’……
+		SUB IXL				;€‡Œ… Š‹€‘’…€
+LDFILE3		LD IYH,A			;‘Œ…™…ˆ… ‚ Š‹€‘’……
 		JP C,LDFILE4
 		PUSH HL				;‘Ž•€ˆ‹ˆ €„…‘ ‡€ƒ“‡Šˆ
 		CALL RDFATZP			;Ž—ˆ’€‹ˆ ŽŒ… ‘‹…„“ž™…ƒŽ Š‹€‘’…€
 		CALL LST_CLS			;Ž‚…ˆ‹ˆ, € ŒŽ†…’ ’Ž Ž‘‹…„ˆ‰ Š‹€‘’…?
 		POP HL				;‚Ž‘‘’€Ž‚ˆ‹ˆ €„…‘ ‡€ƒ“‡Šˆ
 		RET C				;…‘‹ˆ Ž‘‹…„ˆ‰, ‚›•Ž„ˆŒ
-LDFILE4		LD A,IYL;IXL		;LX ŠŽ‹ˆ—…‘’‚Ž ‘…Š’ŽŽ‚ „‹Ÿ ‡€ƒ“‡Šˆ
-		SUB IXH;IYL			;LY TEMP VAR
+LDFILE4		LD A,IYL			;ŠŽ‹ˆ—…‘’‚Ž ‘…Š’ŽŽ‚ „‹Ÿ ‡€ƒ“‡Šˆ
+		SUB IXH				;TEMP VAR
 		RET Z
-		LD IYL,A;IXL,A		;LX,A ŠŽ‹ˆ—…‘’‚Ž ‘…Š’ŽŽ‚ „‹Ÿ ‡€ƒ“‡Šˆ
+		LD IYL,A			;ŠŽ‹ˆ—…‘’‚Ž ‘…Š’ŽŽ‚ „‹Ÿ ‡€ƒ“‡Šˆ
 		JP NZ,LD_FILE
 		RET
 
@@ -440,567 +453,11 @@ LOADLST		LD HL,BUF_512_
 		POP HL
 		RET
 
-;================‡€ƒ“‡—ˆŠ ‘ ZC SD Š€’Ž—Šˆ===================
-READ_SD		PUSH AF
-		LD A,1
-		OUT (P_CONF),A
-		POP AF
-		EX AF,AF'
-		LD A,CMD_18
-		CALL SECM200
-		EX AF,AF'
-RDMULT1		EX AF,AF'
-RDMULT2		CALL IN_OOUT
-		CP 0XFE
-		JR NZ,RDMULT2
-		PUSH BC
-		LD BC,P_DATA
-		INIR
-		NOP
-		INIR
-		NOP
-		IN A,(C)
-		NOP
-		IN A,(C)
-		POP BC
-		EX AF,AF'
-		DEC A
-		JR NZ,RDMULT1
-		LD A,CMD_12
-		CALL OUT_COM
-RDMULT3		CALL IN_OOUT
-		INC A
-		JR NZ,RDMULT3
-		PUSH AF
-		LD A,3
-		OUT (P_CONF),A
-		XOR A
-		OUT (P_DATA),A
-		POP AF
-		RET
+		include drivers/drv_zc.a80
+		include drivers/drv_neogs.a80
+		include drivers/drv_nemo.a80
+		include drivers/drv_smuc.a80
+		include drivers/drv_divide.a80
+		include drivers/drv_profi.a80
 
-SECM200		PUSH HL
-		PUSH DE
-		PUSH BC
-		PUSH AF
-		PUSH BC
-		LD A,CMD_58
-		LD BC,P_DATA
-		CALL OUT_COM
-		CALL IN_OOUT
-		IN A,(C)
-		NOP
-		IN H,(C)
-		NOP
-		IN H,(C)
-		NOP
-		IN H,(C)
-		BIT 6,A
-		POP HL
-		JR NZ,SECN200
-		EX DE,HL
-		ADD HL,HL
-		EX DE,HL
-		ADC HL,HL
-		LD H,L
-		LD L,D
-		LD D,E
-		LD E,0
-SECN200		POP AF
-		LD BC,P_DATA
-		OUT (C),A
-		NOP
-		OUT (C),H
-		NOP
-		OUT (C),L
-		NOP
-		OUT (C),D
-		NOP
-		OUT (C),E
-		LD A,0XFF
-		OUT (C),A
-		POP BC
-		POP DE
-		POP HL
-		RET
-
-OUT_COM		PUSH BC
-		LD BC,P_DATA
-		OUT (C),A
-		XOR A
-		OUT (C),A
-		NOP
-		OUT (C),A
-		NOP
-		OUT (C),A
-		NOP
-		OUT (C),A
-		DEC A
-		OUT (C),A
-		POP BC
-		RET
-
-IN_OOUT		PUSH DE
-		LD DE,0X20FF
-IN_WAIT		IN A,(P_DATA)
-		CP E
-		JR NZ,IN_EXIT
-IN_NEXT		DEC D
-		JR NZ,IN_WAIT
-IN_EXIT		POP DE
-		RET
-;=========================================================
-
-;===============—’…ˆ… ‘ SD NEOGS=========================
-;—’…ˆ… "A" ‘…Š’ŽŽ‚
-READNGS		EX AF,AF'
-		LD A,_DEV_READ
-		CALL COMM2SD
-		EX AF,AF'
-		PUSH DE
-		PUSH BC
-		LD BC,GSDAT
-SDRDSN1		EX AF,AF'
-		OUT (GSCOM),A
-		CALL WC_
-		LD DE,0X0200
-SDRDSN2		CALL WN_
-		INI
-		DEC DE
-		LD A,D
-		OR E
-		JR NZ,SDRDSN2
-		EX AF,AF'
-		DEC A
-		JR NZ,SDRDSN1
-		CALL WN_
-SDRDSN3		IN A,(C)
-		CP 0X77
-		JR NZ,SDRDSN3
-		POP BC
-		POP DE
-		XOR A
-		RET
-
-;……„€’—ˆŠ ŠŽŒ€„/€€Œ…’Ž‚ ‚ „€‰‚… € NeoGS
-COMM2SD		OUT (GSDAT),A			;“˜‹€ ŠŽŒ€„€ „€‰‚…“
-		LD A,0X1E
-		OUT (GSCOM),A			;“˜‹€ ŠŽŒ€„€ Ž˜ˆ‚Š…
-		CALL WC_
-		LD A,B
-		OUT (GSDAT),A			;“˜‹ˆ ˆ’› 31-24 €€Œ…’Ž‚
-		CALL WD_
-		LD A,C
-		OUT (GSDAT),A			;“˜‹ˆ ˆ’› 23-16 €€Œ…’Ž‚
-		CALL WD_
-		LD A,D
-		OUT (GSDAT),A			;“˜‹ˆ ˆ’› 15-8 €€Œ…’Ž‚
-		CALL WD_
-		LD A,E
-		OUT (GSDAT),A			;“˜‹ˆ ˆ’› 7-0 €€Œ…’Ž‚
-		CALL WD_
-		EX AF,AF'
-		OUT (GSDAT),A			;“˜‹Ž ŠŽ‹-‚Ž ‘…Š’ŽŽ‚
-		EX AF,AF'
-		DUPL 9,0
-		RET
-
-;Ž†ˆ„€ˆ… ŠŽƒ„€ NeoGS €‰’ ‡€……’
-WD_		IN A,(GSCOM)
-		RLA
-		JR C,WD_
-		RET
-
-;Ž†ˆ„€ˆ… ŠŽƒ„€ NeoGS „€‘’ €‰’
-WN_		IN A,(GSCOM)
-		RLA
-		JR NC,WN_
-		RET
-
-;Ž†ˆ„€ˆ… ŠŽƒ„€ NeoGS ŠŽŒ€„“ ‡€……’
-WC_		IN A,(GSCOM)
-		RRA
-		JR C,WC_
-		RET
-;==========================================================
-
-;==================—’…ˆ… ‘ NEMO HDD=======================
-P_1F7		EQU 0XF0			;…ƒˆ‘’ ‘Ž‘’ŽŸˆŸ/…ƒˆ‘’ ŠŽŒ€„
-P_1F6		EQU 0XD0			;CHS-ŽŒ… ƒŽ‹Ž‚› ˆ “‘’/LBA €„…‘ 24-27
-P_1F5		EQU 0XB0			;CHS-–ˆ‹ˆ„ 8-15/LBA €„…‘ 16-23
-P_1F4		EQU 0X90			;CHS-–ˆ‹ˆ„ 0-7/LBA €„…‘ 8-15
-P_1F3		EQU 0X70			;CHS-ŽŒ… ‘…Š’Ž€/LBA €„…‘ 0-7
-P_1F2		EQU 0X50			;‘—…’—ˆŠ ‘…Š’ŽŽ‚
-P_1F1		EQU 0X30			;Ž’ Ž˜ˆŽŠ/‘‚Ž‰‘’‚
-P_1F0		EQU 0X10			;Ž’ „€›•
-P_3F6		EQU 0XC8			;…ƒˆ‘’ ‘Ž‘’ŽŸˆŸ/“€‚‹…ˆŸ
-P_HI		EQU 0X11			;‘’€˜ˆ… 8 ˆ’
-PRT_RW		EQU P_1F0*256+P_HI		;Ž’› —’…ˆŸ/‡€ˆ‘ˆ Ž„ˆŒ ‘‹Ž‚ŽŒ
-
-RD_HDDN		PUSH BC
-		PUSH DE
-		PUSH DE
-		EX AF,AF'
-		LD A,(MAS_SLA)
-		OR B
-		LD E,C
-		LD BC,0XFF00+P_1F6
-		OUT (C),A
-		LD C,P_1F5
-		OUT (C),E
-		POP DE
-		LD C,P_1F4
-		OUT (C),D
-		LD C,P_1F3
-		OUT (C),E
-		LD C,P_1F2
-		EX AF,AF'
-		OUT (C),A
-		EX AF,AF'
-		LD C,P_1F7
-		LD A,0X20
-		OUT (C),A
-		LD C,P_1F7
-HDDRD1		IN A,(C)
-		AND 0X88
-		CP 8
-		JR NZ,HDDRD1
-		EX AF,AF'
-HDDRD2		EX AF,AF'
-		LD A,0X40
-		LD C,P_1F0
-READSC1		IN E,(C)
-		INC C
-		IN D,(C)
-		DEC C
-		LD (HL),E
-		INC HL
-		LD (HL),D
-		INC HL
-		IN E,(C)
-		INC C
-		IN D,(C)
-		DEC C
-		LD (HL),E
-		INC HL
-		LD (HL),D
-		INC HL
-		IN E,(C)
-		INC C
-		IN D,(C)
-		DEC C
-		LD (HL),E
-		INC HL
-		LD (HL),D
-		INC HL
-		IN E,(C)
-		INC C
-		IN D,(C)
-		DEC C
-		LD (HL),E
-		INC HL
-		LD (HL),D
-		INC HL
-		DEC A
-		JR NZ,READSC1
-		LD C,P_1F7
-HDDRD3		IN A,(C)
-		AND 0X80
-		JR NZ,HDDRD3
-		EX AF,AF'
-		DEC A
-		JR NZ,HDDRD2
-		POP DE
-		POP BC
-		XOR A
-		RET
-;=============================================================
-
-;==================—’…ˆ… ‘Ž ‘Œ“Š ‚ˆ’€=======================
-PS1F7		EQU 0XFF			;0XFFBE	…ƒˆ‘’ ‘Ž‘’ŽŸˆŸ/…ƒˆ‘’ ŠŽŒ€„
-PS1F6		EQU 0XFE			;0XFEBE	CHS-ŽŒ… ƒŽ‹Ž‚› ˆ “‘’/LBA €„…‘ 24-27
-PS1F5		EQU 0XFD			;0XFDBE	CHS-–ˆ‹ˆ„ 8-15/LBA €„…‘ 16-23
-PS1F4		EQU 0XFC			;0XFCBE	CHS-–ˆ‹ˆ„ 0-7/LBA €„…‘ 8-15
-PS1F3		EQU 0XFB			;0XFBBE	CHS-ŽŒ… ‘…Š’Ž€/LBA €„…‘ 0-7
-PS1F2		EQU 0XFA			;0XFABE	‘—…’—ˆŠ ‘…Š’ŽŽ‚
-PS1F1		EQU 0XF9			;0XF9BE	Ž’ Ž˜ˆŽŠ/‘‚Ž‰‘’‚
-PS1F0		EQU 0XF8			;0XF8BE	Ž’ „€›•
-PS3F6		EQU 0XFE			;0XFEBE	…ƒˆ‘’ ‘Ž‘’ŽŸˆŸ/“€‚‹…ˆŸ
-PSHI		EQU 0XD8			;0XD8BE	‘’€˜ˆ… 8 ˆ’
-PRTSRW		EQU PS1F0*256+PSHI		;Ž’› —’…ˆŸ/‡€ˆ‘ˆ Ž„ˆŒ ‘‹Ž‚ŽŒ
-LOW_PRT		EQU 0XBE			;Œ‹€„˜ˆ‰ €‰’ €„…‘€ SMUC IDE
-SMUCSYS		EQU 0XFFBA			;‘ˆ‘’…Œ›‰ Ž’ SMUC
-SMUCVER		EQU 0X5FBA			;Ž’ ‚…‘ˆˆ SMUC
-
-RD_HDDS		PUSH BC
-		PUSH DE
-		CALL SETSREG
-		EX AF,AF'
-		LD B,PS1F7
-		LD A,0X20
-		CALL SOUTPRT
-HDSRDM2		CALL SINPRT
-		AND 0X88
-		CP 8
-		JR NZ,HDSRDM2
-		EX AF,AF'
-HDSRDM1		PUSH AF
-		LD DE,PRTSRW
-		LD A,0X40
-RDCSSC1		EX AF,AF'
-		LD B,D
-		CALL SINPRT
-		LD (HL),A
-		INC HL
-		LD B,E
-		CALL SINPRT
-		LD (HL),A
-		INC HL
-		LD B,D
-		CALL SINPRT
-		LD (HL),A
-		INC HL
-		LD B,E
-		CALL SINPRT
-		LD (HL),A
-		INC HL
-		LD B,D
-		CALL SINPRT
-		LD (HL),A
-		INC HL
-		LD B,E
-		CALL SINPRT
-		LD (HL),A
-		INC HL
-		LD B,D
-		CALL SINPRT
-		LD (HL),A
-		INC HL
-		LD B,E
-		CALL SINPRT
-		LD (HL),A
-		INC HL
-		EX AF,AF'
-		DEC A
-		JR NZ,RDCSSC1
-		LD B,PS1F7
-HDSRDM3		CALL SINPRT
-		AND 0X80
-		JR NZ,HDSRDM3
-		POP AF
-		DEC A
-		JR NZ,HDSRDM1
-		POP DE
-		POP BC
-		RET
-	
-SETSREG		PUSH DE
-		LD D,B
-		LD E,C
-		EX AF,AF'
-		LD A,(MAS_SLA)
-		OR D
-		LD BC,(PS1F6*0X0100)+LOW_PRT
-		CALL SOUTPRT
-		LD B,PS1F5
-		LD A,E
-		CALL SOUTPRT
-		POP DE
-		LD B,PS1F4
-		LD A,D
-		CALL SOUTPRT
-		LD B,PS1F3
-		LD A,E
-		CALL SOUTPRT
-		LD B,PS1F2
-		EX AF,AF'
-
-SOUTPRT		PUSH HL
-		LD HL,0X3FF0
-		EX (SP),HL
-		JP 0X3D2F
-
-SINPRT		PUSH HL
-		LD HL,0X3FF3
-		EX (SP),HL
-		JP 0X3D2F
-;=============================================================
-
-;==================—’…ˆ… ‘ DIVIDE ‚ˆ’€======================
-PV1F7		EQU 0XBF			;…ƒˆ‘’ ‘Ž‘’ŽŸˆŸ/…ƒˆ‘’ ŠŽŒ€„
-PV1F6		EQU 0XBB			;CHS-ŽŒ… ƒŽ‹Ž‚› ˆ “‘’/LBA €„…‘ 24-27
-PV1F5		EQU 0XB7			;CHS-–ˆ‹ˆ„ 8-15/LBA €„…‘ 16-23
-PV1F4		EQU 0XB3			;CHS-–ˆ‹ˆ„ 0-7/LBA €„…‘ 8-15
-PV1F3		EQU 0XAF			;CHS-ŽŒ… ‘…Š’Ž€/LBA €„…‘ 0-7
-PV1F2		EQU 0XAB			;‘—…’—ˆŠ ‘…Š’ŽŽ‚
-PV1F1		EQU 0XA7			;Ž’ Ž˜ˆŽŠ/‘‚Ž‰‘’‚
-PV1F0		EQU 0XA3			;Ž’ „€›•
-PV3F6		EQU 0XC8			;…ƒˆ‘’ ‘Ž‘’ŽŸˆŸ/“€‚‹…ˆŸ (UNUSED ON DIVIDE)
-PVHI		EQU 0XA3			;‘’€˜ˆ… 8 ˆ’
-PRTVRW		EQU PV1F0*256+PVHI		;Ž’› —’…ˆŸ/‡€ˆ‘ˆ Ž„ˆŒ ‘‹Ž‚ŽŒ
-
-RD_HDDD		PUSH BC
-		PUSH DE
-		CALL SETVREG
-		EX AF,AF'
-		LD C,PV1F7
-		LD A,0X20
-		OUT (C),A
-		LD C,PV1F7
-HDVRD1		IN A,(C)
-		AND 0X88
-		CP 8
-		JR NZ,HDVRD1
-		EX AF,AF'
-HDVRD2		EX AF,AF'
-		CALL READVSEC
-		LD C,PV1F7
-HDVRD3		IN A,(C)
-		AND 0X80
-		JR NZ,HDVRD3
-		EX AF,AF'
-		DEC A
-		JR NZ,HDVRD2
-EXITVHD		POP DE
-		POP BC
-		LD A,B
-		AND 0X0F
-		LD B,A
-		XOR A
-		RET
-
-SETVREG		PUSH DE
-		LD D,B
-		LD E,C
-		LD BC,0XFF00+PV1F6
-		OUT (C),D
-		EX AF,AF'
-		LD C,PV1F7
-SETVRE1		IN A,(C)
-		AND 0X80
-		JR NZ,SETVRE1
-		LD C,PV1F5
-		OUT (C),E
-		POP DE
-		LD C,PV1F4
-		OUT (C),D
-		LD C,PV1F3
-		OUT (C),E
-		LD C,PV1F2
-		EX AF,AF'
-		OUT (C),A
-		RET
-
-;READ SECTOR (512 BYTES)
-READVSEC	LD A,0X40
-		LD C,PV1F0
-READVSC1	REPT 8
-		INI
-		INC B
-		ENDM
-		DEC A
-		JR NZ,READVSC1
-		RET
-;==================—’…ˆ… ‘ DIVIDE ‚ˆ’€======================
-
-;==================—’…ˆ… ‘ PROFI ‚ˆ’€=======================
-PP_1F7W		EQU 0X07EB			;W …ƒˆ‘’ ŠŽŒ€„
-PP_1F7R		EQU 0X07CB			;R …ƒˆ‘’ ‘Ž‘’ŽŸˆŸ
-PP_1F6W		EQU 0X06EB			;W CHS-ŽŒ… ƒŽ‹Ž‚› ˆ “‘’/LBA €„…‘ 24-27
-PP_1F6R		EQU 0X06CB			;R CHS-ŽŒ… ƒŽ‹Ž‚› ˆ “‘’/LBA €„…‘ 24-27
-PP_1F5W		EQU 0X05EB			;W CHS-–ˆ‹ˆ„ 8-15/LBA €„…‘ 16-23
-PP_1F5R		EQU 0X05CB			;R CHS-–ˆ‹ˆ„ 8-15/LBA €„…‘ 16-23
-PP_1F4W		EQU 0X04EB			;W CHS-–ˆ‹ˆ„ 0-7/LBA €„…‘ 8-15
-PP_1F4R		EQU 0X04CB			;R CHS-–ˆ‹ˆ„ 0-7/LBA €„…‘ 8-15
-PP_1F3W		EQU 0X03EB			;W CHS-ŽŒ… ‘…Š’Ž€/LBA €„…‘ 0-7
-PP_1F3R		EQU 0X03CB			;R CHS-ŽŒ… ‘…Š’Ž€/LBA €„…‘ 0-7
-PP_1F2W		EQU 0X02EB			;W ‘—…’—ˆŠ ‘…Š’ŽŽ‚
-PP_1F2R		EQU 0X02CB			;R ‘—…’—ˆŠ ‘…Š’ŽŽ‚
-PP_1F1W		EQU 0X01EB			;W Ž’ ‘‚Ž‰‘’‚
-PP_1F1R		EQU 0X01CB			;R Ž’ Ž˜ˆŽŠ
-PP_1F0W		EQU 0X00EB			;W Ž’ „€›• Œ‹€„˜ˆ… 8 ˆ’
-PP_1F0R		EQU 0X00CB			;R Ž’ „€›• Œ‹€„˜ˆ… 8 ˆ’
-PP_3F6		EQU 0X06AB			;W …ƒˆ‘’ ‘Ž‘’ŽŸˆŸ/“€‚‹…ˆŸ
-PP_HIW		EQU 0XFFCB			;W Ž’ „€›• ‘’€˜ˆ… 8 ˆ’
-PP_HIR		EQU 0XFFEB			;R Ž’ „€›• ‘’€˜ˆ… 8 ˆ’
-
-RD_HDDP		PUSH BC
-		PUSH DE
-		PUSH AF
-		PUSH BC
-		LD BC,0XDFFD
-		LD A,0X20
-		OUT (C),A
-		POP BC
-		LD A,(MAS_SLA)
-		OR B
-		LD B,A
-		POP AF
-		CALL SETHPREG
-		EX AF,AF'
-		LD BC,PP_1F7W
-		LD A,0X20
-		OUT (C),A
-		LD BC,PP_1F7R
-HDDPRD1		IN A,(C)
-		AND 0X88
-		CP 8
-		JR NZ,HDDPRD1
-		EX AF,AF'
-HDDPRD2		EX AF,AF'
-		CALL READPSEC
-		LD BC,PP_1F7R
-HDDPRD3		IN A,(C)
-		AND 0X80
-		JR NZ,HDDPRD3
-		EX AF,AF'
-		DEC A
-		JR NZ,HDDPRD2
-		LD BC,0XDFFD
-		XOR A
-		OUT (C),A
-		POP DE
-		POP BC
-		LD A,B
-		AND 0X0F
-		LD B,A
-		XOR A
-		RET
-
-SETHPREG	PUSH DE
-		LD D,B
-		LD E,C
-		LD BC,PP_1F6W
-		OUT (C),D
-		EX AF,AF'
-		LD BC,PP_1F7R
-SETHPRE1	IN A,(C)
-		AND 0X80
-		JR NZ,SETHPRE1
-		LD BC,PP_1F5W
-		OUT (C),E
-		POP DE
-		LD BC,PP_1F4W
-		OUT (C),D
-		LD BC,PP_1F3W
-		OUT (C),E
-		LD BC,PP_1F2W
-		EX AF,AF'
-		OUT (C),A
-		RET
-
-READPSEC	LD A,0X40
-READPSC1	REPT 4
-		LD BC,PP_1F0R
-		IN E,(C)
-		LD BC,PP_HIR
-		IN D,(C)
-		LD (HL),E
-		INC HL
-		LD (HL),D
-		INC HL
-		ENDM
-		DEC A
-		JR NZ,READPSC1
-		RET
-;==================—’…ˆ… ‘ PROFI ‚ˆ’€=======================
+		include spg2_run.a80

@@ -1,0 +1,67 @@
+
+;LAST UPDATE: 01.12.2014 savelij
+
+;==================óíÖçàÖ ë DIVIDE ÇàçíÄ======================
+RD_HDDD		PUSH BC
+		PUSH DE
+		CALL SETVREG
+		EX AF,AF'
+		LD C,PV1F7
+		LD A,0X20
+		OUT (C),A
+		LD C,PV1F7
+HDVRD1		IN A,(C)
+		AND 0X88
+		CP 8
+		JR NZ,HDVRD1
+		EX AF,AF'
+HDVRD2		EX AF,AF'
+		CALL READVSEC
+		LD C,PV1F7
+HDVRD3		IN A,(C)
+		AND 0X80
+		JR NZ,HDVRD3
+		EX AF,AF'
+		DEC A
+		JR NZ,HDVRD2
+EXITVHD		POP DE
+		POP BC
+		LD A,B
+		AND 0X0F
+		LD B,A
+		XOR A
+		RET
+
+SETVREG		PUSH DE
+		LD D,B
+		LD E,C
+		LD BC,0XFF00+PV1F6
+		OUT (C),D
+		EX AF,AF'
+		LD C,PV1F7
+SETVRE1		IN A,(C)
+		AND 0X80
+		JR NZ,SETVRE1
+		LD C,PV1F5
+		OUT (C),E
+		POP DE
+		LD C,PV1F4
+		OUT (C),D
+		LD C,PV1F3
+		OUT (C),E
+		LD C,PV1F2
+		EX AF,AF'
+		OUT (C),A
+		RET
+
+;READ SECTOR (512 BYTES)
+READVSEC	LD A,0X40
+		LD C,PV1F0
+READVSC1	REPT 8
+		INI
+		INC B
+		ENDM
+		DEC A
+		JR NZ,READVSC1
+		RET
+;==================óíÖçàÖ ë DIVIDE ÇàçíÄ======================

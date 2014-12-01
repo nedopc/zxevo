@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 16.11.2014 savelij
+;LAST UPDATE: 01.12.2014 savelij
 
 		include ../../macros.a80
 		include ../../define.a80
@@ -7,6 +7,11 @@
 		include ../../ports_ngs.a80
 		include ../../sdcomand.a80
 		include ../../fat_vars.a80
+
+READ_7FFD	MACRO
+		LD A,HIGH (RD_7FFD)
+		IN A,(LOW (RD_7FFD))
+		ENDM
 
 CPU5		EQU CPU1
 CPU6		EQU CPU2
@@ -115,8 +120,7 @@ CONT_MAGIC	NOP
 		CP 0X67
 		JP C,CONT_MAGIC2
 
-		LD HL,B1_CPU3
-		CALL MAINMEM3
+		CALL MAINPAGE3_TAP
 		LD HL,(NREG_IXL)
 		LD (RREG_IXL),HL
 		LD HL,(NREG_E)
@@ -167,7 +171,8 @@ ECODE_TABL
 
 ;ÇïéÑ Ç éëçéÇçéÖ åÖçû MAGIC Öëãà çÖ èÖêÖïÇÄóÖçé éíãÄÑóàäéå
 CONT_MAGIC2	LD BC,CONF_128
-		LD A,(N_7FFD)
+;		LD A,(N_7FFD)
+		READ_7FFD
 		AND ZX_SCREEN!0XFF
 		OUT (C),A			;ÇäãûóÖçàÖ éíéÅêÄÜÖçàü ùäêÄçÄ 0
 		LD A,(N_77)
@@ -249,7 +254,9 @@ ERST8PAGE0	LD BC,WIN_A0
 		XOR A
 		JP ADR_SEL_ROM
 
-SELECT_MAPPER	LD A,(R_7FFD)
+SELECT_MAPPER	
+;		LD A,(R_7FFD)
+		READ_7FFD
 		AND 0X10
 		RET NZ
 		LD A,-8
@@ -490,9 +497,7 @@ SET_7FFD	DEC HL
 		DEC HL
 		BIT 7,(HL)
 		RET Z
-		LD A,(R_EFF7)
-		AND 4
-		LD A,(R_7FFD)
+		READ_7FFD
 		LD D,A
 		LD E,0
 		LD HL,PAGES_7FFD_ALL
@@ -528,6 +533,11 @@ PAGES_7FFD_ALL	XXF7_7FFD 0XFF
 		XXF7_7FFD 0XE7
 		XXF7_7FFD 0XD7
 		XXF7_7FFD 0XC7
+
+MAINPAGE3_TAP	LD HL,B1_CPU3
+		CALL SELECT_MAPPER
+		CALL MAINMEM3
+		JR SET_7FFD
 
 MAINMEM3	LD C,LOW (WIN_A0)
 		LD E,(HL)

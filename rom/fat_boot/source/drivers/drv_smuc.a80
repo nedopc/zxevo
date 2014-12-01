@@ -1,0 +1,97 @@
+
+;LAST UPDATE: 01.12.2014 savelij
+
+;==================óíÖçàÖ ëé ëåìä ÇàçíÄ=======================
+RD_HDDS		PUSH BC
+		PUSH DE
+		CALL SETSREG
+		EX AF,AF'
+		LD B,PS1F7
+		LD A,0X20
+		CALL SOUTPRT
+HDSRDM2		CALL SINPRT
+		AND 0X88
+		CP 8
+		JR NZ,HDSRDM2
+		EX AF,AF'
+HDSRDM1		PUSH AF
+		LD DE,PRTSRW
+		LD A,0X40
+RDCSSC1		EX AF,AF'
+		LD B,D
+		CALL SINPRT
+		LD (HL),A
+		INC HL
+		LD B,E
+		CALL SINPRT
+		LD (HL),A
+		INC HL
+		LD B,D
+		CALL SINPRT
+		LD (HL),A
+		INC HL
+		LD B,E
+		CALL SINPRT
+		LD (HL),A
+		INC HL
+		LD B,D
+		CALL SINPRT
+		LD (HL),A
+		INC HL
+		LD B,E
+		CALL SINPRT
+		LD (HL),A
+		INC HL
+		LD B,D
+		CALL SINPRT
+		LD (HL),A
+		INC HL
+		LD B,E
+		CALL SINPRT
+		LD (HL),A
+		INC HL
+		EX AF,AF'
+		DEC A
+		JR NZ,RDCSSC1
+		LD B,PS1F7
+HDSRDM3		CALL SINPRT
+		AND 0X80
+		JR NZ,HDSRDM3
+		POP AF
+		DEC A
+		JR NZ,HDSRDM1
+		POP DE
+		POP BC
+		RET
+	
+SETSREG		PUSH DE
+		LD D,B
+		LD E,C
+		EX AF,AF'
+		LD A,(MAS_SLA)
+		OR D
+		LD BC,(PS1F6*0X0100)+LOW_PRT
+		CALL SOUTPRT
+		LD B,PS1F5
+		LD A,E
+		CALL SOUTPRT
+		POP DE
+		LD B,PS1F4
+		LD A,D
+		CALL SOUTPRT
+		LD B,PS1F3
+		LD A,E
+		CALL SOUTPRT
+		LD B,PS1F2
+		EX AF,AF'
+
+SOUTPRT		PUSH HL
+		LD HL,0X3FF0
+		EX (SP),HL
+		JP 0X3D2F
+
+SINPRT		PUSH HL
+		LD HL,0X3FF3
+		EX (SP),HL
+		JP 0X3D2F
+;==================óíÖçàÖ ëé ëåìä ÇàçíÄ=======================
