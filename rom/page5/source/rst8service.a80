@@ -60,11 +60,11 @@ MAGIC_COLOR	EQU BLUE<<3+WHITE+BR_INK
 		DUPL CONT_RST8-$,0XFF		;002C
 		JP NEXT_RST8
 
-;……•Ž„ ‚ ‘’€ˆ–“ 4 ‘ ‚Ž‡‚€’ŽŒ
+;[……•Ž„ ‚ ‘’€ˆ–“ 4 ‘ ‚Ž‡‚€’ŽŒ]
 		DUPL 0X0030-$,0XFF
 		JP CALL2PAGE			;0030
 
-;Ž„Ž‹†…ˆ… Ž€Ž’Šˆ €†€’ˆŸ MAGIC
+;[Ž„Ž‹†…ˆ… Ž€Ž’Šˆ €†€’ˆŸ MAGIC]
 		DUPL CONTINUE_MAGIC-$,0XFF	;0034
 		JP CONT_MAGIC
 
@@ -81,23 +81,23 @@ MAGIC_COLOR	EQU BLUE<<3+WHITE+BR_INK
 		EI
 		RET
 
-;‚›•Ž„ ˆ‡ RST8
+;[‚›•Ž„ ˆ‡ RST8]
 EXIT_RST8	LD BC,P4_EXIT_RST8		;€„…‘ ‚Ž‡‚€’€ ‚ Ž‘‹…„…‰ ‘’€ˆ–… RAM
 		PUSH BC
 		LD BC,WIN_P0
 		XOR A
 		JP ADR_SEL_ROM
 
-;‚•Ž„ RST 8 „‹Ÿ DOS
+;[‚•Ž„ RST 8 „‹Ÿ DOS]
 RST8_DOS	LD HL,ERST8_DOS
 		JP NEXT_RST
 
-;‚›•Ž„ RST 8 „‹Ÿ DOS
+;[‚›•Ž„ RST 8 „‹Ÿ DOS]
 ERST8_DOS	LD BC,WIN_A0
 		LD A,6
 		JP ADR_SEL_ROM
 
-;Ž€Ž’—ˆŠ MAGIC
+;[Ž€Ž’—ˆŠ MAGIC]
 		DUPL 0X0066-$,0XFF
 CONT_MAGIC	NOP
 		DI
@@ -141,7 +141,7 @@ CONT_MAGIC	NOP
 		DUPL 0X00FF-$,0XFF
 		DW 0X0038
 
-;’€‹ˆ–€ ……•Ž„Ž‚ € „€‰‚…› “‘’Ž‰‘’‚
+;[’€‹ˆ–€ ……•Ž„Ž‚ € „‹Ÿ RST 8]
 CODE_TABL	DW AY_PRN_INIT_			;40
 		DW AY_PRN_A__			;41
 		DW AY_PRN_TOKEN_		;42
@@ -169,7 +169,7 @@ ECODE_TABL
 
 ;===============
 
-;‚•Ž„ ‚ Ž‘Ž‚Ž… Œ…ž MAGIC …‘‹ˆ … ……•‚€—…Ž Ž’‹€„—ˆŠŽŒ
+;[‚•Ž„ ‚ Ž‘Ž‚Ž… Œ…ž MAGIC …‘‹ˆ … ……•‚€—…Ž Ž’‹€„—ˆŠŽŒ]
 CONT_MAGIC2	LD BC,CONF_128
 ;		LD A,(N_7FFD)
 		READ_7FFD
@@ -264,6 +264,7 @@ SELECT_MAPPER
 		LD L,A
 		RET
 
+;[RESTART_NMI]
 RESTART_NMI	PCALL CLS_TXTMODE8,P_ADDONS	;Ž—ˆ‘’Š€ ’…Š‘’ŒŽ„ŽƒŽ Š€€
 		EVOPORT WIN_A5,P_RST8		;‚Š‹ž—…ˆ… ’Ž‰ ‘’€ˆ–› ROM ‚Ž 2 ŽŠŽ Ž…–ˆŽ‚€ˆŸ
 		LD HL,CPU5+TEXT_PORTREGS
@@ -307,7 +308,7 @@ CONTMAGIC3	CALL RESTORE_AY			;‚Ž‘‘’€Ž‚‹…ˆ… €ƒˆ‘’Ž‚ AY
 		XOR A
 		JP ADR_SEL_ROM
 
-;Ž„Ž‹†…ˆ… Ž€Ž’Šˆ RST8
+;[Ž„Ž‹†…ˆ… Ž€Ž’Šˆ RST8]
 NEXT_RST8	LD HL,EXIT_RST8
 NEXT_RST	PUSH HL
 		LD (INTERNAL_SP),SP
@@ -339,7 +340,7 @@ NEXT_RST2	LD (PAGE4READ),A
 		EX DE,HL
 		JP (HL)
 
-;……ŠŽ”ˆƒ“€–ˆŸ ŽŠŽ Ž…–ˆŽ‚€ˆŸ
+;[……ŠŽ”ˆƒ“€–ˆŸ ŽŠŽ Ž…–ˆŽ‚€ˆŸ]
 ;‘’€ˆ–€ ……Œ…›• ‚ ŽŠŽ 1, Ž‘Ž‚€Ÿ €ŒŸ’œ ‚ ‡€‚ˆ‘ˆŒŽ‘’ˆ Ž’ €„…‘€ ‚ ŽŠ€ 2 ˆ 3
 RESETUP_WINS	EXX
 		LD BC,WIN_P5
@@ -403,7 +404,7 @@ RESETUPWINS3	INC HL
 		OUT (C),E			;’……œ ˆ˜…Œ ‚ Ž’ X7F7
 		RET
 
-;—’…ˆ… €‰’€ ˆ‡ Ž‹€‘’ˆ €ŒŸ’ˆ ‚›‡‚€˜…‰ Žƒˆ
+;[—’…ˆ… €‰’€ ˆ‡ Ž‹€‘’ˆ €ŒŸ’ˆ ‚›‡‚€˜…‰ Žƒˆ]
 P5_READ_BYTE	PUSH HL
 		PUSH DE
 		PUSH BC
@@ -484,7 +485,7 @@ LDIR_BYTES	EXX
 		XOR A
 		JP ADR_SEL_ROM
 
-;‚Ž‘‘’€Ž‚‹…ˆE ‘’€ˆ– ‚ ŽŠ€• Ž…–ˆŽ‚€ˆŸ 1 ˆ 3
+;[‚Ž‘‘’€Ž‚‹…ˆE ‘’€ˆ– ‚ ŽŠ€• Ž…–ˆŽ‚€ˆŸ 1 ˆ 3]
 MAIN_MEM13	LD HL,B1_CPU1			;„‹Ÿ 0 Œ€…€
 		CALL SELECT_MAPPER
 MAINMEM1	CALL MAINMEM3			;‚…“‹ˆ „‹Ÿ 1 ŽŠ€ Ž…–ˆŽ‚€ˆŸ
@@ -558,7 +559,7 @@ MAINMEM4	LD E,A
 		OUT (C),E
 INT_ONLY_RET	RET
 
-;ŠŽ‚…‘ˆŸ ‘—ˆ’€›• ‡€—…ˆ‰ ˆ‡ Ž’Ž‚ ŠŽ”ˆƒ“€–ˆˆ
+;[ŠŽ‚…‘ˆŸ ‘—ˆ’€›• ‡€—…ˆ‰ ˆ‡ Ž’Ž‚ ŠŽ”ˆƒ“€–ˆˆ]
 ;HL=€„…‘ Ž’Š“„€ €’œ ‘—ˆ’€›… ‡€—…ˆŸ „‹Ÿ ŠŽ‚…‘ˆˆ
 ;DE=ˆ’› 7,6 „‹Ÿ „…ŠŽ„ˆŽ‚€ˆŸ
 ;BC=Š“„€ ‘Š‹€„›‚€’œ „…ŠŽ„ˆŽ‚€Ž…
@@ -645,7 +646,7 @@ READ_KEYS
 
 SUPPORT_EXT	DB "TRDSCLFDITAPSPG$C FNTBMPROM",0
 
-;‘Ž’ˆŽ‚Š€ ‘ˆ‘Š€ €‰„…›• „ˆ…Š’Žˆ‰/”€‰‹Ž‚
+;[‘Ž’ˆŽ‚Š€ ‘ˆ‘Š€ €‰„…›• „ˆ…Š’Žˆ‰/”€‰‹Ž‚]
 SORT_FINDFILES	LD HL,(KOL_FOUNDED)
 		LD A,H
 		OR L
@@ -761,6 +762,7 @@ SORTIR07	EXX
 		LDIR
 		RET
 
+;[STORE_AY]
 STORE_AY	LD HL,AY_REGS
 		LD DE,0XFFC0
 		LD C,0XFD
@@ -782,6 +784,7 @@ STORE_AY2	LD B,D
 		JP P,STORE_AY2
 		RET
 
+;[RESTORE_AY]
 RESTORE_AY	LD HL,AY_REGS
 		LD DE,0XFFC0
 		LD C,0XFD
@@ -823,6 +826,7 @@ TXT_VERIFY_FONT	DB 0X16,0X18,0,0X17,0X22,"  VERIFY READING FONT ",0
 TXT_VERIFY_OK	DB " OK    ",0
 TXT_VERIFY_ERR	DB "ERROR  ",0
 
+;[Ž‚…Š€ ‘—ˆ’€ŽƒŽ ”Ž’€]
 		IF _CMP_FONT=1
 CMP_FONT	LD H,CMOS_BYTE_00
 		PCALL READCMOS,P_ADDONS
@@ -848,6 +852,7 @@ CMPFONT2	LD A,(DE)
 		RET
 		ENDIF
 
+;[CMP_SCRMODE]
 CMP_SCRMODE	LD HL,FLAGS
 		RES 7,(HL)
 		AND 7
@@ -856,6 +861,7 @@ CMP_SCRMODE	LD HL,FLAGS
 		SET 7,(HL)
 		RET
 
+;[SD_CARD_LOST]
 SD_CARD_LOST	LD HL,FLAGS_DRV
 		LD A,B_NEW_SD
 		OR (HL)
