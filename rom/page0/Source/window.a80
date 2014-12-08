@@ -52,6 +52,7 @@
 ;+4 H ˜ˆˆ€
 ;+5 K ŠŽ„ Š‹€‚ˆ˜ˆ
 
+;[ƒ……€–ˆŸ ’€‹ˆ–› €„…‘Ž‚ ‹ˆˆ‰ ZX Š€€]
 ADRTSC		LD B,0X18
 		LD DE,0X4000
 		LD HL,BUFTSC
@@ -73,6 +74,7 @@ ADRTSC1		LD (HL),E
 ADRTSC3		DJNZ ADRTSC2
 		RET
 
+;[CLS]
 CLS		LD HL,0
 		LD D,H
 		LD E,L
@@ -102,6 +104,7 @@ CLS2		REPT 0X20
 		OUT (0XFE),A
 		RET
 
+;[‘‹…„“ž™€Ÿ ‘’ŽŠ€ ZX Š€€]
 INC_H		INC H
 		LD A,H
 		AND 7
@@ -115,6 +118,7 @@ UMEHL1		LD A,H
 		LD H,A
 		RET	
 
+;[…„›„“™€Ÿ ‘’ŽŠ€ ZX Š€€]
 DEC_H		DEC H
 		LD A,H
 		AND 7
@@ -356,6 +360,7 @@ UMEHL		LD A,L
 ;		POP BC
 ;		RET
 
+;[ˆ‘Ž‚€ˆ… ŽŠ€ (GLUK)]
 DRAWWIN		LD C,(IX+_X_COORD)		;X
 		LD B,(IX+_Y_COORD)		;Y
 	        EX DE,HL
@@ -464,9 +469,11 @@ PRSP0		LD A,(HL)
 		DJNZ PRSP0
 		RET	
 
+;[…—€’œ ‚ HEX 16-ƒŽ —ˆ‘‹€]
 PRT_HL_		LD A,H
 		CALL PRT_A_
 		LD A,L
+;[…—€’œ ‚ HEX 8-ƒŽ —ˆ‘‹€]
 PRT_A_ 		PUSH AF
 		RRCA
 		RRCA
@@ -557,6 +564,7 @@ PRTX0		LD A,(HL)
 		JR Z,PRTX0
 		JR PRCR
 
+;[…—€’œ ’…Š‘’€]
 PRINT_MSG	PUSH HL
 		LD A,D
 		CALL 0X0E9E		;HL=ADRLN,D:=A
@@ -589,7 +597,7 @@ REST_COLCURS	LD DE,(COL_CURSOR)
 		LDIR
 		RET
 
-;ˆ‘Ž‚€‹Š€ –‚…’Ž‰ Ž‹Ž‘Šˆ ‚ Œ…ž
+;[ˆ‘Ž‚€‹Š€ –‚…’Ž‰ Ž‹Ž‘Šˆ ‚ Œ…ž]
 COLOR_CURSOR	LD DE,0
 COL_CURSOR	EQU $-2
 		LD HL,COLBUF
@@ -642,6 +650,7 @@ COLCURS2	LD C,(IX+_COLOR_CUR)
 ;		INC D
 ;		RET
 
+;[…—€’œ ‘ˆŒ‚Ž‹€]
 PRT_SYM		PUSH HL
 		PUSH DE
 		EX DE,HL
@@ -692,6 +701,7 @@ PRTSPECSYM	PUSH HL
 		INC D
 		RET
 
+;[CURSOR_UP]
 CURSOR_UP	LD C,(IX+_TEK_PKT_L)
 		LD B,(IX+_TEK_PKT_H)
 		LD A,B
@@ -761,6 +771,7 @@ DOWN5		POP DE
 		LD (LONG_NAME),A
 		JR DOWN4
 
+;[CURSOR_DOWN]
 CURSOR_DOWN	LD C,(IX+_TEK_PKT_L)
 		LD B,(IX+_TEK_PKT_H)
 		LD L,(IX+_NUM_KOL_L)
@@ -806,7 +817,7 @@ GET_XY		LD E,(IX+_NUM_KOL_L)
 		LD A,C
 		RET
 
-;……Œ…™…ˆ… € ‘’€ˆ–“ ‚‚…•
+;[……Œ…™…ˆ… € ‘’€ˆ–“ ‚‚…•]
 PAGEUP		CALL GET_XY
 		RET Z
 		XOR A
@@ -817,7 +828,7 @@ PDU0		LD D,A
 		LD E,A
 		JR PDUN0
 
-;……Œ…™…ˆ… € ‘’€ˆ–“ ‚ˆ‡
+;[……Œ…™…ˆ… € ‘’€ˆ–“ ‚ˆ‡]
 PAGEDN		CALL GET_XY
 		RET Z
 		EX DE,HL
@@ -890,6 +901,7 @@ PDUN0		LD (IX+_NUM_PKT),A
 ;		ENDM	
 ;		RET
 
+;[‚›—ˆ‘‹…ˆ… €„…‘€ ‚ ZX Š€…]
 ;H-X, L-Y
 ADRDIS		LD (ASD+1),A
 		LD A,L
@@ -916,7 +928,7 @@ ADRATR		LD A,H
 ASD		LD A,0
 		RET
 
-;“‘’€Ž‚Š€ €„…‘€ ˆ‘Ž‚€ˆŸ ˆ„ˆŠ€’ŽŽ‰ Ž‹Ž‘Šˆ
+;[“‘’€Ž‚Š€ €„…‘€ ˆ‘Ž‚€ˆŸ ˆ„ˆŠ€’ŽŽ‰ Ž‹Ž‘Šˆ]
 SETWIN_INDICAT	PUSH HL
 		PUSH DE
 		LD H,(IX+_X_COORD)
@@ -929,7 +941,7 @@ SETWIN_INDICAT	PUSH HL
 		POP HL
 		RET
 
-;ˆ‘Ž‚€ˆ… ‘‹…„“ž™…ƒŽ –‚…’ŽƒŽ Š‚€„€’ˆŠ€
+;[ˆ‘Ž‚€ˆ… ‘‹…„“ž™…ƒŽ –‚…’ŽƒŽ Š‚€„€’ˆŠ€]
 INC_INDICAT	PUSH HL
 		LD HL,0
 ADRSTARTIND	EQU $-2
@@ -939,7 +951,7 @@ ADRSTARTIND	EQU $-2
 		POP HL
 		RET
 
-;‚Ž‘‘’€Ž‚‹…ˆ… —€‘’ˆ Š€€ Ž„ ŽŠŽŒ
+;[‚Ž‘‘’€Ž‚‹…ˆ… —€‘’ˆ Š€€ Ž„ ŽŠŽŒ]
 WIN_RESTORE
 ;		BIT 3,(IX-1)
 ;		RET Z
@@ -947,7 +959,7 @@ WIN_RESTORE
 		LD A,2
 		JR RESAV
 
-;‘Ž•€…ˆ… —€‘’ˆ Š€€ Ž„ ŽŠŽŒ
+;[‘Ž•€…ˆ… —€‘’ˆ Š€€ Ž„ ŽŠŽŒ]
 WIN_STORE
 ;		BIT 3,(IX-1)
 ;		RET NZ

@@ -10,7 +10,7 @@
 		include macros.a80
 
 ;		     0123456789012345678
-NUMBER_VERS	EQU " EVO-DOS Ver 0.39  "
+NUMBER_VERS	EQU " EVO-DOS Ver 0.40  "
 ZASTV_X		EQU 7					;ŠŽŽ„ˆ€’€ X …—€’ˆ €„ˆ‘ˆ BETA128
 ZASTV_Y		EQU 7					;ŠŽŽ„ˆ€’€ Y …—€’ˆ €„ˆ‘ˆ BETA128
 ZASTV_PIX	EQU ZASTV_Y*0X20+0X4000+ZASTV_X+9	;€„…‘ ‚›‚Ž„€ ‘ŠŽ˜…›• “ƒŽ‹ŠŽ‚
@@ -5049,7 +5049,7 @@ sub_2F3A	ld a,3Ch
 loc_2F4F	ld a,c
 loc_2F50	RST32 _OUT_7F,__OUT_N_A+0X7F<<8
 ;		out (0x7f),a
-		call PAUSE725779T
+		call loc_3D2F;PAUSE725779T
 		ld a,0x18
 loc_2F57	RST32 _OUT_1F,__OUT_N_A+0X1F<<8
 ;		out (0x1f),a

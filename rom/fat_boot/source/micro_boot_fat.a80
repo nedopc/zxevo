@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 01.12.2014 savelij
+;LAST UPDATE: 02.12.2014 savelij
 
 		include ../../macros.a80
 		include ../../define.a80
@@ -21,6 +21,7 @@ MAS_SLA		EQU NUM_DEVICE-1		;1 Œ€‘Š€ „‹Ÿ MASTER/SLAVE
 LOADSCS1	EQU MAS_SLA-2			;2 €„…‘ ‚›‡›‚€…Œƒ „€‰‚…€
 LENGHT		EQU LOADSCS1-2			;2 „‹ˆ€ ”€‰‹€ ‚ €‰’€•
 
+;[’—Š€ ‚•„€]
 ;€ ‚•„…: A-Œ… ‚›€ƒ “‘’‰‘’‚€
 ;	BCDE-Œ… Š‹€‘’…€ ‡€“‘Š€…Œƒ ”€‰‹€
 		DI
@@ -142,7 +143,7 @@ READ06		CALL LOADLST
 		OR C
 		JR Z,RUNLOAD
 		LDIR
-;‡€“‘Š ‡€ƒ“†…ƒ
+;[‡€“‘Š ‡€ƒ“†…ƒ]
 RUNLOAD		LD HL,0X2758
 		EXX
 		LD IY,0X5C3A
@@ -163,24 +164,20 @@ LDIRBUF1	LD HL,BUF_512_+0X11
 		LDIR
 		JP RUNLOAD
 
-;……‘ Š“‘Š€ ˆ‡ “†… ‡€ƒ“†…ƒ ‘…Š’€, …‘‹ˆ ”€‰‹=501 €‰’ ˆ Œ……… 
+;[……‘ Š“‘Š€ ˆ‡ “†… ‡€ƒ“†…ƒ ‘…Š’€, …‘‹ˆ ”€‰‹=501 €‰’ ˆ Œ………]
 LD_ONES		LD HL,BUF_512_+0X11
 		LD DE,(BUF_512_+9)
 		LD BC,0X200-0X11
 		LDIR
 		RET
 
-;‡€ƒ“‡ˆ’œ ‘…Š’€ ‘ ‚›€ƒ “‘’‰‘’‚€
+;[‡€ƒ“‡ˆ’œ ‘…Š’€ ‘ ‚›€ƒ “‘’‰‘’‚€]
 LOADSCS		PUSH HL
 		LD HL,(LOADSCS1)
 		EX (SP),HL
 		RET
 
-;LX-Š‹ˆ—…‘’‚ ‘…Š’‚ „‹Ÿ ‡€ƒ“‡Šˆ
-;HX-€‡Œ… Š‹€‘’…€
-;LY-TEMP VAR
-;HY-‘Œ…™…ˆ… ‚ Š‹€‘’……
-
+;[—’…ˆ… ”€‰‹€]
 ;IXL-€‡Œ… Š‹€‘’…€ 
 ;IXH-TEMP VAR        
 ;IYL-Š‹ˆ—…‘’‚ ‘…Š’‚ „‹Ÿ ‡€ƒ“‡Šˆ
@@ -231,6 +228,7 @@ LDFILE4		LD A,IYL			;Š‹ˆ—…‘’‚ ‘…Š’‚ „‹Ÿ ‡€ƒ“‡Šˆ
 		JP NZ,LD_FILE
 		RET
 
+;[‚…Š€ Œ…€ Š‹€‘’…€]
 LST_CLS		LD A,(CAL_FAT)
 		AND A
 		JR NZ,LST_CL1
@@ -251,6 +249,7 @@ LST_CL2		LD HL,0X0FFF
 		SBC HL,DE
 		RET
 
+;[—’…ˆ… ‘‹…„“™…ƒ Š‹€‘’…€]
 RDFATZP		LD BC,(AFILCLS+2)
 		LD DE,(AFILCLS)
 		LD A,(CAL_FAT)
@@ -345,6 +344,7 @@ RDFATS3		LD A,D
 		LD D,A
 		JR RDFATS5
 
+;[…€‡‚€ˆ… Œ…€ Š‹€‘’…€]
 ;‚›—ˆ‘‹…ˆ… …€‹œƒ ‘…Š’€
 ;€ ‚•„… BCDE=Œ… FAT
 ;€ ‚›•„… BCDE=€„…‘ ‘…Š’€
@@ -385,6 +385,7 @@ REALSE3		RRCA
 		LD HL,FRSTDAT
 		JP BCDEHLP			;ˆ€‚ˆ‹ˆ ‘Œ…™…ˆ… ’ €—€‹€ €‡„…‹€
 
+;[BCDE/512]
 BCDE200		LD E,D
 		LD D,C
 		LD C,B
@@ -392,7 +393,7 @@ BCDE200		LD E,D
 		LD A,2
 		JR BCDE_A
 
-;BCDE>>A=BCDE
+;[BCDE>>A=BCDE]
 BCDE_A1		SRL B
 		RR C
 		RR D
@@ -401,7 +402,7 @@ BCDE_A		RRCA
 		JR NC,BCDE_A1
 		RET
 
-;(ADR)-BCDE=BCDE
+;[(ADR)-BCDE=BCDE]
 BCDEHLM		LD A,(HL)
 		INC HL
 		SUB E
@@ -419,7 +420,7 @@ BCDEHLM		LD A,(HL)
 		LD B,A
 		RET
 
-;(ADR)+BCDE=BCDE
+;[(ADR)+BCDE=BCDE]
 BCDEHLP		LD A,(HL)
 		INC HL
 		ADD A,E
@@ -437,7 +438,7 @@ BCDEHLP		LD A,(HL)
 		LD B,A
 		RET
 
-;HLDE+BC=HLDE
+;[HLDE+BC=HLDE]
 HLDEPBC		EX DE,HL
 		ADD HL,BC
 		EX DE,HL
@@ -445,7 +446,7 @@ HLDEPBC		EX DE,HL
 		ADC HL,BC
 		RET
 
-;‡€ƒ“†€…Œ ‘…Š’ ‚ “”…
+;[‡€ƒ“‡Š€ ‘…Š’€ ‚ “”…]
 LOADLST		LD HL,BUF_512_
 		PUSH HL
 		LD A,1
@@ -453,11 +454,11 @@ LOADLST		LD HL,BUF_512_
 		POP HL
 		RET
 
+;[INCLUDES]
 		include drivers/drv_zc.a80
 		include drivers/drv_neogs.a80
 		include drivers/drv_nemo.a80
 		include drivers/drv_smuc.a80
 		include drivers/drv_divide.a80
 		include drivers/drv_profi.a80
-
 		include spg2_run.a80
