@@ -8,6 +8,9 @@
  *
  * @subsection current Current version.
  *
+ * - Add any (left or right) Ctrl,Alt keys and exclude mapped Ctrl,Alt keys from Ctrl-Alt-Del functionality (reset).
+ * - Add reading state of LCTRL,RCTRL,LALT,RALT,LSHIFT,RSHIFT,F12 keyboard states from RTC register D (bits 0-6).
+ * - Add reading state of NUM LOCK LED from RTC register C (bit 0).
  * - Fix update_keys function.
  * - Add EEPROM access via RTC interface.
  * - Add reset PS2 keyboard after error.
@@ -148,8 +151,8 @@ extern volatile UBYTE modes_register;
 /** CAPS LED mode (0 - off/1 - on). */
 #define MODE_CAPSLED 0x04
 /** 60Hz mode (0 - 320 lines / 1 - 262 lines). */
-#define MODES_RASTER 0x30
-#define MODE_VIDEO_MASK (MODE_VGA|MODES_RASTER)
+#define MODE_60HZ 0x10
+#define MODE_VIDEO_MASK (MODE_VGA|MODE_60HZ)
 
 /** Type extensions of gluk registers. */
 extern volatile UBYTE ext_type_gluk;

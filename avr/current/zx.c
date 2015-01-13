@@ -22,7 +22,9 @@ volatile UBYTE zx_mouse_x;
 volatile UBYTE zx_mouse_y;
 
 // PS/2 keyboard control keys status (for additional functons)
-volatile UBYTE kb_status;
+volatile UBYTE kb_ctrl_status;
+// PS/2 keyboard control keys mapped to zx keyboard (mapped keys not used in additional functions)
+volatile UBYTE kb_ctrl_mapped;
 
 #define ZX_FIFO_SIZE 256 /* do not change this since it must be exactly byte-wise */
 
@@ -83,6 +85,14 @@ void zx_task(UBYTE operation) // zx task, tracks when there is need to send new 
 
 		zx_clr_kb();
 
+		//check control keys whoes mapped to zx keyboard
+		//(mapped keys not used in additional functions)
+		kb_ctrl_mapped = 0;
+		if( kbmap_get(0x14,0).tw != (UWORD)NO_KEY+(((UWORD)NO_KEY)<<8) ) kb_ctrl_mapped |= KB_LCTRL_MASK;
+		if( kbmap_get(0x14,1).tw != (UWORD)NO_KEY+(((UWORD)NO_KEY)<<8) ) kb_ctrl_mapped |= KB_RCTRL_MASK;
+		if(	kbmap_get(0x11,0).tw != (UWORD)NO_KEY+(((UWORD)NO_KEY)<<8) ) kb_ctrl_mapped |= KB_LALT_MASK;
+		if( kbmap_get(0x11,1).tw != (UWORD)NO_KEY+(((UWORD)NO_KEY)<<8) ) kb_ctrl_mapped |= KB_RALT_MASK;
+	   /*
 		//detect if CTRL-ALT-DEL keys mapped
 //		if ( ((kbmap[0x14*2] == NO_KEY) && (kbmap[0x14*2+1] == NO_KEY)) ||
 //			 ((kbmap[0x11*2] == NO_KEY) && (kbmap[0x11*2+1] == NO_KEY)) ||
@@ -92,13 +102,14 @@ void zx_task(UBYTE operation) // zx task, tracks when there is need to send new 
 			(kbmap_get(0x11,1).tw == (UWORD)NO_KEY+(((UWORD)NO_KEY)<<8)) )
 		{
 			//not mapped
-			kb_status &= ~KB_CTRL_ALT_DEL_MAPPED_MASK;
+			kb_ctrl_status &= ~KB_CTRL_ALT_DEL_MAPPED_MASK;
 		}
 		else
 		{
 			//mapped
-			kb_status |= KB_CTRL_ALT_DEL_MAPPED_MASK;
+			kb_ctrl_status |= KB_CTRL_ALT_DEL_MAPPED_MASK;
 		}
+		*/
 	}
 	else /*if(operation==ZX_TASK_WORK)*/
 
@@ -308,7 +319,7 @@ void zx_clr_kb(void)
 		zx_counters[i] = 0;
 	}
 
-	kb_status = 0;
+	kb_ctrl_status = 0;
 }
 
 void to_zx(UBYTE scancode, UBYTE was_E0, UBYTE was_release)
@@ -326,10 +337,15 @@ void to_zx(UBYTE scancode, UBYTE was_E0, UBYTE was_release)
 		//additional functionality from ps/2 keyboard
 		switch( scancode )
 		{
-			//Alt Gr
+			//Right Alt (Alt Gr)
 			case  0x11:
-				if ( !was_release ) kb_status |= KB_ALT_MASK;
-				else kb_status &= ~KB_ALT_MASK;
+				if ( !was_release ) kb_ctrl_status |= KB_RALT_MASK;
+				else kb_ctrl_status &= ~KB_RALT_MASK;
+				break;
+			//Right Ctrl
+			case  0x14:
+				if ( !was_release ) kb_ctrl_status |= KB_RCTRL_MASK;
+				else kb_ctrl_status &= ~KB_RCTRL_MASK;
 				break;
 			//Print Screen
 			case 0x7C:
@@ -349,8 +365,9 @@ void to_zx(UBYTE scancode, UBYTE was_E0, UBYTE was_release)
 			case 0x71:
 				//Ctrl-Alt-Del pressed
 				if ( ( !was_release ) &&
-					 ( !(kb_status & KB_CTRL_ALT_DEL_MAPPED_MASK) ) &&
-					 ( (kb_status & (KB_CTRL_MASK|KB_ALT_MASK)) == (KB_CTRL_MASK|KB_ALT_MASK) ) )
+					 /*( !(kb_status & KB_CTRL_ALT_DEL_MAPPED_MASK) ) &&*/
+					 ( (kb_ctrl_status&(~kb_ctrl_mapped)&(KB_LCTRL_MASK|KB_RCTRL_MASK)) !=0 ) &&
+					 ( (kb_ctrl_status&(~kb_ctrl_mapped)&(KB_LALT_MASK|KB_RALT_MASK)) !=0 ) )
 				{
 					//hard reset
 					flags_register |= FLAG_HARD_RESET;
@@ -369,14 +386,7 @@ void to_zx(UBYTE scancode, UBYTE was_E0, UBYTE was_release)
 				//check key of vga mode switcher
 				if ( !was_release )
 				{
-					UBYTE m = modes_register | (~MODE_VIDEO_MASK);
-					m++; // increment bits not ORed with 1
-
-					m ^= modes_register;
-					m &= MODE_VIDEO_MASK; // prepare modes change mask for zx_mode_switcher()
-
-					zx_mode_switcher(m);
-					/*if (kb_status & (KB_LSHIFT_MASK | KB_RSHIFT_MASK))
+					if (kb_ctrl_status & (KB_LSHIFT_MASK | KB_RSHIFT_MASK))
 					{
 						UBYTE m=~modes_register&MODE_60HZ;
 						if (m==0) m|=MODE_VGA;
@@ -387,7 +397,7 @@ void to_zx(UBYTE scancode, UBYTE was_E0, UBYTE was_release)
 						UBYTE m=modes_register&MODE_60HZ;
 						if (m==0) m|=MODE_VGA;
 						zx_mode_switcher(m);
-					}*/
+					}
 				}
 				break;
 			//Num Lock
@@ -397,28 +407,28 @@ void to_zx(UBYTE scancode, UBYTE was_E0, UBYTE was_release)
 				break;
 			//Left Shift
 			case  0x12:
-				if ( !was_release ) kb_status |= KB_LSHIFT_MASK;
-				else kb_status &= ~KB_LSHIFT_MASK;
+				if ( !was_release ) kb_ctrl_status |= KB_LSHIFT_MASK;
+				else kb_ctrl_status &= ~KB_LSHIFT_MASK;
 				break;
 			//Right Shift
 			case  0x59:
-				if ( !was_release ) kb_status |= KB_RSHIFT_MASK;
-				else kb_status &= ~KB_RSHIFT_MASK;
+				if ( !was_release ) kb_ctrl_status |= KB_RSHIFT_MASK;
+				else kb_ctrl_status &= ~KB_RSHIFT_MASK;
 				break;
 			//Left Ctrl
 			case  0x14:
-				if ( !was_release ) kb_status |= KB_CTRL_MASK;
-				else kb_status &= ~KB_CTRL_MASK;
+				if ( !was_release ) kb_ctrl_status |= KB_LCTRL_MASK;
+				else kb_ctrl_status &= ~KB_LCTRL_MASK;
 				break;
 			//Left Alt
 			case  0x11:
-				if ( !was_release ) kb_status |= KB_ALT_MASK;
-				else kb_status &= ~KB_ALT_MASK;
+				if ( !was_release ) kb_ctrl_status |= KB_LALT_MASK;
+				else kb_ctrl_status &= ~KB_LALT_MASK;
 				break;
 			//F12
 			case  0x07:
-				if ( !was_release ) kb_status |= KB_F12_MASK;
-				else kb_status &= ~KB_F12_MASK;
+				if ( !was_release ) kb_ctrl_status |= KB_F12_MASK;
+				else kb_ctrl_status &= ~KB_F12_MASK;
 				break;
 			//keypad '+','-','*' - set ps2mouse resolution
 			case  0x79:
