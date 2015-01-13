@@ -1,0 +1,8 @@
+#!/bin/bash
+
+vcom -novopt -f vcom.opt
+vlog -sv -novopt -incr +define+C35MHZ=1 +define+CCONTEND=1 +define+M48K=1 \
+     +define+START_LOAD=1 +define+START_ADDR=25000 +define+START_LEN=40500 \
+     '+define+START_NAME="dw5.bin"' \
+     -f vlog.opt
+

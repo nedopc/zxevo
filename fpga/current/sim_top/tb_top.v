@@ -41,8 +41,13 @@ module tb;
 //	wire [15:0] za;
 //	wire [ 7:0] zd;
 
-	wire [ 7:0] zd_dut_to_z80;
+	tri1 [ 7:0] zd_dut_to_z80;
 //	wire [ 7:0] zd_z80_to_dut;
+
+
+	reg [15:0] reset_pc = 16'h0000;
+	reg [15:0] reset_sp = 16'hFFFF;
+
 
 
 	wire csrom, romoe_n, romwe_n;
@@ -54,7 +59,7 @@ module tb;
 	wire rwe_n,rucas_n,rlcas_n,rras0_n,rras1_n;
 
 
-	tri1 [15:0] ide_d;
+	tri0 [15:0] ide_d;
 
 
 	wire hsync,vsync;
@@ -200,7 +205,9 @@ module tb;
 	          .A(za),
 //	          .D(zd),
 	          .D_I(zd_dut_to_z80),
-	          .D_O(zd)
+	          .D_O(zd),
+		  .ResetPC(reset_pc),
+		  .ResetSP(reset_sp)
 	        );
 
 	// now make delayed versions of signals
@@ -498,6 +505,110 @@ module tb;
 `endif
 
 
+	// raster type
+`ifdef CCONTEND
+	initial
+		force tb.DUT.modes_raster = 2'b10;
+`endif
+
+
+
+
+	// start in 48k mode
+`ifdef M48K
+	initial
+	begin : force_48k_mode
+
+		int i;
+		int fd;
+		
+		force tb.DUT.zports.atm_turbo = 1'b0;
+		force tb.DUT.zports.atm_pen = 1'b0;
+		force tb.DUT.zports.atm_cpm_n = 1'b1;
+		force tb.DUT.zports.atm_pen2 = 1'b0;
+		force tb.DUT.zports.pent1m_ram0_0 = 1'b0;
+		force tb.DUT.zports.pent1m_1m_on = 1'b0;
+		force tb.DUT.zports.pent1m_page = 'd0;
+		force tb.DUT.zports.pent1m_ROM = 1'b1;
+
+		force tb.DUT.zdos.dos = 1'b0;
+
+		force tb.DUT.page[0] = 'd0;
+		force tb.DUT.page[1] = 'd5;
+		force tb.DUT.page[2] = 'd2;
+		force tb.DUT.page[3] = 'd0;
+		force tb.DUT.romnram[0] = 1'b1;
+		force tb.DUT.romnram[1] = 1'b0;
+		force tb.DUT.romnram[2] = 1'b0;
+		force tb.DUT.romnram[3] = 1'b0;
+		
+		force tb.DUT.peff7[5] = 1'b0;
+		force tb.DUT.peff7[0] = 1'b0;
+		force tb.DUT.zports.atm_scr_mode = 3'b011;
+		force tb.DUT.p7ffd[3] = 1'b0;
+
+		for(i=0;i<512;i=i+1)
+		begin : set_palette //                                            R                               G                              B
+			tb.DUT.video_top.video_palframe.palette[i] = { (i[1]?{1'b1,i[3]}:2'b00), 1'b0, (i[2]?{1'b1,i[3]}:2'b00), 1'b0, (i[0]?{1'b1,i[3]}:2'b00) };
+		end
+
+		#1.0;
+
+		fd = $fopen("48.rom","rb");
+		if( 16384!=$fread(tb.romko.zxevo_rom.mem,fd) )
+		begin
+			$display("Couldn't load 48k ROM!\n");
+			$stop;
+		end
+		$fclose(fd);
+	end
+`endif
+
+
+	// load and start some code after we've reached "1982 Sinclair research ltd"
+`ifdef START_LOAD
+	initial
+	begin
+		int i,fd;
+		logic [7:0] ldbyte;
+
+		wait( za==16'h15e0 && zmreq_n==1'b0 && zrd_n == 1'b0 );
+		
+		$display("loading and starting...");
+
+		fd = $fopen(`START_NAME,"rb");
+		for(i=`START_ADDR;i<`START_ADDR+`START_LEN;i=i+1)
+		begin
+			if( 1!=$fread(ldbyte,fd) )
+			begin
+				$display("can't read byte from input file!");
+				$stop;
+			end
+
+			put_byte_48k(i,ldbyte);
+		end
+		$fclose(fd);
+
+		$display("load ok!");
+
+		reset_pc = 16'h9718;
+		reset_sp = 16'h6000;
+		@(posedge clkz_in);
+		force tb.zrst_n = 1'b0;
+		repeat(3) @(posedge clkz_in);
+		release tb.zrst_n;
+		@(posedge clkz_in);
+		reset_pc = 16'h0000;
+		reset_sp = 16'hFFFF;
+	end
+`endif
+
+
+
+
+
+
+
 
 
 
@@ -510,11 +621,6 @@ module tb;
 //
 //		release tb.DUT.dramarb.bw;
 //	end
-
-
-
-
-
 
 
 
@@ -549,8 +655,6 @@ module tb;
 */
 
 
-
-
 	// init dram
 	initial
 	begin : init_dram
@@ -563,6 +667,35 @@ module tb;
 	end
 
 
+
+
+
+
+	// cmos simulation
+	wire [7:0] cmos_addr;
+	wire [7:0] cmos_read;
+	wire [7:0] cmos_write;
+	wire       cmos_rnw;
+	wire       cmos_req;
+
+	cmosemu cmosemu
+	(
+		.zclk(clkz_in),
+
+		.cmos_req  (cmos_req  ),
+		.cmos_addr (cmos_addr ),
+		.cmos_rnw  (cmos_rnw  ),
+		.cmos_read (cmos_read ),
+		.cmos_write(cmos_write)
+	);
+
+	assign cmos_req   = tb.DUT.wait_start_gluclock;
+	assign cmos_rnw   = tb.DUT.wait_rnw;
+	assign cmos_addr  = tb.DUT.gluclock_addr;
+	assign cmos_write = tb.DUT.wait_write;
+
+	always @*
+		force tb.DUT.wait_read = cmos_read;
 
 
 
@@ -598,16 +731,16 @@ module tb;
 
 
 
-	// set up breakpoint
-	initial
-	begin
-		#(650_000_000); // wait 650ms = 650*1000*1000 ns
-
-		@(posedge fclk);
-
-		tb.DUT.zports.brk_ena  = 1'b1;
-		tb.DUT.zports.brk_addr = 16'h0041;
-	end
+//	// set up breakpoint
+//	initial
+//	begin
+//		#(650_000_000); // wait 650ms = 650*1000*1000 ns
+//
+//		@(posedge fclk);
+//
+//		tb.DUT.zports.brk_ena  = 1'b1;
+//		tb.DUT.zports.brk_addr = 16'h0041;
+//	end
 
 
 
@@ -644,6 +777,18 @@ module tb;
 
 	endtask
 
+	task put_byte_48k
+	(
+		input [15:0] addr,
+		input [ 7:0] data
+	);
+
+		case( addr[15:14] )
+			2'b01: put_byte(addr-16'h4000 + 22'h14000,data);
+			2'b10: put_byte(addr-16'h8000 + 22'h08000,data);
+			2'b11: put_byte(addr-16'hc000 + 22'h00000,data);
+		endcase
+	endtask
 
 
 

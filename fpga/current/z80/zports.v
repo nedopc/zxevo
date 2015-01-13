@@ -230,7 +230,6 @@ module zports(
 
 	wire [7:0] loa;
 
-	wire portfe_wr;
 
 
 
@@ -278,6 +277,7 @@ module zports(
 	reg [5:0] vgFF;
 
 
+	reg [7:0] up_lastwritten;
 
 
 	assign shadow = dos || shadow_en_reg;
@@ -292,7 +292,7 @@ module zports(
 	always @*
 	begin
 		if( (loa==PORTFE) || (loa==PORTF6) ||
-		    (loa==PORTFD) ||
+		    (loa==PORTFD) || (loa==8'hFC)  ||
 
 		    `IS_PORT_NIDE(loa) ||
 //		    (loa==NIDE10) || (loa==NIDE11) || (loa==NIDE30) || (loa==NIDE50) || (loa==NIDE70) ||
@@ -452,8 +452,7 @@ module zports(
 
 
 
-	assign portfe_wr    = (((loa==PORTFE) || (loa==PORTF6)) && port_wr);
-	assign portfd_wr    = ( (loa==PORTFD) && port_wr);
+	assign portfd_wr    = ( (loa==PORTFD || loa==8'hFC) && port_wr);
 
 	// F7 ports (like EFF7) are accessible in shadow mode but at addresses like EEF7, DEF7, BEF7 so that
 	// there are no conflicts in shadow mode with ATM xFF7 and x7F7 ports
@@ -494,7 +493,7 @@ module zports(
 	//border port FE
 	wire portwe_wr_fclk;
 
-	assign portfe_wr_fclk = (((loa==PORTFE) || (loa==PORTF6)) && port_wr_fclk);
+	assign portfe_wr_fclk = (((loa==PORTFE) || (loa==PORTF6) || (loa==8'hFC)) && port_wr_fclk);
 
 	always @(posedge fclk)
 	if( portfe_wr_fclk )
@@ -949,7 +948,6 @@ module zports(
 
 
 	// ULAPLUS ports
-	reg [7:0] up_lastwritten;
 	reg up_select; // 0 -- ena/dis, 1 -- palette write
 	//
 	wire up_wr = port_wr_fclk && (loa==ULAPLUS);

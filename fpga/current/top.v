@@ -181,7 +181,11 @@ module top(
 	// config signals
 	wire [7:0] not_used;
 	wire cfg_vga_on;
-	wire mode_60hz;
+	//
+	wire [1:0] modes_raster;
+	wire       mode_contend_type = 1'b0; // 48/128/+2 or +2a/+3 TODO: take these signals from somewhere
+	wire       mode_contend_ena  = 1'b1; // contention enable
+	wire       contend;
 
 	// nmi signals
 	wire gen_nmi;
@@ -357,11 +361,37 @@ module top(
 
 	zclock zclock
 	(
-		.fclk(fclk), .rst_n(rst_n), .zclk(zclk), .rfsh_n(rfsh_n), .zclk_out(clkz_out),
-		.zpos(zpos), .zneg(zneg),
-		.turbo( {atm_turbo,~(peff7[4])} ), .pre_cend(pre_cend), .cbeg(cbeg),
-		.zclk_stall( cpu_stall | (|zclk_stall) ), .int_turbo(int_turbo),
-		.external_port(external_port), .iorq_n(iorq_n), .m1_n(m1_n)
+		.fclk (fclk ),
+		.zclk (zclk ),
+		.rst_n(rst_n),
+
+		.a(a),
+
+		.mreq_n(mreq_n),
+		.iorq_n(iorq_n),
+		.m1_n  (m1_n  ),
+		.rfsh_n(rfsh_n),
+
+		.modes_raster     (modes_raster     ),
+		.mode_contend_type(mode_contend_type),
+		.mode_contend_ena (mode_contend_ena ),
+		.mode_7ffd_bits   (p7ffd[2:0]       ),
+		.contend          (contend          ),
+
+		.zclk_out(clkz_out),
+
+		.zpos(zpos),
+		.zneg(zneg),
+
+
+		.pre_cend(pre_cend),
+		.cbeg    (cbeg    ),
+
+		.zclk_stall( cpu_stall | (|zclk_stall) ),
+		.turbo     ( {atm_turbo,~(peff7[4])}   ),
+		.int_turbo (int_turbo                  ),
+		
+		.external_port(external_port)
 	);
 
 
@@ -433,7 +463,6 @@ module top(
 
 		for(i=0;i<4;i=i+1)
 		begin : instantiate_atm_pagers
-
 			atm_pager #( .ADDR(i) ) atm_pager
 			(
 				.rst_n(rst_n),
@@ -468,7 +497,7 @@ module top(
                                 
 				.page     (page[i]     ),
 				.romnram  (romnram[i]  ),
-                        	.wrdisable(wrdisable[i]),        
+                        	.wrdisable(wrdisable[i]),
                                 
 				.rd_page0  (rd_pages[i  ]),
 				.rd_page1  (rd_pages[i+4]),
@@ -477,6 +506,7 @@ module top(
 				.rd_dos7ffd   ( {rd_dos7ffd   [i+4], rd_dos7ffd   [i]} ),
 				.rd_wrdisables( {rd_wrdisables[i+4], rd_wrdisables[i]} )
 			);
+
 		end
 
 	endgenerate
@@ -640,8 +670,8 @@ module top(
 	                 .cpu_rddata(cpu_rddata),
 	                 .cpu_strobe(cpu_strobe) );
 
-	video_top video_top(
-
+	video_top video_top
+	(
 		.clk(fclk),
 
 		.vred(vred),
@@ -659,7 +689,11 @@ module top(
 		.scr_page(p7ffd[3]),
 
 		.vga_on(cfg_vga_on),
-		.mode_60hz(mode_60hz),
+
+		.modes_raster     (modes_raster     ),
+		.mode_contend_type(mode_contend_type),
+		
+		.contend(contend),
 
 		.cbeg     (cbeg     ),
 		.post_cbeg(post_cbeg),
@@ -709,7 +743,7 @@ module top(
 		.wait_read(wait_read),
 		.wait_rnw(wait_rnw),
 		.wait_end(wait_end),
-		.config0( { not_used[7:5], mode_60hz, beeper_mux, tape_read, set_nmi[0], cfg_vga_on} ),
+		.config0( { not_used[7:6], modes_raster, beeper_mux, tape_read, set_nmi[0], cfg_vga_on} ),
 
 		.sd_lock_out(avr_lock_claim),
 		.sd_lock_in (avr_lock_grant),
@@ -757,11 +791,8 @@ module top(
 	               .wait_start_comport (wait_start_comport ),
 	               .wait_rnw  (wait_rnw  ),
 	               .wait_write(wait_write),
-`ifndef SIMULATE
 	               .wait_read (wait_read ),
-`else
-	               .wait_read(8'hFF),
-`endif
+		
 		.atmF7_wr_fclk(atmF7_wr_fclk),
 
 		.atm_scr_mode(atm_scr_mode),

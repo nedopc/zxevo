@@ -13,11 +13,11 @@ all : $(APPL) $(MODELLIB) Makefile
 #all : $(MODELLIB) Makefile
 
 clean:
-	rm $(APPLICATION)
+	rm $(APPL) $(MODELLIB)
 
 $(MODELLIB) : $(SRCLIB) sndpix.h Makefile
 	gcc -m32 -O2 -g -shared -Bsymbolic -fPIC -I$(PLI_INCLUDE) $(SRCLIB) -o $(MODELLIB)
 
 $(APPL) : $(SRCAPP) Makefile
-	gcc -O2 -g -L/usr/lib -lSDL $(SRCAPP) -o $(APPL)
+	gcc -O2 -g  $(SRCAPP) -o $(APPL) -lSDL
 
