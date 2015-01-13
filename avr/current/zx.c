@@ -386,7 +386,15 @@ void to_zx(UBYTE scancode, UBYTE was_E0, UBYTE was_release)
 				//check key of vga mode switcher
 				if ( !was_release )
 				{
-					if (kb_ctrl_status & (KB_LSHIFT_MASK | KB_RSHIFT_MASK))
+					UBYTE m = modes_register | (~MODE_VIDEO_MASK);
+					m++; // increment bits not ORed with 1
+
+					m ^= modes_register;
+					m &= MODE_VIDEO_MASK; // prepare modes change mask for zx_mode_switcher()
+
+					zx_mode_switcher(m);
+				
+					/*if (kb_ctrl_status & (KB_LSHIFT_MASK | KB_RSHIFT_MASK))
 					{
 						UBYTE m=~modes_register&MODE_60HZ;
 						if (m==0) m|=MODE_VGA;
@@ -397,7 +405,7 @@ void to_zx(UBYTE scancode, UBYTE was_E0, UBYTE was_release)
 						UBYTE m=modes_register&MODE_60HZ;
 						if (m==0) m|=MODE_VGA;
 						zx_mode_switcher(m);
-					}
+					}*/
 				}
 				break;
 			//Num Lock
