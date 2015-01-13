@@ -87,7 +87,7 @@ module atm_pager(
 
 	reg [ 1:0] wrdisables; // for each map
 
-	reg mreq_n_reg, rd_n_reg, m1_n_reg;
+ 	reg mreq_n_reg, rd_n_reg, m1_n_reg;
 
 	wire dos_exec_stb, ram_exec_stb;
 
@@ -105,6 +105,7 @@ module atm_pager(
 	assign rd_wrdisables = wrdisables;
 
 
+
 	// paging function, does not set pages, ramnrom, dos_7ffd
 	//
 	always @(posedge fclk)
@@ -120,7 +121,7 @@ module atm_pager(
 			if( (ADDR==2'b00) && (pent1m_ram0_0 || in_nmi) ) // pent ram0 OR nmi
 			begin
 				wrdisable <= 1'b0;
-				
+
 				if( in_nmi )
 				begin
 					romnram <= 1'b0;
@@ -135,7 +136,7 @@ module atm_pager(
 			else
 			begin
 				wrdisable <= wrdisables[ pent1m_ROM ];
-				
+
 				romnram <= ~ramnrom[ pent1m_ROM ];
 
 				if( dos_7ffd[ pent1m_ROM ] ) // 7ffd memmap switching
@@ -176,7 +177,7 @@ module atm_pager(
 	end
 	else if( atmF7_wr )
 	begin
-		if( za[15:14]==ADDR )
+ 		if( za[15:14]==ADDR )
 		case( {za[11],za[10]} )
 			2'b10: begin // xxBF7 port -- ROM/RAM readonly bit
 				wrdisables[ pent1m_ROM ] <= zd[0];
@@ -187,7 +188,7 @@ module atm_pager(
 			end
 		endcase
 	end
-	//
+	//	
 	always @(posedge fclk)
 	if( atmF7_wr )
 	begin
@@ -211,19 +212,6 @@ module atm_pager(
 
 		endcase
 	end
-
-/*			if( za[11] ) // xff7 ports - 1 meg
-			begin
-				pages   [ pent1m_ROM ] <= ~{ 2'b11, zd[5:0] };
-				ramnrom [ pent1m_ROM ] <= zd[6];
-				dos_7ffd[ pent1m_ROM ] <= zd[7];
-			end
-			else // x7f7 ports - 4 meg ram
-			begin
-				pages   [ pent1m_ROM ] <= ~zd;
-				ramnrom [ pent1m_ROM ] <= 1'b1; // RAM on
-				// dos_7ffd - UNCHANGED!!! (possibility to use 7ffd 1m and 128k addressing in the whole 4m!)
-			end*/
 
 
 	// DOS turn on/turn off
