@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 22.11.2014 savelij
+;LAST UPDATE: 11.03.2015 savelij
 
 		include ../../macros.a80
 		include ../../define.a80
@@ -10,7 +10,7 @@
 		include macros.a80
 
 ;		     0123456789012345678
-NUMBER_VERS	EQU " EVO-DOS Ver 0.40  "
+NUMBER_VERS	EQU " EVO-DOS Ver 0.41  "
 ZASTV_X		EQU 7					;ŠŽŽ„ˆ€’€ X …—€’ˆ €„ˆ‘ˆ BETA128
 ZASTV_Y		EQU 7					;ŠŽŽ„ˆ€’€ Y …—€’ˆ €„ˆ‘ˆ BETA128
 ZASTV_PIX	EQU ZASTV_Y*0X20+0X4000+ZASTV_X+9	;€„…‘ ‚›‚Ž„€ ‘ŠŽ˜…›• “ƒŽ‹ŠŽ‚
@@ -417,7 +417,7 @@ loc_30A		ld a,(hl)
 		and 0x80
 		ld a,b
 		jr z,loc_31A
-		cp 0xfe
+		cp __RETURN
 		jr z,loc_31A
 		push af
 		call ACTIV_DEF_DSK	; ‚›Ž	„ˆ‘ŠŽ‚Ž„€ Ž “ŒŽ‹—€ˆž
@@ -491,7 +491,7 @@ GOTO_END	jp END_COMAND
 ; …—€’œ ‘ŽŽ™…ˆŸ Ž Ž˜ˆŠ…
 PRINT_ERROR	push af
 		ld a,(TRD_5D0E)		; #FE-€Ž’€…’ BASIC,ˆ€—… TR-DOS
-		cp 0xfe
+		cp __RETURN
 		jr nz,CP4PRINT_HEAD
 		pop af
 		ret
@@ -3169,7 +3169,7 @@ loc_2113	ld c,(hl)
 loc_211C	pop af
 		ret
 
-;“„€‹…ˆ… ‚‚…„…Ž‰ ‘’ŽŠˆ Ž‘‹… ‚›Ž‹…ˆŸ ŠŽŒ€„›
+;[“„€‹…ˆ… ‚‚…„…Ž‰ ‘’ŽŠˆ Ž‘‹… ‚›Ž‹…ˆŸ ŠŽŒ€„›]
 CLRBUF_EDITOR	CALL CLRBUF_EDITOR2
 		ld (hl),0x0d
 		ld (K_CUR),hl
@@ -5221,7 +5221,10 @@ loc_3057	call CMP_SPECSYM
 		rst 0x20
 		dw 0x19dd
 		push bc
-		call CLRBUF_EDITOR1
+;[???]
+;		call CLRBUF_EDITOR1
+		rst 20h
+		dw 19E8h
 		pop bc
 		ld a,(TRD_5CD6)		; #FF-ŠŽŒ€„€ ˆŸ’€ ‘ˆ’€Š‘ˆ—…‘ŠˆŒ €€‹ˆ‡€’ŽŽŒ
 		or a

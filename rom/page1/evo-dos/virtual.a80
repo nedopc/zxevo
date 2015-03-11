@@ -1,9 +1,9 @@
 
-;LAST UPDATE: 21.11.2014 savelij
+;LAST UPDATE: 10.03.2015 savelij
 
 		DB 0XFF				;DCU
 
-;ŠŽˆŽ‚€ˆ… 256 €‰’
+;[ŠŽˆŽ‚€ˆ… 256 €‰’]
 COPY_BLOCK	REPT 128			;ŠŽˆŽ‚€ˆ… ‹ŽŠ€ 256 €‰’
 		LDI
 		ENDM
@@ -43,32 +43,32 @@ WWRITE_SEC_	EQU 0X14
 WREAD_SEC_	EQU 0X15
 WINI_RET	EQU 0X16
 
-;‘ ‚Ž‡‚€’ŽŒ ‚ Œ…‘’Ž ‚›‡Ž‚€
-W_DATA		DW W_OUT1F			;00
-		DW W_OUT3F			;01
-		DW W_OUT5F			;02
-		DW W_OUT7F			;03
-		DW W_OUTFF			;04
-		DW W_OUTI			;05
-		DW W_IN1F			;06
-		DW W_IN3F			;07
-		DW W_IN5F			;08
-		DW W_IN7F			;09
-		DW W_INFF			;0A
-		DW W_INI			;0B
-		DW W_OUTCD			;0C
-		DW W_INHC			;0D
-		DW READ_SEC_1			;0E
+;[‘ ‚Ž‡‚€’ŽŒ ‚ Œ…‘’Ž ‚›‡Ž‚€]
+W_DATA		DW W_OUT1F			;00 ‡€ˆ‘œ Ž’€ 1F
+		DW W_OUT3F			;01 ‡€ˆ‘œ Ž’€ 3F
+		DW W_OUT5F			;02 ‡€ˆ‘œ Ž’€ 5F
+		DW W_OUT7F			;03 ‡€ˆ‘œ Ž’€ 7F
+		DW W_OUTFF			;04 ‡€ˆ‘œ Ž’€ FF
+		DW W_OUTI			;05 OUTI
+		DW W_IN1F			;06 —’…ˆ… Ž’€ 1F
+		DW W_IN3F			;07 —’…ˆ… Ž’€ 3F
+		DW W_IN5F			;08 —’…ˆ… Ž’€ 5F
+		DW W_IN7F			;09 —’…ˆ… Ž’€ 7F
+		DW W_INFF			;0A —’…ˆ… Ž’€ FF
+		DW W_INI			;0B INI
+		DW W_OUTCD			;0C ‡€ˆ‘œ …ƒˆ‘’€ 'D' ‚ Ž’ 'BC'
+		DW W_INHC			;0D —’…ˆ… ‚ …ƒˆ‘’ 'H' ˆ‡ Ž’€ 'BC'
+		DW READ_WRITE_SEC		;0E —’…ˆ…/‡€ˆ‘œ ‘…Š’Ž€
 		DW WR_BYTE_DRIVE		;0F
 		DW RD_BYTE_DRIVE		;10
 		DW NEO_BYTE_DRIVE		;11
-		DW CMP_RAM_DISK			;12
+		DW CMP_RAM_DISK			;12 Ž‚…Š€ RAM „ˆ‘Š€
 EW_DATA
-;…‡ ‚Ž‡‚€’€ ‚ Œ…‘’Ž ‚›‡Ž‚€
-		DW W_OUTCA			;13
-		DW WRITE_SEC_			;14
-		DW READ_SEC_			;15
-		DW W_INI			;16
+;[…‡ ‚Ž‡‚€’€ ‚ Œ…‘’Ž ‚›‡Ž‚€]
+		DW W_OUTCA			;13 ‡€ˆ‘œ …ƒˆ‘’€ 'A' ‚ Ž’ 'BC'
+		DW WRITE_SEC_			;14 ‡€ˆ‘œ ‘…Š’Ž€ …‡ ‚Ž‡‚€’€ ‚ €„…‘ ‚›‡Ž‚€
+		DW READ_SEC_			;15 —’…ˆ… ‘…Š’Ž€ …‡ ‚Ž‡‚€’€ ‚ €„…‘ ‚›‡Ž‚€
+		DW W_INI			;16 INI …‡ ‚Ž‡‚€’€ ‚ €„…‘ ‚›‡Ž‚€
 
 TEXT4VIRTDRV	DB 0X16,ZASTV_Y+2,1
 TXT4VIRTDRV	DC "Virtual Drive: "
@@ -83,6 +83,7 @@ NUM_ALT_PAGE	IF EMU3D2F=1
 		DB P_BAS48|0X80
 		ENDIF
 
+;[Ž€Ž’—ˆŠ RST 30]
 RST30_WORK	EX (SP),HL
 		PUSH AF
 		PUSH BC
@@ -168,7 +169,7 @@ EXIT_RST304	POP BC
 		EX (SP),HL
 		RET
 
-;‡€ˆ‘œ "A" ‚ Ž’ 0X1F
+;[‡€ˆ‘œ "A" ‚ Ž’ 0X1F]
 W_OUT1F		LD A,(REG_A)
 		LD (WR_1F),A
 		CP 0X10
@@ -258,25 +259,25 @@ W_OUT1FF0	CP 0XF0
 ;E0-EF —’…ˆ… „ŽŽ†Šˆ
 		JR INFF_BIT6
 
-;‡€ˆ‘œ "A" ‚ Ž’ 0X3F
+;[‡€ˆ‘œ "A" ‚ Ž’ 0X3F]
 W_OUT3F		LD A,(REG_A)
 		LD (PORT_3F),A
 		OUT (0X3F),A
 		RET
-	
-;‡€ˆ‘œ "A" ‚ Ž’ 0X5F
+
+;[‡€ˆ‘œ "A" ‚ Ž’ 0X5F]
 W_OUT5F		LD A,(REG_A)
 		LD (PORT_5F),A
 		OUT (0X5F),A
 		RET
-	
-;‡€ˆ‘œ "A" ‚ Ž’ 0X7F
+
+;[‡€ˆ‘œ "A" ‚ Ž’ 0X7F]
 W_OUT7F		LD A,(REG_A)
 		LD (PORT_7F),A
 		OUT (0X7F),A
 		RET
 
-;‡€ˆ‘œ "A" ‚ Ž’ 0XFF
+;[‡€ˆ‘œ "A" ‚ Ž’ 0XFF]
 W_OUTFF 	LD A,(REG_A)
 		LD (WR_FF),A
 		OUT (0XFF),A
@@ -290,7 +291,7 @@ W_OUTFF 	LD A,(REG_A)
 		LD (MASK_MNT_DRV),A
 		RET
 
-;‡€ˆ‘œ "A" ‚ Ž’ (C)
+;[‡€ˆ‘œ "A" ‚ Ž’ (C)]
 W_OUTCA 	LD A,(REG_A)
 W_OUTCA1	LD D,A
 		LD BC,(REG_C)			;…‘‹ˆ Ž’ … TR-DOS
@@ -311,7 +312,7 @@ W_OUTCA1	LD D,A
 W_OUTCA4	OUT (C),D
 		RET
 
-;‡€ˆ‘œ ‚ Ž’› ATM/PENTEVO
+;[‡€ˆ‘œ ‚ Ž’› ATM/PENTEVO]
 W_OUTCA3	LD A,B
 		LD HL,BB_CPU1
 		CP HIGH (WIN_A1)
@@ -334,11 +335,11 @@ W_OUTCA2	LD E,B
 		LD (HL),E
 		JP WRITE_WCPU12
 
-;‡€ˆ‘œ "D" ‚ Ž’ (C)
+;[‡€ˆ‘œ "D" ‚ Ž’ (C)]
 W_OUTCD		LD A,(IREG_D)
 		JR W_OUTCA1
-	
-;……„€—€ €‰’€, ŠŽŒ€„€ OUTI
+
+;[……„€—€ €‰’€, ŠŽŒ€„€ OUTI]
 W_OUTI		LD HL,(BUFF_SECT)
 		EXX
 		LD A,(HL)
@@ -349,7 +350,7 @@ W_OUTI		LD HL,(BUFF_SECT)
 		LD (BUFF_SECT),HL
 		RET
 
-;—’…ˆ… Ž’€ 0X1F	
+;[—’…ˆ… Ž’€ 0X1F]
 W_IN1F		LD A,(WR_1F)
 		AND 0XF0
 		CP 0X10
@@ -373,29 +374,29 @@ W_IN1F2		LD (RD_1F),A
 		LD (REG_A),A
 		RET
 
-;—’…ˆ… Ž’€ 0X3F
+;[—’…ˆ… Ž’€ 0X3F]
 W_IN3F		LD A,(PORT_3F)
 		LD (REG_A),A
 		RET
-	
-;—’…ˆ… Ž’€ 0X5F
+
+;[—’…ˆ… Ž’€ 0X5F]
 W_IN5F		LD A,(PORT_5F)
 		LD (REG_A),A
 		RET
 
-;—’…ˆ… Ž’€ 0X7F
+;[—’…ˆ… Ž’€ 0X7F]
 W_IN7F		LD A,(PORT_7F)
 		LD (REG_A),A
 		RET
 
-;—’…ˆ… Ž’€ 0XFF
+;[—’…ˆ… Ž’€ 0XFF]
 W_INFF		LD A,(RD_FF)
 		LD (REG_A),A
 		RET
 
-;—’…ˆ… ‚ "H" ˆ‡ (‘)
+;[—’…ˆ… ‚ "H" ˆ‡ (‘)]
 W_INHC		LD A,(REG_C)
-;Ž…„…‹…ˆ… ˆ‡ Š€ŠŽƒŽ Ž’€ —’…ˆ…
+;[Ž…„…‹…ˆ… ˆ‡ Š€ŠŽƒŽ Ž’€ —’…ˆ…]
 W_INHC1		CP 0X1F
 		JR NZ,W_INHC2
 		LD A,(RD_1F)
@@ -431,7 +432,7 @@ W_INHC6		LD BC,(REG_C)
 		LD (REG_H),A
 		RET
 
-;—’…ˆ… INI
+;[—’…ˆ… INI]
 W_INI		LD A,(RD_1F)
 		LD HL,(REG_L)
 		LD (HL),A
@@ -457,6 +458,7 @@ NEOBYTEDRIVE1	AND 0X0F
 		LD (BYTE_DRIVE),A
 		RET
 
+;[—’…ˆ… ‘…Š’Ž€ ˆ‹ˆ Ž’Ž‚]
 READ_SEC_	LD A,(WR_1F)
 		AND 0X0F0
 		CP 0X80
@@ -475,10 +477,17 @@ READ_SEC_	LD A,(WR_1F)
 		LD (REG_L),HL
 		RET
 
+;[—’…ˆ…/‡€ˆ‘œ ‘…Š’Ž€]
+;IXL=0-—’…ˆ…, =FF-‡€ˆ‘œ
+READ_WRITE_SEC	PUSH IX
+		JR WRITE_SEC_1
+
+;[—’…ˆ… ‘…Š’Ž€]
 READ_SEC_1	PUSH IX
 		LD IXL,0
 		JR WRITE_SEC_1
 
+;[‡€ˆ‘œ ‘…Š’Ž€]
 WRITE_SEC_	PUSH IX
 		LD IXL,0XFF
 WRITE_SEC_1	CALL READ_WCPU12
@@ -489,7 +498,7 @@ WRITE_SEC_1	CALL READ_WCPU12
 		POP IX
 		RET
 
-;—’…ˆ… ˆ‹ˆ ‡€ˆ‘œ ‘…Š’Ž€ €Œ„ˆ‘Š€
+;[—’…ˆ… ˆ‹ˆ ‡€ˆ‘œ ‘…Š’Ž€ €Œ„ˆ‘Š€]
 W_WR_RD_SECT	LD A,(WR_FF)
 		AND 3
 		INC A
@@ -689,6 +698,7 @@ SP_RAMD0	LD A,0X3F
 		LD H,A
 		JP SP_RAMD9
 
+;[—’…ˆ… CMOS]
 ;€ ‚•Ž„…: H-€„…‘ Ÿ—…‰Šˆ
 ;	   L-Ž—ˆ’€Ž… ‡€—…ˆ…
 READCMOS	PUSH BC
@@ -701,6 +711,7 @@ READCMOS	PUSH BC
 		AND A
 		RET
 
+;[‡€ˆ‘œ CMOS]
 ;€ ‚•Ž„…: H-€„…‘ Ÿ—…‰Šˆ
 ;	   L-—’Ž ’“„€ ‡€ˆ‘€’œ
 WRITECMOS	RST8D _CMOS_RW,_WRITE_CMOS
@@ -715,6 +726,7 @@ CP_TYPEDRIVE	PUSH BC
 		POP BC
 		RET
 
+;[“‘’€Ž‚Š€ ……Œ…›• ’…Š“™…ƒŽ ˆ‚Ž„€]
 SET_DRIVENAME	LD H,VIRT_REAL_DRIVE
 		CALL READCMOS
 		RRCA
@@ -726,6 +738,7 @@ SET_DRIVENAME	LD H,VIRT_REAL_DRIVE
 		LD (TRD_5D16),A
 		RET
 
+;[”ŽŒ€’ˆŽ‚€ˆ… RAM „ˆ‘Š€]
 FORMAT_RAM	LD A,(TRD_5CF6)
 		LD B,A
 		INC B
@@ -762,7 +775,7 @@ FORMAT_RAM1	PUSH BC
 		XOR A
 		RET
 
-;Ž‚…Š€ €‹ˆ—ˆŸ Œ€Š…€ €Œ„ˆ‘Š€
+;[Ž‚…Š€ €‹ˆ—ˆŸ Œ€Š…€ €Œ„ˆ‘Š€]
 CMP_RAM_DISK	CALL READ_WCPU12
 		LD BC,WIN_P1
 		LD A,PAGE_RAMDISK
@@ -776,7 +789,7 @@ CMP_RAM_DISK	CALL READ_WCPU12
 		AND A
 		SBC HL,DE
 		RET Z				;…‘‹ˆ Œ€Š… € Œ…‘’…, ’Ž €Œ„ˆ‘Š€ … ‘Ž‡„€…Œ
-;‘Ž‡„€ˆ… —ˆ‘’ŽƒŽ €Œ„ˆ‘Š€
+;[‘Ž‡„€ˆ… —ˆ‘’ŽƒŽ €Œ„ˆ‘Š€]
 CREATE_TRDTABL	LD BC,WIN_P1
 		LD A,PAGE_RAMDISK		;“†€ ‘’€ˆ–€ €—€‹€ €Œ„ˆ‘Š€, ƒ„… “„…’ ’€‹ˆ–€ Žˆ‘€’…‹…‰
 		OUT (C),A
@@ -830,7 +843,7 @@ ELT1		INC C
 		LD DE,CPU1+0X8E1
 		LD BC,DSK_END-DSKINFO
 		LDIR
-;‚Ž‘‘’€Ž‚‹…ˆ… ŠŽ”ˆƒ“€–ˆˆ ŽŠŽ Ž…–ˆŽ‚€ˆŸ 1,2
+;[‚Ž‘‘’€Ž‚‹…ˆ… ŠŽ”ˆƒ“€–ˆˆ ŽŠŽ Ž…–ˆŽ‚€ˆŸ 1,2]
 WRITE_WCPU12	LD BC,(BB_CPU1)
 		LD A,C
 		LD C,LOW (WIN_A0)
@@ -841,7 +854,7 @@ WRITE_WCPU12	LD BC,(BB_CPU1)
 		OUT (C),A
 		RET
 
-;—’…ˆ… ŠŽ”ˆƒ“€–ˆˆ ŽŠŽ Ž…ˆŽ‚€ˆŸ 1,2
+;[—’…ˆ… ŠŽ”ˆƒ“€–ˆˆ ŽŠŽ Ž…ˆŽ‚€ˆŸ 1,2]
 READ_WCPU12	LD BC,RD_RAMNROM
 		IN L,(C)			;ˆ’› RAM & ROM
 		INC B
